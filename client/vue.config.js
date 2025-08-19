@@ -11,8 +11,28 @@ module.exports = defineConfig({
       },
       '/ws': {
         target: 'ws://localhost:8080',
-        ws: true
+        ws: true,
+        changeOrigin: true
       }
     }
+  },
+  configureWebpack: {
+    optimization: {
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      },
+    },
+  },
+  chainWebpack: config => {
+    config.performance
+      .maxEntrypointSize(512000)
+      .maxAssetSize(512000)
   }
 })

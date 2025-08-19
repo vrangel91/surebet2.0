@@ -5,8 +5,19 @@
 </template>
 
 <script>
+import { useTheme } from './composables/useTheme'
+
 export default {
-  name: 'App'
+  name: 'App',
+  setup() {
+    const { loadTheme, applyTheme } = useTheme()
+    
+    // Inicializar tema
+    loadTheme()
+    applyTheme('dark') // Tema padrão
+    
+    return {}
+  }
 }
 </script>
 
@@ -17,6 +28,9 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 * {
@@ -26,7 +40,12 @@ export default {
 }
 
 body {
-  background-color: #1a1a1a;
-  color: #ffffff;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+html {
+  transition: background-color 0.3s ease;
 }
 </style>

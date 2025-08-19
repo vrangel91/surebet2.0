@@ -26,29 +26,37 @@ let lastSurebetCount = 0;
 async function fetchSurebets() {
   try {
     const response = await axios.get('https://zerolossbet.com/api/fetch_surebets/');
-    const newSurebets = response.data;
     
-    // Verificar se há novos surebets
-    const currentSurebetCount = Object.keys(newSurebets).length;
-    
-    if (currentSurebetCount > lastSurebetCount && soundEnabled) {
-      // Enviar notificação para todos os clientes conectados
-      wss.clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify({
-            type: 'new_surebet',
-            count: currentSurebetCount - lastSurebetCount
-          }));
-        }
-      });
+    // Verificar se a resposta contém dados válidos
+    if (response.data && typeof response.data === 'object') {
+      const newSurebets = response.data;
+      
+      // Verificar se há novos surebets
+      const currentSurebetCount = Object.keys(newSurebets).length;
+      
+      if (currentSurebetCount > lastSurebetCount && soundEnabled) {
+        // Enviar notificação para todos os clientes conectados
+        wss.clients.forEach(client => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: 'new_surebet',
+              count: currentSurebetCount - lastSurebetCount
+            }));
+          }
+        });
+      }
+      
+      surebets = newSurebets;
+      lastSurebetCount = currentSurebetCount;
+      
+      console.log(`Surebets atualizados: ${currentSurebetCount} encontrados`);
+    } else {
+      console.log('API retornou dados vazios ou inválidos, mantendo dados anteriores');
     }
-    
-    surebets = newSurebets;
-    lastSurebetCount = currentSurebetCount;
-    
-    console.log(`Surebets atualizados: ${currentSurebetCount} encontrados`);
   } catch (error) {
     console.error('Erro ao buscar surebets:', error.message);
+    // Manter os dados anteriores em caso de erro
+    console.log('Mantendo dados anteriores devido ao erro na API externa');
   }
 }
 

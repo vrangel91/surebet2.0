@@ -17,6 +17,9 @@
           <button class="action-btn" @click="refreshBet">
             <span class="action-icon">🔄</span>
           </button>
+          <button class="action-btn" @click="addToReports" title="Adicionar aos Relatórios">
+            <span class="action-icon">📊</span>
+          </button>
         </div>
       </div>
     </div>
@@ -125,6 +128,45 @@ export default {
       } else {
         console.log('URL de aposta não disponível')
       }
+    },
+    
+    addToReports() {
+      // Emite evento para o componente pai
+      this.$emit('add-to-reports', this.surebet)
+      
+      // Mostra notificação
+      this.showNotification('Surebet adicionado aos relatórios!')
+    },
+    
+    showNotification(message) {
+      // Cria elemento de notificação
+      const notification = document.createElement('div')
+      notification.className = 'notification'
+      notification.textContent = message
+             notification.style.cssText = `
+         position: fixed;
+         top: 100px;
+         right: 20px;
+         background: #00ff88;
+         color: #1a1a1a;
+         padding: 12px 20px;
+         border-radius: 8px;
+         font-weight: 600;
+         z-index: 10000;
+         animation: slideIn 0.3s ease;
+       `
+      
+      document.body.appendChild(notification)
+      
+      // Remove após 3 segundos
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease'
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification)
+          }
+        }, 300)
+      }, 3000)
     }
   }
 }
@@ -132,8 +174,8 @@ export default {
 
 <style lang="scss" scoped>
 .surebet-card {
-  background: #2d2d2d;
-  border: 1px solid #404040;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s ease;
@@ -141,8 +183,8 @@ export default {
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    border-color: #00ff88;
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent-primary);
   }
 }
 
@@ -157,6 +199,28 @@ export default {
   }
 }
 
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
 .card-header {
   display: flex;
   align-items: center;
@@ -168,7 +232,7 @@ export default {
   .profit-percentage {
     font-size: 24px;
     font-weight: 700;
-    color: #00ff88;
+    color: var(--accent-primary);
   }
 }
 
@@ -183,7 +247,7 @@ export default {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .time-icon {
@@ -198,15 +262,15 @@ export default {
 .action-btn {
   width: 32px;
   height: 32px;
-  background: #404040;
+  background: var(--bg-overlay);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   
   &:hover {
-    background: #00ff88;
-    color: #1a1a1a;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
   }
 }
 
@@ -232,13 +296,13 @@ export default {
 .sport-name {
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .tournament {
   font-size: 12px;
-  color: #b0b0b0;
-  background: #404040;
+  color: var(--text-secondary);
+  background: var(--bg-overlay);
   padding: 2px 8px;
   border-radius: 4px;
 }
@@ -246,7 +310,7 @@ export default {
 .match-title {
   font-size: 18px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   margin-bottom: 8px;
   line-height: 1.3;
 }
@@ -262,14 +326,14 @@ export default {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .match-status {
   font-size: 12px;
   font-weight: 600;
-  color: #b0b0b0;
-  background: #404040;
+  color: var(--text-secondary);
+  background: var(--bg-overlay);
   padding: 4px 8px;
   border-radius: 4px;
   
@@ -284,8 +348,8 @@ export default {
 }
 
 .bet-option {
-  background: #1a1a1a;
-  border: 1px solid #404040;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
@@ -305,13 +369,13 @@ export default {
 .bookmaker {
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .market {
   font-size: 12px;
-  color: #b0b0b0;
-  background: #404040;
+  color: var(--text-secondary);
+  background: var(--bg-overlay);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -330,21 +394,21 @@ export default {
 
 .odds-label {
   font-size: 12px;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .odds-value {
   font-size: 16px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .bet-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -372,7 +436,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding-top: 16px;
-  border-top: 1px solid #404040;
+  border-top: 1px solid var(--border-primary);
 }
 
 .profit-summary {
@@ -383,13 +447,13 @@ export default {
 
 .profit-label {
   font-size: 12px;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .profit-value {
   font-size: 16px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .card-stats {
@@ -402,7 +466,7 @@ export default {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .stat-icon {
