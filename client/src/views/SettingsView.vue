@@ -3,7 +3,8 @@
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="toggleSidebar"
+      @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded"
       @open-glossary="openGlossary"
     />
 
@@ -364,6 +365,10 @@ export default {
   },
   mounted() {
     this.loadSettings()
+    // Carregar estado da sidebar das configurações
+    if (this.settings.interface?.sidebarCollapsed !== undefined) {
+      this.sidebarCollapsed = this.settings.interface.sidebarCollapsed
+    }
   },
   computed: {
     isAdmin() {
@@ -371,6 +376,18 @@ export default {
     }
   },
   methods: {
+    handleSidebarToggle(collapsed) {
+      this.sidebarCollapsed = collapsed
+      // Atualizar também nas configurações
+      this.settings.interface.sidebarCollapsed = collapsed
+      this.saveSettings()
+
+    },
+    
+    handleSidebarStateLoaded(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
+    
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },

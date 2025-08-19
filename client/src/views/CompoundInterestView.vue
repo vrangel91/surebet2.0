@@ -1,6 +1,11 @@
 <template>
   <div class="compound-interest-container">
-    <Sidebar @toggle-sidebar="toggleSidebar" />
+    <Sidebar 
+      :sidebarCollapsed="sidebarCollapsed"
+      @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded"
+      @open-glossary="openGlossary"
+    />
     
     <main class="main-content">
       <div class="content-header">
@@ -161,21 +166,30 @@
          </div>
       </div>
     </main>
+
+    <!-- Modal do Glossário -->
+    <GlossaryModal 
+      v-if="showGlossaryModal" 
+      @close="closeGlossary" 
+    />
   </div>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
+import GlossaryModal from '../components/GlossaryModal.vue'
 import Chart from 'chart.js/auto'
 
 export default {
   name: 'CompoundInterestView',
   components: {
-    Sidebar
+    Sidebar,
+    GlossaryModal
   },
   data() {
     return {
       sidebarCollapsed: false,
+      showGlossaryModal: false,
       formData: {
         initialValue: 1000,
         interestRate: 1,
@@ -200,6 +214,22 @@ export default {
     }
   },
   methods: {
+    handleSidebarToggle(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
+    
+    handleSidebarStateLoaded(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
+    
+    openGlossary() {
+      this.showGlossaryModal = true
+    },
+    
+    closeGlossary() {
+      this.showGlossaryModal = false
+    },
+    
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },

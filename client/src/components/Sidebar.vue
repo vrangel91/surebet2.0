@@ -1,13 +1,13 @@
 <template>
-  <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
+  <aside class="sidebar" :class="{ collapsed: shouldBeCollapsed }">
     <!-- Logo e Header -->
     <div class="sidebar-header">
       <div class="logo">
-        <svg class="logo-icon" v-show="!sidebarCollapsed" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+        <svg class="logo-icon" v-show="!shouldBeCollapsed" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
           <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
           <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
         </svg>
-        <h1 v-show="!sidebarCollapsed">SureStake</h1>
+        <h1 v-show="!shouldBeCollapsed">SureStake</h1>
       </div>
       <button class="sidebar-toggle" @click="toggleSidebar">
         <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -24,7 +24,7 @@
             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
           </svg>
         </div>
-        <div class="user-details" v-show="!sidebarCollapsed">
+        <div class="user-details" v-show="!shouldBeCollapsed">
           <p class="user-greeting">Olá, {{ currentUser?.email || 'Usuário' }}</p>
           <div class="user-status"> 
             <span class="status-dot"></span>
@@ -38,91 +38,91 @@
     <nav class="sidebar-nav">
       <ul class="nav-list">
         <li class="nav-item" :class="{ active: $route.path === '/' }">
-          <router-link to="/" class="nav-link" :title="sidebarCollapsed ? 'Dashboard' : ''">
+          <router-link to="/" class="nav-link" :title="shouldBeCollapsed ? 'Dashboard' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 1 13.5V7.207l5-5 5 5Z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Dashboard</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Dashboard</span>
           </router-link>
         </li>
         <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-          <router-link to="/reports" class="nav-link" :title="sidebarCollapsed ? 'Relatórios' : ''">
+          <router-link to="/reports" class="nav-link" :title="shouldBeCollapsed ? 'Relatórios' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Relatórios</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
           </router-link>
         </li>
         <li class="nav-item" :class="{ active: $route.path === '/settings' }">
-          <router-link to="/settings" class="nav-link" :title="sidebarCollapsed ? 'Configurações' : ''">
+          <router-link to="/settings" class="nav-link" :title="shouldBeCollapsed ? 'Configurações' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Configurações</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Configurações</span>
           </router-link>
         </li>
         <li v-if="isAdmin" class="nav-item" :class="{ active: $route.path === '/admin' }">
-          <router-link to="/admin" class="nav-link" :title="sidebarCollapsed ? 'Administração' : ''">
+          <router-link to="/admin" class="nav-link" :title="shouldBeCollapsed ? 'Administração' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
               <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Administração</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Administração</span>
           </router-link>
         </li>
         <li class="nav-item" :class="{ active: $route.path === '/plans' }">
-          <router-link to="/plans" class="nav-link" :title="sidebarCollapsed ? 'Planos' : ''">
+          <router-link to="/plans" class="nav-link" :title="shouldBeCollapsed ? 'Planos' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M3.75 0a.75.75 0 0 0-.75.75V4c0 .414.336.75.75.75h.75v4a.75.75 0 0 0 1.5 0V4.75h1.5v4a.75.75 0 0 0 1.5 0V4.75H9V4a.75.75 0 0 0-.75-.75h-4.5ZM9 3V1.5a.75.75 0 0 0-1.5 0V3h1.5Z"/>
               <path d="M2.5 6a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-11Zm0 1h11v6h-11v-6Z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Planos</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Planos</span>
           </router-link>
         </li>
         <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
-          <router-link to="/referrals" class="nav-link" :title="sidebarCollapsed ? 'Indicações' : ''">
+          <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
               <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
               <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Indicações</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Indicações</span>
           </router-link>
         </li>
               <li class="nav-item" :class="{ active: $route.path === '/support' }">
-        <router-link to="/support" class="nav-link" :title="sidebarCollapsed ? 'Suporte' : ''">
+        <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
           <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
             <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
             <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
           </svg>
-          <span class="nav-text" v-show="!sidebarCollapsed">Suporte</span>
+          <span class="nav-text" v-show="!shouldBeCollapsed">Suporte</span>
         </router-link>
       </li>
       <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
-        <router-link to="/compound-interest" class="nav-link" :title="sidebarCollapsed ? 'Juros Compostos' : ''">
+        <router-link to="/compound-interest" class="nav-link" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
           <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
             <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
             <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
             <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V4.5A.5.5 0 0 1 8 4z"/>
           </svg>
-          <span class="nav-text" v-show="!sidebarCollapsed">Juros Compostos</span>
+          <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
         </router-link>
       </li>
         <li class="nav-item">
-          <button class="nav-link glossary-btn" @click="openGlossary" :title="sidebarCollapsed ? 'Glosário' : ''">
+          <button class="nav-link glossary-btn" @click="openGlossary" :title="shouldBeCollapsed ? 'Glosário' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Glosário</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Glosário</span>
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link logout-btn" @click="logout" :title="sidebarCollapsed ? 'Sair' : ''">
+          <button class="nav-link logout-btn" @click="logout" :title="shouldBeCollapsed ? 'Sair' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
               <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
             </svg>
-            <span class="nav-text" v-show="!sidebarCollapsed">Sair</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Sair</span>
           </button>
         </li>
       </ul>
@@ -139,17 +139,51 @@ export default {
       default: false
     }
   },
+  data() {
+    return {
+      internalCollapsed: false
+    }
+  },
   computed: {
     currentUser() {
       return this.$store.getters.currentUser
     },
     isAdmin() {
       return this.$store.getters.isAdmin
+    },
+    // Computed para determinar se a sidebar deve estar colapsada
+    shouldBeCollapsed() {
+      return this.sidebarCollapsed || this.internalCollapsed
     }
+  },
+  watch: {
+    // Observar mudanças na prop sidebarCollapsed
+    sidebarCollapsed: {
+      handler(newValue) {
+        this.internalCollapsed = newValue
+        this.saveSidebarState(newValue)
+      },
+      immediate: true
+    }
+  },
+  mounted() {
+    this.loadSidebarState()
+    
+    // Monitorar mudanças no localStorage para configurações
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'app_settings') {
+        this.loadSidebarState()
+      }
+    })
+  },
+  beforeUnmount() {
+    window.removeEventListener('storage', this.handleStorageChange)
   },
   methods: {
     toggleSidebar() {
-      this.$emit('toggle-sidebar')
+      this.internalCollapsed = !this.internalCollapsed
+      this.saveSidebarState(this.internalCollapsed)
+      this.$emit('toggle-sidebar', this.internalCollapsed)
     },
     openGlossary() {
       this.$emit('open-glossary')
@@ -157,6 +191,50 @@ export default {
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
+    },
+    
+    // Carregar estado da sidebar das configurações
+    loadSidebarState() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          if (settings.interface && settings.interface.sidebarCollapsed !== undefined) {
+            this.internalCollapsed = settings.interface.sidebarCollapsed
+            this.$emit('sidebar-state-loaded', this.internalCollapsed)
+
+          }
+        }
+      } catch (error) {
+        console.warn('Erro ao carregar estado da sidebar:', error)
+      }
+    },
+    
+    // Salvar estado da sidebar nas configurações
+    saveSidebarState(collapsed) {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        let settings = savedSettings ? JSON.parse(savedSettings) : {}
+        
+        // Inicializar interface se não existir
+        if (!settings.interface) {
+          settings.interface = {}
+        }
+        
+        // Atualizar estado da sidebar
+        settings.interface.sidebarCollapsed = collapsed
+        
+        localStorage.setItem('app_settings', JSON.stringify(settings))
+
+      } catch (error) {
+        console.error('Erro ao salvar estado da sidebar:', error)
+      }
+    },
+    
+    handleStorageChange(event) {
+      if (event.key === 'app_settings') {
+        this.loadSidebarState()
+      }
     }
   }
 }

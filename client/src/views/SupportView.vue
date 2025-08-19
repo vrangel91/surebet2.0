@@ -3,7 +3,8 @@
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="toggleSidebar"
+      @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded"
       @open-glossary="openGlossary"
     />
 
@@ -327,6 +328,14 @@ export default {
       'updateTicketData',
       'addMessageToTicket'
     ]),
+    
+    handleSidebarToggle(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
+    
+    handleSidebarStateLoaded(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
     
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed

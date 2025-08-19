@@ -3,7 +3,8 @@
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="toggleSidebar"
+      @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded"
       @open-glossary="openGlossary"
     />
 
@@ -45,6 +46,16 @@
            </div>
          </div>
       </header>
+
+      <!-- Indicador de Status de Conexão -->
+      <div class="connection-status-bar">
+        <div class="status-item" :class="{ connected: websocketConnected, polling: !websocketConnected && pollingInterval }">
+          <div class="status-indicator"></div>
+          <span class="status-text">
+            {{ websocketConnected ? 'Conectado via WebSocket' : (pollingInterval ? 'Conectado via HTTP' : 'Desconectado') }}
+          </span>
+        </div>
+      </div>
 
                      <!-- Filtros Simples -->
         <div class="filters">
@@ -159,25 +170,28 @@
              </div>
            </div>
            
-           <!-- Filtro por Faixa de Lucro -->
-           <div class="filter-section">
-             <label class="filter-section-label">Faixa de Lucro</label>
-             <div class="profit-range">
-               <input 
-                 type="number" 
-                 v-model="minProfit" 
-                 placeholder="0" 
-                 class="profit-input"
-               />
-               <span class="profit-separator">-</span>
-               <input 
-                 type="number" 
-                 v-model="maxProfit" 
-                 placeholder="1000" 
-                 class="profit-input"
-               />
-             </div>
-           </div>
+                       <!-- Filtro por Faixa de Lucro -->
+            <div class="filter-section">
+              <div class="filter-section-header">
+                <label class="filter-section-label">Faixa de Lucro</label>
+                <span v-if="isUsingDefaultProfitFilters" class="default-indicator">Padrão</span>
+              </div>
+              <div class="profit-range">
+                <input 
+                  type="number" 
+                  v-model="minProfit" 
+                  placeholder="0" 
+                  class="profit-input"
+                />
+                <span class="profit-separator">-</span>
+                <input 
+                  type="number" 
+                  v-model="maxProfit" 
+                  placeholder="1000" 
+                  class="profit-input"
+                />
+              </div>
+            </div>
            
            <!-- Filtro por Casas de Aposta -->
            <div class="filter-section">
@@ -261,10 +275,11 @@
             </div>
          </div>
          
-         <div class="filter-footer">
-           <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
-           <button @click="applyFilters" class="apply-btn">Aplicar</button>
-         </div>
+                   <div class="filter-footer">
+            <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
+            <button @click="saveCurrentFiltersAsDefault" class="save-default-btn">Salvar como Padrão</button>
+            <button @click="applyFilters" class="apply-btn">Aplicar</button>
+          </div>
        </div>
      </div>
      
@@ -310,7 +325,10 @@ export default {
       lastCheckCount: 0,
       startTime: Date.now(),
       uptimeMinutes: 0,
-      showGlossaryModal: false
+      showGlossaryModal: false,
+      websocketConnected: false,
+      websocketRetryCount: 0,
+      pollingInterval: null
     }
   },
   computed: {
@@ -415,10 +433,64 @@ export default {
       if (!(this.minProfit === 0 && this.maxProfit === 1000)) count++
       if (this.selectedDateFilter !== 'any') count++
       return count
+    },
+    
+    isUsingDefaultProfitFilters() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          if (settings.defaultFilters) {
+            const defaultMin = settings.defaultFilters.minProfit !== undefined ? Number(settings.defaultFilters.minProfit) : 0
+            const defaultMax = settings.defaultFilters.maxProfit !== undefined ? Number(settings.defaultFilters.maxProfit) : 1000
+            return this.minProfit === defaultMin && this.maxProfit === defaultMax
+          }
+        }
+      } catch (error) {
+        console.warn('Erro ao verificar filtros padrão:', error)
+      }
+      return this.minProfit === 0 && this.maxProfit === 1000
+    }
+  },
+  watch: {
+    // Monitorar mudanças nas configurações do localStorage
+    '$store.state.settings': {
+      handler() {
+        this.loadDefaultFilters()
+      },
+      deep: true
+    },
+    
+    // Salvar filtros automaticamente quando mudarem
+    selectedHouses() {
+      this.saveFiltersToSettings()
+    },
+    
+    selectedSports() {
+      this.saveFiltersToSettings()
+    },
+    
+    selectedCurrencies() {
+      this.saveFiltersToSettings()
+    },
+    
+    selectedDateFilter() {
+      this.saveFiltersToSettings()
+    },
+    
+    activeFilter() {
+      this.saveFiltersToSettings()
     }
   },
   mounted() {
-    this.initWebSocket()
+    // Carregar filtros padrão das configurações
+    this.loadDefaultFilters()
+    
+    // Carregar filtros salvos das configurações
+    this.loadFiltersFromSettings()
+    
+    // Verificar se o servidor está disponível antes de tentar WebSocket
+    this.checkServerAvailability()
     this.fetchSurebets()
     this.startAutoUpdate()
     
@@ -426,123 +498,285 @@ export default {
     setInterval(() => {
       this.updateStats()
     }, 60000)
+    
+    // Monitorar mudanças no localStorage para configurações
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'app_settings') {
+        this.loadDefaultFilters()
+        this.loadFiltersFromSettings()
+      }
+    })
   },
   beforeUnmount() {
     if (this.ws) {
       this.ws.close()
     }
     this.stopAutoUpdate()
+    this.stopHttpPolling()
   },
   methods: {
-    // Extrai casas/esportes/moedas do payload da API e garante seleção padrão "todos marcados"
-    refreshFilterOptionsFromData(rawSurebets) {
+    // Carrega filtros das configurações (não atualiza automaticamente com dados)
+    loadFiltersFromSettings() {
       try {
-        const values = Object.values(rawSurebets || {})
-        const houseSet = new Set()
-        const sportSet = new Set()
-        const currencySet = new Set()
-        
-        // Adiciona as opções padrão primeiro
-        houseSet.add(...this.filterOptions.houses)
-        sportSet.add(...this.filterOptions.sports.map(s => s.value))
-        currencySet.add(...this.filterOptions.currencies.map(c => c.code))
-        
-        // Adiciona as opções encontradas nos dados da API
-        for (const legs of values) {
-          for (const leg of legs) {
-            if (leg?.house) houseSet.add(leg.house)
-            if (leg?.sport) sportSet.add(leg.sport)
-            if (leg?.currency) currencySet.add(leg.currency)
+        const savedSettings = localStorage.getItem('app_settings')
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          if (settings.filters) {
+            // Carrega filtros salvos das configurações
+            if (settings.filters.selectedHouses) {
+              this.selectedHouses = settings.filters.selectedHouses
+            }
+            if (settings.filters.selectedSports) {
+              this.selectedSports = settings.filters.selectedSports
+            }
+            if (settings.filters.selectedCurrencies) {
+              this.selectedCurrencies = settings.filters.selectedCurrencies
+            }
+            if (settings.filters.selectedDateFilter) {
+              this.selectedDateFilter = settings.filters.selectedDateFilter
+            }
+            if (settings.filters.activeFilter) {
+              this.activeFilter = settings.filters.activeFilter
+            }
           }
         }
-
-        const newHouses = Array.from(houseSet).sort()
-        const newSports = Array.from(sportSet).sort()
-        const newCurrencies = Array.from(currencySet).sort()
-
-        const prevAllHouses = this.selectedHouses.length === this.filterOptions.houses.length
-        const prevAllSports = this.selectedSports.length === this.filterOptions.sports.length
-        const prevAllCurrencies = this.selectedCurrencies.length === this.filterOptions.currencies.length
-
-        this.filterOptions.houses = newHouses
-        // Mantém a estrutura de objetos para esportes (value/label)
-        this.filterOptions.sports = newSports.map(sport => ({ value: sport, label: sport }))
-        // Mantém a estrutura de objetos para moedas (code/label)
-        this.filterOptions.currencies = newCurrencies.map(currency => ({ code: currency, label: currency }))
-
-        // Se ainda não há seleção ou se antes estava tudo selecionado, mantém tudo selecionado
-        if (this.selectedHouses.length === 0 || prevAllHouses) {
-          this.selectedHouses = [...newHouses]
-        } else {
-          // Remove seleções que não existem mais
-          this.selectedHouses = this.selectedHouses.filter(h => newHouses.includes(h))
+      } catch (error) {
+        console.warn('Erro ao carregar filtros das configurações:', error)
+      }
+    },
+    
+    // Salva filtros nas configurações
+    saveFiltersToSettings() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        let settings = savedSettings ? JSON.parse(savedSettings) : {}
+        
+        if (!settings.filters) {
+          settings.filters = {}
         }
-
-        if (this.selectedSports.length === 0 || prevAllSports) {
-          this.selectedSports = [...newSports]
-        } else {
-          this.selectedSports = this.selectedSports.filter(s => newSports.includes(s))
-        }
-
-        if (this.selectedCurrencies.length === 0 || prevAllCurrencies) {
-          this.selectedCurrencies = [...newCurrencies]
-        } else {
-          this.selectedCurrencies = this.selectedCurrencies.filter(c => newCurrencies.includes(c))
-        }
-      } catch (e) {
-        console.warn('Falha ao atualizar opções de filtros:', e)
+        
+        settings.filters.selectedHouses = this.selectedHouses
+        settings.filters.selectedSports = this.selectedSports
+        settings.filters.selectedCurrencies = this.selectedCurrencies
+        settings.filters.selectedDateFilter = this.selectedDateFilter
+        settings.filters.activeFilter = this.activeFilter
+        
+        localStorage.setItem('app_settings', JSON.stringify(settings))
+      } catch (error) {
+        console.error('Erro ao salvar filtros nas configurações:', error)
       }
     },
     initWebSocket() {
-      this.ws = new WebSocket('ws://localhost:3002/ws')
-      
-      this.ws.onopen = () => {
-        console.log('WebSocket conectado')
+      // Verificar se WebSocket está disponível
+      if (typeof WebSocket === 'undefined') {
+        console.warn('WebSocket não suportado neste navegador. Usando fallback HTTP.')
+        this.startHttpPolling()
+        return
+      }
+
+      // Se já tentou 3 vezes, usar HTTP polling diretamente
+      if (this.websocketRetryCount >= 3) {
+        console.log('Usando HTTP polling (WebSocket indisponível)')
+        this.startHttpPolling()
+        return
+      }
+
+      try {
+        // Configurar timeout para WebSocket
+        const wsTimeout = setTimeout(() => {
+          if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+            console.log('Timeout na conexão WebSocket. Usando fallback HTTP.')
+            this.ws.close()
+            this.websocketRetryCount++
+            this.startHttpPolling()
+          }
+        }, 3000) // 3 segundos de timeout
+
+        this.ws = new WebSocket('ws://localhost:3002/ws')
+        
+        this.ws.onopen = () => {
+          clearTimeout(wsTimeout)
+          console.log('WebSocket conectado')
+          this.websocketConnected = true
+          this.websocketRetryCount = 0
+          this.stopHttpPolling() // Para polling se WebSocket conectar
+        }
+        
+        this.ws.onmessage = (event) => {
+          const data = JSON.parse(event.data)
+          
+          switch (data.type) {
+            case 'initial_state':
+              this.surebets = data.surebets
+              this.isSearching = data.isSearching
+              this.soundEnabled = data.soundEnabled
+              this.loading = false
+              // Não toca som no estado inicial
+              break
+              
+            case 'new_surebet':
+              // Verifica se há novos dados antes de tocar o som
+              const currentKeys = Object.keys(this.surebets)
+              const newKeys = Object.keys(data.surebets)
+              const hasNewData = newKeys.length > currentKeys.length || 
+                                newKeys.some(key => !currentKeys.includes(key))
+              
+              this.surebets = data.surebets
+              
+              // Toca som apenas se há novos dados e o som está habilitado
+              if (this.soundEnabled && hasNewData) {
+                this.playNotificationSound()
+              }
+              break
+          }
+        }
+        
+        this.ws.onerror = (error) => {
+          clearTimeout(wsTimeout)
+          // Não logar erro específico para evitar spam no console
+          this.websocketConnected = false
+        }
+        
+        this.ws.onclose = (event) => {
+          clearTimeout(wsTimeout)
+          this.websocketConnected = false
+          
+          // Tentar reconectar apenas se não foi um fechamento intencional
+          if (!event.wasClean && this.websocketRetryCount < 3) {
+            this.websocketRetryCount++
+            console.log(`Tentativa ${this.websocketRetryCount}/3: WebSocket indisponível, tentando novamente em ${2 * this.websocketRetryCount}s...`)
+            
+            setTimeout(() => {
+              this.initWebSocket()
+            }, 2000 * this.websocketRetryCount) // Delay progressivo
+          } else if (this.websocketRetryCount >= 3) {
+            console.log('WebSocket indisponível. Usando HTTP polling.')
+            this.startHttpPolling()
+          }
+        }
+        
+      } catch (error) {
+        console.log('WebSocket não disponível. Usando HTTP polling.')
+        this.startHttpPolling()
+      }
+    },
+
+    startHttpPolling() {
+      // Evitar iniciar múltiplos intervals
+      if (this.pollingInterval) {
+        return
       }
       
-             this.ws.onmessage = (event) => {
-         const data = JSON.parse(event.data)
-         
-         switch (data.type) {
-           case 'initial_state':
-             this.surebets = data.surebets
-             this.refreshFilterOptionsFromData(this.surebets)
-             this.isSearching = data.isSearching
-             this.soundEnabled = data.soundEnabled
-             this.loading = false
-             // Não toca som no estado inicial
-             break
-             
-           case 'new_surebet':
-             // Verifica se há novos dados antes de tocar o som
-             const currentKeys = Object.keys(this.surebets)
-             const newKeys = Object.keys(data.surebets)
-             const hasNewData = newKeys.length > currentKeys.length || 
-                               newKeys.some(key => !currentKeys.includes(key))
-             
-             this.surebets = data.surebets
-             this.refreshFilterOptionsFromData(this.surebets)
-             
-             // Toca som apenas se há novos dados e o som está habilitado
-             if (this.soundEnabled && hasNewData) {
-               this.playNotificationSound()
-             }
-             break
-         }
-       }
+      console.log('Usando HTTP polling para atualizações')
       
-      this.ws.onerror = (error) => {
-        console.error('Erro no WebSocket:', error)
+      // Fazer primeira busca imediatamente
+      this.fetchSurebets()
+      
+      // Configurar polling a cada 5 segundos
+      this.pollingInterval = setInterval(() => {
+        this.fetchSurebets()
+      }, 5000)
+    },
+
+    stopHttpPolling() {
+      if (this.pollingInterval) {
+        clearInterval(this.pollingInterval)
+        this.pollingInterval = null
       }
-      
-      this.ws.onclose = () => {
-        console.log('WebSocket desconectado')
+    },
+
+    loadDefaultFilters() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          
+          // Aplicar filtros padrão se existirem
+          if (settings.defaultFilters) {
+            // Aplicar lucro mínimo e máximo
+            if (settings.defaultFilters.minProfit !== undefined) {
+              this.minProfit = Number(settings.defaultFilters.minProfit)
+            }
+            if (settings.defaultFilters.maxProfit !== undefined) {
+              this.maxProfit = Number(settings.defaultFilters.maxProfit)
+            }
+            
+            // Aplicar filtro ativo padrão
+            if (settings.defaultFilters.activeFilter) {
+              this.activeFilter = settings.defaultFilters.activeFilter
+            }
+          }
+        }
+      } catch (error) {
+        console.warn('Erro ao carregar filtros padrão:', error)
+      }
+    },
+
+    saveCurrentFiltersAsDefault() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        let settings = savedSettings ? JSON.parse(savedSettings) : {}
+        
+        // Inicializar defaultFilters se não existir
+        if (!settings.defaultFilters) {
+          settings.defaultFilters = {}
+        }
+        
+        // Salvar filtros atuais como padrão
+        settings.defaultFilters.minProfit = this.minProfit
+        settings.defaultFilters.maxProfit = this.maxProfit
+        settings.defaultFilters.activeFilter = this.activeFilter
+        
+        localStorage.setItem('app_settings', JSON.stringify(settings))
+        
+        this.showNotification('Filtros salvos como padrão!')
+      } catch (error) {
+        console.error('Erro ao salvar filtros como padrão:', error)
+        this.showNotification('Erro ao salvar filtros como padrão!', 'error')
+      }
+    },
+
+    async checkServerAvailability() {
+      try {
+        // Tentar conectar ao WebSocket com timeout
+        const wsTest = new WebSocket('ws://localhost:3002/ws')
+        
+        const wsPromise = new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Timeout'))
+          }, 2000)
+          
+          wsTest.onopen = () => {
+            clearTimeout(timeout)
+            wsTest.close()
+            resolve(true)
+          }
+          
+          wsTest.onerror = () => {
+            clearTimeout(timeout)
+            reject(new Error('WebSocket não disponível'))
+          }
+        })
+        
+        await wsPromise
+        // Se chegou aqui, WebSocket está disponível
+        this.initWebSocket()
+        
+      } catch (error) {
+        // WebSocket não disponível, usar HTTP polling diretamente
+        console.log('Servidor WebSocket não disponível. Usando HTTP polling.')
+        this.startHttpPolling()
       }
     },
     
          async fetchSurebets() {
        try {
          const response = await fetch('/api/surebets')
+         
+         if (!response.ok) {
+           throw new Error(`HTTP ${response.status}`)
+         }
+         
          const data = await response.json()
          
          // Verifica se há novos dados comparando com os dados atuais
@@ -552,7 +786,6 @@ export default {
                            newKeys.some(key => !currentKeys.includes(key))
          
          this.surebets = data
-         this.refreshFilterOptionsFromData(this.surebets)
          this.loading = false
          this.updateStats() // Atualiza estatísticas
          
@@ -561,7 +794,7 @@ export default {
            this.playNotificationSound()
          }
        } catch (error) {
-         console.error('Erro ao buscar surebets:', error)
+         // Log silencioso para evitar spam no console
          this.loading = false
          this.updateStats() // Atualiza estatísticas mesmo em caso de erro
        }
@@ -585,10 +818,13 @@ export default {
     
     setFilter(filter) {
       this.activeFilter = filter
+      this.saveFiltersToSettings()
     },
     
     applyFilters() {
       // Os filtros são aplicados automaticamente através do computed filteredSurebets
+      this.saveFiltersToSettings()
+      this.toggleFilterOverlay()
     },
     
     clearFilters() {
@@ -600,6 +836,12 @@ export default {
       this.selectedDateFilter = 'any'
       this.minProfit = 0
       this.maxProfit = 1000
+      
+      // Salvar filtros nas configurações
+      this.saveFiltersToSettings()
+      
+      // Mostrar notificação
+      this.showNotification('Filtros limpos!')
     },
     
     toggleFilterOverlay() {
@@ -608,28 +850,42 @@ export default {
     
     selectAllHouses() {
       this.selectedHouses = [...this.filterOptions.houses]
+      this.saveFiltersToSettings()
     },
     
     deselectAllHouses() {
       this.selectedHouses = []
+      this.saveFiltersToSettings()
     },
     
     selectAllSports() {
       // filterOptions.sports sempre tem estrutura de objetos {value, label}
       this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
+      this.saveFiltersToSettings()
     },
     
     deselectAllSports() {
       this.selectedSports = []
+      this.saveFiltersToSettings()
     },
     
     selectAllCurrencies() {
       // filterOptions.currencies sempre tem estrutura de objetos {code, label}
       this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
+      this.saveFiltersToSettings()
     },
     
     deselectAllCurrencies() {
       this.selectedCurrencies = []
+      this.saveFiltersToSettings()
+    },
+    
+    handleSidebarToggle(collapsed) {
+      this.sidebarCollapsed = collapsed
+    },
+    
+    handleSidebarStateLoaded(collapsed) {
+      this.sidebarCollapsed = collapsed
     },
     
     toggleSidebar() {
@@ -1596,6 +1852,16 @@ export default {
   margin-bottom: 12px;
 }
 
+.default-indicator {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(0, 255, 136, 0.3);
+}
+
 .filter-actions {
   display: flex;
   align-items: center;
@@ -1734,6 +2000,7 @@ export default {
 }
 
 .clear-btn,
+.save-default-btn,
 .apply-btn {
   flex: 1;
   padding: 12px 16px;
@@ -1754,12 +2021,92 @@ export default {
   }
 }
 
+.save-default-btn {
+  background: #007bff;
+  color: #ffffff;
+  
+  &:hover {
+    background: #0056b3;
+  }
+}
+
 .apply-btn {
   background: #00ff88;
   color: #1a1a1a;
   
   &:hover {
     background: #00cc6a;
+  }
+}
+
+/* Connection Status Bar */
+.connection-status-bar {
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 8px 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  
+  &.connected {
+    background: rgba(0, 255, 136, 0.1);
+    border-color: rgba(0, 255, 136, 0.3);
+  }
+  
+  &.polling {
+    background: rgba(255, 193, 7, 0.1);
+    border-color: rgba(255, 193, 7, 0.3);
+  }
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  animation: pulse 2s infinite;
+  
+  .status-item.connected & {
+    background: #00ff88;
+  }
+  
+  .status-item.polling & {
+    background: #ffc107;
+  }
+}
+
+.status-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  
+  .status-item.connected & {
+    color: #00ff88;
+  }
+  
+  .status-item.polling & {
+    color: #ffc107;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
   }
 }
 </style>
