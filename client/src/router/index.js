@@ -5,6 +5,9 @@ import SettingsView from '../views/SettingsView.vue'
 import LoginView from '../views/LoginView.vue'
 import AdminView from '../views/AdminView.vue'
 import PlansView from '../views/PlansView.vue'
+import ReferralsView from '../views/ReferralsView.vue'
+import SupportView from '../views/SupportView.vue'
+import CompoundInterestView from '../views/CompoundInterestView.vue'
 import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
@@ -42,6 +45,24 @@ const routes = [
     path: '/plans',
     name: 'plans',
     component: PlansView
+  },
+  {
+    path: '/referrals',
+    name: 'referrals',
+    component: ReferralsView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/support',
+    name: 'support',
+    component: SupportView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/compound-interest',
+    name: 'compound-interest',
+    component: CompoundInterestView,
+    beforeEnter: requireAuth
   }
 ]
 

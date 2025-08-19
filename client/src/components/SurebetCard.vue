@@ -45,6 +45,18 @@
       </div>
     </div>
 
+    <!-- Configuração da Banca -->
+    <div class="bankroll-config">
+      <div class="bankroll-info">
+        <span class="bankroll-label">Banca Configurada:</span>
+        <span class="bankroll-value">{{ formatCurrency(defaultStake) }}</span>
+      </div>
+      <div class="expected-profit">
+        <span class="profit-label">Lucro Esperado:</span>
+        <span class="profit-value">{{ formatCurrency(expectedProfit) }}</span>
+      </div>
+    </div>
+
     <!-- Opções de Aposta -->
     <div class="bet-options">
       <div v-for="(bet, index) in surebet" :key="index" class="bet-option">
@@ -59,6 +71,11 @@
             <span class="odds-value">{{ bet.chance || 1.11 }}</span>
           </div>
           
+          <div class="stake-info">
+            <span class="stake-label">Apostar:</span>
+            <span class="stake-value">{{ formatCurrency(calculatedStakes[index]) }}</span>
+          </div>
+          
           <button class="bet-btn" @click="placeBet(bet)">
             <span class="bet-icon">💰</span>
             <span class="bet-text">Apostar</span>
@@ -67,24 +84,8 @@
       </div>
     </div>
 
-    <!-- Footer do Card -->
-    <div class="card-footer">
-      <div class="profit-summary">
-        <span class="profit-label">Lucro Estimado:</span>
-        <span class="profit-value">{{ formatProfit(surebet[0]?.profit) }}%</span>
-      </div>
-      
-      <div class="card-stats">
-        <span class="stat">
-          <span class="stat-icon">📊</span>
-          {{ surebet.length }} opções
-        </span>
-        <span class="stat">
-          <span class="stat-icon">🎯</span>
-          {{ surebet[0]?.minutes > 0 ? 'Live' : 'Pré-live' }}
-        </span>
-      </div>
-    </div>
+
+    
   </div>
 </template>
 
@@ -97,10 +98,99 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      defaultStake: 100.00 // Valor padrão, será carregado das configurações
+    }
+  },
+  computed: {
+    // Calcula as apostas para cada casa baseado nas odds
+    calculatedStakes() {
+      if (!this.surebet || this.surebet.length === 0) return []
+      
+      const odds = this.surebet.map(bet => parseFloat(bet.chance) || 1.0)
+      const totalOdds = odds.reduce((sum, odd) => sum + (1 / odd), 0)
+      
+      // Se totalOdds >= 1, não é um surebet válido
+      if (totalOdds >= 1) return odds.map(() => 0)
+      
+      // Calcula o stake para cada casa
+      const rawStakes = odds.map(odd => {
+        const stake = (this.defaultStake / odd) / totalOdds
+        return stake
+      })
+      
+      // Arredonda os valores para números inteiros
+      const roundedStakes = rawStakes.map(stake => Math.round(stake))
+      
+      // Garante que todos os valores sejam pelo menos 1
+      for (let i = 0; i < roundedStakes.length; i++) {
+        if (roundedStakes[i] < 1) {
+          roundedStakes[i] = 1
+        }
+      }
+      
+      // Ajusta os valores para manter o lucro
+      const totalRaw = rawStakes.reduce((sum, stake) => sum + stake, 0)
+      let totalRounded = roundedStakes.reduce((sum, stake) => sum + stake, 0)
+      
+      // Se o total arredondado for maior que o original, ajusta para baixo
+      if (totalRounded > totalRaw) {
+        const excess = totalRounded - totalRaw
+        
+        // Distribui o excesso entre os valores maiores
+        const sortedIndices = roundedStakes
+          .map((stake, index) => ({ stake, index }))
+          .sort((a, b) => b.stake - a.stake)
+        
+        let remainingExcess = excess
+        for (const { index } of sortedIndices) {
+          if (remainingExcess <= 0) break
+          
+          const currentStake = roundedStakes[index]
+          const reduction = Math.min(remainingExcess, currentStake - 1)
+          
+          roundedStakes[index] = currentStake - reduction
+          remainingExcess -= reduction
+        }
+      }
+      
+      return roundedStakes
+    },
+    
+    // Total a ser investido
+    totalInvestment() {
+      return this.calculatedStakes.reduce((sum, stake) => sum + stake, 0)
+    },
+    
+    // Lucro esperado
+    expectedProfit() {
+      if (this.calculatedStakes.length === 0) return 0
+      
+      // Calcula o retorno mínimo (qualquer aposta que ganhar)
+      const minReturn = Math.min(...this.calculatedStakes.map((stake, index) => 
+        stake * (parseFloat(this.surebet[index].chance) || 1.0)
+      ))
+      
+      return Math.round((minReturn - this.totalInvestment) * 100) / 100
+    },
+    
+
+  },
+  mounted() {
+    this.loadSettings()
+  },
   methods: {
     formatProfit(profit) {
       if (!profit) return '0.00'
       return parseFloat(profit).toFixed(2)
+    },
+    
+    formatCurrency(value) {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      }).format(value)
     },
     
     formatDateTime(timestamp) {
@@ -110,6 +200,18 @@ export default {
         hour: '2-digit', 
         minute: '2-digit' 
       })
+    },
+    
+    loadSettings() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        if (savedSettings) {
+          const settings = JSON.parse(savedSettings)
+          this.defaultStake = settings.reports?.defaultStake || 100.00
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error)
+      }
     },
     
     calculateBet() {
@@ -343,6 +445,51 @@ export default {
   }
 }
 
+/* Configuração da Banca */
+.bankroll-config {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.bankroll-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.bankroll-label {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.bankroll-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.expected-profit {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.profit-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.profit-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
 .bet-options {
   margin-bottom: 20px;
 }
@@ -384,12 +531,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .odds-info {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 80px;
 }
 
 .odds-label {
@@ -401,6 +550,24 @@ export default {
   font-size: 16px;
   font-weight: 700;
   color: var(--accent-primary);
+}
+
+.stake-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.stake-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.stake-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .bet-btn {
@@ -429,6 +596,42 @@ export default {
 
 .bet-text {
   font-size: 12px;
+}
+
+/* Resumo do Cálculo */
+.calculation-summary {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.summary-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.summary-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  
+  &.profit {
+    color: var(--accent-primary);
+  }
 }
 
 .card-footer {
@@ -488,6 +691,13 @@ export default {
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+  }
+  
+  .odds-info,
+  .stake-info {
+    min-width: auto;
+    width: 100%;
+    justify-content: space-between;
   }
   
   .card-footer {

@@ -252,6 +252,60 @@
         </div>
       </div>
     </div>
+
+    <!-- Redirect Modal -->
+    <div v-if="showRedirectModal" class="modal-overlay">
+      <div class="redirect-modal" @click.stop>
+        <div class="redirect-content">
+          <!-- Logo Mercado Pago -->
+          <div class="mercadopago-logo">
+            <svg width="120" height="60" viewBox="0 0 120 60" fill="none">
+              <!-- Background -->
+              <rect width="120" height="60" rx="8" fill="#009EE3"/>
+              <!-- MP Text -->
+              <text x="60" y="35" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold">MP</text>
+            </svg>
+          </div>
+          
+          <!-- Loading Animation -->
+          <div class="redirect-loading">
+            <div class="loading-dots">
+              <div class="dot"></div>
+              <div class="dot"></div>
+              <div class="dot"></div>
+            </div>
+          </div>
+          
+          <!-- Redirect Text -->
+          <div class="redirect-text">
+            <h3>Redirecionando para checkout seguro</h3>
+            <p>Você será direcionado para o Mercado Pago em instantes...</p>
+          </div>
+          
+          <!-- Security Info -->
+          <div class="security-info">
+            <div class="security-item">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              </svg>
+              <span>Pagamento 100% seguro</span>
+            </div>
+            <div class="security-item">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+              </svg>
+              <span>SSL criptografado</span>
+            </div>
+          </div>
+          
+          <!-- Cancel Button -->
+          <button class="cancel-redirect-btn" @click="cancelRedirect">
+            Cancelar redirecionamento
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -275,6 +329,7 @@ export default {
       showPaymentModal: false,
       showProcessingModal: false,
       showPixModal: false,
+      showRedirectModal: false,
       selectedPlan: null,
       processingText: 'Processando...',
       
@@ -651,14 +706,26 @@ export default {
           this.startTimer()
         }, 2000)
       } else if (method === 'credit') {
-        // Simula redirecionamento para Mercado Pago
-        alert('Redirecionando para checkout do Mercado Pago...')
-        this.selectedPlan = null
+        // Mostra modal de redirecionamento
+        this.showRedirectModal = true
+        
+        // Simula redirecionamento após 3 segundos
+        setTimeout(() => {
+          this.showRedirectModal = false
+          this.selectedPlan = null
+          // Aqui você pode adicionar o redirecionamento real para o Mercado Pago
+          // window.location.href = 'https://www.mercadopago.com.br/checkout/...'
+        }, 3000)
       }
     },
     
     cancelProcessing() {
       this.showProcessingModal = false
+      this.showPaymentModal = true
+    },
+    
+    cancelRedirect() {
+      this.showRedirectModal = false
       this.showPaymentModal = true
     },
     
@@ -1285,6 +1352,160 @@ export default {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
   }
+
+  /* Redirect Modal Styles */
+  .redirect-modal {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    animation: slideInUp 0.4s ease-out;
+  }
+
+  .redirect-content {
+    padding: 48px 32px;
+    position: relative;
+  }
+
+  .mercadopago-logo {
+    margin-bottom: 32px;
+    animation: logoGlow 2s ease-in-out infinite alternate;
+  }
+
+  .redirect-loading {
+    margin-bottom: 32px;
+  }
+
+  .loading-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    background: #00ff88;
+    border-radius: 50%;
+    animation: dotPulse 1.4s ease-in-out infinite both;
+  }
+
+  .dot:nth-child(1) {
+    animation-delay: -0.32s;
+  }
+
+  .dot:nth-child(2) {
+    animation-delay: -0.16s;
+  }
+
+  .dot:nth-child(3) {
+    animation-delay: 0s;
+  }
+
+  .redirect-text h3 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #00ff88;
+    margin: 0 0 12px 0;
+    animation: textGlow 2s ease-in-out infinite alternate;
+  }
+
+  .redirect-text p {
+    font-size: 16px;
+    color: var(--text-secondary, #cccccc);
+    margin: 0 0 32px 0;
+    line-height: 1.5;
+  }
+
+  .security-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .security-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 8px;
+    color: #00ff88;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .security-item svg {
+    flex-shrink: 0;
+  }
+
+  .cancel-redirect-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #cccccc);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+
+  .cancel-redirect-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary, #ffffff);
+    transform: translateY(-1px);
+  }
+
+  /* Animations */
+  @keyframes logoGlow {
+    0% {
+      filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.3));
+    }
+    100% {
+      filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.6));
+    }
+  }
+
+  @keyframes dotPulse {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes textGlow {
+    0% {
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+    }
+    100% {
+      text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
   
   /* Footer */
 .plans-footer {
@@ -1330,6 +1551,39 @@ export default {
   
   .plan-categories {
     gap: 8px;
+  }
+
+  .redirect-modal {
+    max-width: 90%;
+    width: 90%;
+  }
+
+  .redirect-content {
+    padding: 32px 24px;
+  }
+
+  .mercadopago-logo {
+    margin-bottom: 24px;
+  }
+
+  .redirect-text h3 {
+    font-size: 20px;
+  }
+
+  .redirect-text p {
+    font-size: 14px;
+  }
+
+  .security-info {
+    gap: 12px;
+  }
+
+  .security-item {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .plans-grid {
     max-width: 100%;
   }
   

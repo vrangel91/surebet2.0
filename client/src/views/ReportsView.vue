@@ -1,5 +1,5 @@
 <template>
-  <div class="reports-container">
+  <div class="reports-container flex-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -8,7 +8,7 @@
     />
 
     <!-- Conteúdo Principal -->
-    <main class="main-content">
+    <main class="main-content flex-column flex-1 min-h-0">
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -164,9 +164,14 @@
                   {{ formatCurrency(bet.profit) }}
                 </td>
                 <td>
-                  <button class="action-btn" @click="viewBetDetails(bet)">
-                    <span class="action-icon">👁️</span>
-                  </button>
+                  <div class="action-buttons">
+                    <button class="action-btn view-btn" @click="viewBetDetails(bet)" title="Ver detalhes">
+                      <span class="action-icon">👁️</span>
+                    </button>
+                    <button class="action-btn delete-btn" @click="deleteBet(bet)" title="Excluir aposta">
+                      <span class="action-icon">🗑️</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -198,28 +203,31 @@
           </div>
         </div>
 
-        <!-- Paginação -->
-        <div class="pagination" v-if="filteredBets.length > 0">
-          <button 
-            @click="previousPage" 
-            :disabled="currentPage === 1"
-            class="pagination-btn"
-          >
-            Anterior
-          </button>
-          <span class="page-info">
-            Página {{ currentPage }} de {{ totalPages }}
-          </span>
-          <button 
-            @click="nextPage" 
-            :disabled="currentPage === totalPages"
-            class="pagination-btn"
-          >
-            Próximo
-          </button>
-        </div>
-      </div>
-    </main>
+                 <!-- Paginação -->
+         <div class="pagination" v-if="filteredBets.length > 0">
+           <button 
+             @click="previousPage" 
+             :disabled="currentPage === 1"
+             class="pagination-btn"
+           >
+             Anterior
+           </button>
+           <span class="page-info">
+             Página {{ currentPage }} de {{ totalPages }}
+           </span>
+           <button 
+             @click="nextPage" 
+             :disabled="currentPage === totalPages"
+             class="pagination-btn"
+           >
+             Próximo
+           </button>
+         </div>
+       </div>
+       
+               <!-- Espaço extra para scroll -->
+        <div class="scroll-spacer"></div>
+      </main>
 
     <!-- Modal de Detalhes da Aposta -->
     <div v-if="showBetModal" class="modal-overlay" @click="closeBetModal">
@@ -282,6 +290,51 @@
       v-if="showGlossaryModal" 
       @close="closeGlossary" 
     />
+
+    <!-- Modal de Confirmação de Exclusão -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
+      <div class="modal-content delete-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Confirmar Exclusão</h3>
+          <button class="modal-close" @click="closeDeleteModal">×</button>
+        </div>
+        <div class="modal-body" v-if="betToDelete">
+          <div class="delete-warning">
+            <div class="warning-icon">⚠️</div>
+            <p class="warning-text">
+              Tem certeza que deseja excluir a aposta <strong>"{{ betToDelete.match }}"</strong>?
+            </p>
+            <p class="warning-details">
+              Esta ação não pode ser desfeita e removerá permanentemente esta aposta dos seus relatórios.
+            </p>
+          </div>
+          <div class="bet-summary">
+            <div class="summary-item">
+              <span class="label">Esporte:</span>
+              <span class="value">{{ betToDelete.sport }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="label">Lucro:</span>
+              <span :class="['value', betToDelete.profit >= 0 ? 'profit-positive' : 'profit-negative']">
+                {{ formatCurrency(betToDelete.profit) }}
+              </span>
+            </div>
+            <div class="summary-item">
+              <span class="label">ROI:</span>
+              <span class="value">{{ betToDelete.roi }}%</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-cancel" @click="closeDeleteModal">
+            Cancelar
+          </button>
+          <button class="btn-delete" @click="confirmDelete">
+            Excluir Aposta
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -312,6 +365,8 @@ export default {
       sortDirection: 'desc',
       showBetModal: false,
       selectedBet: null,
+      showDeleteModal: false,
+      betToDelete: null,
       // Dados dos surebets da API
       surebets: {},
       // Dados das apostas processadas para relatórios
@@ -616,6 +671,33 @@ export default {
       this.bets = this.bets.filter(bet => bet.id !== betId)
       this.saveBets()
       this.showNotification('Aposta removida dos relatórios!')
+    },
+    
+    // Excluir aposta com confirmação
+    deleteBet(bet) {
+      this.betToDelete = bet
+      this.showDeleteModal = true
+    },
+    
+    // Confirmar exclusão
+    confirmDelete() {
+      if (this.betToDelete) {
+        this.bets = this.bets.filter(b => b.id !== this.betToDelete.id)
+        this.saveBets()
+        this.showNotification('Aposta excluída com sucesso!')
+        
+        // Se a página atual ficou vazia, volta para a página anterior
+        if (this.paginatedBets.length === 0 && this.currentPage > 1) {
+          this.currentPage--
+        }
+      }
+      this.closeDeleteModal()
+    },
+    
+    // Fechar modal de exclusão
+    closeDeleteModal() {
+      this.showDeleteModal = false
+      this.betToDelete = null
     }
   },
   watch: {
@@ -637,6 +719,7 @@ export default {
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh; /* Garante altura mínima */
 }
 
 .sidebar {
@@ -808,7 +891,9 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto; /* Habilita scroll vertical */
+  overflow-x: hidden; /* Evita scroll horizontal */
+  min-width: 0; /* Importante para evitar overflow */
 }
 
 .content-header {
@@ -817,6 +902,7 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0; /* Evita que o header encolha */
 }
 
 .header-left {
@@ -865,6 +951,7 @@ export default {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   padding: 24px 32px;
+  flex-shrink: 0; /* Evita que os cards encolham */
 }
 
 .user-summary-card {
@@ -872,6 +959,7 @@ export default {
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
+  min-height: 200px; /* Altura mínima para consistência */
 }
 
 .card-header {
@@ -961,6 +1049,7 @@ export default {
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
+  min-height: 350px; /* Altura mínima para consistência */
   
   h3 {
     font-size: 18px;
@@ -970,19 +1059,22 @@ export default {
   }
 }
 
- .chart-container {
-   height: 300px;
- }
+.chart-container {
+  height: 300px;
+  width: 100%;
+}
 
- .roi-chart-section {
-   padding: 0 32px 24px;
- }
+.roi-chart-section {
+  padding: 0 32px 24px;
+  flex-shrink: 0; /* Evita que a seção encolha */
+}
 
- .roi-chart-card {
+.roi-chart-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
+  min-height: 450px; /* Altura mínima para consistência */
   
   h3 {
     font-size: 18px;
@@ -992,14 +1084,13 @@ export default {
   }
 }
 
- .roi-chart-container {
-   height: 400px;
- }
+.roi-chart-container {
+  height: 400px;
+  width: 100%;
+}
 
 .bets-table-section {
-  flex: 1;
   padding: 0 32px 24px;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -1009,6 +1100,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
+  flex-shrink: 0; /* Evita que os controles encolham */
 }
 
 .pagination-control {
@@ -1058,11 +1150,12 @@ export default {
 }
 
 .table-container {
-  flex: 1;
   overflow: auto;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 8px;
+  min-height: 300px; /* Altura mínima para a tabela */
+  max-height: 400px; /* Altura máxima para a tabela */
 }
 
 .table-summary {
@@ -1077,6 +1170,7 @@ export default {
   border-radius: 8px;
   color: var(--text-secondary);
   font-size: 14px;
+  flex-shrink: 0; /* Evita que o resumo encolha */
 }
 
 .table-summary .right {
@@ -1104,11 +1198,13 @@ export default {
 .bets-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 1200px; /* Largura mínima para evitar compressão excessiva */
   
   th, td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-primary);
+    white-space: nowrap; /* Evita quebra de linha */
   }
   
   th {
@@ -1143,6 +1239,7 @@ export default {
   text-align: center;
   color: var(--text-tertiary);
   font-style: italic;
+  padding: 40px;
 }
 
 .bet-row {
@@ -1183,17 +1280,39 @@ export default {
   font-weight: 600;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
 .action-btn {
   background: none;
   border: none;
-  color: var(--accent-primary);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 4px;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
-  &:hover {
-    background: var(--accent-hover);
+  &.view-btn {
+    color: var(--accent-primary);
+    
+    &:hover {
+      background: var(--accent-hover);
+      transform: scale(1.1);
+    }
+  }
+  
+  &.delete-btn {
+    color: var(--error);
+    
+    &:hover {
+      background: rgba(255, 68, 68, 0.1);
+      transform: scale(1.1);
+    }
   }
 }
 
@@ -1207,6 +1326,7 @@ export default {
   justify-content: center;
   gap: 16px;
   margin-top: 20px;
+  flex-shrink: 0; /* Evita que a paginação encolha */
 }
 
 .pagination-btn {
@@ -1231,6 +1351,10 @@ export default {
 .page-info {
   font-size: 14px;
   color: var(--text-secondary);
+}
+
+.scroll-spacer {
+  height: 50px; /* Espaço extra no final para scroll */
 }
 
 /* Modal */
@@ -1324,6 +1448,104 @@ export default {
   color: #ffffff;
 }
 
+/* Modal de Exclusão */
+.delete-modal {
+  max-width: 500px;
+}
+
+.delete-warning {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.warning-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.warning-text {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.warning-details {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.bet-summary {
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.bet-summary .summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border-primary);
+  
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.bet-summary .label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.bet-summary .value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.btn-cancel {
+  padding: 10px 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &:hover {
+    background: var(--bg-overlay);
+  }
+}
+
+.btn-delete {
+  padding: 10px 20px;
+  background: var(--error);
+  border: none;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &:hover {
+    background: #cc3333;
+    transform: translateY(-1px);
+  }
+}
+
 /* Animações para notificações */
 @keyframes slideIn {
   from {
@@ -1347,9 +1569,44 @@ export default {
   }
 }
 
-@media (max-width: 768px) {
+/* Responsividade melhorada */
+@media (max-width: 1200px) {
   .performance-cards {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .earnings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-header {
+    padding: 16px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .header-left .page-title {
+    font-size: 24px;
+  }
+  
+  .performance-cards {
+    padding: 16px 20px;
+  }
+  
+  .roi-chart-section {
+    padding: 0 20px 16px;
+  }
+  
+  .bets-table-section {
+    padding: 0 20px 16px;
   }
   
   .table-controls {
@@ -1364,10 +1621,40 @@ export default {
   
   .bets-table {
     font-size: 12px;
+    min-width: 800px; /* Largura mínima menor para mobile */
     
     th, td {
       padding: 8px 12px;
     }
+  }
+  
+  .table-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .table-summary .right {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .bets-table {
+    min-width: 600px; /* Largura mínima ainda menor para telas muito pequenas */
+    font-size: 11px;
+    
+    th, td {
+      padding: 6px 8px;
+    }
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  .roi-chart-container {
+    height: 300px;
   }
 }
 </style>

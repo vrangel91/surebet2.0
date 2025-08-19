@@ -172,5 +172,13 @@ export default {
   height: 100%;
   width: 100%;
   position: relative;
+  min-height: 200px;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+canvas {
+  max-width: 100%;
+  max-height: 100%;
 }
 </style>

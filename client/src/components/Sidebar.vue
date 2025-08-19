@@ -79,6 +79,35 @@
             <span class="nav-text" v-show="!sidebarCollapsed">Planos</span>
           </router-link>
         </li>
+        <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
+          <router-link to="/referrals" class="nav-link" :title="sidebarCollapsed ? 'Indicações' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+              <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+            </svg>
+            <span class="nav-text" v-show="!sidebarCollapsed">Indicações</span>
+          </router-link>
+        </li>
+              <li class="nav-item" :class="{ active: $route.path === '/support' }">
+        <router-link to="/support" class="nav-link" :title="sidebarCollapsed ? 'Suporte' : ''">
+          <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+            <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+          </svg>
+          <span class="nav-text" v-show="!sidebarCollapsed">Suporte</span>
+        </router-link>
+      </li>
+      <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
+        <router-link to="/compound-interest" class="nav-link" :title="sidebarCollapsed ? 'Juros Compostos' : ''">
+          <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+            <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+            <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V4.5A.5.5 0 0 1 8 4z"/>
+          </svg>
+          <span class="nav-text" v-show="!sidebarCollapsed">Juros Compostos</span>
+        </router-link>
+      </li>
         <li class="nav-item">
           <button class="nav-link glossary-btn" @click="openGlossary" :title="sidebarCollapsed ? 'Glosário' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">

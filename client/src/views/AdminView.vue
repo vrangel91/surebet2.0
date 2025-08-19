@@ -31,22 +31,49 @@
       </div>
     </div>
 
-    <!-- Actions Bar -->
-    <div class="actions-bar">
-      <button @click="showCreateModal = true" class="btn-primary">
-        <span class="btn-icon">➕</span>
-        Novo Usuário
+    <!-- Admin Tabs -->
+    <div class="admin-tabs">
+      <button 
+        class="tab-btn" 
+        :class="{ active: activeTab === 'users' }"
+        @click="activeTab = 'users'"
+      >
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 0 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c3.39 0 6 2.145 6 4v1H5.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+        </svg>
+        Usuários
       </button>
-      <div class="search-box">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Buscar usuários..."
-          class="search-input"
-        />
-        <span class="search-icon">🔍</span>
-      </div>
+      <button 
+        class="tab-btn" 
+        :class="{ active: activeTab === 'tickets' }"
+        @click="activeTab = 'tickets'"
+      >
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+          <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+        </svg>
+        Tickets
+      </button>
     </div>
+
+    <!-- Users Tab Content -->
+    <div v-if="activeTab === 'users'" class="tab-content">
+      <!-- Actions Bar -->
+      <div class="actions-bar">
+        <button @click="showCreateModal = true" class="btn-primary">
+          <span class="btn-icon">➕</span>
+          Novo Usuário
+        </button>
+        <div class="search-box">
+          <input
+            v-model="searchTerm"
+            type="text"
+            placeholder="Buscar usuários..."
+            class="search-input"
+          />
+          <span class="search-icon">🔍</span>
+        </div>
+      </div>
 
     <!-- Users Table -->
     <div class="users-table-container">
@@ -111,6 +138,121 @@
           </tr>
         </tbody>
       </table>
+    </div>
+    </div>
+
+    <!-- Tickets Tab Content -->
+    <div v-if="activeTab === 'tickets'" class="tab-content">
+      <!-- Tickets Stats -->
+      <div class="tickets-stats">
+        <div class="stat-card">
+          <span class="stat-number">{{ allTickets.length }}</span>
+          <span class="stat-label">Total de Tickets</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">{{ openTickets.length }}</span>
+          <span class="stat-label">Tickets Abertos</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">{{ pendingTickets.length }}</span>
+          <span class="stat-label">Em Andamento</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">{{ closedTickets.length }}</span>
+          <span class="stat-label">Fechados</span>
+        </div>
+      </div>
+
+      <!-- Tickets Actions Bar -->
+      <div class="actions-bar">
+        <div class="filter-controls">
+          <select v-model="ticketStatusFilter" class="status-filter">
+            <option value="">Todos os Status</option>
+            <option value="open">Abertos</option>
+            <option value="pending">Em Andamento</option>
+            <option value="closed">Fechados</option>
+          </select>
+          <select v-model="ticketPriorityFilter" class="priority-filter">
+            <option value="">Todas as Prioridades</option>
+            <option value="low">Baixa</option>
+            <option value="medium">Média</option>
+            <option value="high">Alta</option>
+            <option value="urgent">Urgente</option>
+          </select>
+        </div>
+        <div class="search-box">
+          <input
+            v-model="ticketSearchTerm"
+            type="text"
+            placeholder="Buscar tickets..."
+            class="search-input"
+          />
+          <span class="search-icon">🔍</span>
+        </div>
+      </div>
+
+      <!-- Tickets Table -->
+      <div class="tickets-table-container">
+        <table class="tickets-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuário</th>
+              <th>Título</th>
+              <th>Categoria</th>
+              <th>Prioridade</th>
+              <th>Status</th>
+              <th>Criado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-row">
+              <td class="ticket-id">#{{ ticket.id }}</td>
+              <td class="ticket-user">
+                <span class="user-avatar">{{ getUserName(ticket.userEmail).charAt(0) }}</span>
+                {{ getUserName(ticket.userEmail) }}
+              </td>
+              <td class="ticket-title">{{ ticket.title }}</td>
+              <td>
+                <span class="category-badge">{{ getCategoryText(ticket.category) }}</span>
+              </td>
+              <td>
+                <span :class="['priority-badge', ticket.priority]">
+                  {{ getPriorityText(ticket.priority) }}
+                </span>
+              </td>
+              <td>
+                <span :class="['status-badge', ticket.status]">
+                  {{ getStatusText(ticket.status) }}
+                </span>
+              </td>
+              <td>{{ formatDate(ticket.createdAt) }}</td>
+              <td class="actions-cell">
+                <button @click="viewTicket(ticket)" class="btn-icon" title="Visualizar">
+                  👁️
+                </button>
+                <button 
+                  @click="updateTicketStatus(ticket, 'pending')" 
+                  v-if="ticket.status === 'open'"
+                  class="btn-icon btn-warning"
+                  title="Marcar como Em Andamento"
+                >
+                  ⏳
+                </button>
+                <button 
+                  @click="updateTicketStatus(ticket, 'closed')" 
+                  v-if="ticket.status !== 'closed'"
+                  class="btn-icon btn-success"
+                  title="Fechar Ticket"
+                >
+                  ✅
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     </main>
 
@@ -298,6 +440,79 @@
       </div>
     </div>
 
+    <!-- Ticket Detail Modal -->
+    <div v-if="showTicketDetailModal" class="modal-overlay" @click="closeTicketDetailModal">
+      <div class="ticket-detail-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Ticket #{{ selectedTicket?.id }}</h3>
+          <button class="close-btn" @click="closeTicketDetailModal">×</button>
+        </div>
+        
+        <div class="modal-body" v-if="selectedTicket">
+          <div class="ticket-detail-header">
+            <h4>{{ selectedTicket.title }}</h4>
+            <div class="ticket-detail-meta">
+              <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status) }}</span>
+              <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority) }}</span>
+            </div>
+          </div>
+          
+          <div class="ticket-detail-content">
+            <div class="ticket-info-grid">
+              <div class="info-item">
+                <label>Usuário:</label>
+                <span>{{ getUserName(selectedTicket.userEmail) }}</span>
+              </div>
+              <div class="info-item">
+                <label>Categoria:</label>
+                <span>{{ getCategoryText(selectedTicket.category) }}</span>
+              </div>
+              <div class="info-item">
+                <label>Criado em:</label>
+                <span>{{ formatDate(selectedTicket.createdAt) }}</span>
+              </div>
+              <div class="info-item">
+                <label>Última atualização:</label>
+                <span>{{ formatDate(selectedTicket.updatedAt) }}</span>
+              </div>
+            </div>
+            
+            <div class="ticket-description-section">
+              <h5>Descrição</h5>
+              <p>{{ selectedTicket.description }}</p>
+            </div>
+            
+            <div class="ticket-messages-section">
+              <h5>Mensagens</h5>
+              <div class="messages-list">
+                <div v-for="message in selectedTicket.messages" :key="message.id" class="message-item" :class="message.type">
+                  <div class="message-header">
+                    <span class="message-author">{{ message.author }}</span>
+                    <span class="message-date">{{ formatDate(message.createdAt) }}</span>
+                  </div>
+                  <div class="message-content">
+                    {{ message.content }}
+                  </div>
+                </div>
+              </div>
+              
+              <div class="new-message-section">
+                <textarea 
+                  v-model="newMessage" 
+                  class="message-input"
+                  placeholder="Digite sua resposta..."
+                  rows="3"
+                ></textarea>
+                <button class="send-message-btn" @click="sendMessage" :disabled="!newMessage.trim()">
+                  Enviar Resposta
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Modal do Glossário -->
     <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
   </div>
@@ -318,14 +533,21 @@ export default {
     return {
       sidebarCollapsed: false,
       showGlossaryModal: false,
+      activeTab: 'users',
       searchTerm: '',
       showCreateModal: false,
       showEditModal: false,
       showDeleteModal: false,
       showPasswordModal: false,
+      showTicketDetailModal: false,
       userToDelete: null,
+      selectedTicket: null,
       showPassword: false,
       showConfirmPassword: false,
+      newMessage: '',
+      ticketStatusFilter: '',
+      ticketPriorityFilter: '',
+      ticketSearchTerm: '',
       userForm: {
         name: '',
         email: '',
@@ -343,7 +565,14 @@ export default {
   },
   
   computed: {
-    ...mapGetters(['allUsers', 'isAdmin']),
+    ...mapGetters([
+      'allUsers', 
+      'isAdmin', 
+      'allTickets', 
+      'openTickets', 
+      'pendingTickets', 
+      'closedTickets'
+    ]),
     
     currentUser() {
       return this.$store.getters.currentUser
@@ -374,6 +603,29 @@ export default {
         user.name.toLowerCase().includes(term) ||
         user.email.toLowerCase().includes(term)
       )
+    },
+    
+    filteredTickets() {
+      let tickets = this.allTickets
+      
+      if (this.ticketStatusFilter) {
+        tickets = tickets.filter(ticket => ticket.status === this.ticketStatusFilter)
+      }
+      
+      if (this.ticketPriorityFilter) {
+        tickets = tickets.filter(ticket => ticket.priority === this.ticketPriorityFilter)
+      }
+      
+      if (this.ticketSearchTerm) {
+        const term = this.ticketSearchTerm.toLowerCase()
+        tickets = tickets.filter(ticket => 
+          ticket.title.toLowerCase().includes(term) ||
+          ticket.description.toLowerCase().includes(term) ||
+          ticket.userEmail.toLowerCase().includes(term)
+        )
+      }
+      
+      return tickets
     }
   },
   
@@ -384,7 +636,13 @@ export default {
   },
   
   methods: {
-    ...mapActions(['createUser', 'updateUserData', 'deleteUserData']),
+    ...mapActions([
+      'createUser', 
+      'updateUserData', 
+      'deleteUserData', 
+      'updateTicketData', 
+      'addMessageToTicket'
+    ]),
     
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
@@ -396,6 +654,79 @@ export default {
     
     closeGlossary() {
       this.showGlossaryModal = false
+    },
+    
+    // Ticket Management Methods
+    viewTicket(ticket) {
+      this.selectedTicket = ticket
+      this.showTicketDetailModal = true
+    },
+    
+    closeTicketDetailModal() {
+      this.showTicketDetailModal = false
+      this.selectedTicket = null
+      this.newMessage = ''
+    },
+    
+    updateTicketStatus(ticket, newStatus) {
+      this.updateTicketData({
+        id: ticket.id,
+        updates: { status: newStatus }
+      })
+    },
+    
+    async sendMessage() {
+      if (!this.newMessage.trim()) return
+      
+      const message = {
+        id: this.selectedTicket.messages.length + 1,
+        author: 'Suporte Técnico',
+        content: this.newMessage,
+        type: 'support',
+        createdAt: new Date().toISOString()
+      }
+      
+      this.addMessageToTicket({
+        ticketId: this.selectedTicket.id,
+        message
+      })
+      
+      this.newMessage = ''
+    },
+    
+    getUserName(email) {
+      const user = this.allUsers.find(u => u.email === email)
+      return user ? user.name : email
+    },
+    
+    getCategoryText(category) {
+      const categoryMap = {
+        technical: 'Problema Técnico',
+        billing: 'Cobrança/Pagamento',
+        account: 'Conta/Acesso',
+        feature: 'Sugestão/Melhoria',
+        other: 'Outro'
+      }
+      return categoryMap[category] || category
+    },
+    
+    getPriorityText(priority) {
+      const priorityMap = {
+        low: 'Baixa',
+        medium: 'Média',
+        high: 'Alta',
+        urgent: 'Urgente'
+      }
+      return priorityMap[priority] || priority
+    },
+    
+    getStatusText(status) {
+      const statusMap = {
+        open: 'Aberto',
+        pending: 'Em Andamento',
+        closed: 'Fechado'
+      }
+      return statusMap[status] || status
     },
     
     logout() {
@@ -772,6 +1103,49 @@ export default {
 
 .sidebar.collapsed ~ .main-content {
   margin-left: 80px;
+}
+
+/* Admin Tabs */
+.admin-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 32px 24px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-secondary, #2a2a2a);
+  color: var(--text-secondary, #888888);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary, #ffffff);
+}
+
+.tab-btn.active {
+  background: #00ff88;
+  color: #1a1a1a;
+  border-color: #00ff88;
+}
+
+.tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tab-content {
+  padding: 24px 32px;
 }
 
 .admin-header {
@@ -1227,6 +1601,302 @@ export default {
 .btn-info:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+/* Tickets Styles */
+.tickets-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 12px;
+}
+
+.status-filter,
+.priority-filter {
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.tickets-table-container {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tickets-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary, #1a1a1a);
+}
+
+.tickets-table th {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  font-weight: 600;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.tickets-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary, #ffffff);
+}
+
+.tickets-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ticket-row {
+  transition: all 0.2s ease;
+}
+
+.ticket-id {
+  font-family: monospace;
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.ticket-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ticket-title {
+  font-weight: 600;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-badge {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priority-badge.low {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+}
+
+.priority-badge.medium {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.priority-badge.high {
+  background: rgba(255, 107, 53, 0.2);
+  color: #ff6b35;
+}
+
+.priority-badge.urgent {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.status-badge.open {
+  background: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+.status-badge.pending {
+  background: rgba(255, 107, 53, 0.2);
+  color: #ff6b35;
+}
+
+.status-badge.closed {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+}
+
+/* Ticket Detail Modal Styles */
+.ticket-detail-modal {
+  background: var(--bg-secondary, #2a2a2a);
+  border-radius: 12px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.ticket-detail-header {
+  margin-bottom: 24px;
+}
+
+.ticket-detail-header h4 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0 0 12px 0;
+}
+
+.ticket-detail-meta {
+  display: flex;
+  gap: 12px;
+}
+
+.ticket-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-primary, #1a1a1a);
+  border-radius: 8px;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item label {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+  font-weight: 600;
+}
+
+.info-item span {
+  font-size: 14px;
+  color: var(--text-primary, #ffffff);
+}
+
+.ticket-description-section,
+.ticket-messages-section {
+  margin-bottom: 24px;
+}
+
+.ticket-description-section h5,
+.ticket-messages-section h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin: 0 0 12px 0;
+}
+
+.ticket-description-section p {
+  font-size: 14px;
+  color: var(--text-secondary, #cccccc);
+  line-height: 1.6;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg-primary, #1a1a1a);
+  border-radius: 8px;
+}
+
+.messages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.message-item {
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.message-item.user {
+  background: rgba(0, 255, 136, 0.1);
+  border-left-color: #00ff88;
+}
+
+.message-item.support {
+  background: rgba(255, 107, 53, 0.1);
+  border-left-color: #ff6b35;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.message-author {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.message-date {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+}
+
+.message-content {
+  font-size: 14px;
+  color: var(--text-secondary, #cccccc);
+  line-height: 1.5;
+}
+
+.new-message-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message-input {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #00ff88;
+}
+
+.send-message-btn {
+  align-self: flex-end;
+  background: #00ff88;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.send-message-btn:hover:not(:disabled) {
+  background: #00cc6a;
+}
+
+.send-message-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Responsividade */
