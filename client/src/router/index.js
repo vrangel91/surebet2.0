@@ -2,22 +2,46 @@ import { createRouter, createWebHistory } from 'vue-router'
 import SurebetsView from '../views/SurebetsView.vue'
 import ReportsView from '../views/ReportsView.vue'
 import SettingsView from '../views/SettingsView.vue'
+import LoginView from '../views/LoginView.vue'
+import AdminView from '../views/AdminView.vue'
+import PlansView from '../views/PlansView.vue'
+import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
   {
+    path: '/login',
+    name: 'login',
+    component: LoginView,
+    beforeEnter: requireGuest
+  },
+  {
     path: '/',
     name: 'surebets',
-    component: SurebetsView
+    component: SurebetsView,
+    beforeEnter: requireAuth
   },
   {
     path: '/reports',
     name: 'reports',
-    component: ReportsView
+    component: ReportsView,
+    beforeEnter: requireAuth
   },
   {
     path: '/settings',
     name: 'settings',
-    component: SettingsView
+    component: SettingsView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/admin',
+    name: 'admin',
+    component: AdminView,
+    beforeEnter: requireAdmin
+  },
+  {
+    path: '/plans',
+    name: 'plans',
+    component: PlansView
   }
 ]
 
@@ -25,5 +49,8 @@ const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
 })
+
+// Verifica o status de autenticação ao carregar a aplicação
+checkAuthStatus()
 
 export default router

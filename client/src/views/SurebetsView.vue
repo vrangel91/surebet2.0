@@ -1,57 +1,11 @@
 <template>
   <div class="surebets-container">
-    <!-- Sidebar -->
-    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
-      <!-- Logo e Header -->
-      <div class="sidebar-header">
-                 <div class="logo">
-           <span class="logo-icon" v-show="!sidebarCollapsed">👑</span>
-           <h1 v-show="!sidebarCollapsed">SureStake</h1>
-         </div>
-        <button class="sidebar-toggle" @click="toggleSidebar">
-          <span v-if="sidebarCollapsed">☰</span>
-          <span v-else>☰</span>
-        </button>
-      </div>
-
-      <!-- Perfil do Usuário -->
-      <div class="user-profile">
-        <div class="user-info">
-          <div class="user-avatar">👤</div>
-          <div class="user-details" v-show="!sidebarCollapsed">
-            <p class="user-greeting">Olá, viniciius@live.com</p>
-            <div class="user-status"> 
-              <span class="status-dot"></span>
-              <span class="status-text">Online</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Menu de Navegação -->
-      <nav class="sidebar-nav">
-        <ul class="nav-list">
-          <li class="nav-item" :class="{ active: $route.path === '/' }">
-            <router-link to="/" class="nav-link" :title="sidebarCollapsed ? 'Dashboard' : ''">
-              <span class="nav-icon">🏠</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Dashboard</span>
-            </router-link>
-          </li>
-          <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-            <router-link to="/reports" class="nav-link" :title="sidebarCollapsed ? 'Relatórios' : ''">
-              <span class="nav-icon">📊</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Relatórios</span>
-            </router-link>
-          </li>
-          <li class="nav-item" :class="{ active: $route.path === '/settings' }">
-            <router-link to="/settings" class="nav-link" :title="sidebarCollapsed ? 'Configurações' : ''">
-              <span class="nav-icon">⚙️</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Configurações</span>
-            </router-link>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+    <!-- Sidebar Reutilizável -->
+    <Sidebar 
+      :sidebarCollapsed="sidebarCollapsed"
+      @toggle-sidebar="toggleSidebar"
+      @open-glossary="openGlossary"
+    />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
@@ -313,17 +267,27 @@
          </div>
        </div>
      </div>
+     
+     <!-- Modal do Glossário -->
+     <GlossaryModal 
+       :isVisible="showGlossaryModal" 
+       @close="closeGlossary"
+     />
    </div>
  </template>
 
 <script>
 import SurebetCard from '../components/SurebetCard.vue'
+import Sidebar from '../components/Sidebar.vue'
+import GlossaryModal from '../components/GlossaryModal.vue'
 import { filterOptions } from '../config/filters.js'
 
 export default {
   name: 'SurebetsView',
   components: {
-    SurebetCard
+    SurebetCard,
+    Sidebar,
+    GlossaryModal
   },
   data() {
     return {
@@ -345,10 +309,17 @@ export default {
       maxProfit: 1000,
       lastCheckCount: 0,
       startTime: Date.now(),
-      uptimeMinutes: 0
+      uptimeMinutes: 0,
+      showGlossaryModal: false
     }
   },
   computed: {
+    currentUser() {
+      return this.$store.getters.currentUser
+    },
+    isAdmin() {
+      return this.$store.getters.isAdmin
+    },
     totalSurebets() {
       return Object.keys(this.surebets).length
     },
@@ -777,8 +748,23 @@ export default {
              notification.parentNode.removeChild(notification)
            }
          }, 300)
-       }, 3000)
-     }
+                }, 3000)
+       },
+       
+               // Métodos do Glossário
+        openGlossary() {
+          this.showGlossaryModal = true
+        },
+        
+        closeGlossary() {
+          this.showGlossaryModal = false
+        },
+        
+        // Método de Logout
+        logout() {
+          this.$store.dispatch('logout')
+          this.$router.push('/login')
+        }
   }
 }
 </script>
@@ -964,6 +950,29 @@ export default {
 .nav-item.active .nav-link {
   background: var(--accent-primary);
   color: var(--bg-primary);
+}
+
+.glossary-btn,
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+}
+
+.logout-btn {
+  margin-top: 20px;
+  
+  &:hover {
+    background: rgba(255, 68, 68, 0.1);
+    color: #ff4444;
+  }
 }
 
 .nav-icon {

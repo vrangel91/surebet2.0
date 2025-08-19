@@ -1,57 +1,11 @@
 <template>
   <div class="reports-container">
-    <!-- Sidebar -->
-    <aside class="sidebar" :class="{ collapsed: sidebarCollapsed }">
-      <!-- Logo e Header -->
-      <div class="sidebar-header">
-        <div class="logo">
-          <span class="logo-icon">👑</span>
-          <h1 v-show="!sidebarCollapsed">SureStake</h1>
-        </div>
-        <button class="sidebar-toggle" @click="toggleSidebar">
-          <span v-if="sidebarCollapsed">☰</span>
-          <span v-else>☰</span>
-        </button>
-      </div>
-
-      <!-- Perfil do Usuário -->
-      <div class="user-profile">
-        <div class="user-info">
-          <div class="user-avatar">👤</div>
-          <div class="user-details" v-show="!sidebarCollapsed">
-            <p class="user-greeting">Olá, viniciius@live.com</p>
-            <div class="user-status"> 
-              <span class="status-dot"></span>
-              <span class="status-text">Online</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Menu de Navegação -->
-      <nav class="sidebar-nav">
-        <ul class="nav-list">
-          <li class="nav-item" :class="{ active: $route.path === '/' }">
-            <router-link to="/" class="nav-link" :title="sidebarCollapsed ? 'Dashboard' : ''">
-              <span class="nav-icon">🏠</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Dashboard</span>
-            </router-link>
-          </li>
-          <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-            <router-link to="/reports" class="nav-link" :title="sidebarCollapsed ? 'Relatórios' : ''">
-              <span class="nav-icon">📊</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Relatórios</span>
-            </router-link>
-          </li>
-          <li class="nav-item" :class="{ active: $route.path === '/settings' }">
-            <router-link to="/settings" class="nav-link" :title="sidebarCollapsed ? 'Configurações' : ''">
-              <span class="nav-icon">⚙️</span>
-              <span class="nav-text" v-show="!sidebarCollapsed">Configurações</span>
-            </router-link>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+    <!-- Sidebar Reutilizável -->
+    <Sidebar 
+      :sidebarCollapsed="sidebarCollapsed"
+      @toggle-sidebar="toggleSidebar"
+      @open-glossary="openGlossary"
+    />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
@@ -61,17 +15,7 @@
           <h2 class="page-title">Relatórios</h2>
           <p class="page-subtitle">Análise detalhada de performance e ganhos</p>
         </div>
-        
-        <div class="header-right">
-          <div class="header-controls">
-            <button class="control-btn" @click="toggleTheme">
-              <span class="control-icon">{{ isDarkTheme ? '☀️' : '🌙' }}</span>
-            </button>
-            <button class="control-btn">
-              <span class="control-icon">🌐</span>
-            </button>
-          </div>
-        </div>
+                
       </header>
 
              <!-- Cards de Performance -->
@@ -332,22 +276,33 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal do Glossário -->
+    <GlossaryModal 
+      v-if="showGlossaryModal" 
+      @close="closeGlossary" 
+    />
   </div>
 </template>
 
 <script>
 import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
+import Sidebar from '../components/Sidebar.vue'
+import GlossaryModal from '../components/GlossaryModal.vue'
 
 export default {
   name: 'ReportsView',
   components: {
     ProfitEvolutionChart,
-    ROIBarChart
+    ROIBarChart,
+    Sidebar,
+    GlossaryModal
   },
   data() {
     return {
       sidebarCollapsed: false,
+      showGlossaryModal: false,
       isDarkTheme: true,
       showData: true,
       recordsPerPage: 10,
@@ -364,6 +319,9 @@ export default {
     }
   },
   computed: {
+    isAdmin() {
+      return this.$store.getters.isAdmin
+    },
     // Calcula ganhos de hoje
     todayEarnings() {
       const today = new Date().toDateString()
@@ -469,6 +427,16 @@ export default {
   methods: {
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
+    },
+    openGlossary() {
+      this.showGlossaryModal = true
+    },
+    closeGlossary() {
+      this.showGlossaryModal = false
+    },
+    logout() {
+      this.$store.dispatch('logout')
+      this.$router.push('/login')
     },
     toggleTheme() {
       this.isDarkTheme = !this.isDarkTheme
