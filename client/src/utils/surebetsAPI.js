@@ -760,6 +760,50 @@ async function loadStatsFromLocalDatabase() {
   })
 }
 
+/**
+ * Limpar completamente o banco de dados local
+ */
+async function clearLocalDatabase() {
+  if (!db) await initLocalDatabase()
+  
+  return new Promise((resolve, reject) => {
+    try {
+      // Limpar store de surebets
+      const surebetsTransaction = db.transaction(['surebets'], 'readwrite')
+      const surebetsStore = surebetsTransaction.objectStore('surebets')
+      const surebetsRequest = surebetsStore.clear()
+      
+      surebetsRequest.onsuccess = () => {
+        console.log('🗄️ Store de surebets limpo')
+        
+        // Limpar store de estatísticas
+        const statsTransaction = db.transaction(['stats'], 'readwrite')
+        const statsStore = statsTransaction.objectStore('stats')
+        const statsRequest = statsStore.clear()
+        
+        statsRequest.onsuccess = () => {
+          console.log('🗄️ Store de estatísticas limpo')
+          resolve()
+        }
+        
+        statsRequest.onerror = () => {
+          console.error('❌ Erro ao limpar estatísticas:', statsRequest.error)
+          reject(statsRequest.error)
+        }
+      }
+      
+      surebetsRequest.onerror = () => {
+        console.error('❌ Erro ao limpar surebets:', surebetsRequest.error)
+        reject(surebetsRequest.error)
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao limpar banco:', error)
+      reject(error)
+    }
+  })
+}
+
 // Exportar funções individuais
 export {
   fetchSurebets,
@@ -778,5 +822,6 @@ export {
   saveToLocalDatabase,
   loadFromLocalDatabase,
   saveStatsToLocalDatabase,
-  loadStatsFromLocalDatabase
+  loadStatsFromLocalDatabase,
+  clearLocalDatabase
 }

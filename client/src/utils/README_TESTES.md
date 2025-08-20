@@ -25,6 +25,39 @@ Este diretório contém arquivos de teste para verificar o funcionamento correto
 - Verificação de formatação
 - Dados de teste mínimos para validação rápida
 
+### 4. `clearDataTest.js`
+**Arquivo de teste para limpeza de dados** que contém:
+- Teste de limpeza do localStorage
+- Teste de limpeza de dados em memória
+- Verificação de que todos os dados são corretamente zerados
+- Simulação da funcionalidade de limpeza completa
+
+### 5. `uniqueSurebetTest.js`
+**Arquivo de teste para identificação única de surebets** que contém:
+- Teste de geração de IDs únicos para surebets
+- Verificação de detecção de surebets duplicadas
+- Teste de contagem correta de bookmakers (evitando duplicatas)
+- Validação da lógica de identificação única baseada em múltiplos critérios
+- Simulação de cenários com bookmakers repetidos na mesma surebet
+
+### 6. `weightedROITest.js`
+**Arquivo de teste para o ROI Médio Ponderado** que contém:
+- Teste da fórmula: `ROI_médio = (Lucro Total / Investimento Total) × 100`
+- Comparação entre ROI Médio Ponderado e ROI Médio Simples
+- Validação de cenários com investimentos diferentes
+- Verificação da precisão dos cálculos
+- Teste de casos extremos (investimentos muito diferentes)
+
+### 7. `duplinhasTest.js`
+**Arquivo de teste para funcionalidade das Duplinhas** que contém:
+- Teste de identificação de pares únicos de bookmakers
+- Verificação de contagem correta de frequência das duplas
+- Validação de ordenação por frequência (mais frequente primeiro)
+- Teste de detecção de surebets duplicadas
+- Verificação de ROI médio ponderado para cada dupla
+- Teste de cenários com ordem invertida de bookmakers
+- Validação de tratamento de valores inválidos
+
 ## 🚀 Como Usar
 
 ### Opção 1: Página de Teste HTML
@@ -51,6 +84,26 @@ import('./utils/roiDebugTest.js').then(module => {
 // Importar e executar teste simples
 import('./utils/simpleROITest.js').then(module => {
   module.runSimpleTest()
+})
+
+// Importar e executar testes de limpeza
+import('./utils/clearDataTest.js').then(module => {
+  module.runClearDataTests()
+})
+
+// Importar e executar testes de surebets únicas
+import('./utils/uniqueSurebetTest.js').then(module => {
+  module.runUniqueSurebetTests()
+})
+
+// Importar e executar testes do ROI Médio Ponderado
+import('./utils/weightedROITest.js').then(module => {
+  module.runWeightedROITests()
+})
+
+// Importar e executar testes das Duplinhas
+import('./utils/duplinhasTest.js').then(module => {
+  module.runDuplinhasTests()
 })
 ```
 
@@ -111,6 +164,37 @@ import('./utils/simpleROITest.js').then(module => {
 - Reescrita da lógica de cálculo das médias
 - Verificação de divisão por zero
 - Validação dos resultados dos cálculos
+
+### 4. ROI Médio Ponderado
+**Causa:** Necessidade de implementar cálculo mais preciso do ROI considerando o peso dos investimentos
+
+**Solução:**
+- Implementação da fórmula: `ROI_médio = (Lucro Total / Investimento Total) × 100`
+- Adição do campo `totalInvestment` para rastrear investimentos
+- Substituição do ROI Médio Simples pelo ROI Médio Ponderado
+- Validação de cenários com investimentos diferentes
+- Testes específicos para verificar a precisão do cálculo
+
+### 4. Funcionalidade de Limpeza de Dados
+**Implementação:** Criada funcionalidade completa para zerar todos os dados e forçar nova busca
+
+**Funcionalidades:**
+- Limpeza completa do localStorage (todas as chaves relacionadas ao ranking)
+- Limpeza do banco de dados local (IndexedDB)
+- Zeragem de todos os dados em memória
+- Forçar nova busca de dados da API
+- Recriação automática dos gráficos
+- Indicador visual durante o processo de limpeza
+
+### 5. Identificação Única de Surebets
+**Implementação:** Sistema robusto para identificar surebets únicas e evitar contagem duplicada
+
+**Funcionalidades:**
+- Geração de IDs únicos baseados em múltiplos critérios (bookmakers, esporte, evento, mercado, odds, data)
+- Detecção automática de surebets duplicadas
+- Prevenção de contagem duplicada de bookmakers dentro da mesma surebet
+- Logs detalhados para debug da contagem
+- Validação de integridade dos dados de contagem
 
 ## 📊 Exemplo de Saída dos Testes
 
@@ -203,6 +287,34 @@ import('./utils/simpleROITest.js').then(module => {
 2. **Verifique os logs** no console para identificar qualquer problema restante
 3. **Teste na interface** para confirmar que os valores estão sendo exibidos corretamente
 4. **Monitore o desempenho** para garantir que as correções não afetaram a performance
+
+## 🏆 Funcionalidade das Duplinhas
+
+### O que são as Duplinhas?
+As "Duplinhas" são pares únicos de casas de apostas que aparecem juntas nas surebets. Esta funcionalidade identifica e conta quantas vezes cada combinação de duas casas aparece, criando um ranking baseado na frequência.
+
+### Como funciona:
+1. **Identificação única**: Cada surebet é identificada de forma única para evitar contagem duplicada
+2. **Pares ordenados**: A ordem dos bookmakers não importa (Bet365 + Kto = Kto + Bet365)
+3. **Contagem de frequência**: Cada par recebe +1 ponto cada vez que aparece em uma surebet nova
+4. **Ranking por frequência**: As duplas são ordenadas da mais frequente para a menos frequente
+
+### Exemplo prático:
+- Surebet 1: Bet365 + Kto
+- Surebet 2: Bet365 + Superbet  
+- Surebet 3: Bet365 + Kto (duplicada - não conta)
+- Surebet 4: Kto + Superbet
+
+**Resultado:**
+- (Bet365, Kto) → 1 vez
+- (Bet365, Superbet) → 1 vez
+- (Kto, Superbet) → 1 vez
+
+### Benefícios:
+- Identifica quais casas trabalham melhor juntas
+- Ajuda na estratégia de arbitragem
+- Fornece insights sobre parcerias entre casas
+- Permite análise de performance por dupla
 
 ## 📞 Suporte
 

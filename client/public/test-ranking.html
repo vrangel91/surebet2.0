@@ -182,10 +182,15 @@
             <h2>📊 Testes de Funcionalidade</h2>
             <p>Execute os testes para verificar o funcionamento correto do sistema de ranking.</p>
             
-            <button class="test-button" onclick="runBasicTests()">🚀 Executar Testes Básicos</button>
-            <button class="test-button" onclick="runROIDebugTests()">🔍 Debug do ROI</button>
-            <button class="test-button" onclick="runAllTests()">🎯 Executar Todos os Testes</button>
-            <button class="clear-button" onclick="clearConsole()">🧹 Limpar Console</button>
+                                                <button class="test-button" onclick="runBasicTests()">🚀 Executar Testes Básicos</button>
+                <button class="test-button" onclick="runROIDebugTests()">🔍 Debug do ROI</button>
+                <button class="test-button" onclick="runClearDataTests()">🧹 Teste de Limpeza</button>
+                <button class="test-button" onclick="runUniqueSurebetTests()">🔐 Teste de Surebets Únicas</button>
+        <button class="test-button" onclick="runWeightedROITests()">🧮 Teste ROI Médio Ponderado</button>
+        <button class="test-button" onclick="runDuplinhasTests()">🏆 Teste Duplinhas</button>
+        <button class="test-button" onclick="runChartTests()">📊 Teste Gráficos</button>
+                <button class="test-button" onclick="runAllTests()">🎯 Executar Todos os Testes</button>
+                    <button class="clear-button" onclick="clearConsole()">🧹 Limpar Console</button>
         </div>
         
         <div class="test-section">
@@ -206,8 +211,13 @@
 
     <script type="module">
         // Importar os módulos de teste
-        import { runAllTests } from '../src/utils/rankingTest.js';
-        import { runROIDebugTests } from '../src/utils/roiDebugTest.js';
+                        import { runAllTests } from '../src/utils/rankingTest.js';
+                import { runROIDebugTests } from '../src/utils/roiDebugTest.js';
+                import { runClearDataTests } from '../src/utils/clearDataTest.js';
+                import { runUniqueSurebetTests, testUniqueIdGeneration } from '../src/utils/uniqueSurebetTest.js';
+import { runWeightedROITests, testSpecificScenarios } from '../src/utils/weightedROITest.js';
+import { runDuplinhasTests, testSpecificDuplinhasScenarios } from '../src/utils/duplinhasTest.js';
+import { runChartTests, testFrequencyChart, testTimelineChart, testCanvas } from '../src/utils/chartTest.js';
         
         // Variáveis globais
         let isRunningTests = false;
@@ -320,6 +330,197 @@
             }
         };
         
+                        // Função para executar testes de limpeza de dados
+                window.runClearDataTests = async function() {
+                    if (isRunningTests) {
+                        addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                        return;
+                    }
+                    
+                    isRunningTests = true;
+                    updateTestStatus('🧹 Executando testes de limpeza...', 'info');
+                    addToConsole('🧹 Iniciando testes de limpeza de dados...', 'success');
+                    
+                    try {
+                        const results = await runClearDataTests();
+                        addToConsole('✅ Testes de limpeza concluídos com sucesso!', 'success');
+                        updateTestStatus('✅ Testes de limpeza concluídos!', 'success');
+                        
+                        // Adicionar resultado
+                        testResults.push({
+                            name: 'Testes de Limpeza',
+                            status: 'SUCCESS',
+                            message: 'Todos os testes de limpeza passaram',
+                            timestamp: new Date().toISOString(),
+                            data: results
+                        });
+                        
+                        updateTestResults();
+                        
+                    } catch (error) {
+                        addToConsole(`❌ Erro durante testes de limpeza: ${error.message}`, 'error');
+                        updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+                    } finally {
+                        isRunningTests = false;
+                    }
+                };
+
+                // Função para executar testes de surebets únicas
+                window.runUniqueSurebetTests = async function() {
+                    if (isRunningTests) {
+                        addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                        return;
+                    }
+                    
+                    isRunningTests = true;
+                    updateTestStatus('🔐 Executando testes de surebets únicas...', 'info');
+                    addToConsole('🔐 Iniciando testes de identificação única de surebets...', 'success');
+                    
+                    try {
+                        const results = await runUniqueSurebetTests();
+                        addToConsole('✅ Testes de surebets únicas concluídos com sucesso!', 'success');
+                        updateTestStatus('✅ Testes de surebets únicas concluídos!', 'success');
+                        
+                        // Adicionar resultado
+                        testResults.push({
+                            name: 'Testes de Surebets Únicas',
+                            status: results.success ? 'SUCCESS' : 'FAILED',
+                            message: results.success ? 'Todos os testes de surebets únicas passaram' : 'Alguns testes falharam',
+                            timestamp: new Date().toISOString(),
+                            data: results
+                        });
+                        
+                        updateTestResults();
+                        
+                    } catch (error) {
+                        addToConsole(`❌ Erro durante testes de surebets únicas: ${error.message}`, 'error');
+                        updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+                    } finally {
+                        isRunningTests = false;
+                    }
+                                };
+
+                // Função para executar testes do ROI Médio Ponderado
+                window.runWeightedROITests = async function() {
+                    if (isRunningTests) {
+                        addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                        return;
+                    }
+                    
+                    isRunningTests = true;
+                    updateTestStatus('🧮 Executando testes do ROI Médio Ponderado...', 'info');
+                    addToConsole('🧮 Iniciando testes do ROI Médio Ponderado...', 'success');
+                    
+                    try {
+                        runWeightedROITests();
+                        addToConsole('✅ Testes do ROI Médio Ponderado concluídos com sucesso!', 'success');
+                        updateTestStatus('✅ Testes do ROI Médio Ponderado concluídos!', 'success');
+                        
+                        // Adicionar resultado
+                        testResults.push({
+                            name: 'Testes do ROI Médio Ponderado',
+                            status: 'SUCCESS',
+                            message: 'Testes do ROI Médio Ponderado concluídos',
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        updateTestResults();
+                        
+                    } catch (error) {
+                        addToConsole(`❌ Erro durante testes do ROI Médio Ponderado: ${error.message}`, 'error');
+                        updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+                    } finally {
+                        isRunningTests = false;
+                    }
+                };
+
+                // Função para executar testes das Duplinhas
+                window.runDuplinhasTests = async function() {
+                    if (isRunningTests) {
+                        addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                        return;
+                    }
+                    
+                    isRunningTests = true;
+                    updateTestStatus('🏆 Executando testes das Duplinhas...', 'info');
+                    addToConsole('🏆 Iniciando testes das Duplinhas...', 'success');
+                    
+                    try {
+                        runDuplinhasTests();
+                        testSpecificDuplinhasScenarios();
+                        addToConsole('✅ Testes das Duplinhas concluídos com sucesso!', 'success');
+                        updateTestStatus('✅ Testes das Duplinhas concluídos!', 'success');
+                        
+                        // Adicionar resultado
+                        testResults.push({
+                            name: 'Testes das Duplinhas',
+                            status: 'SUCCESS',
+                            message: 'Testes das Duplinhas concluídos',
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        updateTestResults();
+                        
+                    } catch (error) {
+                        addToConsole(`❌ Erro durante testes das Duplinhas: ${error.message}`, 'error');
+                        updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+                    } finally {
+                        isRunningTests = false;
+                    }
+                };
+
+        // Função para executar testes dos Gráficos
+        window.runChartTests = async function() {
+            if (isRunningTests) {
+                addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                return;
+            }
+            
+            isRunningTests = true;
+            updateTestStatus('📊 Executando testes dos Gráficos...', 'info');
+            addToConsole('📊 Iniciando testes dos Gráficos...', 'success');
+            
+            try {
+                // Testar Chart.js
+                const chartTestResult = runChartTests();
+                addToConsole(`Chart.js testado: ${chartTestResult ? '✅ OK' : '❌ FALHOU'}`);
+                
+                // Testar canvas
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 200;
+                const canvasTestResult = testCanvas(canvas);
+                addToConsole(`Canvas testado: ${canvasTestResult ? '✅ OK' : '❌ FALHOU'}`);
+                
+                // Testar gráfico de frequência
+                const frequencyTestResult = testFrequencyChart(canvas);
+                addToConsole(`Gráfico de frequência testado: ${frequencyTestResult ? '✅ OK' : '❌ FALHOU'}`);
+                
+                // Testar gráfico de timeline
+                const timelineTestResult = testTimelineChart(canvas);
+                addToConsole(`Gráfico de timeline testado: ${timelineTestResult ? '✅ OK' : '❌ FALHOU'}`);
+                
+                addToConsole('✅ Testes dos Gráficos concluídos com sucesso!', 'success');
+                updateTestStatus('✅ Testes dos Gráficos concluídos!', 'success');
+                
+                // Adicionar resultado
+                testResults.push({
+                    name: 'Testes dos Gráficos',
+                    status: 'SUCCESS',
+                    message: 'Testes dos Gráficos concluídos',
+                    timestamp: new Date().toISOString()
+                });
+                
+                updateTestResults();
+                
+            } catch (error) {
+                addToConsole(`❌ Erro durante testes dos Gráficos: ${error.message}`, 'error');
+                updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+            } finally {
+                isRunningTests = false;
+            }
+        };
+
         // Função para executar todos os testes
         window.runAllTests = async function() {
             if (isRunningTests) {
