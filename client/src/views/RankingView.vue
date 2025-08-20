@@ -2347,15 +2347,57 @@ html, body {
   background: rgba(0, 0, 0, 0.3);
   color: #ffffff;
   font-weight: 600;
-  text-align: left;
-  padding: 16px;
+  padding: 8px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ranking-table td {
-  padding: 16px;
+  padding: 8px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   color: #ffffff;
+}
+
+/* Alinhamento específico por coluna para o ranking */
+.ranking-table th:nth-child(1), /* Posição */
+.ranking-table td:nth-child(1) {
+  text-align: center;
+  width: 50px;
+}
+
+.ranking-table th:nth-child(2), /* Casa de Aposta */
+.ranking-table td:nth-child(2) {
+  text-align: left;
+  min-width: 120px;
+}
+
+.ranking-table th:nth-child(3), /* Frequência */
+.ranking-table td:nth-child(3) {
+  text-align: center;
+  width: 70px;
+}
+
+.ranking-table th:nth-child(4), /* % do Total */
+.ranking-table td:nth-child(4) {
+  text-align: center;
+  width: 70px;
+}
+
+.ranking-table th:nth-child(5), /* Lucro Médio */
+.ranking-table td:nth-child(5) {
+  text-align: right;
+  width: 90px;
+}
+
+.ranking-table th:nth-child(6), /* ROI Médio */
+.ranking-table td:nth-child(6) {
+  text-align: center;
+  width: 70px;
+}
+
+.ranking-table th:nth-child(7), /* Última Aparição */
+.ranking-table td:nth-child(7) {
+  text-align: center;
+  width: 100px;
 }
 
 .ranking-row:hover {
@@ -2364,14 +2406,14 @@ html, body {
 
 .position-badge {
   display: inline-block;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .position-badge.gold {
@@ -2398,6 +2440,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: flex-start;
 }
 
 .bookmaker-logo {
@@ -2414,7 +2457,6 @@ html, body {
 }
 
 .frequency, .percentage {
-  text-align: center;
   font-weight: 600;
 }
 
@@ -2495,16 +2537,58 @@ html, body {
 .duplinhas-table th {
   background: rgba(0, 255, 136, 0.1);
   color: #00ff88;
-  padding: 16px 12px;
-  text-align: left;
+  padding: 8px 6px;
   font-weight: 600;
   border-bottom: 2px solid rgba(0, 255, 136, 0.3);
 }
 
 .duplinhas-table td {
-  padding: 16px 12px;
+  padding: 8px 6px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
+}
+
+/* Alinhamento específico por coluna para as duplinhas */
+.duplinhas-table th:nth-child(1), /* Posição */
+.duplinhas-table td:nth-child(1) {
+  text-align: center;
+  width: 50px;
+}
+
+.duplinhas-table th:nth-child(2), /* Dupla */
+.duplinhas-table td:nth-child(2) {
+  text-align: left;
+  min-width: 120px;
+}
+
+.duplinhas-table th:nth-child(3), /* Frequência */
+.duplinhas-table td:nth-child(3) {
+  text-align: center;
+  width: 70px;
+}
+
+.duplinhas-table th:nth-child(4), /* % do Total */
+.duplinhas-table td:nth-child(4) {
+  text-align: center;
+  width: 70px;
+}
+
+.duplinhas-table th:nth-child(5), /* Lucro Total */
+.duplinhas-table td:nth-child(5) {
+  text-align: right;
+  width: 90px;
+}
+
+.duplinhas-table th:nth-child(6), /* ROI Médio */
+.duplinhas-table td:nth-child(6) {
+  text-align: center;
+  width: 70px;
+}
+
+.duplinhas-table th:nth-child(7), /* Última Aparição */
+.duplinhas-table td:nth-child(7) {
+  text-align: center;
+  width: 100px;
 }
 
 .dupla-row:hover {
@@ -2514,30 +2598,32 @@ html, body {
 .dupla-names {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  justify-content: flex-start;
 }
 
 .dupla-bookmakers {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .bookmaker-tag {
   background: linear-gradient(135deg, #00ff88, #00cc6a);
   color: #1a1a1a;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 4px 8px;
+  border-radius: 16px;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
 .dupla-separator {
   color: #ffffff;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .total-profit.positive {
