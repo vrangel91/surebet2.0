@@ -12,6 +12,7 @@ const { syncModels } = require('./models');
 // Importar rotas
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const bookmakerAccountsRoutes = require('./routes/bookmakerAccounts');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,6 +25,7 @@ app.use(express.static(path.join(__dirname, 'client/dist')));
 // Configurar rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 8080 });

@@ -48,3 +48,92 @@ export async function validateToken() {
     return false
   }
 }
+
+// Objeto HTTP com métodos para requisições
+export const http = {
+  async get(url, config = {}) {
+    const response = await authenticatedFetch(url, {
+      method: 'GET',
+      ...config
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          data: errorData,
+          status: response.status
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  },
+  
+  async post(url, data = {}, config = {}) {
+    const response = await authenticatedFetch(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      ...config
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          data: errorData,
+          status: response.status
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  },
+  
+  async put(url, data = {}, config = {}) {
+    const response = await authenticatedFetch(url, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+      ...config
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          data: errorData,
+          status: response.status
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  },
+  
+  async delete(url, config = {}) {
+    const response = await authenticatedFetch(url, {
+      method: 'DELETE',
+      ...config
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw {
+        response: {
+          data: errorData,
+          status: response.status
+        }
+      }
+    }
+    
+    return {
+      data: await response.json()
+    }
+  }
+}

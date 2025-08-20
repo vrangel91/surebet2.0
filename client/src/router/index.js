@@ -9,6 +9,7 @@ import ReferralsView from '../views/ReferralsView.vue'
 import SupportView from '../views/SupportView.vue'
 import CompoundInterestView from '../views/CompoundInterestView.vue'
 import RankingView from '../views/RankingView.vue'
+import BookmakerAccountsView from '../views/BookmakerAccountsView.vue'
 import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
@@ -69,6 +70,12 @@ const routes = [
     path: '/ranking',
     name: 'ranking',
     component: RankingView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/bookmaker-accounts',
+    name: 'bookmaker-accounts',
+    component: BookmakerAccountsView,
     beforeEnter: requireAuth
   }
 ]
