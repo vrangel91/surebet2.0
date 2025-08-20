@@ -44,9 +44,10 @@
         <li class="nav-item" :class="{ active: $route.path === '/' }">
           <div class="nav-link" :class="{ 'locked': !hasCredits }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              <path d="M11 2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h2zM9 3v1h2V3H9z"/>
+              <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-.5-.5h-1v.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 7.5v6z"/>
+              <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v4A1.5 1.5 0 0 0 1.5 9h11A1.5 1.5 0 0 0 14 7.5v-4A1.5 1.5 0 0 0 12.5 2h-11zm0 1h11a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+              <path d="M8.5 5a.5.5 0 0 0-1 0v1H6a.5.5 0 0 0 0 1h1.5v1a.5.5 0 0 0 1 0V7H10a.5.5 0 0 0 0-1H8.5V5z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Surebets</span>
             <svg v-if="!hasCredits" class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
@@ -127,9 +128,9 @@
         <li class="nav-item" :class="{ active: $route.path === '/ranking' }">
           <router-link to="/ranking" class="nav-link" :title="shouldBeCollapsed ? 'Ranking' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              <path d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.792l4.79 4.792A7 7 0 0 0 7.5 1.018zm0 1.96l3.976 3.976a5.5 5.5 0 1 1-7.952 0L7.5 2.978z"/>
+              <path d="M6.94 7.146a.5.5 0 0 1 .12-.223l2.5-2.5a.5.5 0 0 1 .707.707L8.061 7.39l-.353.353-.354-.354L5.147 5.183a.5.5 0 0 1 .708-.707l2.206 2.207-1.06 1.06z"/>
+              <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Ranking</span>
           </router-link>

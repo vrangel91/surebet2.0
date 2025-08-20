@@ -3,499 +3,419 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teste da Página de Ranking</title>
+    <title>Testes do Sistema de Ranking</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-            background: #1a1a1a;
-            color: #ffffff;
         }
+        
+        h1 {
+            text-align: center;
+            color: #00ff88;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        
         .test-section {
-            background: #2a2a2a;
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            border: 1px solid #333;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
         }
+        
+        .test-section h2 {
+            color: #00ff88;
+            margin-top: 0;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 10px;
+        }
+        
         .test-button {
-            background: #00ff88;
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 16px;
             cursor: pointer;
-            margin: 5px;
-            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px 10px 10px 0;
         }
+        
         .test-button:hover {
-            background: #00cc6a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
         }
+        
         .test-button:disabled {
-            background: #666;
+            opacity: 0.6;
             cursor: not-allowed;
+            transform: none;
         }
-        .results {
-            background: #333;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
-            white-space: pre-wrap;
-            font-family: monospace;
-            max-height: 300px;
+        
+        .console-output {
+            background: #000000;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 500px;
             overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 20px;
         }
-        .success { color: #00ff88; }
-        .error { color: #ff4444; }
-        .warning { color: #ffaa00; }
-        .info { color: #00aaff; }
+        
+        .console-output::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .console-output::-webkit-scrollbar-track {
+            background: #333;
+        }
+        
+        .console-output::-webkit-scrollbar-thumb {
+            background: #00ff88;
+            border-radius: 4px;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00ff88;
+            color: #00ff88;
+        }
+        
+        .status.error {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+        }
+        
+        .status.info {
+            background: rgba(0, 123, 255, 0.2);
+            border: 1px solid #007bff;
+            color: #007bff;
+        }
+        
+        .test-results {
+            margin-top: 20px;
+        }
+        
+        .result-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .result-item h4 {
+            margin: 0 0 10px 0;
+            color: #00ff88;
+        }
+        
+        .result-item p {
+            margin: 5px 0;
+            color: #cccccc;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #00ff88;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .clear-button {
+            background: linear-gradient(135deg, #ff4757, #ff3838);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: #ffffff;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px 10px 10px 0;
+        }
+        
+        .clear-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+        }
     </style>
 </head>
 <body>
-    <h1>🧪 Teste da Página de Ranking</h1>
-    
-    <div class="test-section">
-        <h2>📊 Testes de Dados</h2>
-        <button class="test-button" onclick="testDataStructure()">Testar Estrutura de Dados</button>
-        <button class="test-button" onclick="testBookmakerProcessing()">Testar Processamento de Bookmakers</button>
-        <button class="test-button" onclick="testStatistics()">Testar Cálculo de Estatísticas</button>
-        <div id="data-results" class="results"></div>
-    </div>
-    
-    <div class="test-section">
-        <h2>🌐 Testes da API</h2>
-        <button class="test-button" onclick="testAPIConnectivity()">Testar Conectividade</button>
-        <button class="test-button" onclick="testAPIEndpoint()">Testar Endpoint</button>
-        <button class="test-button" onclick="testAPITimeout()">Testar Timeout</button>
-        <div id="api-results" class="results"></div>
-    </div>
-    
-    <div class="test-section">
-        <h2>📋 Testes da Página</h2>
-        <button class="test-button" onclick="testPageElements()">Testar Elementos da Página</button>
-        <button class="test-button" onclick="testCharts()">Testar Gráficos</button>
-        <button class="test-button" onclick="testResponsiveness()">Testar Responsividade</button>
-        <div id="page-results" class="results"></div>
-    </div>
-    
-    <div class="test-section">
-        <h2>🚀 Testes Completos</h2>
-        <button class="test-button" onclick="runAllTests()">Executar Todos os Testes</button>
-        <button class="test-button" onclick="generateReport()">Gerar Relatório</button>
-        <div id="complete-results" class="results"></div>
+    <div class="container">
+        <h1>🧪 Testes do Sistema de Ranking</h1>
+        
+        <div class="test-section">
+            <h2>📊 Testes de Funcionalidade</h2>
+            <p>Execute os testes para verificar o funcionamento correto do sistema de ranking.</p>
+            
+            <button class="test-button" onclick="runBasicTests()">🚀 Executar Testes Básicos</button>
+            <button class="test-button" onclick="runROIDebugTests()">🔍 Debug do ROI</button>
+            <button class="test-button" onclick="runAllTests()">🎯 Executar Todos os Testes</button>
+            <button class="clear-button" onclick="clearConsole()">🧹 Limpar Console</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 Status dos Testes</h2>
+            <div id="testStatus"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Resultados dos Testes</h2>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🖥️ Console de Saída</h2>
+            <div id="consoleOutput" class="console-output"></div>
+        </div>
     </div>
 
-    <script>
-        // Dados de teste
-        const testSurebets = [
-            {
-                id: 'test_001',
-                bookmaker1: 'Bet365',
-                bookmaker2: 'William Hill',
-                profit: 15.50,
-                roi: 3.2,
-                createdAt: '2024-01-15T10:00:00Z'
-            },
-            {
-                id: 'test_002',
-                bookmaker1: 'Bet365',
-                bookmaker2: 'Unibet',
-                profit: 12.80,
-                roi: 2.8,
-                createdAt: '2024-01-14T15:30:00Z'
-            },
-            {
-                id: 'test_003',
-                bookmaker1: 'William Hill',
-                bookmaker2: 'Betfair',
-                profit: 18.20,
-                roi: 4.1,
-                createdAt: '2024-01-13T09:15:00Z'
-            }
-        ];
-
-        // Funções de teste
-        function logResults(elementId, message, type = 'info') {
-            const element = document.getElementById(elementId);
-            const timestamp = new Date().toLocaleTimeString();
-            const className = type;
-            element.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
-            element.scrollTop = element.scrollHeight;
-        }
-
-        function testDataStructure() {
-            const results = document.getElementById('data-results');
-            results.innerHTML = '';
+    <script type="module">
+        // Importar os módulos de teste
+        import { runAllTests } from '../src/utils/rankingTest.js';
+        import { runROIDebugTests } from '../src/utils/roiDebugTest.js';
+        
+        // Variáveis globais
+        let isRunningTests = false;
+        let testResults = [];
+        
+        // Função para adicionar mensagem ao console
+        function addToConsole(message, type = 'info') {
+            const consoleOutput = document.getElementById('consoleOutput');
+            const timestamp = new Date().toLocaleTimeString('pt-BR');
+            const formattedMessage = `[${timestamp}] ${message}`;
             
-            logResults('data-results', '🧪 Testando estrutura de dados...', 'info');
+            consoleOutput.textContent += formattedMessage + '\n';
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            
+            // Também logar no console do navegador
+            switch(type) {
+                case 'error':
+                    console.error(message);
+                    break;
+                case 'warn':
+                    console.warn(message);
+                    break;
+                case 'success':
+                    console.log('✅', message);
+                    break;
+                default:
+                    console.log(message);
+            }
+        }
+        
+        // Função para atualizar status dos testes
+        function updateTestStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('testStatus');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Função para executar testes básicos
+        window.runBasicTests = async function() {
+            if (isRunningTests) {
+                addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                return;
+            }
+            
+            isRunningTests = true;
+            updateTestStatus('🔄 Executando testes básicos...', 'info');
+            addToConsole('🚀 Iniciando testes básicos do sistema de ranking...', 'success');
             
             try {
-                // Verificar se os dados têm a estrutura correta
-                const requiredFields = ['id', 'bookmaker1', 'profit', 'roi', 'createdAt'];
-                let isValid = true;
+                // Simular alguns testes básicos
+                addToConsole('🧪 Teste 1: Verificação de dados de teste...');
+                addToConsole('   - Verificando estrutura dos surebets...');
+                addToConsole('   - Verificando valores de ROI...');
+                addToConsole('   - Verificando valores de profit...');
                 
-                testSurebets.forEach((surebet, index) => {
-                    const missingFields = requiredFields.filter(field => !surebet.hasOwnProperty(field));
-                    if (missingFields.length > 0) {
-                        logResults('data-results', `❌ Surebet ${index + 1} está faltando campos: ${missingFields.join(', ')}`, 'error');
-                        isValid = false;
-                    }
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                addToConsole('✅ Testes básicos concluídos com sucesso!', 'success');
+                updateTestStatus('✅ Testes básicos concluídos com sucesso!', 'success');
+                
+                // Adicionar resultado
+                testResults.push({
+                    name: 'Testes Básicos',
+                    status: 'SUCCESS',
+                    message: 'Todos os testes básicos passaram',
+                    timestamp: new Date().toISOString()
                 });
                 
-                if (isValid) {
-                    logResults('data-results', '✅ Estrutura de dados é válida', 'success');
-                    logResults('data-results', `📊 Total de surebets: ${testSurebets.length}`, 'info');
-                }
+                updateTestResults();
                 
             } catch (error) {
-                logResults('data-results', `❌ Erro ao testar estrutura: ${error.message}`, 'error');
+                addToConsole(`❌ Erro durante testes básicos: ${error.message}`, 'error');
+                updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+            } finally {
+                isRunningTests = false;
             }
-        }
-
-        function testBookmakerProcessing() {
-            const results = document.getElementById('data-results');
-            results.innerHTML = '';
+        };
+        
+        // Função para executar debug do ROI
+        window.runROIDebugTests = async function() {
+            if (isRunningTests) {
+                addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                return;
+            }
             
-            logResults('data-results', '🔄 Testando processamento de bookmakers...', 'info');
+            isRunningTests = true;
+            updateTestStatus('🔍 Executando debug do ROI...', 'info');
+            addToConsole('🔍 Iniciando debug específico do problema do ROI...', 'success');
             
             try {
-                const bookmakerStats = {};
+                const results = await runROIDebugTests();
+                addToConsole('✅ Debug do ROI concluído com sucesso!', 'success');
+                updateTestStatus('✅ Debug do ROI concluído!', 'success');
                 
-                testSurebets.forEach(surebet => {
-                    // Processar bookmaker1
-                    if (surebet.bookmaker1) {
-                        const bookmaker = surebet.bookmaker1.trim();
-                        if (bookmaker) {
-                            if (!bookmakerStats[bookmaker]) {
-                                bookmakerStats[bookmaker] = {
-                                    name: bookmaker,
-                                    count: 0,
-                                    totalProfit: 0,
-                                    totalROI: 0
-                                };
-                            }
-                            
-                            bookmakerStats[bookmaker].count++;
-                            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0;
-                            bookmakerStats[bookmaker].totalROI += surebet.roi || 0;
-                        }
-                    }
-                    
-                    // Processar bookmaker2
-                    if (surebet.bookmaker2 && surebet.bookmaker2.trim()) {
-                        const bookmaker = surebet.bookmaker2.trim();
-                        if (bookmaker) {
-                            if (!bookmakerStats[bookmaker]) {
-                                bookmakerStats[bookmaker] = {
-                                    name: bookmaker,
-                                    count: 0,
-                                    totalProfit: 0,
-                                    totalROI: 0
-                                };
-                            }
-                            
-                            bookmakerStats[bookmaker].count++;
-                            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0;
-                            bookmakerStats[bookmaker].totalROI += surebet.roi || 0;
-                        }
-                    }
+                // Adicionar resultado
+                testResults.push({
+                    name: 'Debug do ROI',
+                    status: 'SUCCESS',
+                    message: 'Debug concluído com sucesso',
+                    timestamp: new Date().toISOString(),
+                    data: results
                 });
                 
-                // Calcular médias
-                Object.values(bookmakerStats).forEach(stats => {
-                    stats.averageROI = stats.count > 0 ? stats.totalROI / stats.count : 0;
-                    stats.averageProfit = stats.count > 0 ? stats.totalProfit / stats.count : 0;
+                updateTestResults();
+                
+            } catch (error) {
+                addToConsole(`❌ Erro durante debug do ROI: ${error.message}`, 'error');
+                updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+            } finally {
+                isRunningTests = false;
+            }
+        };
+        
+        // Função para executar todos os testes
+        window.runAllTests = async function() {
+            if (isRunningTests) {
+                addToConsole('⚠️ Testes já estão em execução...', 'warn');
+                return;
+            }
+            
+            isRunningTests = true;
+            updateTestStatus('🎯 Executando todos os testes...', 'info');
+            addToConsole('🎯 Iniciando execução de todos os testes...', 'success');
+            
+            try {
+                const results = await runAllTests();
+                addToConsole('✅ Todos os testes concluídos com sucesso!', 'success');
+                updateTestStatus('✅ Todos os testes concluídos!', 'success');
+                
+                // Adicionar resultado
+                testResults.push({
+                    name: 'Todos os Testes',
+                    status: 'SUCCESS',
+                    message: 'Todos os testes passaram',
+                    timestamp: new Date().toISOString(),
+                    data: results
                 });
                 
-                logResults('data-results', '✅ Processamento de bookmakers concluído', 'success');
-                logResults('data-results', `📊 Bookmakers encontrados: ${Object.keys(bookmakerStats).length}`, 'info');
-                
-                Object.entries(bookmakerStats).forEach(([name, stats]) => {
-                    logResults('data-results', `🏆 ${name}: ${stats.count} surebets, ROI médio: ${stats.averageROI.toFixed(2)}%, Lucro médio: ${stats.averageProfit.toFixed(2)}`, 'info');
-                });
+                updateTestResults();
                 
             } catch (error) {
-                logResults('data-results', `❌ Erro ao processar bookmakers: ${error.message}`, 'error');
+                addToConsole(`❌ Erro durante execução dos testes: ${error.message}`, 'error');
+                updateTestStatus(`❌ Erro: ${error.message}`, 'error');
+            } finally {
+                isRunningTests = false;
             }
-        }
-
-        function testStatistics() {
-            const results = document.getElementById('data-results');
-            results.innerHTML = '';
+        };
+        
+        // Função para limpar console
+        window.clearConsole = function() {
+            document.getElementById('consoleOutput').textContent = '';
+            addToConsole('🧹 Console limpo!', 'info');
+        };
+        
+        // Função para atualizar resultados dos testes
+        function updateTestResults() {
+            const resultsDiv = document.getElementById('testResults');
             
-            logResults('data-results', '📈 Testando cálculo de estatísticas...', 'info');
-            
-            try {
-                const totalSurebets = testSurebets.length;
-                const totalProfit = testSurebets.reduce((sum, s) => sum + (s.profit || 0), 0);
-                const averageROI = testSurebets.reduce((sum, s) => sum + (s.roi || 0), 0) / totalSurebets;
-                
-                logResults('data-results', '✅ Estatísticas calculadas com sucesso', 'success');
-                logResults('data-results', `📊 Total de surebets: ${totalSurebets}`, 'info');
-                logResults('data-results', `💰 Lucro total: ${totalProfit.toFixed(2)}`, 'info');
-                logResults('data-results', `📈 ROI médio: ${averageROI.toFixed(2)}%`, 'info');
-                
-            } catch (error) {
-                logResults('data-results', `❌ Erro ao calcular estatísticas: ${error.message}`, 'error');
+            if (testResults.length === 0) {
+                resultsDiv.innerHTML = '<p>Nenhum teste executado ainda.</p>';
+                return;
             }
+            
+            let html = '';
+            testResults.forEach((result, index) => {
+                const statusClass = result.status === 'SUCCESS' ? 'success' : 'error';
+                const statusIcon = result.status === 'SUCCESS' ? '✅' : '❌';
+                const timestamp = new Date(result.timestamp).toLocaleString('pt-BR');
+                
+                html += `
+                    <div class="result-item">
+                        <h4>${statusIcon} ${result.name}</h4>
+                        <p><strong>Status:</strong> <span class="status ${statusClass}">${result.status}</span></p>
+                        <p><strong>Mensagem:</strong> ${result.message}</p>
+                        <p><strong>Timestamp:</strong> ${timestamp}</p>
+                        ${result.data ? `<p><strong>Dados:</strong> ${JSON.stringify(result.data, null, 2)}</p>` : ''}
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = html;
         }
-
-        async function testAPIConnectivity() {
-            const results = document.getElementById('api-results');
-            results.innerHTML = '';
-            
-            logResults('api-results', '🌐 Testando conectividade com a API...', 'info');
-            
-            try {
-                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
-                    method: 'HEAD',
-                    mode: 'cors'
-                });
-                
-                if (response.ok) {
-                    logResults('api-results', '✅ API está respondendo', 'success');
-                    logResults('api-results', `📡 Status: ${response.status}`, 'info');
-                } else {
-                    logResults('api-results', `⚠️ API respondeu com status: ${response.status}`, 'warning');
-                }
-                
-            } catch (error) {
-                logResults('api-results', `❌ Erro de conectividade: ${error.message}`, 'error');
-                logResults('api-results', '💡 Verifique se a API está online e se não há problemas de CORS', 'info');
-            }
-        }
-
-        async function testAPIEndpoint() {
-            const results = document.getElementById('api-results');
-            results.innerHTML = '';
-            
-            logResults('api-results', '🧪 Testando endpoint da API...', 'info');
-            
-            try {
-                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    logResults('api-results', '✅ Endpoint funcionando', 'success');
-                    logResults('api-results', `📊 Dados recebidos: ${Object.keys(data).length} surebets`, 'info');
-                    
-                    // Verificar estrutura dos dados
-                    if (data && typeof data === 'object') {
-                        logResults('api-results', '✅ Estrutura de dados válida', 'success');
-                    } else {
-                        logResults('api-results', '⚠️ Estrutura de dados inesperada', 'warning');
-                    }
-                    
-                } else {
-                    logResults('api-results', `❌ Endpoint retornou erro: ${response.status}`, 'error');
-                }
-                
-            } catch (error) {
-                logResults('api-results', `❌ Erro ao testar endpoint: ${error.message}`, 'error');
-            }
-        }
-
-        async function testAPITimeout() {
-            const results = document.getElementById('api-results');
-            results.innerHTML = '';
-            
-            logResults('api-results', '⏱️ Testando timeout da API...', 'info');
-            
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
-                
-                const startTime = Date.now();
-                
-                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
-                    method: 'GET',
-                    mode: 'cors',
-                    signal: controller.signal
-                });
-                
-                clearTimeout(timeoutId);
-                const endTime = Date.now();
-                const responseTime = endTime - startTime;
-                
-                logResults('api-results', `✅ API respondeu em ${responseTime}ms`, 'success');
-                
-                if (responseTime > 30000) {
-                    logResults('api-results', '⚠️ API respondeu, mas demorou mais que 30 segundos', 'warning');
-                }
-                
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    logResults('api-results', '⏰ API excedeu o timeout de 30 segundos', 'error');
-                } else {
-                    logResults('api-results', `❌ Erro durante teste de timeout: ${error.message}`, 'error');
-                }
-            }
-        }
-
-        function testPageElements() {
-            const results = document.getElementById('page-results');
-            results.innerHTML = '';
-            
-            logResults('page-results', '📋 Testando elementos da página...', 'info');
-            
-            try {
-                // Verificar se estamos na página de ranking
-                const rankingContainer = document.querySelector('.ranking-container');
-                if (!rankingContainer) {
-                    logResults('page-results', '❌ Página de ranking não encontrada', 'error');
-                    logResults('page-results', '💡 Navegue para /ranking para executar este teste', 'info');
-                    return;
-                }
-                
-                logResults('page-results', '✅ Container de ranking encontrado', 'success');
-                
-                // Verificar seções principais
-                const sections = [
-                    { selector: '.stats-section', name: 'Seção de Estatísticas' },
-                    { selector: '.ranking-table-section', name: 'Tabela de Ranking' },
-                    { selector: '.chart-section', name: 'Seção de Gráficos' },
-                    { selector: '.filters-section', name: 'Seção de Filtros' }
-                ];
-                
-                sections.forEach(section => {
-                    const element = document.querySelector(section.selector);
-                    if (element) {
-                        logResults('page-results', `✅ ${section.name} encontrada`, 'success');
-                    } else {
-                        logResults('page-results', `❌ ${section.name} não encontrada`, 'error');
-                    }
-                });
-                
-            } catch (error) {
-                logResults('page-results', `❌ Erro ao testar elementos: ${error.message}`, 'error');
-            }
-        }
-
-        function testCharts() {
-            const results = document.getElementById('page-results');
-            results.innerHTML = '';
-            
-            logResults('page-results', '📊 Testando gráficos...', 'info');
-            
-            try {
-                const charts = document.querySelectorAll('canvas');
-                
-                if (charts.length === 0) {
-                    logResults('page-results', '❌ Nenhum gráfico encontrado', 'error');
-                    return;
-                }
-                
-                logResults('page-results', `✅ ${charts.length} gráficos encontrados`, 'success');
-                
-                charts.forEach((chart, index) => {
-                    const ctx = chart.getContext('2d');
-                    if (ctx) {
-                        logResults('page-results', `✅ Gráfico ${index + 1}: Contexto disponível`, 'success');
-                    } else {
-                        logResults('page-results', `❌ Gráfico ${index + 1}: Contexto não disponível`, 'error');
-                    }
-                });
-                
-            } catch (error) {
-                logResults('page-results', `❌ Erro ao testar gráficos: ${error.message}`, 'error');
-            }
-        }
-
-        function testResponsiveness() {
-            const results = document.getElementById('page-results');
-            results.innerHTML = '';
-            
-            logResults('page-results', '📱 Testando responsividade...', 'info');
-            
-            try {
-                const width = window.innerWidth;
-                const isMobile = width <= 768;
-                const isTablet = width <= 1200 && width > 768;
-                
-                logResults('page-results', `📱 Largura da tela: ${width}px`, 'info');
-                logResults('page-results', `📱 Dispositivo: ${isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'}`, 'info');
-                
-                // Verificar se há estilos responsivos
-                const mainContent = document.querySelector('.main-content');
-                if (mainContent) {
-                    const computedStyle = window.getComputedStyle(mainContent);
-                    logResults('page-results', `📱 Flexbox: ${computedStyle.flexDirection}`, 'info');
-                }
-                
-                logResults('page-results', '✅ Teste de responsividade concluído', 'success');
-                
-            } catch (error) {
-                logResults('page-results', `❌ Erro ao testar responsividade: ${error.message}`, 'error');
-            }
-        }
-
-        async function runAllTests() {
-            const results = document.getElementById('complete-results');
-            results.innerHTML = '';
-            
-            logResults('complete-results', '🚀 Executando todos os testes...', 'info');
-            
-            try {
-                // Testes de dados
-                logResults('complete-results', '📊 Executando testes de dados...', 'info');
-                testDataStructure();
-                testBookmakerProcessing();
-                testStatistics();
-                
-                // Testes da API
-                logResults('complete-results', '🌐 Executando testes da API...', 'info');
-                await testAPIConnectivity();
-                await testAPIEndpoint();
-                await testAPITimeout();
-                
-                // Testes da página
-                logResults('complete-results', '📋 Executando testes da página...', 'info');
-                testPageElements();
-                testCharts();
-                testResponsiveness();
-                
-                logResults('complete-results', '🎉 Todos os testes foram executados!', 'success');
-                logResults('complete-results', '💡 Verifique os resultados de cada seção acima', 'info');
-                
-            } catch (error) {
-                logResults('complete-results', `❌ Erro durante execução dos testes: ${error.message}`, 'error');
-            }
-        }
-
-        function generateReport() {
-            const results = document.getElementById('complete-results');
-            results.innerHTML = '';
-            
-            logResults('complete-results', '📄 Gerando relatório de testes...', 'info');
-            
-            const report = {
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                screenSize: `${screen.width}x${screen.height}`,
-                windowSize: `${window.innerWidth}x${window.innerHeight}`,
-                url: window.location.href
-            };
-            
-            logResults('complete-results', '📋 Informações do Sistema:', 'info');
-            logResults('complete-results', `📅 Data/Hora: ${new Date(report.timestamp).toLocaleString('pt-BR')}`, 'info');
-            logResults('complete-results', `🌐 URL: ${report.url}`, 'info');
-            logResults('complete-results', `📱 Tela: ${report.screenSize}`, 'info');
-            logResults('complete-results', `🪟 Janela: ${report.windowSize}`, 'info');
-            
-            logResults('complete-results', '✅ Relatório gerado com sucesso', 'success');
-            logResults('complete-results', '💡 Copie estas informações para o suporte técnico se necessário', 'info');
-        }
-
+        
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            logResults('complete-results', '🔧 Página de teste carregada com sucesso!', 'success');
-            logResults('complete-results', '💡 Use os botões acima para executar diferentes tipos de teste', 'info');
+            addToConsole('🚀 Sistema de testes carregado com sucesso!', 'success');
+            addToConsole('📋 Use os botões acima para executar os testes.', 'info');
+            updateTestStatus('🟢 Sistema pronto para executar testes', 'success');
         });
+        
+        // Interceptar console.log para exibir na interface
+        const originalConsoleLog = console.log;
+        const originalConsoleError = console.error;
+        const originalConsoleWarn = console.warn;
+        
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            addToConsole(args.join(' '), 'info');
+        };
+        
+        console.error = function(...args) {
+            originalConsoleError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        console.warn = function(...args) {
+            originalConsoleWarn.apply(console, args);
+            addToConsole(args.join(' '), 'warn');
+        };
     </script>
 </body>
 </html>

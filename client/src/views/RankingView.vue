@@ -13,7 +13,11 @@
       <!-- Header -->
       <div class="ranking-header">
         <h1 class="ranking-title">
-          <span class="ranking-icon">🏆</span>
+          <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.792l4.79 4.792A7 7 0 0 0 7.5 1.018zm0 1.96l3.976 3.976a5.5 5.5 0 1 1-7.952 0L7.5 2.978z"/>
+            <path d="M6.94 7.146a.5.5 0 0 1 .12-.223l2.5-2.5a.5.5 0 0 1 .707.707L8.061 7.39l-.353.353-.354-.354L5.147 5.183a.5.5 0 0 1 .708-.707l2.206 2.207-1.06 1.06z"/>
+            <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+          </svg>
           Ranking das Casas de Apostas
         </h1>
         <p class="ranking-subtitle">Análise das casas mais frequentes nas surebets</p>
@@ -55,6 +59,18 @@
             <span v-if="isLoading">🔄</span>
             <span v-else>🔄</span>
             {{ isLoading ? 'Atualizando...' : 'Atualizar' }}
+          </button>
+        </div>
+        
+        <div class="filter-group">
+          <button @click="forceRecreateCharts" class="chart-btn" :class="{ 'disabled': chartsDisabled }">
+            {{ chartsDisabled ? '⚠️ Gráficos Desabilitados' : '📊 Recriar Gráficos' }}
+          </button>
+        </div>
+        
+        <div class="filter-group">
+          <button @click="clearAndRecalculate" class="clear-btn">
+            🧹 Limpar e Recalcular
           </button>
         </div>
       </div>
@@ -123,12 +139,12 @@
                   {{ bookmaker.name }}
                 </td>
                 <td class="frequency">{{ bookmaker.count }}</td>
-                <td class="percentage">{{ bookmaker.percentage.toFixed(1) }}%</td>
-                <td class="avg-profit" :class="getProfitClass(bookmaker.averageProfit)">
-                  {{ formatCurrency(bookmaker.averageProfit) }}
+                <td class="percentage">{{ formatPercentage(bookmaker.percentage) }}%</td>
+                <td class="avg-profit" :class="getProfitClass(bookmaker.averageProfit || 0)">
+                  {{ formatCurrency(bookmaker.averageProfit || 0) }}
                 </td>
-                <td class="avg-roi" :class="getROIClass(bookmaker.averageROI)">
-                  {{ bookmaker.averageROI.toFixed(2) }}%
+                <td class="avg-roi" :class="getROIClass(bookmaker.averageROI || 0)">
+                  {{ formatROI(bookmaker.averageROI || 0) }}%
                 </td>
                 <td class="last-appearance">{{ formatDate(bookmaker.lastAppearance) }}</td>
               </tr>
@@ -153,7 +169,7 @@
             <h4>🏆 Top Performers</h4>
             <ul class="analysis-list">
               <li v-for="bookmaker in topPerformers" :key="bookmaker.id">
-                                 <strong>{{ bookmaker.name }}</strong> - {{ bookmaker.averageROI.toFixed(2) }}% ROI
+                                 <strong>{{ bookmaker.name }}</strong> - {{ formatROI(bookmaker.averageROI || 0) }}% ROI
               </li>
             </ul>
           </div>
@@ -171,7 +187,7 @@
             <h4>💰 Maior Lucro</h4>
             <ul class="analysis-list">
               <li v-for="bookmaker in highestProfit" :key="bookmaker.id">
-                                 <strong>{{ bookmaker.name }}</strong> - {{ formatCurrency(bookmaker.averageProfit) }}
+                                 <strong>{{ bookmaker.name }}</strong> - {{ formatCurrency(bookmaker.averageProfit || 0) }}
               </li>
             </ul>
           </div>
@@ -232,7 +248,9 @@ export default {
       autoRefreshInterval: null,
       lastUpdate: null,
       isLoading: false,
-      refreshInterval: 30000 // 30 segundos
+      refreshInterval: 30000, // 30 segundos
+      isRecreatingCharts: false, // Proteção contra recursão infinita
+      chartsDisabled: false // Desabilitar gráficos quando há problemas
     }
   },
   
@@ -306,11 +324,13 @@ export default {
     
     this.loadSurebets()
     
-    // Aguardar um pouco para garantir que o DOM está pronto
+    // Aguardar o DOM estar completamente pronto antes de configurar gráficos
     this.$nextTick(() => {
+      // Aguardar um pouco mais para garantir que todos os elementos estão renderizados
       setTimeout(() => {
+        console.log('🎨 Iniciando configuração dos gráficos...')
         this.setupCharts()
-      }, 500)
+      }, 1000) // Aumentar delay para garantir renderização completa
     })
     
     this.startAutoRefresh()
@@ -390,6 +410,14 @@ export default {
            // Fallback para dados de exemplo em caso de erro
            console.log('📊 Usando dados de exemplo')
            this.surebets = this.getFallbackData()
+           
+           // Debug dos dados de fallback
+           console.log('🔍 Verificando ROI nos dados de fallback:', {
+             totalSurebets: this.surebets.length,
+             surebetsWithROI: this.surebets.filter(s => s.roi && s.roi > 0).length,
+             sampleROI: this.surebets.slice(0, 3).map(s => ({ roi: s.roi, profit: s.profit, bookmaker1: s.bookmaker1 }))
+           })
+           
            this.updateRanking()
          }
        } finally {
@@ -549,15 +577,42 @@ export default {
       
       const bookmaker = stats[bookmakerName]
       bookmaker.count++
-      bookmaker.totalProfit += surebet.profit || 0
-      bookmaker.totalROI += surebet.roi || 0
+      
+      // Garantir que os valores são números válidos
+      const validProfit = isNaN(surebet.profit) || surebet.profit === null || surebet.profit === undefined ? 0 : parseFloat(surebet.profit)
+      const validROI = isNaN(surebet.roi) || surebet.roi === null || surebet.roi === undefined ? 0 : parseFloat(surebet.roi)
+      
+      bookmaker.totalProfit += validProfit
+      bookmaker.totalROI += validROI
       bookmaker.surebets.push(surebet)
       
-      // Calcular médias
-      bookmaker.averageProfit = bookmaker.totalProfit / bookmaker.count
-      bookmaker.averageROI = bookmaker.totalROI / bookmaker.count
+      // Calcular médias com validação
+      if (bookmaker.count > 0) {
+        bookmaker.averageProfit = bookmaker.totalProfit / bookmaker.count
+        bookmaker.averageROI = bookmaker.totalROI / bookmaker.count
+        
+        // Verificar se as médias são válidas
+        if (isNaN(bookmaker.averageProfit) || bookmaker.averageProfit === Infinity || bookmaker.averageProfit === -Infinity) {
+          console.warn(`⚠️ averageProfit inválido para ${bookmaker.name}: ${bookmaker.averageProfit}, resetando para 0`)
+          bookmaker.averageProfit = 0
+        }
+        if (isNaN(bookmaker.averageROI) || bookmaker.averageROI === Infinity || bookmaker.averageROI === -Infinity) {
+          console.warn(`⚠️ averageROI inválido para ${bookmaker.name}: ${bookmaker.averageROI}, resetando para 0`)
+          bookmaker.averageROI = 0
+        }
+      } else {
+        bookmaker.averageProfit = 0
+        bookmaker.averageROI = 0
+      }
       
-      console.log('📊 Bookmaker atualizado:', bookmaker)
+      console.log('📊 Bookmaker atualizado:', {
+        name: bookmaker.name,
+        count: bookmaker.count,
+        totalROI: bookmaker.totalROI,
+        averageROI: bookmaker.averageROI,
+        lastSurebetROI: surebet.roi,
+        calculoVerificacao: `${bookmaker.totalROI} / ${bookmaker.count} = ${bookmaker.totalROI / bookmaker.count}`
+      })
     },
     
     // Processar estatísticas dos bookmakers
@@ -570,7 +625,11 @@ export default {
         return
       }
       
+      // RECALCULAR TUDO desde zero para garantir dados corretos
       const bookmakerStats = {}
+      
+      console.log('🔄 Recalculando estatísticas desde zero para garantir precisão...')
+      
       const processedSurebetIds = new Set()
       
       this.surebets.forEach(surebet => {
@@ -600,8 +659,13 @@ export default {
             }
             
             bookmakerStats[bookmaker].count++
-            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0
-            bookmakerStats[bookmaker].totalROI += surebet.roi || 0
+            
+            // Garantir que os valores são números válidos
+            const validProfit = isNaN(surebet.profit) || surebet.profit === null || surebet.profit === undefined ? 0 : parseFloat(surebet.profit)
+            const validROI = isNaN(surebet.roi) || surebet.roi === null || surebet.roi === undefined ? 0 : parseFloat(surebet.roi)
+            
+            bookmakerStats[bookmaker].totalProfit += validProfit
+            bookmakerStats[bookmaker].totalROI += validROI
             bookmakerStats[bookmaker].surebets.push(surebet)
           }
         }
@@ -622,17 +686,50 @@ export default {
             }
             
             bookmakerStats[bookmaker].count++
-            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0
-            bookmakerStats[bookmaker].totalROI += surebet.roi || 0
+            
+            // Garantir que os valores são números válidos
+            const validProfit = isNaN(surebet.profit) || surebet.profit === null || surebet.profit === undefined ? 0 : parseFloat(surebet.profit)
+            const validROI = isNaN(surebet.roi) || surebet.roi === null || surebet.roi === undefined ? 0 : parseFloat(surebet.roi)
+            
+            bookmakerStats[bookmaker].totalProfit += validProfit
+            bookmakerStats[bookmaker].totalROI += validROI
             bookmakerStats[bookmaker].surebets.push(surebet)
           }
         }
       })
       
-      // Calcular médias e ordenar
+      // Calcular totalCount após processar todos os bookmakers
+      const totalCount = Object.values(bookmakerStats).reduce((sum, stats) => sum + stats.count, 0)
+      
+      // Calcular médias para cada bookmaker
       Object.values(bookmakerStats).forEach(stats => {
-        stats.averageROI = stats.count > 0 ? stats.totalROI / stats.count : 0
-        stats.averageProfit = stats.count > 0 ? stats.totalProfit / stats.count : 0
+        // Garantir que os valores são números válidos
+        const validTotalProfit = isNaN(stats.totalProfit) || stats.totalProfit === null || stats.totalProfit === undefined ? 0 : parseFloat(stats.totalProfit)
+        const validTotalROI = isNaN(stats.totalROI) || stats.totalROI === null || stats.totalROI === undefined ? 0 : parseFloat(stats.totalROI)
+        
+        // Calcular médias com validação
+        if (stats.count > 0) {
+          stats.averageProfit = validTotalProfit / stats.count
+          stats.averageROI = validTotalROI / stats.count
+          
+          // Verificar se as médias são válidas
+          if (isNaN(stats.averageProfit) || stats.averageProfit === Infinity || stats.averageProfit === -Infinity) {
+            console.warn(`⚠️ averageProfit inválido para ${stats.name}: ${stats.averageProfit}, resetando para 0`)
+            stats.averageProfit = 0
+          }
+          if (isNaN(stats.averageROI) || stats.averageROI === Infinity || stats.averageROI === -Infinity) {
+            console.warn(`⚠️ averageROI inválido para ${stats.name}: ${stats.averageROI}, resetando para 0`)
+            stats.averageROI = 0
+          }
+        } else {
+          stats.averageProfit = 0
+          stats.averageROI = 0
+        }
+        
+        stats.percentage = totalCount > 0 ? (stats.count / totalCount) * 100 : 0
+        
+        // Debug: verificar valores calculados
+        console.log(`📊 ${stats.name}: count=${stats.count}, totalROI=${stats.totalROI}, averageROI=${stats.averageROI}`)
       })
       
       this.bookmakersStats = Object.values(bookmakerStats)
@@ -640,6 +737,23 @@ export default {
       
       console.log('📊 Estatísticas processadas:', this.bookmakersStats.length, 'bookmakers')
       console.log('🏆 Top 3 bookmakers:', this.bookmakersStats.slice(0, 3).map(b => `${b.name}: ${b.count} surebets`))
+      console.log('🔍 Debug ROI dos bookmakers:', this.bookmakersStats.slice(0, 5).map(b => ({
+        name: b.name,
+        count: b.count,
+        totalROI: b.totalROI,
+        averageROI: b.averageROI,
+        totalProfit: b.totalProfit,
+        roiCalculado: b.count > 0 ? (b.totalROI / b.count).toFixed(4) : 'N/A',
+        roiOriginal: b.averageROI
+      })))
+      
+      // Verificar especificamente os 3 primeiros bookmakers na tabela
+      console.log('🎯 ROI na tabela (3 primeiros):', this.bookmakersStats.slice(0, 3).map(b => ({
+        name: b.name,
+        averageROI: b.averageROI,
+        formatado: this.formatROI(b.averageROI),
+        classe: this.getROIClass(b.averageROI)
+      })))
       
       // Salvar estatísticas no banco de dados
       this.saveStatsToDatabase()
@@ -669,13 +783,37 @@ export default {
         this.bookmakersStats = []
       }
       
-      // Calcular estatísticas gerais
-      this.totalSurebets = this.surebets.length
-      this.uniqueBookmakers = this.bookmakersStats.length
+      // Preservar estatísticas acumuladas e não zerar
+      const currentSurebetsCount = this.surebets.length
+      const currentTotalProfit = this.surebets.reduce((sum, surebet) => {
+        const validProfit = isNaN(surebet.profit) || surebet.profit === null || surebet.profit === undefined ? 0 : parseFloat(surebet.profit)
+        return sum + validProfit
+      }, 0)
+      const currentTotalROI = this.surebets.reduce((sum, surebet) => {
+        const validROI = isNaN(surebet.roi) || surebet.roi === null || surebet.roi === undefined ? 0 : parseFloat(surebet.roi)
+        return sum + validROI
+      }, 0)
       
-      // Calcular lucro total e ROI médio
-      this.totalProfit = this.surebets.reduce((sum, surebet) => sum + (surebet.profit || 0), 0)
-      this.averageROI = this.totalSurebets > 0 ? this.surebets.reduce((sum, surebet) => sum + (surebet.roi || 0), 0) / this.totalSurebets : 0
+      console.log('🔍 Debug ROI:', {
+        currentSurebetsCount,
+        currentTotalROI,
+        surebetsWithROI: this.surebets.filter(s => s.roi > 0).length,
+        firstSurebetROI: this.surebets[0]?.roi,
+        averageCalculated: currentSurebetsCount > 0 ? currentTotalROI / currentSurebetsCount : 0
+      })
+      
+      // Manter o maior valor (dados acumulados) - EXCETO para averageROI que deve ser recalculado
+      this.totalSurebets = Math.max(currentSurebetsCount, this.totalSurebets || 0)
+      this.totalProfit = Math.max(currentTotalProfit, this.totalProfit || 0)
+      
+      // Recalcular ROI médio corretamente
+      if (currentSurebetsCount > 0) {
+        this.averageROI = currentTotalROI / currentSurebetsCount
+        console.log('✅ ROI médio atualizado:', this.averageROI)
+      } else {
+        console.log('⚠️ Sem surebets para calcular ROI médio')
+      }
+      this.uniqueBookmakers = this.bookmakersStats.length
       
       console.log('📈 Estatísticas calculadas:', {
         totalSurebets: this.totalSurebets,
@@ -698,7 +836,7 @@ export default {
         
         // Top performers
         this.topPerformers = [...this.bookmakersStats]
-          .sort((a, b) => b.averageProfit - a.averageProfit)
+          .sort((a, b) => (b.averageROI || 0) - (a.averageROI || 0))
           .slice(0, 5)
         
         // Mais frequentes
@@ -749,29 +887,61 @@ export default {
     // Gráfico de frequência
     setupFrequencyChart() {
       try {
+        console.log('🎨 Configurando gráfico de frequência...')
+        
         const ctx = this.$refs.frequencyChart
         if (!ctx) {
           console.log('⚠️ Referência do gráfico de frequência não encontrada')
           return
         }
         
+        console.log('📊 Contexto do canvas encontrado:', ctx)
+        
+        // Destruir gráfico existente se houver
+        if (this.frequencyChart) {
+          console.log('🗑️ Destruindo gráfico de frequência existente...')
+          this.frequencyChart.destroy()
+          this.frequencyChart = null
+        }
+        
+        // Verificar se temos dados para exibir
+        const hasData = this.bookmakersStats && this.bookmakersStats.length > 0
+        console.log('📈 Dados disponíveis para gráfico:', hasData, this.bookmakersStats?.length)
+        
+        // Criar dados iniciais (mesmo que vazios)
+        const initialLabels = hasData ? this.bookmakersStats.slice(0, 10).map(b => b.name) : ['Sem dados']
+        const initialData = hasData ? this.bookmakersStats.slice(0, 10).map(b => b.count) : [0]
+        
+        console.log('🏷️ Labels iniciais:', initialLabels)
+        console.log('📊 Dados iniciais:', initialData)
+        
         this.frequencyChart = new Chart(ctx, {
           type: 'bar',
           data: {
-            labels: [],
+            labels: initialLabels,
             datasets: [{
               label: 'Frequência',
-              data: [],
+              data: initialData,
               backgroundColor: 'rgba(0, 255, 136, 0.8)',
               borderColor: '#00ff88',
-              borderWidth: 2
+              borderWidth: 2,
+              borderRadius: 4
             }]
           },
           options: {
             responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              duration: 1000
+            },
             plugins: {
               legend: {
                 display: false
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#00ff88'
               }
             },
             scales: {
@@ -781,7 +951,10 @@ export default {
                   color: 'rgba(255, 255, 255, 0.1)'
                 },
                 ticks: {
-                  color: '#ffffff'
+                  color: '#ffffff',
+                  font: {
+                    size: 12
+                  }
                 }
               },
               x: {
@@ -789,80 +962,166 @@ export default {
                   color: 'rgba(255, 255, 255, 0.1)'
                 },
                 ticks: {
-                  color: '#ffffff'
+                  color: '#ffffff',
+                  font: {
+                    size: 11
+                  },
+                  maxRotation: 45
                 }
               }
             }
           }
         })
         
+        console.log('✅ Gráfico de frequência configurado com sucesso:', this.frequencyChart)
+        
       } catch (error) {
         console.error('❌ Erro ao configurar gráfico de frequência:', error)
+        console.error('Stack trace:', error.stack)
       }
     },
     
     // Gráfico de timeline
     setupTimelineChart() {
       try {
+        console.log('🎨 Configurando gráfico de timeline...')
+        
         const ctx = this.$refs.timelineChart
         if (!ctx) {
           console.log('⚠️ Referência do gráfico de timeline não encontrada')
           return
         }
         
+        console.log('📊 Contexto do canvas timeline encontrado:', ctx)
+        
+        // Destruir gráfico existente se houver
+        if (this.timelineChart) {
+          console.log('🗑️ Destruindo gráfico de timeline existente...')
+          this.timelineChart.destroy()
+          this.timelineChart = null
+        }
+        
+        // Verificar se temos dados para exibir
+        const hasData = this.surebets && this.surebets.length > 0
+        console.log('📈 Dados de timeline disponíveis:', hasData, this.surebets?.length)
+        
+        // Criar dados iniciais para timeline
+        let initialLabels = ['Sem dados']
+        let initialData = [0]
+        
+        if (hasData) {
+          // Agrupar surebets por dia
+          const dailyStats = {}
+          this.surebets.forEach(surebet => {
+            const date = new Date(surebet.createdAt).toDateString()
+            dailyStats[date] = (dailyStats[date] || 0) + 1
+          })
+          
+          const sortedDates = Object.keys(dailyStats).sort()
+          initialLabels = sortedDates.map(date => 
+            new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          )
+          initialData = sortedDates.map(date => dailyStats[date])
+        }
+        
+        console.log('🏷️ Labels de timeline:', initialLabels)
+        console.log('📊 Dados de timeline:', initialData)
+        
         this.timelineChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [{
-            label: 'Surebets por Dia',
-            data: [],
-            borderColor: '#00ff88',
-            backgroundColor: 'rgba(0, 255, 136, 0.1)',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: {
-              display: false
-            }
+          type: 'line',
+          data: {
+            labels: initialLabels,
+            datasets: [{
+              label: 'Surebets por Dia',
+              data: initialData,
+              borderColor: '#00ff88',
+              backgroundColor: 'rgba(0, 255, 136, 0.1)',
+              tension: 0.4,
+              borderWidth: 3,
+              pointBackgroundColor: '#00ff88',
+              pointBorderColor: '#ffffff',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }]
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+              duration: 1000
+            },
+            plugins: {
+              legend: {
+                display: false
               },
-              ticks: {
-                color: '#ffffff'
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                titleColor: '#ffffff',
+                bodyColor: '#00ff88'
               }
             },
-            x: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
+            scales: {
+              y: {
+                beginAtZero: true,
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                  color: '#ffffff',
+                  font: {
+                    size: 12
+                  }
+                }
               },
-              ticks: {
-                color: '#ffffff'
+              x: {
+                grid: {
+                  color: 'rgba(255, 255, 255, 0.1)'
+                },
+                ticks: {
+                  color: '#ffffff',
+                  font: {
+                    size: 11
+                  },
+                  maxRotation: 45
+                }
               }
             }
           }
-        }
-      })
-      
+        })
+        
+        console.log('✅ Gráfico de timeline configurado com sucesso:', this.timelineChart)
+        
       } catch (error) {
         console.error('❌ Erro ao configurar gráfico de timeline:', error)
+        console.error('Stack trace:', error.stack)
       }
     },
     
     // Atualizar dados dos gráficos
     updateCharts() {
       try {
-        this.updateFrequencyChart()
-        this.updateTimelineChart()
+        // Verificar se os gráficos foram desabilitados devido a erros
+        if (this.chartsDisabled) {
+          console.log('⚠️ Gráficos desabilitados devido a erros anteriores - use "Recriar Gráficos"')
+          return
+        }
+        
+        console.log('🔄 Atualizando gráficos...')
+        console.log('📊 Estado dos gráficos:', {
+          frequencyChart: !!this.frequencyChart,
+          timelineChart: !!this.timelineChart
+        })
+        
+        // Aguardar um tick para garantir que os dados estão atualizados
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.updateFrequencyChart()
+            this.updateTimelineChart()
+          }, 100)
+        })
       } catch (error) {
         console.error('❌ Erro ao atualizar gráficos:', error)
+        this.chartsDisabled = true
       }
     },
     
@@ -880,31 +1139,52 @@ export default {
           console.log('⚠️ Nenhum dado disponível para o gráfico de frequência:', dataSource)
           
           // Limpar gráfico se não há dados
-          this.frequencyChart.data.labels = []
-          this.frequencyChart.data.datasets[0].data = []
-          this.frequencyChart.update()
+          if (this.frequencyChart.data && this.frequencyChart.data.datasets && this.frequencyChart.data.datasets[0]) {
+            this.frequencyChart.data.labels = []
+            this.frequencyChart.data.datasets[0].data = []
+            this.frequencyChart.update('none') // Usar 'none' para evitar animações
+          }
           return
         }
         
         const top10 = dataSource.slice(0, 10)
         console.log('📊 Atualizando gráfico com', top10.length, 'bookmakers')
         
-        this.frequencyChart.data.labels = top10.map(b => b.name || 'Desconhecido')
-        this.frequencyChart.data.datasets[0].data = top10.map(b => b.count || 0)
-        this.frequencyChart.update()
-        
-        console.log('✅ Gráfico de frequência atualizado com sucesso')
+        // Verificar se o gráfico está em estado válido
+        if (this.frequencyChart.data && this.frequencyChart.data.datasets && this.frequencyChart.data.datasets[0]) {
+          this.frequencyChart.data.labels = top10.map(b => b.name || 'Desconhecido')
+          this.frequencyChart.data.datasets[0].data = top10.map(b => b.count || 0)
+          this.frequencyChart.update('none') // Usar 'none' para evitar animações
+          
+          console.log('✅ Gráfico de frequência atualizado com sucesso')
+        } else {
+          console.log('⚠️ Estrutura do gráfico inválida - desabilitando atualizações automáticas')
+          // Desabilitar atualizações automáticas para evitar recursão
+          this.chartsDisabled = true
+        }
       } catch (error) {
         console.error('❌ Erro ao atualizar gráfico de frequência:', error)
+        // Desabilitar atualizações automáticas para evitar recursão
+        this.chartsDisabled = true
       }
     },
     
     updateTimelineChart() {
-      if (!this.timelineChart) return
+      if (!this.timelineChart) {
+        console.log('⚠️ Gráfico de timeline não foi inicializado')
+        return
+      }
       
       try {
         if (!this.filteredSurebets || !Array.isArray(this.filteredSurebets)) {
           console.log('⚠️ filteredSurebets não é um array válido:', this.filteredSurebets)
+          
+          // Limpar gráfico se não há dados
+          if (this.timelineChart.data && this.timelineChart.data.datasets && this.timelineChart.data.datasets[0]) {
+            this.timelineChart.data.labels = []
+            this.timelineChart.data.datasets[0].data = []
+            this.timelineChart.update('none')
+          }
           return
         }
         
@@ -917,41 +1197,101 @@ export default {
         
         const sortedDates = Object.keys(dailyStats).sort()
         
-        this.timelineChart.data.labels = sortedDates.map(date => 
-          new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-        )
-        this.timelineChart.data.datasets[0].data = sortedDates.map(date => dailyStats[date])
-        this.timelineChart.update()
+        // Verificar se o gráfico está em estado válido
+        if (this.timelineChart.data && this.timelineChart.data.datasets && this.timelineChart.data.datasets[0]) {
+          this.timelineChart.data.labels = sortedDates.map(date => 
+            new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+          )
+          this.timelineChart.data.datasets[0].data = sortedDates.map(date => dailyStats[date])
+          this.timelineChart.update('none')
+          
+          console.log('✅ Gráfico de timeline atualizado com sucesso')
+        } else {
+          console.log('⚠️ Estrutura do gráfico de timeline inválida - desabilitando atualizações automáticas')
+          // Desabilitar atualizações automáticas para evitar recursão
+          this.chartsDisabled = true
+        }
       } catch (error) {
         console.error('❌ Erro ao atualizar gráfico de timeline:', error)
+        // Desabilitar atualizações automáticas para evitar recursão
+        this.chartsDisabled = true
       }
     },
     
     // Utilitários
     getPositionClass(position) {
-      if (position === 1) return 'gold'
-      if (position === 2) return 'silver'
-      if (position === 3) return 'bronze'
+      // Garantir que o valor é um número válido
+      const validPosition = isNaN(position) || position === null || position === undefined ? 0 : parseInt(position)
+      if (validPosition === 1) return 'gold'
+      if (validPosition === 2) return 'silver'
+      if (validPosition === 3) return 'bronze'
       return 'normal'
     },
     
     getProfitClass(profit) {
-      return profit > 0 ? 'positive' : profit < 0 ? 'negative' : 'neutral'
+      // Garantir que o valor é um número válido
+      const validProfit = isNaN(profit) || profit === null || profit === undefined ? 0 : parseFloat(profit)
+      return validProfit > 0 ? 'positive' : validProfit < 0 ? 'negative' : 'neutral'
     },
     
     getROIClass(roi) {
-      return roi > 0 ? 'positive' : roi < 0 ? 'negative' : 'neutral'
+      // Garantir que o valor é um número válido
+      const validROI = isNaN(roi) || roi === null || roi === undefined ? 0 : parseFloat(roi)
+      return validROI > 0 ? 'positive' : validROI < 0 ? 'negative' : 'neutral'
     },
     
     formatCurrency(value) {
+      // Verificar se o valor é válido
+      if (value === null || value === undefined || isNaN(value) || value === Infinity || value === -Infinity) {
+        return 'R$ 0,00'
+      }
+      
+      // Converter para número se for string
+      const numValue = typeof value === 'string' ? parseFloat(value) : value
+      
+      // Verificar novamente se é um número válido
+      if (isNaN(numValue) || numValue === Infinity || numValue === -Infinity) {
+        return 'R$ 0,00'
+      }
+      
       return new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL'
-      }).format(value)
+      }).format(numValue)
     },
     
     formatROI(value) {
-      return isNaN(value) ? '0.00' : parseFloat(value).toFixed(2)
+      // Verificar se o valor é válido
+      if (value === null || value === undefined || isNaN(value) || value === Infinity || value === -Infinity) {
+        return '0.00'
+      }
+      
+      // Converter para número se for string
+      const numValue = typeof value === 'string' ? parseFloat(value) : value
+      
+      // Verificar novamente se é um número válido
+      if (isNaN(numValue) || numValue === Infinity || numValue === -Infinity) {
+        return '0.00'
+      }
+      
+      return numValue.toFixed(2)
+    },
+    
+    formatPercentage(value) {
+      // Verificar se o valor é válido
+      if (value === null || value === undefined || isNaN(value) || value === Infinity || value === -Infinity) {
+        return '0.0'
+      }
+      
+      // Converter para número se for string
+      const numValue = typeof value === 'string' ? parseFloat(value) : value
+      
+      // Verificar novamente se é um número válido
+      if (isNaN(numValue) || numValue === Infinity || numValue === -Infinity) {
+        return '0.0'
+      }
+      
+      return numValue.toFixed(1)
     },
     
     formatDate(dateString) {
@@ -996,6 +1336,49 @@ export default {
       this.loadSurebets()
     },
     
+    // Limpar todos os dados salvos e recalcular
+    clearAndRecalculate() {
+      console.log('🧹 Limpando todos os dados salvos...')
+      
+      // Limpar localStorage
+      localStorage.removeItem('ranking_stats')
+      localStorage.removeItem('surebets_cache')
+      
+      // Limpar dados em memória
+      this.bookmakersStats = []
+      this.totalSurebets = 0
+      this.totalProfit = 0
+      this.averageROI = 0
+      this.uniqueBookmakers = 0
+      
+      // Recarregar dados
+      this.loadSurebets()
+    },
+    
+    // Forçar recriação dos gráficos
+    forceRecreateCharts() {
+      console.log('🔄 Forçando recriação dos gráficos...')
+      
+      // Resetar flags de erro
+      this.chartsDisabled = false
+      this.isRecreatingCharts = false
+      
+      // Destruir gráficos existentes
+      if (this.frequencyChart) {
+        this.frequencyChart.destroy()
+        this.frequencyChart = null
+      }
+      if (this.timelineChart) {
+        this.timelineChart.destroy()
+        this.timelineChart = null
+      }
+      
+      // Aguardar um pouco e recriar
+      setTimeout(() => {
+        this.setupCharts()
+      }, 200)
+    },
+    
     // Formatar data e hora para exibição
     formatDateTime(date) {
       if (!date) return ''
@@ -1012,8 +1395,31 @@ export default {
     // Salvar estatísticas no banco de dados
     async saveStatsToDatabase() {
       try {
+        // Preparar dados para salvar (remover referências circulares e objetos complexos)
+        const cleanBookmakersStats = this.bookmakersStats.map(bookmaker => {
+          // Garantir que todos os valores são válidos antes de salvar
+          const validTotalProfit = isNaN(bookmaker.totalProfit) || bookmaker.totalProfit === null || bookmaker.totalProfit === undefined ? 0 : parseFloat(bookmaker.totalProfit)
+          const validTotalROI = isNaN(bookmaker.totalROI) || bookmaker.totalROI === null || bookmaker.totalROI === undefined ? 0 : parseFloat(bookmaker.totalROI)
+          const validAverageProfit = isNaN(bookmaker.averageProfit) || bookmaker.averageProfit === null || bookmaker.averageProfit === undefined ? 0 : parseFloat(bookmaker.averageProfit)
+          const validAverageROI = isNaN(bookmaker.averageROI) || bookmaker.averageROI === null || bookmaker.averageROI === undefined ? 0 : parseFloat(bookmaker.averageROI)
+          
+          return {
+            id: bookmaker.id,
+            name: bookmaker.name,
+            count: bookmaker.count,
+            totalProfit: validTotalProfit,
+            totalROI: validTotalROI,
+            averageProfit: validAverageProfit,
+            averageROI: validAverageROI,
+            percentage: bookmaker.percentage,
+            lastAppearance: bookmaker.lastAppearance,
+            // Não salvar o array surebets para evitar problemas de clonagem
+            surebetIds: bookmaker.surebets ? bookmaker.surebets.map(s => s.id || s.surebet_id) : []
+          }
+        })
+        
         const statsData = {
-          bookmakersStats: this.bookmakersStats,
+          bookmakersStats: cleanBookmakersStats,
           totalSurebets: this.totalSurebets,
           uniqueBookmakers: this.uniqueBookmakers,
           totalProfit: this.totalProfit,
@@ -1066,7 +1472,11 @@ export default {
       try {
         // Se não há dados atuais, usar os salvos
         if (!this.bookmakersStats.length) {
-          this.bookmakersStats = savedStats.bookmakersStats || []
+          // Restaurar bookmakers salvos (sem o array surebets)
+          this.bookmakersStats = (savedStats.bookmakersStats || []).map(savedBookmaker => ({
+            ...savedBookmaker,
+            surebets: [] // Inicializar array vazio
+          }))
           this.totalSurebets = savedStats.totalSurebets || 0
           this.uniqueBookmakers = savedStats.uniqueBookmakers || 0
           this.totalProfit = savedStats.totalProfit || 0
@@ -1089,14 +1499,27 @@ export default {
               existing.count += savedBookmaker.count
               existing.totalProfit += savedBookmaker.totalProfit
               existing.totalROI += savedBookmaker.totalROI
-              existing.surebets = [...(existing.surebets || []), ...(savedBookmaker.surebets || [])]
               
-              // Recalcular médias
-              existing.averageProfit = existing.count > 0 ? existing.totalProfit / existing.count : 0
-              existing.averageROI = existing.count > 0 ? existing.totalROI / existing.count : 0
+              // Recalcular médias com validação
+              const validTotalProfit = isNaN(existing.totalProfit) || existing.totalProfit === null || existing.totalProfit === undefined ? 0 : parseFloat(existing.totalProfit)
+              const validTotalROI = isNaN(existing.totalROI) || existing.totalROI === null || existing.totalROI === undefined ? 0 : parseFloat(existing.totalROI)
+              
+              existing.averageProfit = existing.count > 0 ? validTotalProfit / existing.count : 0
+              existing.averageROI = existing.count > 0 ? validTotalROI / existing.count : 0
+              
+              // Verificar se as médias são válidas
+              if (isNaN(existing.averageProfit) || existing.averageProfit === Infinity || existing.averageProfit === -Infinity) {
+                existing.averageProfit = 0
+              }
+              if (isNaN(existing.averageROI) || existing.averageROI === Infinity || existing.averageROI === -Infinity) {
+                existing.averageROI = 0
+              }
             } else {
-              // Adicionar novo
-              existingStats.set(savedBookmaker.name, savedBookmaker)
+              // Adicionar novo (sem o array surebets)
+              existingStats.set(savedBookmaker.name, {
+                ...savedBookmaker,
+                surebets: []
+              })
             }
           })
         }
@@ -1105,10 +1528,20 @@ export default {
         this.bookmakersStats = Array.from(existingStats.values())
           .sort((a, b) => b.count - a.count)
         
-        // Recalcular totais
+        // Recalcular totais (somar com os dados salvos)
         this.uniqueBookmakers = this.bookmakersStats.length
-        this.totalProfit += savedStats.totalProfit || 0
-        this.totalSurebets += savedStats.totalSurebets || 0
+        
+        // Somar valores salvos aos atuais
+        const savedProfit = savedStats.totalProfit || 0
+        const savedSurebets = savedStats.totalSurebets || 0
+        
+        // Evitar duplicação: só somar se os valores salvos são maiores
+        if (savedProfit > this.totalProfit) {
+          this.totalProfit = savedProfit
+        }
+        if (savedSurebets > this.totalSurebets) {
+          this.totalSurebets = savedSurebets
+        }
         
         console.log('🔄 Estatísticas mescladas com sucesso')
       } catch (error) {
@@ -1198,8 +1631,10 @@ html, body {
 }
 
 .ranking-icon {
-  font-size: 36px;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+  width: 36px;
+  height: 36px;
+  color: #00ff88;
+  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
 }
 
 .ranking-subtitle {
@@ -1260,11 +1695,58 @@ html, body {
   box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
 }
 
-.refresh-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
+ .refresh-btn:disabled {
+   opacity: 0.6;
+   cursor: not-allowed;
+   transform: none;
+ }
+ 
+ .chart-btn {
+   background: linear-gradient(135deg, #ff6b35, #f7931e);
+   border: none;
+   border-radius: 8px;
+   padding: 12px 20px;
+   color: #ffffff;
+   font-weight: 600;
+   font-size: 14px;
+   cursor: pointer;
+   transition: all 0.3s ease;
+   min-width: 150px;
+ }
+ 
+   .chart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  }
+  
+  .chart-btn.disabled {
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    opacity: 0.8;
+    cursor: pointer;
+  }
+  
+  .chart-btn.disabled:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .clear-btn {
+    background: linear-gradient(135deg, #ff4757, #ff3838);
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 150px;
+  }
+  
+  .clear-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 71, 87, 0.3);
+  }
 
 .update-status {
   display: flex;
