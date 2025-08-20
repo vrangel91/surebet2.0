@@ -85,6 +85,8 @@
             <th>E-mail</th>
             <th>Função</th>
             <th>Status</th>
+            <th>Créditos</th>
+            <th>Tipo de Conta</th>
             <th>Último Login</th>
             <th>Criado em</th>
             <th>Ações</th>
@@ -107,6 +109,16 @@
                 {{ user.status === 'active' ? 'Ativo' : 'Inativo' }}
               </span>
             </td>
+            <td>
+              <span class="credits-display">
+                {{ user.credits || 0 }} 💰
+              </span>
+            </td>
+            <td>
+              <span :class="['account-type-badge', user.accountType || 'basic']">
+                {{ getAccountTypeText(user.accountType || 'basic') }}
+              </span>
+            </td>
             <td>{{ formatDate(user.lastLogin) }}</td>
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="actions-cell">
@@ -119,6 +131,20 @@
                 title="Alterar Senha"
               >
                 🔐
+              </button>
+              <button 
+                @click="addCredits(user)" 
+                class="btn-icon btn-credits"
+                title="Adicionar Créditos"
+              >
+                💰
+              </button>
+              <button 
+                @click="changeAccountType(user)" 
+                class="btn-icon btn-account"
+                title="Alterar Tipo de Conta"
+              >
+                👑
               </button>
               <button 
                 @click="toggleUserStatus(user)" 
@@ -417,6 +443,113 @@
       </div>
     </div>
 
+    <!-- Add Credits Modal -->
+    <div v-if="showCreditsModal" class="modal-overlay" @click="showCreditsModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Adicionar Créditos</h2>
+          <button @click="showCreditsModal = false" class="modal-close">✕</button>
+        </div>
+        
+        <form @submit.prevent="saveCredits" class="modal-form">
+          <div class="form-group">
+            <label>Usuário</label>
+            <input
+              :value="creditsForm.userName"
+              type="text"
+              disabled
+              class="form-input disabled"
+              placeholder="Nome do usuário"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Créditos Atuais</label>
+            <input
+              :value="creditsForm.currentCredits"
+              type="number"
+              disabled
+              class="form-input disabled"
+              placeholder="Créditos atuais"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Adicionar Créditos</label>
+            <input
+              v-model="creditsForm.creditsToAdd"
+              type="number"
+              required
+              min="1"
+              class="form-input"
+              placeholder="Quantidade de créditos"
+            />
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" @click="showCreditsModal = false" class="btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">
+              Adicionar Créditos
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Change Account Type Modal -->
+    <div v-if="showAccountTypeModal" class="modal-overlay" @click="showAccountTypeModal = false">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>Alterar Tipo de Conta</h2>
+          <button @click="showAccountTypeModal = false" class="modal-close">✕</button>
+        </div>
+        
+        <form @submit.prevent="saveAccountType" class="modal-form">
+          <div class="form-group">
+            <label>Usuário</label>
+            <input
+              :value="accountTypeForm.userName"
+              type="text"
+              disabled
+              class="form-input disabled"
+              placeholder="Nome do usuário"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Tipo de Conta Atual</label>
+            <input
+              :value="getAccountTypeText(accountTypeForm.currentType)"
+              type="text"
+              disabled
+              class="form-input disabled"
+              placeholder="Tipo atual"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>Novo Tipo de Conta</label>
+            <select v-model="accountTypeForm.newType" class="form-select" required>
+              <option value="basic">Básica</option>
+              <option value="premium">Premium</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" @click="showAccountTypeModal = false" class="btn-secondary">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-primary">
+              Alterar Tipo
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
       <div class="modal-content delete-modal" @click.stop>
@@ -530,6 +663,31 @@ export default {
     Sidebar,
     GlossaryModal
   },
+  
+  // Guarda de rota adicional para proteção extra
+  beforeRouteEnter(to, from, next) {
+    // Verificar se o usuário é admin antes de permitir acesso
+    // Como não temos acesso ao store aqui, vamos usar o localStorage diretamente
+    const user = localStorage.getItem('user')
+    if (user) {
+      try {
+        const userData = JSON.parse(user)
+        if (userData.role === 'admin') {
+          next()
+        } else {
+          console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Usuário não é admin')
+          next('/')
+        }
+      } catch (error) {
+        console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Erro ao verificar usuário')
+        next('/')
+      }
+    } else {
+      console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Usuário não autenticado')
+      next('/')
+    }
+  },
+  
   data() {
     return {
       sidebarCollapsed: false,
@@ -540,6 +698,8 @@ export default {
       showEditModal: false,
       showDeleteModal: false,
       showPasswordModal: false,
+      showCreditsModal: false,
+      showAccountTypeModal: false,
       showTicketDetailModal: false,
       userToDelete: null,
       selectedTicket: null,
@@ -561,6 +721,18 @@ export default {
         userName: '',
         newPassword: '',
         confirmPassword: ''
+      },
+      creditsForm: {
+        userId: '',
+        userName: '',
+        currentCredits: 0,
+        creditsToAdd: 1
+      },
+      accountTypeForm: {
+        userId: '',
+        userName: '',
+        currentType: 'basic',
+        newType: 'basic'
       }
     }
   },
@@ -631,9 +803,20 @@ export default {
   },
   
   mounted() {
+    // Verificação de segurança robusta
     if (!this.isAdmin) {
+      console.warn('🚫 Tentativa de acesso administrativo negada para usuário:', this.currentUser?.email)
       this.$router.push('/')
+      return
     }
+    
+    console.log('✅ Acesso administrativo autorizado para:', this.currentUser?.email)
+    
+    // Garantir que todos os usuários tenham a propriedade credits
+    this.ensureAllUsersHaveCredits()
+    
+    // Buscar usuários da API
+    this.fetchUsersFromAPI()
   },
   
   methods: {
@@ -642,8 +825,14 @@ export default {
       'updateUserData', 
       'deleteUserData', 
       'updateTicketData', 
-      'addMessageToTicket'
+      'addMessageToTicket',
+      'addCreditsToUser',
+      'upgradeAccountType',
+      'ensureAllUsersHaveCredits',
+      'fetchUsers'
     ]),
+    
+
     
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
@@ -651,6 +840,16 @@ export default {
     
     handleSidebarStateLoaded(collapsed) {
       this.sidebarCollapsed = collapsed
+    },
+    
+    async fetchUsersFromAPI() {
+      try {
+        console.log('🔄 Buscando usuários da API...')
+        await this.fetchUsers()
+        console.log('✅ Usuários carregados com sucesso')
+      } catch (error) {
+        console.error('❌ Erro ao carregar usuários:', error)
+      }
     },
     
     toggleSidebar() {
@@ -737,6 +936,15 @@ export default {
       }
       return statusMap[status] || status
     },
+
+    getAccountTypeText(accountType) {
+      const accountTypeMap = {
+        basic: 'Básica',
+        premium: 'Premium',
+        vip: 'VIP'
+      }
+      return accountTypeMap[accountType] || accountType
+    },
     
     logout() {
       this.$store.dispatch('logout')
@@ -752,6 +960,24 @@ export default {
       this.showConfirmPassword = false
       this.showPasswordModal = true
     },
+
+    addCredits(user) {
+      console.log('Método addCredits chamado para usuário:', user)
+      this.creditsForm.userId = user.id
+      this.creditsForm.userName = user.name
+      this.creditsForm.currentCredits = user.credits || 0
+      this.creditsForm.creditsToAdd = 1
+      this.showCreditsModal = true
+      console.log('Formulário de créditos preenchido:', this.creditsForm)
+    },
+
+    changeAccountType(user) {
+      this.accountTypeForm.userId = user.id
+      this.accountTypeForm.userName = user.name
+      this.accountTypeForm.currentType = user.accountType || 'basic'
+      this.accountTypeForm.newType = user.accountType || 'basic'
+      this.showAccountTypeModal = true
+    },
     
     togglePasswordVisibility() {
       this.showPassword = !this.showPassword
@@ -761,29 +987,88 @@ export default {
       this.showConfirmPassword = !this.showConfirmPassword
     },
     
-    savePassword() {
-      if (!this.isPasswordFormValid) {
-        return
-      }
-      
-      // Simular alteração de senha
-      console.log(`Alterando senha do usuário ${this.passwordForm.userName} para: ${this.passwordForm.newPassword}`)
-      
-      // Aqui você pode adicionar a lógica para salvar a nova senha
-      // Por exemplo, chamar uma API ou atualizar o store
-      
-      // Fechar modal e limpar formulário
-      this.showPasswordModal = false
-      this.passwordForm = {
-        userId: '',
-        userName: '',
-        newPassword: '',
-        confirmPassword: ''
-      }
-      
-      // Mostrar mensagem de sucesso
-      alert('Senha alterada com sucesso!')
-    },
+         savePassword() {
+       if (!this.isPasswordFormValid) {
+         return
+       }
+       
+       const userName = this.passwordForm.userName
+       
+       // Simular alteração de senha
+       console.log(`Alterando senha do usuário ${userName} para: ${this.passwordForm.newPassword}`)
+       
+       // Aqui você pode adicionar a lógica para salvar a nova senha
+       // Por exemplo, chamar uma API ou atualizar o store
+       
+       // Fechar modal e limpar formulário
+       this.showPasswordModal = false
+       this.passwordForm = {
+         userId: '',
+         userName: '',
+         newPassword: '',
+         confirmPassword: ''
+       }
+       
+       // Usar alert nativo para garantir que apareça visualmente
+       alert(`🔐 Senha atualizada com sucesso para ${userName}`)
+     },
+
+         async saveCredits() {
+       console.log('Método saveCredits chamado')
+       console.log('Formulário atual:', this.creditsForm)
+       
+       try {
+         const creditsToAdd = parseInt(this.creditsForm.creditsToAdd)
+         const userName = this.creditsForm.userName
+         const userId = this.creditsForm.userId
+         
+         console.log('Tentando adicionar créditos:', { userId, creditsToAdd, userName })
+         
+         await this.addCreditsToUser({
+           userId: userId,
+           amount: creditsToAdd
+         })
+         
+         this.showCreditsModal = false
+         this.creditsForm = {
+           userId: '',
+           userName: '',
+           currentCredits: 0,
+           creditsToAdd: 1
+         }
+         
+         // Usar alert nativo para garantir que apareça visualmente
+         alert(`✅ ${creditsToAdd} crédito(s) adicionado(s) com sucesso para ${userName}`)
+       } catch (error) {
+         console.error('Erro ao adicionar créditos:', error)
+         alert('❌ Erro ao processar a adição de créditos. Tente novamente.')
+       }
+     },
+
+         async saveAccountType() {
+       try {
+         const newType = this.accountTypeForm.newType
+         const userName = this.accountTypeForm.userName
+         
+         await this.upgradeAccountType({
+           userId: this.accountTypeForm.userId,
+           accountType: newType
+         })
+         
+         this.showAccountTypeModal = false
+         this.accountTypeForm = {
+           userId: '',
+           userName: '',
+           currentType: 'basic',
+           newType: 'basic'
+         }
+         
+         // Usar alert nativo para garantir que apareça visualmente
+         alert(`👑 Tipo de conta atualizado para ${this.getAccountTypeText(newType)} - ${userName}`)
+       } catch (error) {
+         alert('❌ Erro ao atualizar tipo de conta. Verifique as permissões e tente novamente.')
+       }
+     },
     
     formatDate(dateString) {
       if (!dateString) return 'Nunca'
@@ -879,6 +1164,169 @@ export default {
         status: 'active',
         password: ''
       }
+    },
+
+    showNotification(message, type = 'info') {
+      console.log('Mostrando notificação:', message, type)
+      
+      // Remover notificações existentes
+      const existingNotifications = document.querySelectorAll('.admin-notification')
+      existingNotifications.forEach(notification => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification)
+        }
+      })
+
+      // Criar nova notificação
+      const notification = document.createElement('div')
+      notification.className = `admin-notification admin-notification-${type}`
+      
+      // Definir ícone baseado no tipo
+      const icons = {
+        success: '✅',
+        error: '❌',
+        warning: '⚠️',
+        info: 'ℹ️'
+      }
+      
+      // Criar estrutura da notificação
+      const notificationContent = document.createElement('div')
+      notificationContent.className = 'notification-content'
+      
+      const notificationIcon = document.createElement('span')
+      notificationIcon.className = 'notification-icon'
+      notificationIcon.textContent = icons[type] || icons.info
+      
+      const notificationMessage = document.createElement('span')
+      notificationMessage.className = 'notification-message'
+      notificationMessage.textContent = message
+      
+      const closeButton = document.createElement('button')
+      closeButton.className = 'notification-close'
+      closeButton.textContent = '×'
+      closeButton.addEventListener('click', () => {
+        if (notification.parentNode) {
+          notification.classList.remove('show')
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification)
+            }
+          }, 300)
+        }
+      })
+      
+      // Montar estrutura
+      notificationContent.appendChild(notificationIcon)
+      notificationContent.appendChild(notificationMessage)
+      notification.appendChild(notificationContent)
+      notification.appendChild(closeButton)
+      
+      // Adicionar ao DOM
+      document.body.appendChild(notification)
+      
+      // Forçar reflow e animar entrada
+      setTimeout(() => {
+        notification.classList.add('show')
+      }, 10)
+      
+      // Auto-remover após 6 segundos
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.classList.remove('show')
+          setTimeout(() => {
+            if (notification.parentNode) {
+              notification.parentNode.removeChild(notification)
+            }
+          }, 300)
+        }
+      }, 6000)
+    },
+
+    showProfessionalNotification(message, type = 'info') {
+      // Remover notificações existentes
+      const existingNotifications = document.querySelectorAll('.professional-notification')
+      existingNotifications.forEach(notification => {
+        if (notification.parentNode) {
+          notification.parentNode.removeChild(notification)
+        }
+      })
+
+      // Criar container de notificações se não existir
+      let notificationContainer = document.getElementById('notification-container')
+      if (!notificationContainer) {
+        notificationContainer = document.createElement('div')
+        notificationContainer.id = 'notification-container'
+        notificationContainer.className = 'notification-container'
+        document.body.appendChild(notificationContainer)
+      }
+
+      // Criar nova notificação
+      const notification = document.createElement('div')
+      notification.className = `professional-notification professional-notification-${type}`
+      
+      // Definir ícones e cores baseado no tipo
+      const notificationConfig = {
+        success: {
+          icon: '✓',
+          title: 'Sucesso',
+          color: '#00ff88'
+        },
+        error: {
+          icon: '✕',
+          title: 'Erro',
+          color: '#ff4444'
+        },
+        warning: {
+          icon: '⚠',
+          title: 'Atenção',
+          color: '#ffc107'
+        },
+        info: {
+          icon: 'ℹ',
+          title: 'Informação',
+          color: '#17a2b8'
+        }
+      }
+      
+      const config = notificationConfig[type] || notificationConfig.info
+      
+      // Criar estrutura da notificação
+      notification.innerHTML = `
+        <div class="notification-header">
+          <div class="notification-icon-wrapper" style="background: ${config.color}20; border-color: ${config.color}">
+            <span class="notification-icon" style="color: ${config.color}">${config.icon}</span>
+          </div>
+          <div class="notification-content">
+            <div class="notification-title">${config.title}</div>
+            <div class="notification-message">${message}</div>
+          </div>
+          <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="notification-progress" style="background: ${config.color}"></div>
+      `
+      
+      // Adicionar ao container
+      notificationContainer.appendChild(notification)
+      
+      // Animar entrada
+      setTimeout(() => {
+        notification.classList.add('show')
+      }, 10)
+      
+      // Auto-remover após 5 segundos
+      setTimeout(() => {
+        notification.classList.remove('show')
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.remove()
+          }
+        }, 300)
+      }, 5000)
     }
   }
 }
@@ -1597,7 +2045,7 @@ export default {
 }
 
 .btn-info {
-  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  /* background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); */
   color: #ffffff;
   border: none;
   border-radius: 6px;
@@ -1610,6 +2058,50 @@ export default {
 .btn-info:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-credits:hover {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.btn-account:hover {
+  background: rgba(138, 43, 226, 0.2);
+  color: #8a2be2;
+}
+
+.credits-display {
+  font-weight: 600;
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.account-type-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.account-type-badge.basic {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
+  border: 1px solid rgba(108, 117, 125, 0.3);
+}
+
+.account-type-badge.premium {
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.account-type-badge.vip {
+  background: rgba(138, 43, 226, 0.2);
+  color: #8a2be2;
+  border: 1px solid rgba(138, 43, 226, 0.3);
 }
 
 /* Tickets Styles */
@@ -1908,6 +2400,242 @@ export default {
   cursor: not-allowed;
 }
 
+/* Notificações Profissionais */
+.admin-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(42, 42, 42, 0.98);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 20px 24px;
+  min-width: 350px;
+  max-width: 500px;
+  z-index: 999999;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  pointer-events: auto;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.admin-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.notification-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.notification-message {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.notification-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #cccccc;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.notification-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+/* Tipos de Notificação */
+.admin-notification-success {
+  border-left: 5px solid #00ff88;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(42, 42, 42, 0.98));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 255, 136, 0.1);
+}
+
+.admin-notification-error {
+  border-left: 5px solid #ff4444;
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(42, 42, 42, 0.98));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(255, 68, 68, 0.1);
+}
+
+.admin-notification-warning {
+  border-left: 5px solid #ffc107;
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(42, 42, 42, 0.98));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(255, 193, 7, 0.1);
+}
+
+.admin-notification-info {
+  border-left: 5px solid #17a2b8;
+  background: linear-gradient(135deg, rgba(23, 162, 184, 0.15), rgba(42, 42, 42, 0.98));
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(23, 162, 184, 0.1);
+}
+
+/* Notificações Profissionais */
+.notification-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.professional-notification {
+  background: rgba(42, 42, 42, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  min-width: 380px;
+  max-width: 450px;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  pointer-events: auto;
+  position: relative;
+}
+
+.professional-notification.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.notification-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px 16px;
+}
+
+.notification-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+}
+
+.notification-icon {
+  font-size: 20px;
+  font-weight: bold;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  line-height: 1.3;
+}
+
+.notification-message {
+  color: #cccccc;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+}
+
+.notification-close {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: #888888;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  backdrop-filter: blur(5px);
+}
+
+.notification-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  transform: scale(1.1);
+}
+
+.notification-progress {
+  height: 3px;
+  width: 100%;
+  animation: progressShrink 5s linear forwards;
+}
+
+@keyframes progressShrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+/* Tipos de Notificação Profissionais */
+.professional-notification-success {
+  border-left: 4px solid #00ff88;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 255, 136, 0.1);
+}
+
+.professional-notification-error {
+  border-left: 4px solid #ff4444;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(255, 68, 68, 0.1);
+}
+
+.professional-notification-warning {
+  border-left: 4px solid #ffc107;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(255, 193, 7, 0.1);
+}
+
+.professional-notification-info {
+  border-left: 4px solid #17a2b8;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(23, 162, 184, 0.1);
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .admin-container {
@@ -1934,6 +2662,71 @@ export default {
   
   .admin-stats {
     grid-template-columns: 1fr;
+  }
+
+  .admin-notification {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    min-width: auto;
+    max-width: none;
+    padding: 16px 20px;
+    border-radius: 12px;
+  }
+  
+  .notification-message {
+    font-size: 14px;
+  }
+  
+  .notification-icon {
+    font-size: 18px;
+  }
+  
+  .notification-close {
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+  }
+
+  /* Responsividade para Notificações Profissionais */
+  .notification-container {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+  }
+
+  .professional-notification {
+    min-width: auto;
+    max-width: none;
+    border-radius: 12px;
+  }
+
+  .notification-header {
+    padding: 16px 20px 12px;
+    gap: 12px;
+  }
+
+  .notification-icon-wrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .notification-icon {
+    font-size: 18px;
+  }
+
+  .notification-title {
+    font-size: 15px;
+  }
+
+  .notification-message {
+    font-size: 13px;
+  }
+
+  .notification-close {
+    width: 28px;
+    height: 28px;
   }
 }
 </style>

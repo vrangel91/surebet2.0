@@ -13,286 +13,346 @@
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
-          <h2 class="page-title">Configurações</h2>
-          <p class="page-subtitle">Personalize sua experiência de arbitragem</p>
+          <div class="header-icon">⚙️</div>
+          <div class="header-text">
+            <h1 class="page-title">Configurações</h1>
+            <p class="page-subtitle">Personalize sua experiência de arbitragem</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button @click="saveAllSettings" class="save-all-btn">
+            <span class="btn-icon">💾</span>
+            Salvar Tudo
+          </button>
         </div>
       </header>
 
       <!-- Conteúdo das Configurações -->
       <div class="settings-content">
-        <!-- Notificações -->
-        <div class="settings-section">
-          <h3 class="section-title">🔔 Notificações</h3>
-          <div class="settings-grid">
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Som de Notificação</label>
-                <p class="setting-description">Reproduz som quando novos surebets são encontrados</p>
-              </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.notifications.sound" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
+        <div class="settings-grid">
+          <!-- Notificações -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🔔</div>
+              <h3 class="card-title">Notificações</h3>
+              <p class="card-description">Configure como receber alertas e notificações</p>
             </div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Som de Notificação</label>
+                  <p class="setting-description">Reproduz som quando novos surebets são encontrados</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.notifications.sound" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Notificações do Navegador</label>
-                <p class="setting-description">Mostra notificações do sistema quando novos surebets são encontrados</p>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Notificações do Navegador</label>
+                  <p class="setting-description">Mostra notificações do sistema quando novos surebets são encontrados</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.notifications.browser" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.notifications.browser" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Volume do Som</label>
-                <p class="setting-description">Ajuste o volume das notificações sonoras</p>
-              </div>
-              <div class="setting-control">
-                <input 
-                  type="range" 
-                  min="0" 
-                  max="100" 
-                  v-model="settings.notifications.volume" 
-                  @change="saveSettings"
-                  class="volume-slider"
-                >
-                <span class="volume-value">{{ settings.notifications.volume }}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Busca Automática -->
-        <div class="settings-section">
-          <h3 class="section-title">🔄 Busca Automática</h3>
-          <div class="settings-grid">
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Iniciar Busca Automaticamente</label>
-                <p class="setting-description">Inicia a busca de surebets ao carregar a página</p>
-              </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.autoSearch.enabled" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Intervalo de Atualização</label>
-                <p class="setting-description">Frequência de atualização dos surebets (em segundos)</p>
-              </div>
-              <div class="setting-control">
-                <select v-model="settings.autoSearch.interval" @change="saveSettings" class="setting-select">
-                  <option value="3">3 segundos</option>
-                  <option value="5">5 segundos</option>
-                  <option value="10">10 segundos</option>
-                  <option value="15">15 segundos</option>
-                  <option value="30">30 segundos</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Busca em Segundo Plano</label>
-                <p class="setting-description">Continua buscando mesmo quando a aba não está ativa</p>
-              </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.autoSearch.background" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Volume do Som</label>
+                  <p class="setting-description">Ajuste o volume das notificações sonoras</p>
+                </div>
+                <div class="setting-control">
+                  <div class="volume-control">
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="100" 
+                      v-model="settings.notifications.volume" 
+                      @change="saveSettings"
+                      class="volume-slider"
+                    >
+                    <span class="volume-value">{{ settings.notifications.volume }}%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Filtros Padrão -->
-        <div class="settings-section">
-          <h3 class="section-title">🎯 Filtros Padrão</h3>
-          <div class="settings-grid">
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Lucro Mínimo Padrão</label>
-                <p class="setting-description">Lucro mínimo para exibir surebets (em %)</p>
-              </div>
-              <div class="setting-control">
-                <input 
-                  type="number" 
-                  v-model="settings.defaultFilters.minProfit" 
-                  @change="saveSettings"
-                  class="setting-input"
-                  min="0"
-                  max="100"
-                >
-                <span class="input-suffix">%</span>
-              </div>
+          <!-- Busca Automática -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🔄</div>
+              <h3 class="card-title">Busca Automática</h3>
+              <p class="card-description">Configure a busca automática de surebets</p>
             </div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Iniciar Busca Automaticamente</label>
+                  <p class="setting-description">Inicia a busca de surebets ao carregar a página</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.autoSearch.enabled" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Lucro Máximo Padrão</label>
-                <p class="setting-description">Lucro máximo para exibir surebets (em %)</p>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Intervalo de Atualização</label>
+                  <p class="setting-description">Frequência de atualização dos surebets</p>
+                </div>
+                <div class="setting-control">
+                  <select v-model="settings.autoSearch.interval" @change="saveSettings" class="setting-select">
+                    <option value="3">3 segundos</option>
+                    <option value="5">5 segundos</option>
+                    <option value="10">10 segundos</option>
+                    <option value="15">15 segundos</option>
+                    <option value="30">30 segundos</option>
+                  </select>
+                </div>
               </div>
-              <div class="setting-control">
-                <input 
-                  type="number" 
-                  v-model="settings.defaultFilters.maxProfit" 
-                  @change="saveSettings"
-                  class="setting-input"
-                  min="0"
-                  max="1000"
-                >
-                <span class="input-suffix">%</span>
-              </div>
-            </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Filtro Padrão</label>
-                <p class="setting-description">Filtro inicial ao carregar a página</p>
-              </div>
-              <div class="setting-control">
-                <select v-model="settings.defaultFilters.activeFilter" @change="saveSettings" class="setting-select">
-                  <option value="all">Todas</option>
-                  <option value="prelive">Pré-live</option>
-                  <option value="live">Live</option>
-                </select>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Busca em Segundo Plano</label>
+                  <p class="setting-description">Continua buscando mesmo quando a aba não está ativa</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.autoSearch.background" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Interface -->
-        <div class="settings-section">
-          <h3 class="section-title">🎨 Interface</h3>
-          <div class="settings-grid">
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Tema Escuro</label>
-                <p class="setting-description">Ativa o tema escuro por padrão</p>
-              </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.interface.darkMode" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
+          <!-- Filtros Padrão -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🎯</div>
+              <h3 class="card-title">Filtros Padrão</h3>
+              <p class="card-description">Configure os filtros padrão para surebets</p>
             </div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Lucro Mínimo Padrão</label>
+                  <p class="setting-description">Lucro mínimo para exibir surebets (em %)</p>
+                </div>
+                <div class="setting-control">
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      v-model="settings.defaultFilters.minProfit" 
+                      @change="saveSettings"
+                      class="setting-input"
+                      min="0"
+                      max="100"
+                    >
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Sidebar Colapsada</label>
-                <p class="setting-description">Inicia com a sidebar minimizada</p>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Lucro Máximo Padrão</label>
+                  <p class="setting-description">Lucro máximo para exibir surebets (em %)</p>
+                </div>
+                <div class="setting-control">
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      v-model="settings.defaultFilters.maxProfit" 
+                      @change="saveSettings"
+                      class="setting-input"
+                      min="0"
+                      max="1000"
+                    >
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
               </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.interface.sidebarCollapsed" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-            </div>
 
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Cards por Linha</label>
-                <p class="setting-description">Número de cards de surebet por linha</p>
-              </div>
-              <div class="setting-control">
-                <select v-model="settings.interface.cardsPerRow" @change="saveSettings" class="setting-select">
-                  <option value="1">1 card</option>
-                  <option value="2">2 cards</option>
-                  <option value="3">3 cards</option>
-                  <option value="4">4 cards</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Relatórios -->
-        <div class="settings-section">
-          <h3 class="section-title">📊 Relatórios</h3>
-          <div class="settings-grid">
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Aposta Padrão</label>
-                <p class="setting-description">Valor padrão para apostas nos relatórios</p>
-              </div>
-              <div class="setting-control">
-                <input 
-                  type="number" 
-                  v-model="settings.reports.defaultStake" 
-                  @change="saveSettings"
-                  class="setting-input"
-                  min="1"
-                  step="0.01"
-                >
-                <span class="input-suffix">R$</span>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Moeda Padrão</label>
-                <p class="setting-description">Moeda padrão para exibição nos relatórios</p>
-              </div>
-              <div class="setting-control">
-                <select v-model="settings.reports.defaultCurrency" @change="saveSettings" class="setting-select">
-                  <option value="BRL">Real (R$)</option>
-                  <option value="USD">Dólar ($)</option>
-                  <option value="EUR">Euro (€)</option>
-                  <option value="PEN">Sol Peruano (S/)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="setting-item">
-              <div class="setting-info">
-                <label class="setting-label">Auto-save de Relatórios</label>
-                <p class="setting-description">Salva automaticamente os dados dos relatórios</p>
-              </div>
-              <div class="setting-control">
-                <label class="toggle-switch">
-                  <input type="checkbox" v-model="settings.reports.autoSave" @change="saveSettings">
-                  <span class="toggle-slider"></span>
-                </label>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Filtro Padrão</label>
+                  <p class="setting-description">Filtro inicial ao carregar a página</p>
+                </div>
+                <div class="setting-control">
+                  <select v-model="settings.defaultFilters.activeFilter" @change="saveSettings" class="setting-select">
+                    <option value="all">Todas</option>
+                    <option value="prelive">Pré-live</option>
+                    <option value="live">Live</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Ações -->
-        <div class="settings-section">
-          <h3 class="section-title">🛠️ Ações</h3>
-          <div class="settings-actions">
-            <button @click="resetSettings" class="action-btn reset-btn">
-              <span class="btn-icon">🔄</span>
-              Restaurar Padrões
-            </button>
-            <button @click="exportSettings" class="action-btn export-btn">
-              <span class="btn-icon">📤</span>
-              Exportar Configurações
-            </button>
-            <button @click="importSettings" class="action-btn import-btn">
-              <span class="btn-icon">📥</span>
-              Importar Configurações
-            </button>
-            <button @click="clearData" class="action-btn clear-btn">
-              <span class="btn-icon">🗑️</span>
-              Limpar Dados
-            </button>
+          <!-- Interface -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🎨</div>
+              <h3 class="card-title">Interface</h3>
+              <p class="card-description">Personalize a aparência da aplicação</p>
+            </div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Tema Escuro</label>
+                  <p class="setting-description">Ativa o tema escuro por padrão</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.interface.darkMode" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Sidebar Colapsada</label>
+                  <p class="setting-description">Inicia com a sidebar minimizada</p>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle-switch">
+                    <input type="checkbox" v-model="settings.interface.sidebarCollapsed" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Cards por Linha</label>
+                  <p class="setting-description">Número de cards de surebet por linha</p>
+                </div>
+                <div class="setting-control">
+                  <select v-model="settings.interface.cardsPerRow" @change="saveSettings" class="setting-select">
+                    <option value="1">1 card</option>
+                    <option value="2">2 cards</option>
+                    <option value="3">3 cards</option>
+                    <option value="4">4 cards</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Relatórios e Ações -->
+          <div class="reports-actions-container">
+            <!-- Relatórios -->
+            <div class="settings-card">
+              <div class="card-header">
+                <div class="card-icon">📊</div>
+                <h3 class="card-title">Relatórios</h3>
+                <p class="card-description">Configure as opções de relatórios</p>
+              </div>
+              <div class="card-content">
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <label class="setting-label">Aposta Padrão</label>
+                    <p class="setting-description">Valor padrão para apostas nos relatórios</p>
+                  </div>
+                  <div class="setting-control">
+                    <div class="input-group">
+                      <input 
+                        type="number" 
+                        v-model="settings.reports.defaultStake" 
+                        @change="saveSettings"
+                        class="setting-input"
+                        min="1"
+                        step="0.01"
+                      >
+                      <span class="input-suffix">R$</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <label class="setting-label">Moeda Padrão</label>
+                    <p class="setting-description">Moeda padrão para exibição nos relatórios</p>
+                  </div>
+                  <div class="setting-control">
+                    <select v-model="settings.reports.defaultCurrency" @change="saveSettings" class="setting-select">
+                      <option value="BRL">Real (R$)</option>
+                      <option value="USD">Dólar ($)</option>
+                      <option value="EUR">Euro (€)</option>
+                      <option value="PEN">Sol Peruano (S/)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="setting-item">
+                  <div class="setting-info">
+                    <label class="setting-label">Auto-save de Relatórios</label>
+                    <p class="setting-description">Salva automaticamente os dados dos relatórios</p>
+                  </div>
+                  <div class="setting-control">
+                    <label class="toggle-switch">
+                      <input type="checkbox" v-model="settings.reports.autoSave" @change="saveSettings">
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ações -->
+            <div class="settings-card actions-card">
+              <div class="card-header">
+                <div class="card-icon">🛠️</div>
+                <h3 class="card-title">Ações</h3>
+                <p class="card-description">Gerencie suas configurações</p>
+              </div>
+              <div class="card-content">
+                <div class="actions-grid">
+                  <button @click="resetSettings" class="action-btn reset-btn">
+                    <span class="btn-icon">🔄</span>
+                    <div class="btn-content">
+                      <span class="btn-title">Restaurar Padrões</span>
+                      <span class="btn-description">Volta para configurações iniciais</span>
+                    </div>
+                  </button>
+                  <button @click="exportSettings" class="action-btn export-btn">
+                    <span class="btn-icon">📤</span>
+                    <div class="btn-content">
+                      <span class="btn-title">Exportar Configurações</span>
+                      <span class="btn-description">Salva suas configurações em arquivo</span>
+                    </div>
+                  </button>
+                  <button @click="importSettings" class="action-btn import-btn">
+                    <span class="btn-icon">📥</span>
+                    <div class="btn-content">
+                      <span class="btn-title">Importar Configurações</span>
+                      <span class="btn-description">Carrega configurações de arquivo</span>
+                    </div>
+                  </button>
+                  <button @click="clearData" class="action-btn clear-btn">
+                    <span class="btn-icon">🗑️</span>
+                    <div class="btn-content">
+                      <span class="btn-title">Limpar Dados</span>
+                      <span class="btn-description">Remove todos os dados salvos</span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -308,9 +368,9 @@
     >
 
     <!-- Modal do Glossário -->
-    <GlossaryModal 
-      v-if="showGlossaryModal" 
-      @close="closeGlossary" 
+        <GlossaryModal
+      :isVisible="showGlossaryModal"
+      @close="closeGlossary"
     />
   </div>
 </template>
@@ -381,7 +441,6 @@ export default {
       // Atualizar também nas configurações
       this.settings.interface.sidebarCollapsed = collapsed
       this.saveSettings()
-
     },
     
     handleSidebarStateLoaded(collapsed) {
@@ -391,15 +450,23 @@ export default {
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
+    
     openGlossary() {
       this.showGlossaryModal = true
     },
+    
     closeGlossary() {
       this.showGlossaryModal = false
     },
+    
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
+    },
+    
+    saveAllSettings() {
+      this.saveSettings()
+      this.showNotification('Todas as configurações foram salvas!', 'success')
     },
     
     loadSettings() {
@@ -707,9 +774,24 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
 }
 
 .header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-icon {
+  font-size: 32px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-text {
   .page-title {
     font-size: 28px;
     font-weight: 700;
@@ -723,47 +805,108 @@ export default {
   }
 }
 
+.header-actions {
+  .save-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: var(--accent-secondary);
+      transform: translateY(-2px);
+    }
+    
+    .btn-icon {
+      font-size: 16px;
+    }
+  }
+}
+
 .settings-content {
   flex: 1;
   padding: 24px 32px;
   overflow-y: auto;
 }
 
-.settings-section {
-  margin-bottom: 40px;
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.settings-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
   
-  &:last-child {
-    margin-bottom: 0;
+  &:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 }
 
-.section-title {
+.card-header {
+  padding: 20px 24px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-primary);
+  border-radius: 12px 12px 0 0;
+}
+
+.card-icon {
+  font-size: 24px;
+  margin-bottom: 12px;
+}
+
+.card-title {
   font-size: 20px;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.settings-grid {
-  display: grid;
-  gap: 20px;
+.card-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.card-content {
+  padding: 20px 24px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-primary);
+  flex-shrink: 0;
   
-  &:hover {
-    border-color: var(--accent-primary);
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  &:first-child {
+    padding-top: 0;
   }
 }
 
@@ -784,12 +927,14 @@ export default {
   font-size: 14px;
   color: var(--text-secondary);
   margin: 0;
+  line-height: 1.4;
 }
 
 .setting-control {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 /* Toggle Switch */
@@ -838,7 +983,13 @@ input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
 
-/* Volume Slider */
+/* Volume Control */
+.volume-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .volume-slider {
   width: 100px;
   height: 6px;
@@ -855,6 +1006,7 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     background: var(--accent-primary);
     cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
   
   &::-moz-range-thumb {
@@ -864,6 +1016,7 @@ input:checked + .toggle-slider:before {
     background: var(--accent-primary);
     cursor: pointer;
     border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 }
 
@@ -872,22 +1025,31 @@ input:checked + .toggle-slider:before {
   color: var(--text-primary);
   min-width: 40px;
   text-align: right;
+  font-weight: 600;
 }
 
 /* Inputs e Selects */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .setting-input {
   width: 80px;
   padding: 8px 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
   text-align: center;
+  transition: all 0.3s ease;
   
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
   }
 }
 
@@ -895,14 +1057,17 @@ input:checked + .toggle-slider:before {
   padding: 8px 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text-primary);
   font-size: 14px;
   min-width: 120px;
+  cursor: pointer;
+  transition: all 0.3s ease;
   
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
   }
   
   option {
@@ -914,66 +1079,93 @@ input:checked + .toggle-slider:before {
 .input-suffix {
   font-size: 14px;
   color: var(--text-secondary);
-  margin-left: 4px;
+  font-weight: 500;
+}
+
+/* Relatórios e Ações */
+.reports-actions-container {
+  display: contents;
 }
 
 /* Ações */
-.settings-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+.actions-card {
+  // Removido grid-column: 1 / -1; pois agora está dentro do container
+}
+
+.actions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  justify-content: space-between;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border: none;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
+  text-align: left;
+  
+  &:hover {
+    border-color: var(--accent-primary);
+    background: var(--bg-overlay);
+  }
   
   .btn-icon {
-    font-size: 16px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  
+  .btn-content {
+    flex: 1;
+  }
+  
+  .btn-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  
+  .btn-description {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
   }
   
   &.reset-btn {
-    background: var(--bg-overlay);
-    color: var(--text-primary);
-    
     &:hover {
-      background: var(--border-secondary);
+      border-color: #ffc107;
+      background: rgba(255, 193, 7, 0.1);
     }
   }
   
   &.export-btn {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    
     &:hover {
-      background: var(--accent-secondary);
+      border-color: var(--accent-primary);
+      background: rgba(0, 255, 136, 0.1);
     }
   }
   
   &.import-btn {
-    background: var(--info);
-    color: var(--text-primary);
-    
     &:hover {
-      background: #0052cc;
+      border-color: #007bff;
+      background: rgba(0, 123, 255, 0.1);
     }
   }
   
   &.clear-btn {
-    background: var(--error);
-    color: var(--text-primary);
-    
     &:hover {
-      background: #cc3333;
+      border-color: #dc3545;
+      background: rgba(220, 53, 69, 0.1);
     }
   }
 }
@@ -1002,22 +1194,49 @@ input:checked + .toggle-slider:before {
 }
 
 /* Responsividade */
+@media (max-width: 1200px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .settings-card {
+    height: 550px;
+  }
+}
+
 @media (max-width: 768px) {
-  .sidebar {
-    position: fixed;
-    left: -280px;
-    top: 0;
-    height: 100vh;
-    z-index: 1000;
-    transition: left 0.3s ease;
+  .content-header {
+    padding: 16px 20px;
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .header-left {
+    width: 100%;
+  }
+  
+  .header-actions {
+    width: 100%;
     
-    &.open {
-      left: 0;
+    .save-all-btn {
+      width: 100%;
+      justify-content: center;
     }
   }
   
   .settings-content {
-    padding: 16px;
+    padding: 16px 20px;
+  }
+  
+  .settings-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .settings-card {
+    height: auto;
+    min-height: 450px;
   }
   
   .setting-item {
@@ -1031,8 +1250,32 @@ input:checked + .toggle-slider:before {
     justify-content: flex-end;
   }
   
-  .settings-actions {
-    grid-template-columns: 1fr;
+  .actions-grid {
+    flex-direction: column;
+  }
+  
+  .action-btn {
+    flex-direction: row;
+    text-align: left;
+    gap: 12px;
+    
+    .btn-content {
+      text-align: left;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .card-header {
+    padding: 20px;
+  }
+  
+  .card-content {
+    padding: 20px;
+  }
+  
+  .setting-item {
+    padding: 12px 0;
   }
 }
 </style>

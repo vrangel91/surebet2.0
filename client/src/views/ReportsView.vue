@@ -16,7 +16,14 @@
           <h2 class="page-title">Relatórios</h2>
           <p class="page-subtitle">Análise detalhada de performance e ganhos</p>
         </div>
-                
+        
+        <div class="header-controls">
+          <button class="control-btn refresh-btn" @click="refreshData" title="Atualizar dados">
+            <svg class="refresh-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            </svg>
+          </button>
+        </div>
       </header>
 
              <!-- Cards de Performance -->
@@ -287,9 +294,9 @@
     </div>
 
     <!-- Modal do Glossário -->
-    <GlossaryModal 
-      v-if="showGlossaryModal" 
-      @close="closeGlossary" 
+        <GlossaryModal
+      :isVisible="showGlossaryModal"
+      @close="closeGlossary"
     />
 
     <!-- Modal de Confirmação de Exclusão -->
@@ -707,6 +714,58 @@ export default {
     closeDeleteModal() {
       this.showDeleteModal = false
       this.betToDelete = null
+    },
+    
+    // Atualizar dados da página
+    async refreshData() {
+      try {
+        console.log('🔄 Atualizando dados...')
+        
+        // Mostrar indicador de loading
+        const refreshBtn = document.querySelector('.refresh-btn')
+        if (refreshBtn) {
+          refreshBtn.classList.add('refreshing')
+          refreshBtn.disabled = true
+        }
+        
+        // Atualizar surebets da API
+        await this.fetchSurebets()
+        
+        // Recarregar apostas armazenadas
+        this.loadStoredBets()
+        
+        // Verificar se o usuário tem créditos para usar o sistema
+        if (this.$store.getters.userCredits <= 0) {
+          const today = new Date().toDateString()
+          const lastConsumption = this.$store.state.user?.lastCreditConsumption 
+            ? new Date(this.$store.state.user.lastCreditConsumption).toDateString() 
+            : null
+          
+          if (lastConsumption !== today) {
+            // Consumir crédito se for um novo dia
+            this.$store.dispatch('checkAndConsumeCredit')
+          }
+        }
+        
+        // Resetar paginação
+        this.currentPage = 1
+        
+        // Mostrar notificação de sucesso
+        this.showNotification('✅ Dados atualizados com sucesso!')
+        
+        console.log('✅ Dados atualizados com sucesso')
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar dados:', error)
+        this.showNotification('❌ Erro ao atualizar dados. Tente novamente.')
+      } finally {
+        // Remover indicador de loading
+        const refreshBtn = document.querySelector('.refresh-btn')
+        if (refreshBtn) {
+          refreshBtn.classList.remove('refreshing')
+          refreshBtn.disabled = false
+        }
+      }
     }
   },
   watch: {
@@ -949,10 +1008,60 @@ export default {
   &:hover {
     background: var(--bg-overlay);
   }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  &.refreshing {
+    .refresh-icon {
+      animation: spin 1s linear infinite;
+    }
+  }
+}
+
+.refresh-btn {
+  background: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+  color: var(--bg-primary);
+  
+  &:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    transform: scale(1.05);
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+  
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.3);
+  }
+  
+  &.refreshing {
+    background: var(--bg-tertiary);
+    border-color: var(--border-primary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    
+    &:hover {
+      background: var(--bg-tertiary);
+      transform: none;
+    }
+  }
 }
 
 .control-icon {
   font-size: 16px;
+}
+
+.refresh-icon {
+  width: 18px;
+  height: 18px;
+  transition: all 0.3s ease;
 }
 
 .performance-cards {
@@ -1575,6 +1684,16 @@ export default {
   to {
     transform: translateX(100%);
     opacity: 0;
+  }
+}
+
+/* Animação de rotação para o botão refresh */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 

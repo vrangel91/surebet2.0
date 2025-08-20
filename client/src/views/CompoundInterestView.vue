@@ -168,9 +168,9 @@
     </main>
 
     <!-- Modal do Glossário -->
-    <GlossaryModal 
-      v-if="showGlossaryModal" 
-      @close="closeGlossary" 
+        <GlossaryModal
+      :isVisible="showGlossaryModal"
+      @close="closeGlossary"
     />
   </div>
 </template>
@@ -204,6 +204,18 @@ export default {
       debounceTimer: null
     }
   },
+  computed: {
+    // Verificação de créditos
+    userCredits() {
+      return this.$store.getters.userCredits
+    },
+    canUseSystem() {
+      return this.$store.getters.canUseSystem
+    },
+    hasCredits() {
+      return this.userCredits > 0 && this.canUseSystem
+    }
+  },
   watch: {
     formData: {
       handler() {
@@ -214,6 +226,52 @@ export default {
     }
   },
   methods: {
+    checkCreditsAndRedirect() {
+      if (!this.hasCredits) {
+        this.showNotification('Você precisa de créditos para acessar a Calculadora de Juros Compostos. Compre créditos para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    showNotification(message, type = 'info') {
+      const notification = document.createElement('div')
+      notification.className = 'notification'
+      notification.textContent = message
+      
+      let backgroundColor = '#00ff88'
+      let textColor = '#1a1a1a'
+      
+      if (type === 'error') {
+        backgroundColor = '#ff6b6b'
+        textColor = '#ffffff'
+      } else if (type === 'warning') {
+        backgroundColor = '#ffc107'
+        textColor = '#1a1a1a'
+      }
+      
+      notification.style.cssText = `
+         position: fixed;
+         top: 100px;
+         right: 20px;
+         background: ${backgroundColor};
+         color: ${textColor};
+         padding: 12px 20px;
+         border-radius: 8px;
+         font-weight: 600;
+         z-index: 10000;
+         animation: slideIn 0.3s ease;
+       `
+      
+      document.body.appendChild(notification)
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease'
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification)
+          }
+        }, 300)
+      }, 3000)
+    },
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
     },
@@ -458,6 +516,9 @@ export default {
   },
 
   mounted() {
+    // Verificar créditos antes de permitir acesso
+    this.checkCreditsAndRedirect()
+    
     // Calcular automaticamente com valores padrão
     this.calculateInterest()
   },
@@ -823,6 +884,29 @@ export default {
   .evolution-table th,
   .evolution-table td {
     padding: 8px;
+  }
+}
+
+/* Animações para notificações */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
   }
 }
 </style>

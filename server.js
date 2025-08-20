@@ -5,6 +5,14 @@ const WebSocket = require('ws');
 const cron = require('node-cron');
 const path = require('path');
 
+// Importar configurações do banco e modelos
+const { sequelize, testConnection } = require('./config/database');
+const { syncModels } = require('./models');
+
+// Importar rotas
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -12,6 +20,10 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'client/dist')));
+
+// Configurar rotas da API
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 8080 });
@@ -112,7 +124,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-// Rotas da API
+// Rotas da API existentes
 app.get('/api/surebets', (req, res) => {
   res.json(surebets);
 });
@@ -140,10 +152,33 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/dist/index.html'));
 });
 
-// Inicializar busca de surebets
-fetchSurebets();
+// Inicializar aplicação
+async function initializeApp() {
+  try {
+    // Testar conexão com banco de dados
+    await testConnection();
+    
+    // Sincronizar modelos
+    await syncModels();
+    
+    // Criar administrador padrão
 
-app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
-  console.log(`WebSocket rodando na porta 8080`);
-});
+    
+    // Inicializar busca de surebets
+    fetchSurebets();
+    
+    // Iniciar servidor
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`🔌 WebSocket rodando na porta 8080`);
+      console.log(`📊 API disponível em http://localhost:${PORT}/api`);
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro ao inicializar aplicação:', error);
+    process.exit(1);
+  }
+}
+
+// Inicializar aplicação
+initializeApp();

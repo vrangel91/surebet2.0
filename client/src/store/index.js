@@ -5,105 +5,8 @@ export default createStore({
     authToken: localStorage.getItem('authToken') || null,
     user: JSON.parse(localStorage.getItem('user')) || null,
     isAuthenticated: !!localStorage.getItem('authToken'),
-    users: JSON.parse(localStorage.getItem('users')) || [
-      {
-        id: '1',
-        name: 'Administrador',
-        email: 'admin@zeroloss.com',
-        role: 'admin',
-        status: 'active',
-        createdAt: '2024-01-01T00:00:00.000Z',
-        lastLogin: null
-      },
-      {
-        id: '2',
-        name: 'Usuário Teste',
-        email: 'user@test.com',
-        role: 'user',
-        status: 'active',
-        createdAt: '2024-01-02T00:00:00.000Z',
-        lastLogin: null
-      }
-    ],
-    tickets: JSON.parse(localStorage.getItem('tickets')) || [
-      {
-        id: '001',
-        userId: '2',
-        userEmail: 'user@test.com',
-        title: 'Problema com login na plataforma',
-        description: 'Não consigo fazer login na minha conta. Aparece erro de credenciais inválidas mesmo com senha correta.',
-        category: 'account',
-        priority: 'high',
-        status: 'open',
-        createdAt: '2024-01-15T10:30:00',
-        updatedAt: '2024-01-15T10:30:00',
-        messages: [
-          {
-            id: 1,
-            author: 'user@test.com',
-            content: 'Não consigo fazer login na minha conta. Aparece erro de credenciais inválidas mesmo com senha correta.',
-            type: 'user',
-            createdAt: '2024-01-15T10:30:00'
-          },
-          {
-            id: 2,
-            author: 'Suporte Técnico',
-            content: 'Olá! Vamos verificar isso. Pode tentar resetar sua senha através do link "Esqueci minha senha"?',
-            type: 'support',
-            createdAt: '2024-01-15T11:00:00'
-          }
-        ]
-      },
-      {
-        id: '002',
-        userId: '2',
-        userEmail: 'user@test.com',
-        title: 'Dúvida sobre planos e preços',
-        description: 'Gostaria de saber mais detalhes sobre os planos disponíveis e se há desconto para pagamento anual.',
-        category: 'billing',
-        priority: 'medium',
-        status: 'pending',
-        createdAt: '2024-01-14T14:20:00',
-        updatedAt: '2024-01-15T09:15:00',
-        messages: [
-          {
-            id: 1,
-            author: 'user@test.com',
-            content: 'Gostaria de saber mais detalhes sobre os planos disponíveis e se há desconto para pagamento anual.',
-            type: 'user',
-            createdAt: '2024-01-14T14:20:00'
-          }
-        ]
-      },
-      {
-        id: '003',
-        userId: '2',
-        userEmail: 'user@test.com',
-        title: 'Sugestão de nova funcionalidade',
-        description: 'Seria muito útil ter uma funcionalidade de exportar relatórios em PDF. Poderiam implementar isso?',
-        category: 'feature',
-        priority: 'low',
-        status: 'closed',
-        createdAt: '2024-01-10T16:45:00',
-        updatedAt: '2024-01-12T11:30:00',
-        messages: [
-          {
-            id: 1,
-            author: 'user@test.com',
-            content: 'Seria muito útil ter uma funcionalidade de exportar relatórios em PDF. Poderiam implementar isso?',
-            type: 'user',
-            createdAt: '2024-01-10T16:45:00'
-          },
-          {
-            id: 2,
-            author: 'Suporte Técnico',
-            content: 'Obrigado pela sugestão! Vamos analisar a viabilidade e incluí-la em nossa roadmap de desenvolvimento.',
-            type: 'support',
-            createdAt: '2024-01-12T11:30:00'
-          }
-        ]
-      }
-    ]
+    users: JSON.parse(localStorage.getItem('users')) || [],
+    tickets: JSON.parse(localStorage.getItem('tickets')) || []
   },
   
   mutations: {
@@ -134,8 +37,23 @@ export default createStore({
       localStorage.removeItem('user')
     },
     
+    // Limpar dados mocados do localStorage
+    clearMockData(state) {
+      // Limpar usuários e tickets mocados
+      localStorage.removeItem('users')
+      localStorage.removeItem('tickets')
+      state.users = []
+      state.tickets = []
+      console.log('🗑️ Dados mocados removidos do localStorage')
+    },
+    
     addUser(state, user) {
       state.users.push(user)
+      localStorage.setItem('users', JSON.stringify(state.users))
+    },
+    
+    setUsers(state, users) {
+      state.users = users
       localStorage.setItem('users', JSON.stringify(state.users))
     },
     
@@ -180,6 +98,70 @@ export default createStore({
         ticket.updatedAt = new Date().toISOString()
         localStorage.setItem('tickets', JSON.stringify(state.tickets))
       }
+    },
+    
+    // Mutations para sistema de créditos
+    consumeCredit(state, userId) {
+      const user = state.users.find(u => u.id === userId)
+      if (user && user.credits > 0) {
+        user.credits--
+        user.lastCreditConsumption = new Date().toISOString()
+        localStorage.setItem('users', JSON.stringify(state.users))
+        
+        // Atualizar usuário atual se for o mesmo
+        if (state.user && state.user.id === userId) {
+          state.user.credits = user.credits
+          state.user.lastCreditConsumption = user.lastCreditConsumption
+          localStorage.setItem('user', JSON.stringify(state.user))
+        }
+      }
+    },
+    
+    addCredits(state, { userId, amount }) {
+      const user = state.users.find(u => u.id === userId)
+      if (user) {
+        // Garantir que credits seja um número
+        if (typeof user.credits !== 'number') {
+          user.credits = 0
+        }
+        
+        user.credits += amount
+        localStorage.setItem('users', JSON.stringify(state.users))
+        
+        // Atualizar usuário atual se for o mesmo
+        if (state.user && state.user.id === userId) {
+          state.user.credits = user.credits
+          localStorage.setItem('user', JSON.stringify(state.user))
+        }
+        
+        console.log(`Créditos adicionados: ${amount} para usuário ${userId}. Total: ${user.credits}`)
+      } else {
+        console.error(`Usuário não encontrado: ${userId}`)
+      }
+    },
+    
+    updateAccountType(state, { userId, accountType }) {
+      const user = state.users.find(u => u.id === userId)
+      if (user) {
+        user.accountType = accountType
+        localStorage.setItem('users', JSON.stringify(state.users))
+        
+        // Atualizar usuário atual se for o mesmo
+        if (state.user && state.user.id === userId) {
+          state.user.accountType = accountType
+          localStorage.setItem('user', JSON.stringify(state.user))
+        }
+      }
+    },
+    
+    // Garantir que todos os usuários tenham a propriedade credits
+    ensureUserCredits(state) {
+      state.users.forEach(user => {
+        if (typeof user.credits !== 'number') {
+          user.credits = 0
+        }
+      })
+      localStorage.setItem('users', JSON.stringify(state.users))
     }
   },
   
@@ -263,6 +245,96 @@ export default createStore({
     
     addMessageToTicket({ commit }, { ticketId, message }) {
       commit('addTicketMessage', { ticketId, message })
+    },
+    
+    // Actions para sistema de créditos
+    checkAndConsumeCredit({ commit, state, getters }) {
+      const user = state.user
+      if (!user) return false
+      
+      // Verificar se já consumiu crédito hoje
+      const today = new Date().toDateString()
+      const lastConsumption = user.lastCreditConsumption 
+        ? new Date(user.lastCreditConsumption).toDateString() 
+        : null
+      
+      if (lastConsumption === today) {
+        return true // Já consumiu hoje, pode usar
+      }
+      
+      // Verificar se tem créditos disponíveis
+      if (user.credits > 0) {
+        commit('consumeCredit', user.id)
+        return true
+      }
+      
+      return false // Sem créditos
+    },
+    
+    addCreditsToUser({ commit }, { userId, amount }) {
+      console.log('Action addCreditsToUser chamada:', { userId, amount })
+      commit('addCredits', { userId, amount })
+    },
+    
+    upgradeAccountType({ commit }, { userId, accountType }) {
+      commit('updateAccountType', { userId, accountType })
+    },
+    
+    ensureAllUsersHaveCredits({ commit }) {
+      commit('ensureUserCredits')
+    },
+    
+    // Limpar dados mocados na inicialização
+    clearMockDataOnInit({ commit }) {
+      commit('clearMockData')
+    },
+    
+    // Buscar usuários da API
+    async fetchUsers({ commit, state }) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          console.error('❌ Token de autenticação não encontrado')
+          return
+        }
+        
+        const response = await fetch('/api/users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        if (data.success && data.users) {
+          // Mapear os campos do backend para o formato do frontend
+          const mappedUsers = data.users.map(user => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            credits: user.credits || 0,
+            accountType: user.account_type || 'basic',
+            lastLogin: user.last_login,
+            createdAt: user.created_at,
+            updatedAt: user.updated_at
+          }))
+          
+          commit('setUsers', mappedUsers)
+          console.log(`✅ ${mappedUsers.length} usuário(s) carregado(s) da API`)
+        } else {
+          console.error('❌ Resposta da API inválida:', data)
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar usuários:', error)
+      }
     }
   },
   
@@ -278,6 +350,46 @@ export default createStore({
     userTickets: state => state.tickets.filter(ticket => ticket.userId === state.user?.id),
     openTickets: state => state.tickets.filter(ticket => ticket.status === 'open'),
     pendingTickets: state => state.tickets.filter(ticket => ticket.status === 'pending'),
-    closedTickets: state => state.tickets.filter(ticket => ticket.status === 'closed')
+    closedTickets: state => state.tickets.filter(ticket => ticket.status === 'closed'),
+    
+    // Getters para sistema de créditos
+    userCredits: state => state.user?.credits || 0,
+    userAccountType: state => state.user?.accountType || 'basic',
+    canUseSystem: state => {
+      if (!state.user) return false
+      if (state.user.role === 'admin') return true
+      
+      const today = new Date().toDateString()
+      const lastConsumption = state.user.lastCreditConsumption 
+        ? new Date(state.user.lastCreditConsumption).toDateString() 
+        : null
+      
+      return lastConsumption === today || state.user.credits > 0
+    },
+    accountTypeInfo: () => {
+      return {
+        basic: {
+          name: 'Básico',
+          description: 'Acesso básico ao sistema',
+          features: ['Acesso às surebets', 'Filtros básicos', 'Relatórios simples'],
+          price: 'Grátis',
+          creditsPerDay: 1
+        },
+        premium: {
+          name: 'Premium',
+          description: 'Acesso completo com recursos avançados',
+          features: ['Todas as funcionalidades básicas', 'Filtros avançados', 'Relatórios detalhados', 'Prioridade no suporte'],
+          price: 'R$ 29,90/mês',
+          creditsPerDay: 1
+        },
+        vip: {
+          name: 'VIP',
+          description: 'Acesso exclusivo com recursos premium',
+          features: ['Todas as funcionalidades premium', 'Filtros personalizados', 'Relatórios em tempo real', 'Suporte prioritário 24/7', 'Funcionalidades exclusivas'],
+          price: 'R$ 99,90/mês',
+          creditsPerDay: 1
+        }
+      }
+    }
   }
 })

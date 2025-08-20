@@ -8,6 +8,7 @@ import PlansView from '../views/PlansView.vue'
 import ReferralsView from '../views/ReferralsView.vue'
 import SupportView from '../views/SupportView.vue'
 import CompoundInterestView from '../views/CompoundInterestView.vue'
+import RankingView from '../views/RankingView.vue'
 import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
@@ -62,6 +63,12 @@ const routes = [
     path: '/compound-interest',
     name: 'compound-interest',
     component: CompoundInterestView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/ranking',
+    name: 'ranking',
+    component: RankingView,
     beforeEnter: requireAuth
   }
 ]

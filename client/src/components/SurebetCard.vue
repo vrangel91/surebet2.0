@@ -10,15 +10,9 @@
           <span class="time-icon">🕐</span>
           {{ formatDateTime(surebet[0]?.timestamp) }}
         </span>
-        <div class="action-icons">
-          <button class="action-btn" @click="calculateBet">
-            <span class="action-icon">🧮</span>
-          </button>
-          <button class="action-btn" @click="refreshBet">
-            <span class="action-icon">🔄</span>
-          </button>
+        <div class="action-icons">          
           <button class="action-btn" @click="addToReports" title="Adicionar aos Relatórios">
-            <span class="action-icon">📊</span>
+            <span class="action-icon">✚</span>
           </button>
         </div>
       </div>
@@ -83,9 +77,6 @@
         </div>
       </div>
     </div>
-
-
-    
   </div>
 </template>
 
@@ -173,9 +164,7 @@ export default {
       ))
       
       return Math.round((minReturn - this.totalInvestment) * 100) / 100
-    },
-    
-
+    }
   },
   mounted() {
     this.loadSettings()
@@ -245,18 +234,18 @@ export default {
       const notification = document.createElement('div')
       notification.className = 'notification'
       notification.textContent = message
-             notification.style.cssText = `
-         position: fixed;
-         top: 100px;
-         right: 20px;
-         background: #00ff88;
-         color: #1a1a1a;
-         padding: 12px 20px;
-         border-radius: 8px;
-         font-weight: 600;
-         z-index: 10000;
-         animation: slideIn 0.3s ease;
-       `
+      notification.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: #00ff88;
+        color: #1a1a1a;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `
       
       document.body.appendChild(notification)
       
@@ -598,84 +587,6 @@ export default {
   font-size: 12px;
 }
 
-/* Resumo do Cálculo */
-.calculation-summary {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 20px;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-primary);
-  
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.summary-label {
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.summary-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  
-  &.profit {
-    color: var(--accent-primary);
-  }
-}
-
-.card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-primary);
-}
-
-.profit-summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profit-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.profit-value {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--accent-primary);
-}
-
-.card-stats {
-  display: flex;
-  gap: 12px;
-}
-
-.stat {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.stat-icon {
-  font-size: 14px;
-}
-
 @media (max-width: 768px) {
   .surebet-card {
     padding: 16px;
@@ -698,12 +609,6 @@ export default {
     min-width: auto;
     width: 100%;
     justify-content: space-between;
-  }
-  
-  .card-footer {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
   }
 }
 </style>

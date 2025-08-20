@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste da Página de Ranking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+        .test-section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .test-button {
+            background: #00ff88;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        .test-button:hover {
+            background: #00cc6a;
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .results {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #00ff88; }
+        .error { color: #ff4444; }
+        .warning { color: #ffaa00; }
+        .info { color: #00aaff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste da Página de Ranking</h1>
+    
+    <div class="test-section">
+        <h2>📊 Testes de Dados</h2>
+        <button class="test-button" onclick="testDataStructure()">Testar Estrutura de Dados</button>
+        <button class="test-button" onclick="testBookmakerProcessing()">Testar Processamento de Bookmakers</button>
+        <button class="test-button" onclick="testStatistics()">Testar Cálculo de Estatísticas</button>
+        <div id="data-results" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🌐 Testes da API</h2>
+        <button class="test-button" onclick="testAPIConnectivity()">Testar Conectividade</button>
+        <button class="test-button" onclick="testAPIEndpoint()">Testar Endpoint</button>
+        <button class="test-button" onclick="testAPITimeout()">Testar Timeout</button>
+        <div id="api-results" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>📋 Testes da Página</h2>
+        <button class="test-button" onclick="testPageElements()">Testar Elementos da Página</button>
+        <button class="test-button" onclick="testCharts()">Testar Gráficos</button>
+        <button class="test-button" onclick="testResponsiveness()">Testar Responsividade</button>
+        <div id="page-results" class="results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>🚀 Testes Completos</h2>
+        <button class="test-button" onclick="runAllTests()">Executar Todos os Testes</button>
+        <button class="test-button" onclick="generateReport()">Gerar Relatório</button>
+        <div id="complete-results" class="results"></div>
+    </div>
+
+    <script>
+        // Dados de teste
+        const testSurebets = [
+            {
+                id: 'test_001',
+                bookmaker1: 'Bet365',
+                bookmaker2: 'William Hill',
+                profit: 15.50,
+                roi: 3.2,
+                createdAt: '2024-01-15T10:00:00Z'
+            },
+            {
+                id: 'test_002',
+                bookmaker1: 'Bet365',
+                bookmaker2: 'Unibet',
+                profit: 12.80,
+                roi: 2.8,
+                createdAt: '2024-01-14T15:30:00Z'
+            },
+            {
+                id: 'test_003',
+                bookmaker1: 'William Hill',
+                bookmaker2: 'Betfair',
+                profit: 18.20,
+                roi: 4.1,
+                createdAt: '2024-01-13T09:15:00Z'
+            }
+        ];
+
+        // Funções de teste
+        function logResults(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            element.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            element.scrollTop = element.scrollHeight;
+        }
+
+        function testDataStructure() {
+            const results = document.getElementById('data-results');
+            results.innerHTML = '';
+            
+            logResults('data-results', '🧪 Testando estrutura de dados...', 'info');
+            
+            try {
+                // Verificar se os dados têm a estrutura correta
+                const requiredFields = ['id', 'bookmaker1', 'profit', 'roi', 'createdAt'];
+                let isValid = true;
+                
+                testSurebets.forEach((surebet, index) => {
+                    const missingFields = requiredFields.filter(field => !surebet.hasOwnProperty(field));
+                    if (missingFields.length > 0) {
+                        logResults('data-results', `❌ Surebet ${index + 1} está faltando campos: ${missingFields.join(', ')}`, 'error');
+                        isValid = false;
+                    }
+                });
+                
+                if (isValid) {
+                    logResults('data-results', '✅ Estrutura de dados é válida', 'success');
+                    logResults('data-results', `📊 Total de surebets: ${testSurebets.length}`, 'info');
+                }
+                
+            } catch (error) {
+                logResults('data-results', `❌ Erro ao testar estrutura: ${error.message}`, 'error');
+            }
+        }
+
+        function testBookmakerProcessing() {
+            const results = document.getElementById('data-results');
+            results.innerHTML = '';
+            
+            logResults('data-results', '🔄 Testando processamento de bookmakers...', 'info');
+            
+            try {
+                const bookmakerStats = {};
+                
+                testSurebets.forEach(surebet => {
+                    // Processar bookmaker1
+                    if (surebet.bookmaker1) {
+                        const bookmaker = surebet.bookmaker1.trim();
+                        if (bookmaker) {
+                            if (!bookmakerStats[bookmaker]) {
+                                bookmakerStats[bookmaker] = {
+                                    name: bookmaker,
+                                    count: 0,
+                                    totalProfit: 0,
+                                    totalROI: 0
+                                };
+                            }
+                            
+                            bookmakerStats[bookmaker].count++;
+                            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0;
+                            bookmakerStats[bookmaker].totalROI += surebet.roi || 0;
+                        }
+                    }
+                    
+                    // Processar bookmaker2
+                    if (surebet.bookmaker2 && surebet.bookmaker2.trim()) {
+                        const bookmaker = surebet.bookmaker2.trim();
+                        if (bookmaker) {
+                            if (!bookmakerStats[bookmaker]) {
+                                bookmakerStats[bookmaker] = {
+                                    name: bookmaker,
+                                    count: 0,
+                                    totalProfit: 0,
+                                    totalROI: 0
+                                };
+                            }
+                            
+                            bookmakerStats[bookmaker].count++;
+                            bookmakerStats[bookmaker].totalProfit += surebet.profit || 0;
+                            bookmakerStats[bookmaker].totalROI += surebet.roi || 0;
+                        }
+                    }
+                });
+                
+                // Calcular médias
+                Object.values(bookmakerStats).forEach(stats => {
+                    stats.averageROI = stats.count > 0 ? stats.totalROI / stats.count : 0;
+                    stats.averageProfit = stats.count > 0 ? stats.totalProfit / stats.count : 0;
+                });
+                
+                logResults('data-results', '✅ Processamento de bookmakers concluído', 'success');
+                logResults('data-results', `📊 Bookmakers encontrados: ${Object.keys(bookmakerStats).length}`, 'info');
+                
+                Object.entries(bookmakerStats).forEach(([name, stats]) => {
+                    logResults('data-results', `🏆 ${name}: ${stats.count} surebets, ROI médio: ${stats.averageROI.toFixed(2)}%, Lucro médio: ${stats.averageProfit.toFixed(2)}`, 'info');
+                });
+                
+            } catch (error) {
+                logResults('data-results', `❌ Erro ao processar bookmakers: ${error.message}`, 'error');
+            }
+        }
+
+        function testStatistics() {
+            const results = document.getElementById('data-results');
+            results.innerHTML = '';
+            
+            logResults('data-results', '📈 Testando cálculo de estatísticas...', 'info');
+            
+            try {
+                const totalSurebets = testSurebets.length;
+                const totalProfit = testSurebets.reduce((sum, s) => sum + (s.profit || 0), 0);
+                const averageROI = testSurebets.reduce((sum, s) => sum + (s.roi || 0), 0) / totalSurebets;
+                
+                logResults('data-results', '✅ Estatísticas calculadas com sucesso', 'success');
+                logResults('data-results', `📊 Total de surebets: ${totalSurebets}`, 'info');
+                logResults('data-results', `💰 Lucro total: ${totalProfit.toFixed(2)}`, 'info');
+                logResults('data-results', `📈 ROI médio: ${averageROI.toFixed(2)}%`, 'info');
+                
+            } catch (error) {
+                logResults('data-results', `❌ Erro ao calcular estatísticas: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAPIConnectivity() {
+            const results = document.getElementById('api-results');
+            results.innerHTML = '';
+            
+            logResults('api-results', '🌐 Testando conectividade com a API...', 'info');
+            
+            try {
+                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
+                    method: 'HEAD',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    logResults('api-results', '✅ API está respondendo', 'success');
+                    logResults('api-results', `📡 Status: ${response.status}`, 'info');
+                } else {
+                    logResults('api-results', `⚠️ API respondeu com status: ${response.status}`, 'warning');
+                }
+                
+            } catch (error) {
+                logResults('api-results', `❌ Erro de conectividade: ${error.message}`, 'error');
+                logResults('api-results', '💡 Verifique se a API está online e se não há problemas de CORS', 'info');
+            }
+        }
+
+        async function testAPIEndpoint() {
+            const results = document.getElementById('api-results');
+            results.innerHTML = '';
+            
+            logResults('api-results', '🧪 Testando endpoint da API...', 'info');
+            
+            try {
+                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    logResults('api-results', '✅ Endpoint funcionando', 'success');
+                    logResults('api-results', `📊 Dados recebidos: ${Object.keys(data).length} surebets`, 'info');
+                    
+                    // Verificar estrutura dos dados
+                    if (data && typeof data === 'object') {
+                        logResults('api-results', '✅ Estrutura de dados válida', 'success');
+                    } else {
+                        logResults('api-results', '⚠️ Estrutura de dados inesperada', 'warning');
+                    }
+                    
+                } else {
+                    logResults('api-results', `❌ Endpoint retornou erro: ${response.status}`, 'error');
+                }
+                
+            } catch (error) {
+                logResults('api-results', `❌ Erro ao testar endpoint: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAPITimeout() {
+            const results = document.getElementById('api-results');
+            results.innerHTML = '';
+            
+            logResults('api-results', '⏱️ Testando timeout da API...', 'info');
+            
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 segundos
+                
+                const startTime = Date.now();
+                
+                const response = await fetch('https://zerolossbet.com/api/fetch_surebets/', {
+                    method: 'GET',
+                    mode: 'cors',
+                    signal: controller.signal
+                });
+                
+                clearTimeout(timeoutId);
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+                
+                logResults('api-results', `✅ API respondeu em ${responseTime}ms`, 'success');
+                
+                if (responseTime > 30000) {
+                    logResults('api-results', '⚠️ API respondeu, mas demorou mais que 30 segundos', 'warning');
+                }
+                
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    logResults('api-results', '⏰ API excedeu o timeout de 30 segundos', 'error');
+                } else {
+                    logResults('api-results', `❌ Erro durante teste de timeout: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        function testPageElements() {
+            const results = document.getElementById('page-results');
+            results.innerHTML = '';
+            
+            logResults('page-results', '📋 Testando elementos da página...', 'info');
+            
+            try {
+                // Verificar se estamos na página de ranking
+                const rankingContainer = document.querySelector('.ranking-container');
+                if (!rankingContainer) {
+                    logResults('page-results', '❌ Página de ranking não encontrada', 'error');
+                    logResults('page-results', '💡 Navegue para /ranking para executar este teste', 'info');
+                    return;
+                }
+                
+                logResults('page-results', '✅ Container de ranking encontrado', 'success');
+                
+                // Verificar seções principais
+                const sections = [
+                    { selector: '.stats-section', name: 'Seção de Estatísticas' },
+                    { selector: '.ranking-table-section', name: 'Tabela de Ranking' },
+                    { selector: '.chart-section', name: 'Seção de Gráficos' },
+                    { selector: '.filters-section', name: 'Seção de Filtros' }
+                ];
+                
+                sections.forEach(section => {
+                    const element = document.querySelector(section.selector);
+                    if (element) {
+                        logResults('page-results', `✅ ${section.name} encontrada`, 'success');
+                    } else {
+                        logResults('page-results', `❌ ${section.name} não encontrada`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                logResults('page-results', `❌ Erro ao testar elementos: ${error.message}`, 'error');
+            }
+        }
+
+        function testCharts() {
+            const results = document.getElementById('page-results');
+            results.innerHTML = '';
+            
+            logResults('page-results', '📊 Testando gráficos...', 'info');
+            
+            try {
+                const charts = document.querySelectorAll('canvas');
+                
+                if (charts.length === 0) {
+                    logResults('page-results', '❌ Nenhum gráfico encontrado', 'error');
+                    return;
+                }
+                
+                logResults('page-results', `✅ ${charts.length} gráficos encontrados`, 'success');
+                
+                charts.forEach((chart, index) => {
+                    const ctx = chart.getContext('2d');
+                    if (ctx) {
+                        logResults('page-results', `✅ Gráfico ${index + 1}: Contexto disponível`, 'success');
+                    } else {
+                        logResults('page-results', `❌ Gráfico ${index + 1}: Contexto não disponível`, 'error');
+                    }
+                });
+                
+            } catch (error) {
+                logResults('page-results', `❌ Erro ao testar gráficos: ${error.message}`, 'error');
+            }
+        }
+
+        function testResponsiveness() {
+            const results = document.getElementById('page-results');
+            results.innerHTML = '';
+            
+            logResults('page-results', '📱 Testando responsividade...', 'info');
+            
+            try {
+                const width = window.innerWidth;
+                const isMobile = width <= 768;
+                const isTablet = width <= 1200 && width > 768;
+                
+                logResults('page-results', `📱 Largura da tela: ${width}px`, 'info');
+                logResults('page-results', `📱 Dispositivo: ${isMobile ? 'Mobile' : isTablet ? 'Tablet' : 'Desktop'}`, 'info');
+                
+                // Verificar se há estilos responsivos
+                const mainContent = document.querySelector('.main-content');
+                if (mainContent) {
+                    const computedStyle = window.getComputedStyle(mainContent);
+                    logResults('page-results', `📱 Flexbox: ${computedStyle.flexDirection}`, 'info');
+                }
+                
+                logResults('page-results', '✅ Teste de responsividade concluído', 'success');
+                
+            } catch (error) {
+                logResults('page-results', `❌ Erro ao testar responsividade: ${error.message}`, 'error');
+            }
+        }
+
+        async function runAllTests() {
+            const results = document.getElementById('complete-results');
+            results.innerHTML = '';
+            
+            logResults('complete-results', '🚀 Executando todos os testes...', 'info');
+            
+            try {
+                // Testes de dados
+                logResults('complete-results', '📊 Executando testes de dados...', 'info');
+                testDataStructure();
+                testBookmakerProcessing();
+                testStatistics();
+                
+                // Testes da API
+                logResults('complete-results', '🌐 Executando testes da API...', 'info');
+                await testAPIConnectivity();
+                await testAPIEndpoint();
+                await testAPITimeout();
+                
+                // Testes da página
+                logResults('complete-results', '📋 Executando testes da página...', 'info');
+                testPageElements();
+                testCharts();
+                testResponsiveness();
+                
+                logResults('complete-results', '🎉 Todos os testes foram executados!', 'success');
+                logResults('complete-results', '💡 Verifique os resultados de cada seção acima', 'info');
+                
+            } catch (error) {
+                logResults('complete-results', `❌ Erro durante execução dos testes: ${error.message}`, 'error');
+            }
+        }
+
+        function generateReport() {
+            const results = document.getElementById('complete-results');
+            results.innerHTML = '';
+            
+            logResults('complete-results', '📄 Gerando relatório de testes...', 'info');
+            
+            const report = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                screenSize: `${screen.width}x${screen.height}`,
+                windowSize: `${window.innerWidth}x${window.innerHeight}`,
+                url: window.location.href
+            };
+            
+            logResults('complete-results', '📋 Informações do Sistema:', 'info');
+            logResults('complete-results', `📅 Data/Hora: ${new Date(report.timestamp).toLocaleString('pt-BR')}`, 'info');
+            logResults('complete-results', `🌐 URL: ${report.url}`, 'info');
+            logResults('complete-results', `📱 Tela: ${report.screenSize}`, 'info');
+            logResults('complete-results', `🪟 Janela: ${report.windowSize}`, 'info');
+            
+            logResults('complete-results', '✅ Relatório gerado com sucesso', 'success');
+            logResults('complete-results', '💡 Copie estas informações para o suporte técnico se necessário', 'info');
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            logResults('complete-results', '🔧 Página de teste carregada com sucesso!', 'success');
+            logResults('complete-results', '💡 Use os botões acima para executar diferentes tipos de teste', 'info');
+        });
+    </script>
+</body>
+</html>

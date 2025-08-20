@@ -87,7 +87,7 @@
           
           <div class="rocket-illustration">
             <img 
-              src="../assets/img/welcome-banner.png" 
+              src="../assets/img/welcome-banner.gif" 
               alt="Welcome Banner" 
               class="welcome-banner-img"
             >

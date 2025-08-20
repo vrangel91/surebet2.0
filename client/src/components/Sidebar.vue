@@ -25,34 +25,47 @@
           </svg>
         </div>
         <div class="user-details" v-show="!shouldBeCollapsed">
-          <p class="user-greeting">Olá, {{ currentUser?.email || 'Usuário' }}</p>
+          <p class="user-greeting">Olá, {{ currentUser?.name || 'Usuário' }}</p>
           <div class="user-status"> 
             <span class="status-dot"></span>
             <span class="status-text">Online</span>
           </div>
         </div>
       </div>
+      
+      <!-- Status da Conta Compacto -->
+      <CreditStatus :compact="true" v-show="!shouldBeCollapsed" />
     </div>
 
     <!-- Menu de Navegação -->
     <nav class="sidebar-nav">
       <ul class="nav-list">
+        <!-- Dashboard/Surebets sempre em primeiro -->
         <li class="nav-item" :class="{ active: $route.path === '/' }">
-          <router-link to="/" class="nav-link" :title="shouldBeCollapsed ? 'Dashboard' : ''">
+          <div class="nav-link" :class="{ 'locked': !hasCredits }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5ZM13 7.207V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 1 13.5V7.207l5-5 5 5Z"/>
+              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
             </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Dashboard</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Surebets</span>
+            <svg v-if="!hasCredits" class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+            </svg>
+          </div>
+        </li>
+
+        <!-- Administração (só para admins) -->
+        <li v-if="isAdmin" class="nav-item" :class="{ active: $route.path === '/admin' }">
+          <router-link to="/admin" class="nav-link" :title="shouldBeCollapsed ? 'Administração' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+            </svg>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Administração</span>
           </router-link>
         </li>
-        <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-          <router-link to="/reports" class="nav-link" :title="shouldBeCollapsed ? 'Relatórios' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
-            </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
-          </router-link>
-        </li>
+
+        <!-- Configurações -->
         <li class="nav-item" :class="{ active: $route.path === '/settings' }">
           <router-link to="/settings" class="nav-link" :title="shouldBeCollapsed ? 'Configurações' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -61,15 +74,35 @@
             <span class="nav-text" v-show="!shouldBeCollapsed">Configurações</span>
           </router-link>
         </li>
-        <li v-if="isAdmin" class="nav-item" :class="{ active: $route.path === '/admin' }">
-          <router-link to="/admin" class="nav-link" :title="shouldBeCollapsed ? 'Administração' : ''">
+
+        <!-- Juros Compostos -->
+        <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
+          <div class="nav-link" :class="{ 'locked': !hasCredits }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+              <path d="M3.5 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
+              <path d="M3.5 5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
+              <path d="M3.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
+              <path d="M3.5 11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
+              <path d="M3.5 14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
             </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Administração</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
+            <svg v-if="!hasCredits" class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+            </svg>
+          </div>
+        </li>
+
+        <!-- Indicações -->
+        <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
+          <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M7 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+            </svg>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Indicações</span>
           </router-link>
         </li>
+
+        <!-- Planos -->
         <li class="nav-item" :class="{ active: $route.path === '/plans' }">
           <router-link to="/plans" class="nav-link" :title="shouldBeCollapsed ? 'Planos' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -79,35 +112,42 @@
             <span class="nav-text" v-show="!shouldBeCollapsed">Planos</span>
           </router-link>
         </li>
-        <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
-          <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
+
+        <!-- Relatórios -->
+        <li class="nav-item" :class="{ active: $route.path === '/reports' }">
+          <div class="nav-link" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3A1.5 1.5 0 0 1 15 10.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+            </svg>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
+          </div>
+        </li>
+
+        <!-- Ranking -->
+        <li class="nav-item" :class="{ active: $route.path === '/ranking' }">
+          <router-link to="/ranking" class="nav-link" :title="shouldBeCollapsed ? 'Ranking' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
               <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-              <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
             </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Indicações</span>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Ranking</span>
           </router-link>
         </li>
-              <li class="nav-item" :class="{ active: $route.path === '/support' }">
-        <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
-          <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-            <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-          </svg>
-          <span class="nav-text" v-show="!shouldBeCollapsed">Suporte</span>
-        </router-link>
-      </li>
-      <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
-        <router-link to="/compound-interest" class="nav-link" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
-          <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-            <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-            <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V4.5A.5.5 0 0 1 8 4z"/>
-          </svg>
-          <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
-        </router-link>
-      </li>
+
+        <!-- Suporte -->
+        <li class="nav-item" :class="{ active: $route.path === '/support' }">
+          <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z"/>
+              <path d="M8 4.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1-.5-.5z"/>
+              <path d="M8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+            </svg>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Suporte</span>
+          </router-link>
+        </li>
+
+        <!-- Glosário -->
         <li class="nav-item">
           <button class="nav-link glossary-btn" @click="openGlossary" :title="shouldBeCollapsed ? 'Glosário' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -116,6 +156,8 @@
             <span class="nav-text" v-show="!shouldBeCollapsed">Glosário</span>
           </button>
         </li>
+
+        <!-- Sair -->
         <li class="nav-item">
           <button class="nav-link logout-btn" @click="logout" :title="shouldBeCollapsed ? 'Sair' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -131,8 +173,13 @@
 </template>
 
 <script>
+import CreditStatus from './CreditStatus.vue'
+
 export default {
   name: 'Sidebar',
+  components: {
+    CreditStatus
+  },
   props: {
     sidebarCollapsed: {
       type: Boolean,
@@ -154,6 +201,16 @@ export default {
     // Computed para determinar se a sidebar deve estar colapsada
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
+    },
+    // Verificação de créditos
+    userCredits() {
+      return this.$store.getters.userCredits
+    },
+    canUseSystem() {
+      return this.$store.getters.canUseSystem
+    },
+    hasCredits() {
+      return this.userCredits > 0 && this.canUseSystem
     }
   },
   watch: {
@@ -180,6 +237,40 @@ export default {
     window.removeEventListener('storage', this.handleStorageChange)
   },
   methods: {
+    handleDashboardClick() {
+      if (this.hasCredits) {
+        this.$router.push('/')
+      } else {
+        this.showNotification('Você precisa de créditos para acessar os Surebets. Compre créditos para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    handleReportsClick() {
+      if (this.hasCredits) {
+        // Se já estiver na página de relatórios, força o refresh
+        if (this.$route.path === '/reports') {
+          // Força o refresh da página
+          window.location.reload()
+        } else {
+          // Navega para a página de relatórios
+          this.$router.push('/reports')
+        }
+      } else {
+        this.showNotification('Você precisa de créditos para acessar os Relatórios. Compre créditos para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    handleCompoundInterestClick() {
+      if (this.hasCredits) {
+        this.$router.push('/compound-interest')
+      } else {
+        this.showNotification('Você precisa de créditos para acessar a Calculadora de Juros Compostos. Compre créditos para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    showNotification(message, type = 'info') {
+      this.$emit('show-notification', { message, type })
+    },
     toggleSidebar() {
       this.internalCollapsed = !this.internalCollapsed
       this.saveSidebarState(this.internalCollapsed)
@@ -415,6 +506,35 @@ export default {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+.lock-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  opacity: 0.7;
+  color: #ff4444;
+}
+
+.nav-link.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.nav-link.locked:hover {
+  background: var(--bg-secondary, #2a2a2a);
+  border-color: var(--border-primary, rgba(255, 255, 255, 0.1));
+  transform: none;
+}
+
+.nav-link.locked .nav-icon {
+  opacity: 0.5;
+}
+
+.nav-link.locked .nav-text {
+  opacity: 0.5;
 }
 
 .nav-text {

@@ -44,18 +44,11 @@
                 <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
               </button>
            </div>
-         </div>
-      </header>
+                  </div>
+       </header>
 
-      <!-- Indicador de Status de Conexão -->
-      <div class="connection-status-bar">
-        <div class="status-item" :class="{ connected: websocketConnected, polling: !websocketConnected && pollingInterval }">
-          <div class="status-indicator"></div>
-          <span class="status-text">
-            {{ websocketConnected ? 'Conectado via WebSocket' : (pollingInterval ? 'Conectado via HTTP' : 'Desconectado') }}
-          </span>
-        </div>
-      </div>
+       
+             
 
                      <!-- Filtros Simples -->
         <div class="filters">
@@ -94,49 +87,51 @@
             <div v-else class="games-count">
               Total de jogos encontrados: {{ totalSurebets }}
             </div>
+            
+
           </div>
         </div>
 
-      <!-- Lista de Surebets -->
-      <div class="surebets-list">
+              <!-- Lista de Surebets -->
+        <div class="surebets-list">
         <div v-if="loading" class="loading">
           <div class="loading-spinner"></div>
           <p>Carregando surebets...</p>
         </div>
         
-                 <div v-else-if="filteredSurebets.length === 0" class="empty-state">
-           <div class="animated-container">
-             <!-- Mensagem principal animada -->
-             <div class="main-message">
-               <h2 class="animated-text">Nenhum Surebet Disponível</h2>
-               <div class="pulse-dot"></div>
-             </div>
-             
-             <!-- Submensagem com efeito de digitação -->
-             <p class="typing-text">Aguardando novas oportunidades de arbitragem...</p>
-             
-             <!-- Estatísticas animadas -->
-             <div class="stats-container">
-               <div class="stat-item">
-                 <div class="stat-number" :data-target="lastCheckCount">{{ lastCheckCount }}</div>
-                 <div class="stat-label">Verificações</div>
-               </div>
-               <div class="stat-item">
-                 <div class="stat-number" :data-target="uptimeMinutes">{{ uptimeMinutes }}</div>
-                 <div class="stat-label">Minutos Online</div>
-               </div>
-             </div>
-           </div>
-         </div>
+        <div v-else-if="filteredSurebets.length === 0" class="empty-state">
+          <div class="animated-container">
+            <!-- Mensagem principal animada -->
+            <div class="main-message">
+              <h2 class="animated-text">Nenhum Surebet Disponível</h2>
+              <div class="pulse-dot"></div>
+            </div>
+            
+            <!-- Submensagem com efeito de digitação -->
+            <p class="typing-text">Aguardando novas oportunidades de arbitragem...</p>
+            
+            <!-- Estatísticas animadas -->
+            <div class="stats-container">
+              <div class="stat-item">
+                <div class="stat-number" :data-target="lastCheckCount">{{ lastCheckCount }}</div>
+                <div class="stat-label">Verificações</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number" :data-target="uptimeMinutes">{{ uptimeMinutes }}</div>
+                <div class="stat-label">Minutos Online</div>
+              </div>
+            </div>
+          </div>
+        </div>
         
-                 <div v-else class="surebets-grid">
-           <SurebetCard 
-             v-for="(surebet, index) in filteredSurebets" 
-             :key="index"
-             :surebet="surebet"
-             @add-to-reports="addSurebetToReports"
-           />
-         </div>
+        <div v-else class="surebets-grid">
+          <SurebetCard 
+            v-for="(surebet, index) in filteredSurebets" 
+            :key="index"
+            :surebet="surebet"
+            @add-to-reports="addSurebetToReports"
+          />
+        </div>
       </div>
     </main>
 
@@ -275,19 +270,99 @@
             </div>
          </div>
          
-                   <div class="filter-footer">
-            <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
-            <button @click="saveCurrentFiltersAsDefault" class="save-default-btn">Salvar como Padrão</button>
-            <button @click="applyFilters" class="apply-btn">Aplicar</button>
-          </div>
+                                       <div class="filter-footer">
+             <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
+             <button @click="applyFilters" class="apply-btn">Aplicar</button>
+           </div>
        </div>
      </div>
      
-     <!-- Modal do Glossário -->
-     <GlossaryModal 
-       :isVisible="showGlossaryModal" 
-       @close="closeGlossary"
-     />
+           <!-- Modal do Glossário -->
+      <GlossaryModal 
+        :isVisible="showGlossaryModal" 
+        @close="closeGlossary"
+      />
+      
+                    <!-- Modal para Salvar Filtro -->
+        <div v-if="showSaveFilterModal && false" class="modal-overlay" @click="closeSaveFilterModal()">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h3>Salvar Filtro</h3>
+            <button class="close-btn" @click="closeSaveFilterModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Nome do Filtro:</label>
+              <input 
+                v-model="currentFilterName" 
+                type="text" 
+                placeholder="Ex: Filtro Futebol BRL"
+                class="filter-name-input"
+                @keyup.enter="saveFilter"
+              />
+            </div>
+            <div class="filter-preview">
+              <h4>Configuração Atual:</h4>
+              <div class="preview-item">
+                <strong>Casas:</strong> {{ selectedHouses.length }} selecionadas
+              </div>
+              <div class="preview-item">
+                <strong>Esportes:</strong> {{ selectedSports.length }} selecionados
+              </div>
+              <div class="preview-item">
+                <strong>Moedas:</strong> {{ selectedCurrencies.length }} selecionadas
+              </div>
+              <div class="preview-item">
+                <strong>Lucro:</strong> {{ minProfit }}% - {{ maxProfit }}%
+              </div>
+              <div class="preview-item">
+                <strong>Data:</strong> {{ selectedDateFilter === 'any' ? 'Qualquer horário' : selectedDateFilter }}
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button @click="closeSaveFilterModal()" class="cancel-btn">Cancelar</button>
+            <button @click="saveFilter()" class="save-btn" :disabled="!currentFilterName.trim()">Salvar</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Modal para Listar Filtros Salvos -->
+      <div v-if="showSavedFiltersModal" class="modal-overlay" @click="closeSavedFiltersModal()">
+        <div class="modal-content saved-filters-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Filtros Salvos</h3>
+            <button class="close-btn" @click="closeSavedFiltersModal()">×</button>
+          </div>
+          <div class="modal-body">
+            <div v-if="savedFilters.length === 0" class="empty-filters">
+              <p>Nenhum filtro salvo ainda.</p>
+              <p>Salve seus filtros favoritos para reutilizá-los rapidamente!</p>
+            </div>
+            <div v-else class="saved-filters-list">
+              <div 
+                v-for="(filter, index) in savedFilters" 
+                :key="index"
+                class="saved-filter-item"
+              >
+                <div class="filter-info">
+                  <h4>{{ filter.name }}</h4>
+                  <div class="filter-details">
+                    <span class="detail-item">🏠 {{ filter.houses.length }} casas</span>
+                    <span class="detail-item">⚽ {{ filter.sports.length }} esportes</span>
+                    <span class="detail-item">💰 {{ filter.currencies.length }} moedas</span>
+                    <span class="detail-item">📅 {{ filter.dateFilter === 'any' ? 'Qualquer horário' : filter.dateFilter }}</span>
+                  </div>
+                </div>
+                <div class="filter-actions">
+                  <button @click="loadFilter(filter)" class="load-btn">Carregar</button>
+                  <button @click="deleteFilter(index)" class="delete-btn">Excluir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
    </div>
  </template>
 
@@ -295,15 +370,17 @@
 import SurebetCard from '../components/SurebetCard.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import CreditStatus from '../components/CreditStatus.vue'
 import { filterOptions } from '../config/filters.js'
 
 export default {
   name: 'SurebetsView',
-  components: {
-    SurebetCard,
-    Sidebar,
-    GlossaryModal
-  },
+     components: {
+     SurebetCard,
+     Sidebar,
+     GlossaryModal,
+     CreditStatus
+   },
   data() {
     return {
       surebets: {},
@@ -318,17 +395,22 @@ export default {
       selectedSports: filterOptions.sports.map(sport => sport.value), // Inicia com todos os esportes selecionados
       selectedCurrencies: filterOptions.currencies.map(currency => currency.code), // Inicia com todas as moedas selecionadas
       filterOptions: filterOptions,
-      showFilterOverlay: false,
-      selectedDateFilter: 'any',
-      minProfit: 0,
-      maxProfit: 1000,
-      lastCheckCount: 0,
-      startTime: Date.now(),
-      uptimeMinutes: 0,
-      showGlossaryModal: false,
-      websocketConnected: false,
-      websocketRetryCount: 0,
-      pollingInterval: null
+             showFilterOverlay: false,
+       selectedDateFilter: 'any',
+       minProfit: 0,
+       maxProfit: 1000,
+       lastCheckCount: 0,
+       startTime: Date.now(),
+       uptimeMinutes: 0,
+       showGlossaryModal: false,
+       websocketConnected: false,
+       websocketRetryCount: 0,
+       pollingInterval: null,
+             savedFilters: [], // Lista de filtros salvos do usuário
+             showSavedFiltersModal: false,
+       showSaveFilterModal: false,
+       currentFilterName: '',
+
     }
   },
   computed: {
@@ -353,6 +435,43 @@ export default {
     },
     filteredSurebets() {
       let surebetsArray = Object.values(this.surebets)
+      console.log('🔍 DEBUG FILTROS:')
+      console.log('Total surebets inicial:', surebetsArray.length)
+      console.log('Selected houses:', this.selectedHouses.length, '/', this.filterOptions.houses.length)
+      console.log('Selected sports:', this.selectedSports.length, '/', this.filterOptions.sports.length)
+      console.log('Selected currencies:', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length)
+      
+      // Log de um surebet de exemplo para ver estrutura
+      if (surebetsArray.length > 0) {
+        console.log('Exemplo de surebet:', surebetsArray[0])
+      }
+      
+      // REMOÇÃO DE DUPLICATAS - Remove surebets com dados 100% idênticos
+      const uniqueSurebets = []
+      const seenKeys = new Set()
+      let duplicatesRemoved = 0
+      
+      surebetsArray.forEach(surebet => {
+        if (!surebet || surebet.length === 0) return
+        
+        // Cria uma chave única baseada em campos que identificam o surebet
+        const key = this.createSurebetKey(surebet)
+        
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key)
+          uniqueSurebets.push(surebet)
+        } else {
+          duplicatesRemoved++
+          console.log('🔄 Surebet duplicado removido:', key)
+        }
+      })
+      
+      surebetsArray = uniqueSurebets
+      
+       if (duplicatesRemoved > 0) {
+         console.log(`✅ Removidos ${duplicatesRemoved} surebet(s) duplicado(s)`)
+         console.log(`📊 Total: ${surebetsArray.length} surebet(s) únicos`)
+       }
       
       // Filtro por status (prelive/live)
       switch (this.activeFilter) {
@@ -363,30 +482,98 @@ export default {
           surebetsArray = surebetsArray.filter(surebet => surebet[0]?.minutes > 0)
           break
       }
+      console.log('Após filtro status:', surebetsArray.length)
       
-      // Filtro por casas de aposta (vinculado ao campo "house" da API)
-      if (this.selectedHouses.length > 0 && this.selectedHouses.length !== this.filterOptions.houses.length) {
-        surebetsArray = surebetsArray.filter(surebet => {
-          const surebetHouses = surebet.map(bet => bet.house).filter(Boolean)
-          return this.selectedHouses.some(house => surebetHouses.includes(house))
-        })
-      }
+             // Filtro por casas de aposta (vinculado ao campo "house" da API)
+       if (this.selectedHouses.length !== this.filterOptions.houses.length) {
+         console.log('🏠 Aplicando filtro de casas...')
+         console.log('Casas selecionadas:', this.selectedHouses)
+         
+         const beforeFilter = surebetsArray.length
+         surebetsArray = surebetsArray.filter(surebet => {
+           // Extrai todas as casas únicas do surebet
+           const surebetHouses = [...new Set(surebet.map(bet => bet.house).filter(Boolean))]
+           
+           // Se não há casas selecionadas, não exibe nenhum surebet
+           if (this.selectedHouses.length === 0) {
+             console.log('❌ Surebet rejeitado - nenhuma casa selecionada')
+             return false
+           }
+           
+           // Conta quantas casas do surebet coincidem com as selecionadas
+           const matchingHouses = surebetHouses.filter(house => this.selectedHouses.includes(house))
+           
+           // Só exibe se pelo menos 2 casas coincidem
+           const match = matchingHouses.length >= 2
+           
+           if (!match) {
+             console.log('❌ Surebet rejeitado - casas do surebet:', surebetHouses, 'casas coincidentes:', matchingHouses.length)
+           } else {
+             console.log('✅ Surebet aceito - casas do surebet:', surebetHouses, 'casas coincidentes:', matchingHouses)
+           }
+           
+           return match
+         })
+         console.log(`Filtro casas: ${beforeFilter} -> ${surebetsArray.length}`)
+       }
       
-      // Filtro por esportes (vinculado ao campo "sport" da API)
-      if (this.selectedSports.length > 0 && this.selectedSports.length !== this.filterOptions.sports.length) {
-        surebetsArray = surebetsArray.filter(surebet => {
-          const surebetSport = surebet[0]?.sport
-          return surebetSport && this.selectedSports.includes(surebetSport)
-        })
-      }
+             // Filtro por esportes (vinculado ao campo "sport" da API)
+       if (this.selectedSports.length !== this.filterOptions.sports.length) {
+         console.log('⚽ Aplicando filtro de esportes...')
+         console.log('Esportes selecionados:', this.selectedSports)
+         
+         const beforeFilter = surebetsArray.length
+         surebetsArray = surebetsArray.filter(surebet => {
+           const surebetSport = surebet[0]?.sport
+           
+           // Se não há esportes selecionados, não exibe nenhum surebet
+           if (this.selectedSports.length === 0) {
+             console.log('❌ Surebet rejeitado - nenhum esporte selecionado')
+             return false
+           }
+           
+           // Verifica se o esporte do surebet está na lista selecionada
+           const match = surebetSport && this.selectedSports.includes(surebetSport)
+           
+           if (!match) {
+             console.log('❌ Surebet rejeitado - esporte:', surebetSport)
+           } else {
+             console.log('✅ Surebet aceito - esporte:', surebetSport)
+           }
+           
+           return match
+         })
+         console.log(`Filtro esportes: ${beforeFilter} -> ${surebetsArray.length}`)
+       }
       
-      // Filtro por moedas (vinculado ao campo "currency" da API)
-      if (this.selectedCurrencies.length > 0 && this.selectedCurrencies.length !== this.filterOptions.currencies.length) {
-        surebetsArray = surebetsArray.filter(surebet => {
-          const surebetCurrency = surebet[0]?.currency
-          return surebetCurrency && this.selectedCurrencies.includes(surebetCurrency)
-        })
-      }
+             // Filtro por moedas (vinculado ao campo "currency" da API)
+       if (this.selectedCurrencies.length !== this.filterOptions.currencies.length) {
+         console.log('💰 Aplicando filtro de moedas...')
+         console.log('Moedas selecionadas:', this.selectedCurrencies)
+         
+         const beforeFilter = surebetsArray.length
+         surebetsArray = surebetsArray.filter(surebet => {
+           const surebetCurrency = surebet[0]?.currency
+           
+           // Se não há moedas selecionadas, não exibe nenhum surebet
+           if (this.selectedCurrencies.length === 0) {
+             console.log('❌ Surebet rejeitado - nenhuma moeda selecionada')
+             return false
+           }
+           
+           // Verifica se a moeda do surebet está na lista selecionada
+           const match = surebetCurrency && this.selectedCurrencies.includes(surebetCurrency)
+           
+           if (!match) {
+             console.log('❌ Surebet rejeitado - moeda:', surebetCurrency)
+           } else {
+             console.log('✅ Surebet aceito - moeda:', surebetCurrency)
+           }
+           
+           return match
+         })
+         console.log(`Filtro moedas: ${beforeFilter} -> ${surebetsArray.length}`)
+       }
       
       // Filtro por data (intervalo até o evento)
       if (this.selectedDateFilter !== 'any') {
@@ -394,6 +581,7 @@ export default {
         const maxHours = hoursMap[this.selectedDateFilter] || null
         if (maxHours) {
           const now = new Date()
+          const beforeFilter = surebetsArray.length
           surebetsArray = surebetsArray.filter(surebet => {
             const ts = surebet[0]?.timestamp || null
             if (!ts) return true
@@ -401,17 +589,22 @@ export default {
             const diffHours = (eventTime - now) / (1000 * 60 * 60)
             return diffHours <= maxHours
           })
+          console.log(`Filtro data: ${beforeFilter} -> ${surebetsArray.length}`)
         }
       }
 
       // Filtro por faixa de lucro
       if (this.minProfit > 0 || this.maxProfit < 1000) {
+        const beforeFilter = surebetsArray.length
         surebetsArray = surebetsArray.filter(surebet => {
           const profit = surebet[0]?.profit || 0
           return profit >= this.minProfit && profit <= this.maxProfit
         })
+        console.log(`Filtro lucro: ${beforeFilter} -> ${surebetsArray.length}`)
       }
       
+      console.log('✅ Total final:', surebetsArray.length)
+      console.log('---')
       return surebetsArray
     },
     
@@ -482,31 +675,71 @@ export default {
       this.saveFiltersToSettings()
     }
   },
-  mounted() {
-    // Carregar filtros padrão das configurações
-    this.loadDefaultFilters()
-    
-    // Carregar filtros salvos das configurações
-    this.loadFiltersFromSettings()
-    
-    // Verificar se o servidor está disponível antes de tentar WebSocket
-    this.checkServerAvailability()
-    this.fetchSurebets()
-    this.startAutoUpdate()
-    
-    // Atualiza estatísticas a cada minuto
-    setInterval(() => {
-      this.updateStats()
-    }, 60000)
-    
-    // Monitorar mudanças no localStorage para configurações
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'app_settings') {
+               mounted() {
+        // DEBUG: Verificar estado inicial
+        console.log('🚀 MOUNTED: showSaveFilterModal inicial =', this.showSaveFilterModal)
+        
+        // Limpar estado dos modais
+        this.clearModalState()
+        
+        // Carregar filtros padrão das configurações
         this.loadDefaultFilters()
+        
+        // Carregar filtros salvos das configurações
         this.loadFiltersFromSettings()
-      }
-    })
-  },
+        
+        // Carregar filtros salvos do usuário
+        this.loadSavedFilters()
+        
+        // DEBUG: Verificar estado após carregar filtros
+        console.log('🔍 MOUNTED: showSaveFilterModal após carregar filtros =', this.showSaveFilterModal)
+        
+        // Forçar o modal para false se estiver true
+        if (this.showSaveFilterModal) {
+          console.log('⚠️ MOUNTED: Forçando showSaveFilterModal para false')
+          this.showSaveFilterModal = false
+        }
+        
+        // TESTE: Adicionar dados de teste para debug
+        this.addTestData()
+        
+        // Verificar se o servidor está disponível antes de tentar WebSocket
+        this.checkServerAvailability()
+        this.fetchSurebets()
+        this.startAutoUpdate()
+        
+        // Atualiza estatísticas a cada minuto
+        setInterval(() => {
+          this.updateStats()
+        }, 60000)
+        
+        // Monitorar mudanças no localStorage para configurações
+        window.addEventListener('storage', (event) => {
+          if (event.key === 'app_settings') {
+            this.loadDefaultFilters()
+            this.loadFiltersFromSettings()
+          }
+        })
+        
+        // DEBUG: Verificar estado final
+        console.log('✅ MOUNTED: showSaveFilterModal final =', this.showSaveFilterModal)
+        
+        // Garantir que o modal esteja fechado após o próximo tick
+        this.$nextTick(() => {
+          if (this.showSaveFilterModal) {
+            console.log('⚠️ NEXT_TICK: Forçando showSaveFilterModal para false')
+            this.showSaveFilterModal = false
+          }
+        })
+        
+        // Verificação adicional após 1 segundo
+        setTimeout(() => {
+          if (this.showSaveFilterModal) {
+            console.log('⚠️ TIMEOUT: Forçando showSaveFilterModal para false')
+            this.showSaveFilterModal = false
+          }
+        }, 1000)
+      },
   beforeUnmount() {
     if (this.ws) {
       this.ws.close()
@@ -514,9 +747,11 @@ export default {
     this.stopAutoUpdate()
     this.stopHttpPolling()
   },
-  methods: {
-    // Carrega filtros das configurações (não atualiza automaticamente com dados)
-    loadFiltersFromSettings() {
+     methods: {
+
+     
+     // Carrega filtros das configurações (não atualiza automaticamente com dados)
+     loadFiltersFromSettings() {
       try {
         const savedSettings = localStorage.getItem('app_settings')
         if (savedSettings) {
@@ -565,6 +800,86 @@ export default {
       } catch (error) {
         console.error('Erro ao salvar filtros nas configurações:', error)
       }
+    },
+    
+    // MÉTODO DE TESTE - REMOVER DEPOIS
+    addTestData() {
+      this.surebets = {
+        'test1': [
+          {
+            house: 'Bet365',
+            sport: 'Futebol',
+            currency: 'BRL',
+            match: 'Time A vs Time B',
+            market: 'Resultado Final',
+            chance: 2.10,
+            profit: 5.2,
+            minutes: 0,
+            timestamp: new Date().toISOString()
+          },
+          {
+            house: 'Betano',
+            sport: 'Futebol',
+            currency: 'BRL',
+            match: 'Time A vs Time B',
+            market: 'Resultado Final',
+            chance: 1.95,
+            profit: 5.2,
+            minutes: 0,
+            timestamp: new Date().toISOString()
+          }
+        ],
+        'test2': [
+          {
+            house: 'Pixbet',
+            sport: 'Tênis',
+            currency: 'USD',
+            match: 'Jogador 1 vs Jogador 2',
+            market: 'Vencedor',
+            chance: 1.80,
+            profit: 3.1,
+            minutes: 15,
+            timestamp: new Date().toISOString()
+          },
+          {
+            house: 'Rivalo',
+            sport: 'Tênis',
+            currency: 'USD',
+            match: 'Jogador 1 vs Jogador 2',
+            market: 'Vencedor',
+            chance: 2.25,
+            profit: 3.1,
+            minutes: 15,
+            timestamp: new Date().toISOString()
+          }
+        ],
+        'test3': [
+          {
+            house: 'Sportingbet',
+            sport: 'Basquete',
+            currency: 'EUR',
+            match: 'Lakers vs Warriors',
+            market: 'Handicap',
+            chance: 1.92,
+            profit: 7.8,
+            minutes: 0,
+            timestamp: new Date().toISOString()
+          },
+          {
+            house: 'Betway',
+            sport: 'Basquete',
+            currency: 'EUR',
+            match: 'Lakers vs Warriors',
+            market: 'Handicap',
+            chance: 2.05,
+            profit: 7.8,
+            minutes: 0,
+            timestamp: new Date().toISOString()
+          }
+        ]
+      }
+      this.loading = false
+      console.log('📊 Dados de teste adicionados:', this.surebets)
     },
     initWebSocket() {
       // Verificar se WebSocket está disponível
@@ -977,23 +1292,63 @@ export default {
        }
      },
      
-     // Mostra notificação
-     showNotification(message) {
-       const notification = document.createElement('div')
-       notification.className = 'notification'
-       notification.textContent = message
-               notification.style.cssText = `
-          position: fixed;
-          top: 100px;
-          right: 20px;
-          background: #00ff88;
-          color: #1a1a1a;
-          padding: 12px 20px;
-          border-radius: 8px;
-          font-weight: 600;
-          z-index: 10000;
-          animation: slideIn 0.3s ease;
-        `
+     // Cria uma chave única para identificar surebets duplicados
+     createSurebetKey(surebet) {
+       if (!surebet || surebet.length === 0) return ''
+       
+       const firstBet = surebet[0]
+       
+       // Campos principais que identificam um surebet único
+       const keyFields = [
+         firstBet.match || '',           // Nome da partida
+         firstBet.sport || '',           // Esporte
+         firstBet.tournament || '',      // Torneio
+         firstBet.date || '',            // Data
+         firstBet.hour || '',            // Hora
+         firstBet.profit || '0',         // Lucro
+         firstBet.currency || ''         // Moeda
+       ]
+       
+       // Adiciona informações das casas de apostas e odds
+       const betDetails = surebet.map(bet => 
+         `${bet.house || ''}-${bet.chance || ''}-${bet.market || ''}`
+       ).sort().join('|')
+       
+       // Combina todos os campos para criar uma chave única
+       const key = keyFields.join('|') + '|' + betDetails
+       
+       return key
+     },
+     
+           // Mostra notificação
+      showNotification(message, type = 'success') {
+        const notification = document.createElement('div')
+        notification.className = 'notification'
+        notification.textContent = message
+        
+        let backgroundColor = '#00ff88'
+        let textColor = '#1a1a1a'
+        
+        if (type === 'error') {
+          backgroundColor = '#ff6b6b'
+          textColor = '#ffffff'
+        } else if (type === 'warning') {
+          backgroundColor = '#ffc107'
+          textColor = '#1a1a1a'
+        }
+        
+        notification.style.cssText = `
+           position: fixed;
+           top: 100px;
+           right: 20px;
+           background: ${backgroundColor};
+           color: ${textColor};
+           padding: 12px 20px;
+           border-radius: 8px;
+           font-weight: 600;
+           z-index: 10000;
+           animation: slideIn 0.3s ease;
+         `
        
        document.body.appendChild(notification)
        
@@ -1016,16 +1371,150 @@ export default {
           this.showGlossaryModal = false
         },
         
-        // Método de Logout
-        logout() {
-          this.$store.dispatch('logout')
-          this.$router.push('/login')
-        }
+                 // Método de Logout
+         logout() {
+           this.$store.dispatch('logout')
+           this.$router.push('/login')
+         },
+         
+         // Métodos para Filtros Salvos
+         loadSavedFilters() {
+           try {
+             const userId = this.currentUser?.id || 'anonymous'
+             const key = `saved_filters_${userId}`
+             const saved = localStorage.getItem(key)
+             if (saved) {
+               this.savedFilters = JSON.parse(saved)
+             }
+             
+             // DEBUG: Verificar se há algum problema com showSaveFilterModal
+             console.log('🔍 DEBUG: showSaveFilterModal =', this.showSaveFilterModal)
+             
+             // Forçar o valor para false se estiver true
+             if (this.showSaveFilterModal) {
+               console.log('⚠️ WARNING: showSaveFilterModal estava true, forçando para false')
+               this.showSaveFilterModal = false
+             }
+           } catch (error) {
+             console.warn('Erro ao carregar filtros salvos:', error)
+             this.savedFilters = []
+           }
+         },
+         
+                   // Método para limpar localStorage e forçar reset dos modais
+          clearModalState() {
+            console.log('🧹 Limpando estado dos modais...')
+            this.showSaveFilterModal = false
+            this.showSavedFiltersModal = false
+            this.currentFilterName = ''
+            
+            // Limpar localStorage relacionado aos modais (se existir)
+            try {
+              localStorage.removeItem('showSaveFilterModal')
+              localStorage.removeItem('showSavedFiltersModal')
+              
+              // Limpar TODOS os itens do localStorage que possam estar relacionados
+              const keysToRemove = []
+              for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i)
+                if (key && (key.includes('modal') || key.includes('filter'))) {
+                  keysToRemove.push(key)
+                }
+              }
+              
+              keysToRemove.forEach(key => {
+                localStorage.removeItem(key)
+                console.log('🗑️ Removido do localStorage:', key)
+              })
+            } catch (error) {
+              console.warn('Erro ao limpar localStorage dos modais:', error)
+            }
+            
+            // Forçar o estado para false após um pequeno delay
+            setTimeout(() => {
+              this.showSaveFilterModal = false
+              this.showSavedFiltersModal = false
+              console.log('✅ Estado dos modais forçado para false')
+            }, 100)
+          },
+         
+         saveSavedFilters() {
+           try {
+             const userId = this.currentUser?.id || 'anonymous'
+             const key = `saved_filters_${userId}`
+             localStorage.setItem(key, JSON.stringify(this.savedFilters))
+           } catch (error) {
+             console.error('Erro ao salvar filtros:', error)
+           }
+         },
+         
+         showSaveFilterModal() {
+           this.currentFilterName = ''
+           this.showSaveFilterModal = true
+         },
+         
+         closeSaveFilterModal() {
+           this.showSaveFilterModal = false
+           this.currentFilterName = ''
+         },
+         
+         saveFilter() {
+           if (!this.currentFilterName.trim()) return
+           
+           const newFilter = {
+             id: Date.now(),
+             name: this.currentFilterName.trim(),
+             houses: [...this.selectedHouses],
+             sports: [...this.selectedSports],
+             currencies: [...this.selectedCurrencies],
+             dateFilter: this.selectedDateFilter,
+             minProfit: this.minProfit,
+             maxProfit: this.maxProfit,
+             activeFilter: this.activeFilter,
+             createdAt: new Date().toISOString()
+           }
+           
+           this.savedFilters.push(newFilter)
+           this.saveSavedFilters()
+           this.closeSaveFilterModal()
+           this.showNotification('Filtro salvo com sucesso!')
+         },
+         
+         showSavedFiltersList() {
+           this.showSavedFiltersModal = true
+         },
+         
+         closeSavedFiltersModal() {
+           this.showSavedFiltersModal = false
+         },
+         
+         loadFilter(filter) {
+           this.selectedHouses = [...filter.houses]
+           this.selectedSports = [...filter.sports]
+           this.selectedCurrencies = [...filter.currencies]
+           this.selectedDateFilter = filter.dateFilter
+           this.minProfit = filter.minProfit
+           this.maxProfit = filter.maxProfit
+           this.activeFilter = filter.activeFilter
+           
+           this.saveFiltersToSettings()
+           this.closeSavedFiltersModal()
+           this.showNotification(`Filtro "${filter.name}" carregado!`)
+         },
+         
+         deleteFilter(index) {
+           const filterName = this.savedFilters[index].name
+           this.savedFilters.splice(index, 1)
+           this.saveSavedFilters()
+           this.showNotification(`Filtro "${filterName}" excluído!`)
+         }
   }
 }
 </script>
 
 <style lang="scss" scoped>
+
+
 .surebets-container {
   display: flex;
   height: 100vh;
@@ -1415,6 +1904,8 @@ export default {
    padding: 8px 0;
    border-bottom: 1px solid #404040;
  }
+
+
 
 .advanced-filters {
   display: flex;
@@ -1999,18 +2490,17 @@ export default {
   gap: 12px;
 }
 
-.clear-btn,
-.save-default-btn,
-.apply-btn {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+ .clear-btn,
+ .apply-btn {
+   flex: 1;
+   padding: 12px 16px;
+   border: none;
+   border-radius: 6px;
+   font-size: 14px;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.3s ease;
+ }
 
 .clear-btn {
   background: #404040;
@@ -2021,23 +2511,256 @@ export default {
   }
 }
 
-.save-default-btn {
-  background: #007bff;
-  color: #ffffff;
-  
-  &:hover {
-    background: #0056b3;
-  }
-}
+ .apply-btn {
+   background: #00ff88;
+   color: #1a1a1a;
+   
+   &:hover {
+     background: #00cc6a;
+   }
+ }
+ 
+ /* Modais */
+ .modal-overlay {
+   position: fixed;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   background: rgba(0, 0, 0, 0.8);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   z-index: 10000;
+   backdrop-filter: blur(5px);
+ }
+ 
+ .modal-content {
+   background: #2a2a2a;
+   border-radius: 12px;
+   border: 1px solid #404040;
+   max-width: 500px;
+   width: 90%;
+   max-height: 80vh;
+   overflow: hidden;
+   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+ }
+ 
+ .saved-filters-modal {
+   max-width: 600px;
+ }
+ 
+ .modal-header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 20px;
+   border-bottom: 1px solid #404040;
+   
+   h3 {
+     font-size: 18px;
+     font-weight: 700;
+     color: #ffffff;
+     margin: 0;
+   }
+ }
+ 
+ .modal-body {
+   padding: 20px;
+   max-height: 400px;
+   overflow-y: auto;
+ }
+ 
+ .modal-footer {
+   display: flex;
+   gap: 12px;
+   padding: 20px;
+   border-top: 1px solid #404040;
+ }
+ 
+ .form-group {
+   margin-bottom: 20px;
+   
+   label {
+     display: block;
+     font-size: 14px;
+     font-weight: 500;
+     color: #b0b0b0;
+     margin-bottom: 8px;
+   }
+ }
+ 
+ .filter-name-input {
+   width: 100%;
+   padding: 12px;
+   background: #2d2d2d;
+   border: 1px solid #404040;
+   border-radius: 6px;
+   color: #ffffff;
+   font-size: 14px;
+   
+   &:focus {
+     outline: none;
+     border-color: #00ff88;
+   }
+   
+   &::placeholder {
+     color: #808080;
+   }
+ }
+ 
+ .filter-preview {
+   background: rgba(45, 45, 45, 0.5);
+   border: 1px solid #404040;
+   border-radius: 8px;
+   padding: 16px;
+   
+   h4 {
+     font-size: 14px;
+     font-weight: 600;
+     color: #ffffff;
+     margin: 0 0 12px 0;
+   }
+ }
+ 
+ .preview-item {
+   font-size: 13px;
+   color: #b0b0b0;
+   margin-bottom: 6px;
+   
+   strong {
+     color: #ffffff;
+   }
+ }
+ 
+ .cancel-btn,
+ .save-btn {
+   flex: 1;
+   padding: 12px 16px;
+   border: none;
+   border-radius: 6px;
+   font-size: 14px;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.3s ease;
+ }
+ 
+ .cancel-btn {
+   background: #404040;
+   color: #ffffff;
+   
+   &:hover {
+     background: #505050;
+   }
+ }
+ 
+ .save-btn {
+   background: #00ff88;
+   color: #1a1a1a;
+   
+   &:hover {
+     background: #00cc6a;
+   }
+   
+   &:disabled {
+     background: #404040;
+     color: #808080;
+     cursor: not-allowed;
+   }
+ }
+ 
+ .empty-filters {
+   text-align: center;
+   color: #b0b0b0;
+   
+   p {
+     margin: 8px 0;
+     font-size: 14px;
+   }
+ }
+ 
+ .saved-filters-list {
+   display: flex;
+   flex-direction: column;
+   gap: 12px;
+ }
+ 
+ .saved-filter-item {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 16px;
+   background: rgba(45, 45, 45, 0.5);
+   border: 1px solid #404040;
+   border-radius: 8px;
+   transition: all 0.3s ease;
+   
+   &:hover {
+     border-color: #00ff88;
+     background: rgba(45, 45, 45, 0.8);
+   }
+ }
+ 
+ .filter-info {
+   flex: 1;
+   
+   h4 {
+     font-size: 16px;
+     font-weight: 600;
+     color: #ffffff;
+     margin: 0 0 8px 0;
+   }
+ }
+ 
+ .filter-details {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 8px;
+ }
+ 
+ .detail-item {
+   font-size: 12px;
+   color: #b0b0b0;
+   background: rgba(255, 255, 255, 0.1);
+   padding: 4px 8px;
+   border-radius: 12px;
+ }
+ 
+ .filter-actions {
+   display: flex;
+   gap: 8px;
+ }
+ 
+ .load-btn,
+ .delete-btn {
+   padding: 8px 12px;
+   border: none;
+   border-radius: 4px;
+   font-size: 12px;
+   font-weight: 500;
+   cursor: pointer;
+   transition: all 0.3s ease;
+ }
+ 
+ .load-btn {
+   background: #00ff88;
+   color: #1a1a1a;
+   
+   &:hover {
+     background: #00cc6a;
+   }
+ }
+ 
+ .delete-btn {
+   background: #dc3545;
+   color: #ffffff;
+   
+   &:hover {
+     background: #c82333;
+   }
+ }
 
-.apply-btn {
-  background: #00ff88;
-  color: #1a1a1a;
-  
-  &:hover {
-    background: #00cc6a;
-  }
-}
+
 
 /* Connection Status Bar */
 .connection-status-bar {

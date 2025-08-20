@@ -7,7 +7,7 @@ O sistema de administração foi implementado para permitir o gerenciamento comp
 ## 🔐 Usuários Padrão
 
 ### Administrador
-- **E-mail:** `admin@zeroloss.com`
+- **E-mail:** `admin`
 - **Senha:** `123456`
 - **Role:** `admin`
 - **Status:** `active`

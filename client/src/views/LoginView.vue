@@ -1,5 +1,30 @@
 <template>
   <div class="login-container">
+    <!-- Video Background -->
+    <video 
+      class="video-background" 
+      autoplay 
+      muted 
+      loop 
+      playsinline
+      ref="videoElement"
+      @loadedmetadata="setVideoStartTime"
+    >
+      <source src="../assets/movie/playvideo.mp4" type="video/mp4">
+      Seu navegador não suporta vídeos.
+    </video>
+    
+    <!-- Overlay com gradiente para transparência -->
+    <div class="video-overlay"></div>
+    
+    <!-- Overlay adicional de baixo para cima -->
+    <div class="bottom-overlay"></div>
+    
+    <!-- Partículas flutuantes -->
+    <div class="floating-particles">
+      <div class="particle" v-for="n in 20" :key="n"></div>
+    </div>
+    
     <div class="login-card">
       <!-- Logo e Header -->
       <div class="login-header">
@@ -175,26 +200,25 @@ export default {
       this.loginSuccess = ''
       
       try {
-        // Simula uma requisição de login (substitua pela sua API real)
         const response = await this.authenticateUser()
         
         if (response.success) {
           this.loginSuccess = 'Login realizado com sucesso!'
           
-                                // Salva o token e dados do usuário
-            this.$store.dispatch('login', {
-              token: response.token,
-              user: response.user
-            })
-            
-            // Atualiza o último login
-            this.$store.dispatch('updateLastLogin', this.email)
-            
-            // Salva dados do usuário se "lembrar-me" estiver marcado
-            if (this.rememberMe) {
-              this.saveRememberedUser()
-            }
+          // Salva o token e dados do usuário
+          this.$store.dispatch('login', {
+            token: response.token,
+            user: response.user
+          })
           
+          // Atualiza o último login
+          this.$store.dispatch('updateLastLogin', this.email)
+          
+          // Salva dados do usuário se "lembrar-me" estiver marcado
+          if (this.rememberMe) {
+            this.saveRememberedUser()
+          }
+        
           // Redireciona para o dashboard após 1 segundo
           setTimeout(() => {
             this.$router.push('/')
@@ -210,47 +234,34 @@ export default {
     },
     
     async authenticateUser() {
-      // Simula uma requisição de API
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // Aqui você faria a chamada real para sua API
-          // const response = await fetch('/api/auth/login', {
-          //   method: 'POST',
-          //   headers: { 'Content-Type': 'application/json' },
-          //   body: JSON.stringify({ email: this.email, password: this.password })
-          // })
-          
-                     // Simulação de autenticação (substitua pela sua lógica real)
-           if (this.email === 'admin@zeroloss.com' && this.password === '123456') {
-             resolve({
-               success: true,
-               token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-               user: {
-                 id: '1',
-                 email: this.email,
-                 name: 'Administrador',
-                 role: 'admin'
-               }
-             })
-           } else if (this.email === 'user@test.com' && this.password === '123456') {
-             resolve({
-               success: true,
-               token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIxMjM0NTY3ODkwIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-               user: {
-                 id: '2',
-                 email: this.email,
-                 name: 'Usuário Teste',
-                 role: 'user'
-               }
-             })
-           } else {
-             resolve({
-               success: false,
-               message: 'E-mail ou senha incorretos'
-             })
-           }
-        }, 1500) // Simula delay da rede
-      })
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: this.email, password: this.password })
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok && data.success) {
+          return {
+            success: true,
+            token: data.token,
+            user: data.user
+          }
+        } else {
+          return {
+            success: false,
+            message: data.message || 'E-mail ou senha incorretos'
+          }
+        }
+      } catch (error) {
+        console.error('Erro na autenticação:', error)
+        return {
+          success: false,
+          message: 'Erro de conexão. Tente novamente.'
+        }
+      }
     },
     
          handleLoginFailure(message) {
@@ -305,6 +316,13 @@ export default {
     forgotPassword() {
       // Implementar recuperação de senha
       this.loginError = 'Funcionalidade de recuperação de senha será implementada em breve.'
+    },
+    
+    setVideoStartTime() {
+      // Define o tempo inicial do vídeo para 6 segundos
+      if (this.$refs.videoElement) {
+        this.$refs.videoElement.currentTime = 6
+      }
     }
   }
 }
@@ -316,13 +334,93 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: url('../assets/img/img-auth-bg-dark.png') center center / cover no-repeat;
   padding: 20px;
   position: relative;
+  overflow: hidden;
 }
 
-.login-container::before {
-  content: '';
+/* Video Background */
+.video-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  filter: brightness(0.3) contrast(1.2) saturate(0.8);
+  animation: videoPulse 8s ease-in-out infinite;
+}
+
+@keyframes videoPulse {
+  0%, 100% {
+    filter: brightness(0.3) contrast(1.2) saturate(0.8);
+  }
+  50% {
+    filter: brightness(0.4) contrast(1.1) saturate(0.9);
+  }
+}
+
+/* Partículas flutuantes */
+.floating-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(0, 255, 136, 0.3);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite;
+}
+
+.particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 8s; }
+.particle:nth-child(2) { left: 20%; animation-delay: 1s; animation-duration: 7s; }
+.particle:nth-child(3) { left: 30%; animation-delay: 2s; animation-duration: 9s; }
+.particle:nth-child(4) { left: 40%; animation-delay: 3s; animation-duration: 6s; }
+.particle:nth-child(5) { left: 50%; animation-delay: 4s; animation-duration: 8s; }
+.particle:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 7s; }
+.particle:nth-child(7) { left: 70%; animation-delay: 6s; animation-duration: 9s; }
+.particle:nth-child(8) { left: 80%; animation-delay: 7s; animation-duration: 6s; }
+.particle:nth-child(9) { left: 90%; animation-delay: 8s; animation-duration: 8s; }
+.particle:nth-child(10) { left: 15%; animation-delay: 9s; animation-duration: 7s; }
+.particle:nth-child(11) { left: 25%; animation-delay: 10s; animation-duration: 9s; }
+.particle:nth-child(12) { left: 35%; animation-delay: 11s; animation-duration: 6s; }
+.particle:nth-child(13) { left: 45%; animation-delay: 12s; animation-duration: 8s; }
+.particle:nth-child(14) { left: 55%; animation-delay: 13s; animation-duration: 7s; }
+.particle:nth-child(15) { left: 65%; animation-delay: 14s; animation-duration: 9s; }
+.particle:nth-child(16) { left: 75%; animation-delay: 15s; animation-duration: 6s; }
+.particle:nth-child(17) { left: 85%; animation-delay: 16s; animation-duration: 8s; }
+.particle:nth-child(18) { left: 95%; animation-delay: 17s; animation-duration: 7s; }
+.particle:nth-child(19) { left: 5%; animation-delay: 18s; animation-duration: 9s; }
+.particle:nth-child(20) { left: 45%; animation-delay: 19s; animation-duration: 6s; }
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Overlay com gradiente para transparência */
+.video-overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -330,25 +428,103 @@ export default {
   bottom: 0;
   background: linear-gradient(
     135deg,
-    rgba(0, 0, 0, 0.4) 0%,
-    rgba(0, 0, 0, 0.2) 50%,
-    rgba(0, 0, 0, 0.4) 100%
+    rgba(0, 0, 0, 0.6) 0%,
+    rgba(0, 0, 0, 0.4) 25%,
+    rgba(0, 0, 0, 0.3) 50%,
+    rgba(0, 0, 0, 0.4) 75%,
+    rgba(0, 0, 0, 0.6) 100%
   );
   z-index: 1;
+  animation: overlayShift 12s ease-in-out infinite;
+}
+
+@keyframes overlayShift {
+  0%, 100% {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.6) 0%,
+      rgba(0, 0, 0, 0.4) 25%,
+      rgba(0, 0, 0, 0.3) 50%,
+      rgba(0, 0, 0, 0.4) 75%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+  }
+  50% {
+    background: linear-gradient(
+      225deg,
+      rgba(0, 0, 0, 0.5) 0%,
+      rgba(0, 0, 0, 0.3) 25%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(0, 0, 0, 0.3) 75%,
+      rgba(0, 0, 0, 0.5) 100%
+    );
+  }
+}
+
+/* Overlay adicional de baixo para cima */
+.bottom-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.8) 0%,
+    rgba(0, 0, 0, 0.6) 30%,
+    rgba(0, 0, 0, 0.3) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  z-index: 1;
+  animation: bottomOverlayPulse 10s ease-in-out infinite;
+}
+
+@keyframes bottomOverlayPulse {
+  0%, 100% {
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.8) 0%,
+      rgba(0, 0, 0, 0.6) 30%,
+      rgba(0, 0, 0, 0.3) 70%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+  50% {
+    background: linear-gradient(
+      to top,
+      rgba(0, 0, 0, 0.9) 0%,
+      rgba(0, 0, 0, 0.7) 30%,
+      rgba(0, 0, 0, 0.4) 70%,
+      rgba(0, 0, 0, 0.1) 100%
+    );
+  }
 }
 
 .login-card {
-  background: rgba(42, 42, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
+  background: rgba(26, 26, 26, 0.85);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
   padding: 40px;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   z-index: 2;
-  animation: fadeInUp 0.6s ease-out;
+  animation: fadeInUp 0.8s ease-out;
+  transition: all 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(0, 255, 136, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-color: rgba(0, 255, 136, 0.3);
 }
 
 @keyframes fadeInUp {
@@ -426,19 +602,25 @@ export default {
 .form-input {
   width: 100%;
   padding: 16px 20px;
-  background: #1a1a1a;
-  border: 2px solid #404040;
-  border-radius: 8px;
+  background: rgba(26, 26, 26, 0.8);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(64, 64, 64, 0.6);
+  border-radius: 12px;
   color: #ffffff;
   font-size: 16px;
   transition: all 0.3s ease;
   box-sizing: border-box;
+  position: relative;
 }
 
 .form-input:focus {
   outline: none;
   border-color: #00ff88;
-  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  background: rgba(26, 26, 26, 0.9);
+  box-shadow: 
+    0 0 0 3px rgba(0, 255, 136, 0.15),
+    0 8px 25px rgba(0, 255, 136, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-input::placeholder {
@@ -546,7 +728,7 @@ export default {
   padding: 16px;
   background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   color: #1a1a1a;
   font-size: 16px;
   font-weight: 600;
@@ -557,12 +739,34 @@ export default {
   justify-content: center;
   gap: 8px;
   margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 15px rgba(0, 255, 136, 0.2),
+    0 0 0 1px rgba(0, 255, 136, 0.1);
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
 }
 
 .login-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+  box-shadow: 
+    0 8px 25px rgba(0, 255, 136, 0.4),
+    0 0 0 1px rgba(0, 255, 136, 0.2);
+}
+
+.login-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .login-btn:disabled {
