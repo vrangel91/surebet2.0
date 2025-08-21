@@ -39,7 +39,15 @@ let lastSurebetCount = 0;
 // Função para buscar surebets da API
 async function fetchSurebets() {
   try {
-    const response = await axios.get('https://zerolossbet.com/api/fetch_surebets/');
+    const response = await axios.get('https://zerolossbet.com/api/fetch_surebets/', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Referer': 'https://zerolossbet.com/dashboard',
+        'Origin': 'https://zerolossbet.com'
+      }
+    });
     
     // Verificar se a resposta contém dados válidos
     if (response.data && typeof response.data === 'object') {

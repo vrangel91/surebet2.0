@@ -35,6 +35,23 @@
       
       <!-- Status da Conta Compacto -->
       <CreditStatus :compact="true" v-show="!shouldBeCollapsed" />
+      
+      <!-- Ícones de Administração e Configurações -->
+      <div class="admin-icons" v-show="!shouldBeCollapsed">
+        <!-- Configurações -->
+        <router-link to="/settings" class="admin-icon-link" title="Configurações">
+          <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+          </svg>
+        </router-link>
+        
+                                  <!-- Administração (só para admins) -->
+                          <router-link v-if="isAdmin" to="/admin" class="admin-icon-link" title="Administração">
+                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                            </svg>
+                          </router-link>
+      </div>
     </div>
 
     <!-- Menu de Navegação -->
@@ -54,26 +71,6 @@
               <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
             </svg>
           </div>
-        </li>
-
-        <!-- Administração (só para admins) -->
-        <li v-if="isAdmin" class="nav-item" :class="{ active: $route.path === '/admin' }">
-          <router-link to="/admin" class="nav-link" :title="shouldBeCollapsed ? 'Administração' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-            </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Administração</span>
-          </router-link>
-        </li>
-
-        <!-- Configurações -->
-        <li class="nav-item" :class="{ active: $route.path === '/settings' }">
-          <router-link to="/settings" class="nav-link" :title="shouldBeCollapsed ? 'Configurações' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-            </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Configurações</span>
-          </router-link>
         </li>
 
         <!-- Juros Compostos -->
@@ -449,6 +446,42 @@ export default {
 .status-text {
   font-size: 12px;
   color: var(--text-secondary, #cccccc);
+}
+
+/* Ícones de Administração */
+.admin-icons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.admin-icon-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  color: var(--text-secondary, #cccccc);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.admin-icon-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: #00ff88;
+  color: #00ff88;
+  transform: translateY(-1px);
+}
+
+.admin-icon-link svg {
+  width: 16px;
+  height: 16px;
 }
 
 .sidebar-nav {
