@@ -31,7 +31,11 @@
             v-for="category in planCategories" 
             :key="category.id"
             @click="selectCategory(category.id)"
-            :class="['category-btn', { active: selectedCategory === category.id }]"
+            :class="['category-btn', { 
+              active: selectedCategory === category.id,
+              disabled: category.disabled 
+            }]"
+            :disabled="category.disabled"
           >
             <!-- Pre-Game Icon -->
             <svg v-if="category.id === 'pre-game'" class="category-icon" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
@@ -67,6 +71,7 @@
               <path d="M3.5 4.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-7z"/>
             </svg>
             <span class="category-text">{{ category.name }}</span>
+            <span v-if="category.disabled" class="disabled-badge">Em Breve</span>
           </button>
         </div>
 
@@ -345,6 +350,7 @@ export default {
           name: 'Surebet Pré-Jogo',
           title: 'Surebet Pré-Jogo',
           description: 'Apostas seguras em jogos pré-live com análise detalhada',
+          disabled: false,
           plans: [
             {
               id: 'pre-daily',
@@ -401,6 +407,7 @@ export default {
           name: 'Surebet Live',
           title: 'Surebet Live',
           description: 'Apostas seguras em tempo real durante os jogos',
+          disabled: true,
           plans: [
             {
               id: 'live-daily',
@@ -461,6 +468,7 @@ export default {
           name: 'Pré + Live',
           title: 'Surebet Pré + Live',
           description: 'Combinação completa: apostas pré-jogo e ao vivo',
+          disabled: true,
           plans: [
             {
               id: 'prelive-daily',
@@ -521,6 +529,7 @@ export default {
           name: 'Valuebet',
           title: 'Valuebet',
           description: 'Apostas de valor com odds favoráveis identificadas por IA',
+          disabled: true,
           plans: [
             {
               id: 'value-daily',
@@ -581,6 +590,7 @@ export default {
           name: 'Plano Full',
           title: 'Plano Full',
           description: 'Acesso completo a todas as funcionalidades da plataforma',
+          disabled: true,
           plans: [
             {
               id: 'full-daily',
@@ -687,7 +697,10 @@ export default {
     },
     
     selectCategory(categoryId) {
-      this.selectedCategory = categoryId
+      const category = this.planCategories.find(cat => cat.id === categoryId)
+      if (category && !category.disabled) {
+        this.selectedCategory = categoryId
+      }
     },
     
     buyPlan(plan) {
@@ -881,17 +894,37 @@ export default {
   justify-content: center;
   gap: 12px;
   margin-bottom: 32px;
-  flex-wrap: wrap;
-  max-width: 800px;
+  max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
+  overflow-x: auto;
+  padding: 0 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.plan-categories::-webkit-scrollbar {
+  height: 6px;
+}
+
+.plan-categories::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.plan-categories::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.plan-categories::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .category-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 20px;
+  padding: 12px 24px;
   background: var(--bg-secondary, #2a2a2a);
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
   border-radius: 25px;
@@ -900,6 +933,9 @@ export default {
   transition: all 0.3s ease;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: fit-content;
 }
 
 .category-btn:hover {
@@ -910,6 +946,32 @@ export default {
   background: #00ff88;
   color: #1a1a1a;
   border-color: #00ff88;
+}
+
+.category-btn.disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: #666666;
+  border-color: rgba(255, 255, 255, 0.1);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.category-btn.disabled:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: none;
+  box-shadow: none;
+}
+
+.disabled-badge {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .category-icon {
@@ -1560,6 +1622,8 @@ export default {
   
   .plan-categories {
     gap: 8px;
+    max-width: 100%;
+    padding: 0 8px;
   }
 
   .redirect-modal {
@@ -1637,9 +1701,19 @@ export default {
     font-size: 32px;
   }
   
+  .plan-categories {
+    gap: 6px;
+    padding: 0 4px;
+  }
+  
   .category-btn {
     padding: 8px 12px;
     font-size: 12px;
+    min-width: auto;
+  }
+  
+  .category-text {
+    font-size: 11px;
   }
   
   .description-title {

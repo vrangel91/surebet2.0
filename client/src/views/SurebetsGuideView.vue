@@ -547,7 +547,7 @@ export default {
       this.showGlossaryModal = true
     },
     
-    closeGlossary() {
+        closeGlossary() {
       this.showGlossaryModal = false
     },
     
@@ -1153,4 +1153,7 @@ export default {
     margin-left: 0;
   }
 }
+
+
+
 </style>

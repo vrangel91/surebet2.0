@@ -1,6 +1,8 @@
 <template>
   <div id="app">
     <router-view />
+    <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->
+    <FloatingGuideButton />
   </div>
 </template>
 

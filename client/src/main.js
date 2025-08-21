@@ -4,11 +4,16 @@ import router from './router'
 import store from './store'
 import { initializeApp } from './utils/initApp'
 import './assets/styles/main.scss'
+import FloatingGuideButton from './components/FloatingGuideButton.vue'
 
 // Inicializar aplicação e limpar dados mocados
 initializeApp()
 
 const app = createApp(App)
+
+// Registrar componente global
+app.component('FloatingGuideButton', FloatingGuideButton)
+
 app.use(router)
 app.use(store)
 app.mount('#app')

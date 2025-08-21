@@ -133,16 +133,7 @@
           </router-link>
         </li>
 
-        <!-- Guia de Surebets -->
-        <li class="nav-item" :class="{ active: $route.path === '/guide' }">
-          <router-link to="/guide" class="nav-link" :title="shouldBeCollapsed ? 'Guia' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-              <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-            </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Guia</span>
-          </router-link>
-        </li>
+
 
         <!-- Contas de Casas de Apostas -->
         <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
@@ -365,6 +356,57 @@ export default {
   width: 80px;
 }
 
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 12px 8px;
+}
+
+.sidebar.collapsed .nav-icon {
+  margin: 0;
+}
+
+.sidebar.collapsed .lock-icon {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  margin: 0;
+  width: 12px;
+  height: 12px;
+}
+
+.sidebar.collapsed .user-profile {
+  padding: 16px 8px;
+}
+
+.sidebar.collapsed .user-info {
+  justify-content: center;
+}
+
+.sidebar.collapsed .user-avatar {
+  margin: 0 auto;
+}
+
+.sidebar.collapsed .admin-icons {
+  justify-content: center;
+  gap: 4px;
+}
+
+.sidebar.collapsed .admin-icon-link {
+  width: 28px;
+  height: 28px;
+}
+
+.sidebar.collapsed .sidebar-header {
+  padding: 16px 8px;
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  position: absolute;
+  top: 16px;
+  right: 8px;
+}
+
 .sidebar-header {
   display: flex;
   justify-content: space-between;
@@ -526,6 +568,7 @@ export default {
   cursor: pointer;
   width: 100%;
   text-align: left;
+  position: relative;
 }
 
 .nav-link:hover {
@@ -561,6 +604,9 @@ export default {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .lock-icon {
