@@ -10,6 +10,7 @@ import SupportView from '../views/SupportView.vue'
 import CompoundInterestView from '../views/CompoundInterestView.vue'
 import RankingView from '../views/RankingView.vue'
 import BookmakerAccountsView from '../views/BookmakerAccountsView.vue'
+import SurebetsGuideView from '../views/SurebetsGuideView.vue'
 import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
@@ -76,6 +77,12 @@ const routes = [
     path: '/bookmaker-accounts',
     name: 'bookmaker-accounts',
     component: BookmakerAccountsView,
+    beforeEnter: requireAuth
+  },
+  {
+    path: '/guide',
+    name: 'guide',
+    component: SurebetsGuideView,
     beforeEnter: requireAuth
   }
 ]

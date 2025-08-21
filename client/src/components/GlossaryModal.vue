@@ -535,7 +535,7 @@ export default {
   font-size: 2rem;
   font-weight: 700;
   margin: 0 0 12px 0;
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #00d4ff 100%);
+  /* background: linear-gradient(135deg, var(--accent-primary) 0%, #00d4ff 100%); */
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: initial;
