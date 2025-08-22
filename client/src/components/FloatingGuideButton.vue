@@ -2,17 +2,11 @@
   <div>
     <!-- Botão Flutuante do Guia Interativo -->
     <div class="floating-guide-btn" @click="openGuideModal">
-      <div class="lamp-container">
-        <svg class="lamp-icon" width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1z"/>
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.87-3.13-7-7-7z"/>
-        </svg>
-        <div class="genie-sparkles">
-          <div class="sparkle sparkle-1"></div>
-          <div class="sparkle sparkle-2"></div>
-          <div class="sparkle sparkle-3"></div>
-        </div>
-      </div>
+             <div class="icon-container">
+         <svg class="help-icon" width="32" height="32" fill="currentColor" viewBox="0 0 24 24">
+           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
+         </svg>
+       </div>
       <!-- Texto removido para manter apenas o ícone -->
     </div>
 
@@ -106,7 +100,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'O que é'",
-            target: "#o-que-e"
+            target: "/guide#o-que-e"
           }
         },
         {
@@ -115,7 +109,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Como Funciona'",
-            target: "#como-funciona"
+            target: "/guide#como-funciona"
           }
         },
         {
@@ -124,7 +118,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Tipos'",
-            target: "#tipos"
+            target: "/guide#tipos"
           }
         },
         {
@@ -133,7 +127,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Cálculos'",
-            target: "#calculos"
+            target: "/guide#calculos"
           }
         },
         {
@@ -142,7 +136,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Estratégias'",
-            target: "#estrategias"
+            target: "/guide#estrategias"
           }
         },
         {
@@ -151,7 +145,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Riscos'",
-            target: "#riscos"
+            target: "/guide#riscos"
           }
         },
         {
@@ -160,7 +154,7 @@ export default {
           highlight: {
             type: 'link',
             text: "Ver seção 'Ferramentas'",
-            target: "#ferramentas"
+            target: "/guide#ferramentas"
           }
         },
         {
@@ -170,6 +164,15 @@ export default {
             type: 'link',
             text: "Ver Ranking de Usuários",
             target: "/ranking"
+          }
+        },
+        {
+          title: "Guia Completo de Surebets",
+          description: "Quer aprender mais detalhadamente sobre arbitragem esportiva? Acesse nosso guia completo com explicações detalhadas, exemplos práticos e estratégias avançadas.",
+          highlight: {
+            type: 'link',
+            text: "Ver Guia Completo",
+            target: "/guide"
           }
         }
       ]
@@ -212,6 +215,24 @@ export default {
           });
           this.closeGuideModal();
         }
+      } else if (targetId.includes('#')) {
+        // Navegação para outra página com âncora
+        const [path, hash] = targetId.split('#');
+        this.$router.push(path).then(() => {
+          // Aguarda um momento para a página carregar
+          this.$nextTick(() => {
+            setTimeout(() => {
+              const targetElement = document.querySelector(`#${hash}`);
+              if (targetElement) {
+                targetElement.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }
+            }, 100);
+          });
+        });
+        this.closeGuideModal();
       } else {
         // Navegação para outra página
         this.$router.push(targetId);
@@ -252,7 +273,7 @@ export default {
   opacity: 1;
 }
 
-.lamp-container {
+.icon-container {
   position: relative;
   width: 28px;
   height: 28px;
@@ -261,57 +282,11 @@ export default {
   justify-content: center;
 }
 
-.lamp-icon {
+.help-icon {
   color: #1a1a1a;
   width: 28px;
   height: 28px;
   filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
-}
-
-.genie-sparkles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  pointer-events: none;
-}
-
-.sparkle {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: #ffd700;
-  border-radius: 50%;
-  opacity: 0.7;
-  animation: sparkle-float 2s infinite ease-in-out;
-}
-
-.sparkle-1 {
-  top: 10px;
-  left: 10px;
-  animation-delay: -0.5s;
-}
-
-.sparkle-2 {
-  top: 20px;
-  left: 30px;
-  animation-delay: -1s;
-}
-
-.sparkle-3 {
-  top: 15px;
-  left: 50px;
-  animation-delay: -1.5s;
-}
-
-@keyframes sparkle-float {
-  0% { transform: translateY(0) scale(0.8); opacity: 0.7; }
-  50% { transform: translateY(-10px) scale(1.2); opacity: 0.9; }
-  100% { transform: translateY(0) scale(0.8); opacity: 0.7; }
 }
 
 .btn-text {
@@ -589,7 +564,7 @@ export default {
     height: 50px;
   }
 
-  .lamp-container {
+  .icon-container {
     width: 32px;
     height: 32px;
   }

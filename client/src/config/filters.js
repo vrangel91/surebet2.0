@@ -31,7 +31,7 @@ export const filterOptions = {
     "B2XBet",
     "BR4",
     "BateuBet",
-    "Bateubet",
+    "Bateguebet",
     "BetAki",
     "BetApp",
     "BetBra Exchange",

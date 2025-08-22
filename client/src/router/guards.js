@@ -15,8 +15,12 @@ export function requireGuest(to, from, next) {
   if (!store.getters.isAuthenticated) {
     next()
   } else {
-    // Redireciona para dashboard se já estiver autenticado
-    next('/')
+    // Redireciona baseado no tipo de conta se já estiver autenticado
+    if (store.getters.isVIP) {
+      next('/')
+    } else {
+      next('/plans')
+    }
   }
 }
 
@@ -38,7 +42,29 @@ export function requireAdmin(to, from, next) {
       console.warn('🚫 Tentativa de acesso administrativo sem autenticação')
     }
     
-    // Redireciona para dashboard se não for admin
-    next('/')
+    // Redireciona baseado no tipo de conta se não for admin
+    if (store.getters.isVIP) {
+      next('/')
+    } else {
+      next('/plans')
+    }
+  }
+}
+
+export function requireVIP(to, from, next) {
+  // Verifica se o usuário está autenticado e tem nível VIP ou Premium
+  if (store.getters.isAuthenticated && store.getters.isVIP) {
+    console.log('✅ Acesso VIP autorizado para:', store.getters.currentUser?.email)
+    next()
+  } else {
+    // Log de tentativa de acesso não autorizado
+    if (store.getters.isAuthenticated) {
+      console.warn('🚫 Tentativa de acesso VIP negada para usuário:', store.getters.currentUser?.email, 'Nível:', store.getters.currentUser?.accountType)
+    } else {
+      console.warn('🚫 Tentativa de acesso VIP sem autenticação')
+    }
+    
+    // Redireciona para planos se não for VIP
+    next('/plans')
   }
 }

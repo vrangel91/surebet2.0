@@ -1087,13 +1087,16 @@ export default {
         email: user.email,
         role: user.role,
         status: user.status,
-        password: ''
+        password: '',
+        accountType: user.accountType || 'basic'
       }
       this.showEditModal = true
     },
     
     async saveUser() {
       try {
+        console.log('💾 Salvando usuário...', this.userForm)
+        
         if (this.showEditModal) {
           // Atualizar usuário existente
           const userToUpdate = this.allUsers.find(u => u.email === this.userForm.email)
@@ -1103,9 +1106,11 @@ export default {
               updates: {
                 name: this.userForm.name,
                 role: this.userForm.role,
-                status: this.userForm.status
+                status: this.userForm.status,
+                accountType: this.userForm.accountType
               }
             })
+            this.showSuccessNotification('Usuário atualizado com sucesso!', 'Usuário Atualizado')
           }
         } else {
           // Criar novo usuário
@@ -1114,14 +1119,36 @@ export default {
             email: this.userForm.email,
             role: this.userForm.role,
             status: this.userForm.status,
-            password: this.userForm.password
+            password: this.userForm.password,
+            accountType: this.userForm.accountType || 'basic'
           })
+          
+          this.showSuccessNotification('Usuário criado com sucesso!', 'Novo Usuário')
         }
         
         this.closeModal()
-        this.$toast?.success?.(this.showEditModal ? 'Usuário atualizado!' : 'Usuário criado!')
+        
+        // Recarregar usuários da API para garantir sincronização
+        await this.fetchUsersFromAPI()
+        
       } catch (error) {
-        this.$toast?.error?.('Erro ao salvar usuário')
+        console.error('❌ Erro ao salvar usuário:', error)
+        
+        let errorMessage = 'Erro ao salvar usuário. Tente novamente.'
+        let errorTitle = 'Erro'
+        
+        if (error.message.includes('Token de autenticação')) {
+          errorMessage = 'Sessão expirada. Faça login novamente.'
+          errorTitle = 'Sessão Expirada'
+        } else if (error.message.includes('E-mail já cadastrado')) {
+          errorMessage = 'Este e-mail já está sendo usado por outro usuário.'
+          errorTitle = 'E-mail Duplicado'
+        } else if (error.message.includes('HTTP error')) {
+          errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.'
+          errorTitle = 'Erro de Conexão'
+        }
+        
+        this.showErrorNotification(errorMessage, errorTitle)
       }
     },
     
@@ -1145,12 +1172,33 @@ export default {
     
     async confirmDelete() {
       try {
+        console.log('🗑️ Excluindo usuário:', this.userToDelete.id)
+        
         await this.deleteUserData(this.userToDelete.id)
+        
         this.showDeleteModal = false
         this.userToDelete = null
-        this.$toast?.success?.('Usuário excluído!')
+        
+        // Recarregar usuários da API para garantir sincronização
+        await this.fetchUsersFromAPI()
+        
+        this.showSuccessNotification('Usuário excluído com sucesso!', 'Usuário Excluído')
+        
       } catch (error) {
-        this.$toast?.error?.('Erro ao excluir usuário')
+        console.error('❌ Erro ao excluir usuário:', error)
+        
+        let errorMessage = 'Erro ao excluir usuário. Tente novamente.'
+        let errorTitle = 'Erro'
+        
+        if (error.message.includes('Token de autenticação')) {
+          errorMessage = 'Sessão expirada. Faça login novamente.'
+          errorTitle = 'Sessão Expirada'
+        } else if (error.message.includes('Não é possível deletar administradores')) {
+          errorMessage = 'Não é possível excluir usuários administradores.'
+          errorTitle = 'Operação Negada'
+        }
+        
+        this.showErrorNotification(errorMessage, errorTitle)
       }
     },
     
@@ -1162,7 +1210,8 @@ export default {
         email: '',
         role: 'user',
         status: 'active',
-        password: ''
+        password: '',
+        accountType: 'basic'
       }
     },
 

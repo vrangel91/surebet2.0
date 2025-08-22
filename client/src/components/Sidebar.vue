@@ -38,8 +38,8 @@
       
       <!-- Ícones de Administração e Configurações -->
       <div class="admin-icons" v-show="!shouldBeCollapsed">
-        <!-- Configurações -->
-        <router-link to="/settings" class="admin-icon-link" title="Configurações">
+        <!-- Configurações (só para admins) -->
+        <router-link v-if="isAdmin" to="/settings" class="admin-icon-link" title="Configurações">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
             <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
           </svg>
@@ -59,7 +59,7 @@
       <ul class="nav-list">
         <!-- Dashboard/Surebets sempre em primeiro -->
         <li class="nav-item" :class="{ active: $route.path === '/' }">
-          <div class="nav-link" :class="{ 'locked': !hasCredits }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M11 2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h2zM9 3v1h2V3H9z"/>
               <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-.5-.5h-1v.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 7.5v6z"/>
@@ -67,15 +67,18 @@
               <path d="M8.5 5a.5.5 0 0 0-1 0v1H6a.5.5 0 0 0 0 1h1.5v1a.5.5 0 0 0 1 0V7H10a.5.5 0 0 0 0-1H8.5V5z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Surebets</span>
-            <svg v-if="!hasCredits" class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-            </svg>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
           </div>
         </li>
 
         <!-- Juros Compostos -->
         <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
-          <div class="nav-link" :class="{ 'locked': !hasCredits }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M3.5 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
               <path d="M3.5 5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
@@ -84,9 +87,12 @@
               <path d="M3.5 14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
-            <svg v-if="!hasCredits" class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-            </svg>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
           </div>
         </li>
 
@@ -113,11 +119,17 @@
 
         <!-- Relatórios -->
         <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-          <div class="nav-link" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3A1.5 1.5 0 0 1 15 10.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
           </div>
         </li>
 
@@ -137,12 +149,18 @@
 
         <!-- Contas de Casas de Apostas -->
         <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
-          <router-link to="/bookmaker-accounts" class="nav-link" :title="shouldBeCollapsed ? 'Contas' : ''">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBookmakerAccountsClick" :title="shouldBeCollapsed ? 'Contas' : ''">
             <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
               <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383l-4.708 2.825L15 11.105V5.383zm-.034 6.876l-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
             </svg>
             <span class="nav-text" v-show="!shouldBeCollapsed">Contas</span>
-          </router-link>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
+          </div>
         </li>
 
         <!-- Suporte -->
@@ -208,6 +226,9 @@ export default {
     isAdmin() {
       return this.$store.getters.isAdmin
     },
+    isVIP() {
+      return this.$store.getters.isVIP
+    },
     // Computed para determinar se a sidebar deve estar colapsada
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
@@ -248,15 +269,15 @@ export default {
   },
   methods: {
     handleDashboardClick() {
-      if (this.hasCredits) {
+      if (this.isVIP) {
         this.$router.push('/')
       } else {
-        this.showNotification('Você precisa de créditos para acessar os Surebets. Compre créditos para continuar.', 'error')
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
         this.$router.push('/plans')
       }
     },
     handleReportsClick() {
-      if (this.hasCredits) {
+      if (this.isVIP) {
         // Se já estiver na página de relatórios, força o refresh
         if (this.$route.path === '/reports') {
           // Força o refresh da página
@@ -266,15 +287,24 @@ export default {
           this.$router.push('/reports')
         }
       } else {
-        this.showNotification('Você precisa de créditos para acessar os Relatórios. Compre créditos para continuar.', 'error')
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
         this.$router.push('/plans')
       }
     },
     handleCompoundInterestClick() {
-      if (this.hasCredits) {
+      if (this.isVIP) {
         this.$router.push('/compound-interest')
       } else {
-        this.showNotification('Você precisa de créditos para acessar a Calculadora de Juros Compostos. Compre créditos para continuar.', 'error')
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    
+    handleBookmakerAccountsClick() {
+      if (this.isVIP) {
+        this.$router.push('/bookmaker-accounts')
+      } else {
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
         this.$router.push('/plans')
       }
     },
@@ -640,6 +670,45 @@ export default {
 
 .nav-text {
   flex-grow: 1;
+}
+
+/* Indicadores VIP */
+.vip-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  animation: vipGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes vipGlow {
+  from {
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  }
+  to {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  }
+}
+
+.vip-icon {
+  width: 12px;
+  height: 12px;
+  color: #1a1a1a;
+}
+
+.vip-text {
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* Responsividade */

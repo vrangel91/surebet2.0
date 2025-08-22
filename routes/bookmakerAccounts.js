@@ -34,7 +34,8 @@ router.post('/', async (req, res) => {
 
     // Validações
     if (!bookmaker_name || bookmaker_name.trim().length < 2) {
-      return res.status(400).json({
+      return res.status(400)
+      ({
         success: false,
         message: 'Nome da casa de apostas é obrigatório e deve ter pelo menos 2 caracteres'
       });

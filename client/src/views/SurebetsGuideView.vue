@@ -1112,6 +1112,12 @@ export default {
   transform: translateY(-2px);
 }
 
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 0;
+  }
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .main-content {
@@ -1148,11 +1154,7 @@ export default {
   }
 }
 
-@media (max-width: 1200px) {
-  .main-content {
-    margin-left: 0;
-  }
-}
+
 
 
 

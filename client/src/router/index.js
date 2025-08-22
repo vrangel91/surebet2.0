@@ -11,7 +11,7 @@ import CompoundInterestView from '../views/CompoundInterestView.vue'
 import RankingView from '../views/RankingView.vue'
 import BookmakerAccountsView from '../views/BookmakerAccountsView.vue'
 import SurebetsGuideView from '../views/SurebetsGuideView.vue'
-import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
+import { requireAuth, requireGuest, requireAdmin, requireVIP, checkAuthStatus } from './guards'
 
 const routes = [
   {
@@ -24,19 +24,19 @@ const routes = [
     path: '/',
     name: 'surebets',
     component: SurebetsView,
-    beforeEnter: requireAuth
+    beforeEnter: requireVIP
   },
   {
     path: '/reports',
     name: 'reports',
     component: ReportsView,
-    beforeEnter: requireAuth
+    beforeEnter: requireVIP
   },
   {
     path: '/settings',
     name: 'settings',
     component: SettingsView,
-    beforeEnter: requireAuth
+    beforeEnter: requireAdmin
   },
   {
     path: '/admin',
@@ -65,7 +65,7 @@ const routes = [
     path: '/compound-interest',
     name: 'compound-interest',
     component: CompoundInterestView,
-    beforeEnter: requireAuth
+    beforeEnter: requireVIP
   },
   {
     path: '/ranking',
@@ -77,7 +77,7 @@ const routes = [
     path: '/bookmaker-accounts',
     name: 'bookmaker-accounts',
     component: BookmakerAccountsView,
-    beforeEnter: requireAuth
+    beforeEnter: requireVIP
   },
   {
     path: '/guide',

@@ -192,24 +192,208 @@ export default createStore({
       }
     },
     
-    createUser({ commit }, userData) {
-      const newUser = {
-        id: Date.now().toString(),
-        ...userData,
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        lastLogin: null
+    async createUser({ commit, state }, userData) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: userData.name,
+            email: userData.email,
+            password: userData.password,
+            role: userData.role || 'user',
+            account_type: userData.accountType || 'basic'
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao criar usuário')
+        }
+
+        const result = await response.json()
+        
+        // Converter dados do backend (snake_case) para frontend (camelCase)
+        const newUser = {
+          id: result.user.id,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+          accountType: result.user.account_type,
+          credits: result.user.credits || 0,
+          status: result.user.status,
+          lastLogin: result.user.last_login,
+          createdAt: result.user.created_at,
+          updatedAt: result.user.updated_at
+        }
+
+        // Adicionar usuário ao estado local
+        commit('addUser', newUser)
+        return newUser
+        
+      } catch (error) {
+        console.error('❌ Erro ao criar usuário:', error)
+        throw error
       }
-      commit('addUser', newUser)
-      return newUser
     },
     
-    updateUserData({ commit }, { id, updates }) {
-      commit('updateUser', { id, updates })
+    async updateUserData({ commit, state }, { id, updates }) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        // Converter dados do frontend (camelCase) para backend (snake_case)
+        const backendUpdates = {}
+        if (updates.name) backendUpdates.name = updates.name
+        if (updates.email) backendUpdates.email = updates.email
+        if (updates.role) backendUpdates.role = updates.role
+        if (updates.status) backendUpdates.status = updates.status
+        if (updates.accountType) backendUpdates.account_type = updates.accountType
+
+        const response = await fetch(`/api/users/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(backendUpdates)
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao atualizar usuário')
+        }
+
+        const result = await response.json()
+        
+        // Converter dados do backend (snake_case) para frontend (camelCase)
+        const updatedUser = {
+          id: result.user.id,
+          name: result.user.name,
+          email: result.user.email,
+          role: result.user.role,
+          accountType: result.user.account_type,
+          credits: result.user.credits || 0,
+          status: result.user.status,
+          lastLogin: result.user.last_login,
+          createdAt: result.user.created_at,
+          updatedAt: result.user.updated_at
+        }
+
+        // Atualizar usuário no estado local
+        commit('updateUser', { id, updates: updatedUser })
+        return updatedUser
+        
+      } catch (error) {
+        console.error('❌ Erro ao atualizar usuário:', error)
+        throw error
+      }
     },
     
-    deleteUserData({ commit }, id) {
-      commit('deleteUser', id)
+    async changeUserPassword({ state }, { id, password }) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch(`/api/users/${id}/password`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao alterar senha')
+        }
+
+        return { success: true }
+        
+      } catch (error) {
+        console.error('❌ Erro ao alterar senha:', error)
+        throw error
+      }
+    },
+    
+    async changeAccountType({ commit, state }, { userId, newType }) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ account_type: newType })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao alterar tipo de conta')
+        }
+
+        const result = await response.json()
+        
+        // Atualizar usuário local
+        commit('updateUser', { 
+          id: userId, 
+          updates: { accountType: result.user.account_type }
+        })
+        
+        return { success: true }
+        
+      } catch (error) {
+        console.error('❌ Erro ao alterar tipo de conta:', error)
+        throw error
+      }
+    },
+    
+    async deleteUserData({ commit, state }, id) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch(`/api/users/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao excluir usuário')
+        }
+
+        // Se a API retornou sucesso, fazer commit local
+        commit('deleteUser', id)
+        return { success: true }
+        
+      } catch (error) {
+        console.error('❌ Erro ao excluir usuário:', error)
+        throw error
+      }
     },
     
     updateLastLogin({ commit }, email) {
@@ -344,6 +528,11 @@ export default createStore({
     authToken: state => state.authToken,
     allUsers: state => state.users,
     isAdmin: state => state.user?.role === 'admin',
+    isVIP: state => {
+      if (!state.user) return false
+      if (state.user.role === 'admin') return true
+      return ['premium', 'vip'].includes(state.user.accountType)
+    },
     activeUsers: state => state.users.filter(user => user.status === 'active'),
     inactiveUsers: state => state.users.filter(user => user.status === 'inactive'),
     allTickets: state => state.tickets,
