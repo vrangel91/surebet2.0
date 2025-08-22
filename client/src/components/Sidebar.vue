@@ -389,6 +389,7 @@ export default {
 .sidebar.collapsed .nav-link {
   justify-content: center;
   padding: 12px 8px;
+  position: relative;
 }
 
 .sidebar.collapsed .nav-icon {
@@ -402,6 +403,96 @@ export default {
   margin: 0;
   width: 12px;
   height: 12px;
+}
+
+/* Estilos específicos para badges VIP no sidebar colapsado */
+.sidebar.collapsed .vip-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  margin: 0;
+  padding: 2px;
+  border-radius: 50%;
+  font-size: 8px;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  box-shadow: 0 1px 4px rgba(255, 215, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: vipPulse 2s ease-in-out infinite;
+}
+
+@keyframes vipPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 1px 4px rgba(255, 215, 0, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.6);
+  }
+}
+
+.sidebar.collapsed .vip-icon {
+  width: 6px;
+  height: 6px;
+  color: #1a1a1a;
+}
+
+.sidebar.collapsed .vip-text {
+  display: none;
+}
+
+/* Ajuste para nav-link com badge VIP no sidebar colapsado */
+.sidebar.collapsed .nav-link:has(.vip-indicator) {
+  padding-right: 8px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+/* Tooltip para badges VIP no sidebar colapsado */
+.sidebar.collapsed .vip-indicator::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 4px;
+}
+
+.sidebar.collapsed .vip-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: -4px;
+}
+
+.sidebar.collapsed .vip-indicator:hover::before,
+.sidebar.collapsed .vip-indicator:hover::after {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sidebar.collapsed .user-profile {

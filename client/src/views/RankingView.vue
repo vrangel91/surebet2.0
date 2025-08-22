@@ -41,6 +41,31 @@
         </div>
       </div>
 
+      <!-- Status da busca automática -->
+      <div class="auto-refresh-status">
+        <div class="status-indicator">
+          <span class="status-dot" :class="{ active: autoRefreshInterval }"></span>
+          <span class="status-text">
+            {{ autoRefreshInterval ? '🔄 Busca automática ativa' : '⏹️ Busca automática pausada' }}
+          </span>
+        </div>
+        <div class="update-info" v-if="lastDataUpdate">
+          <span class="update-text">
+            Última atualização: {{ formatDateTime(lastDataUpdate) }}
+          </span>
+          <span class="update-count" v-if="dataUpdateCount > 0">
+            ({{ dataUpdateCount }} atualizações)
+          </span>
+        </div>
+        <button 
+          @click="toggleAutoRefresh" 
+          class="toggle-auto-refresh-btn"
+          :class="{ active: autoRefreshInterval }"
+        >
+          {{ autoRefreshInterval ? '⏸️ Pausar' : '▶️ Retomar' }}
+        </button>
+      </div>
+
       <div class="stats-dashboard">
         <div class="stat-card">
           <div class="stat-icon">🎯</div>
@@ -270,7 +295,11 @@ export default {
       timeChart: null,
       sportsChart: null,
       isLoading: false,
-      availableSports: []
+      availableSports: [],
+      // Novas propriedades para busca contínua
+      autoRefreshInterval: null,
+      lastDataUpdate: null,
+      dataUpdateCount: 0
     }
   },
   
@@ -312,10 +341,14 @@ export default {
         this.setupCharts()
       }, 1000)
     })
+    
+    // Iniciar busca automática de novos dados
+    this.startAutoRefresh()
   },
   
   beforeUnmount() {
     this.destroyCharts()
+    this.stopAutoRefresh()
   },
   
   methods: {
@@ -329,32 +362,40 @@ export default {
       try {
         this.isLoading = true
         
-        // Tentar carregar dados do banco primeiro
-        try {
-          const dbStats = await this.$store.dispatch('fetchSurebetStats', {
-            period: this.selectedPeriod,
-            sport: this.selectedSport,
-            limit: 1000
-          })
+        // Buscar dados da API externa
+        const apiData = await this.fetchFromExternalAPI()
+        
+        if (apiData && apiData.length > 0) {
+          console.log(`✅ Carregados ${apiData.length} registros da API externa`)
+          this.surebets = apiData
           
-          if (dbStats && dbStats.length > 0) {
-            console.log(`✅ Carregados ${dbStats.length} registros do banco de dados`)
-            this.surebets = dbStats
-          } else {
-            console.log('📊 Nenhum dado encontrado no banco, usando dados de exemplo')
+          // Salvar dados no banco local para cache
+          await this.saveDataToDatabase()
+        } else {
+          console.log('📊 Nenhum dado encontrado na API externa, tentando carregar do banco local')
+          
+          // Tentar carregar dados do banco local
+          try {
+            const dbStats = await this.$store.dispatch('fetchSurebetStats', {
+              period: this.selectedPeriod,
+              sport: this.selectedSport,
+              limit: 1000
+            })
+            
+            if (dbStats && dbStats.length > 0) {
+              console.log(`✅ Carregados ${dbStats.length} registros do banco de dados`)
+              this.surebets = dbStats
+            } else {
+              console.log('📊 Nenhum dado encontrado, usando dados de exemplo')
+              this.surebets = this.generateSampleData()
+            }
+          } catch (dbError) {
+            console.warn('⚠️ Erro ao carregar do banco, usando dados de exemplo:', dbError)
             this.surebets = this.generateSampleData()
           }
-        } catch (dbError) {
-          console.warn('⚠️ Erro ao carregar do banco, usando dados de exemplo:', dbError)
-          this.surebets = this.generateSampleData()
         }
         
         this.processAnalytics()
-        
-        // Salvar dados no banco se não existirem
-        if (this.surebets.length > 0) {
-          this.saveDataToDatabase()
-        }
         
       } catch (error) {
         console.error('❌ Erro ao carregar dados:', error)
@@ -364,6 +405,130 @@ export default {
       } finally {
         this.isLoading = false
       }
+    },
+
+    async fetchFromExternalAPI() {
+      try {
+        console.log('🌐 Buscando dados da API externa...')
+        
+        // Buscar dados da API externa via servidor
+        const response = await fetch('/api/surebets', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
+        }
+        
+        const apiData = await response.json()
+        console.log('📡 Dados recebidos da API externa:', apiData)
+        
+        // Verificar se os dados têm a estrutura esperada
+        if (!apiData || typeof apiData !== 'object') {
+          throw new Error('Estrutura de dados inválida da API')
+        }
+        
+        // Processar dados da API externa
+        const processedData = this.processExternalAPIData(apiData)
+        console.log('✅ Dados processados:', processedData.length, 'registros únicos')
+        
+        return processedData
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar da API externa:', error)
+        throw error
+      }
+    },
+
+    processExternalAPIData(apiData) {
+      const processedData = []
+      const processedIds = new Set()
+      
+      // Iterar sobre cada surebet_id na resposta da API
+      Object.entries(apiData).forEach(([surebetId, surebetParts]) => {
+        // Verificar se já processamos este surebet_id
+        if (processedIds.has(surebetId)) {
+          console.log(`⚠️ Surebet ID duplicado ignorado: ${surebetId}`)
+          return
+        }
+        
+        // Marcar como processado
+        processedIds.add(surebetId)
+        
+        // Processar cada parte do surebet
+        if (Array.isArray(surebetParts)) {
+          surebetParts.forEach((part, index) => {
+            try {
+              // Extrair informações da parte
+              const {
+                house,
+                profit,
+                roi,
+                timestamp,
+                sport,
+                event,
+                market,
+                selection1,
+                selection2,
+                selection3,
+                odds1,
+                odds2,
+                odds3,
+                stake = 100,
+                status = 'active'
+              } = part
+              
+              // Criar data e hora a partir do timestamp
+              const dateObj = timestamp ? new Date(timestamp) : new Date()
+              const date = dateObj.toISOString().split('T')[0]
+              const hour = dateObj.getHours()
+              
+              // Criar objeto surebet processado
+              const processedSurebet = {
+                surebet_id: surebetId,
+                house: house || 'Casa não especificada',
+                market: market || 'Mercado não especificado',
+                match: event || 'Evento não especificado',
+                profit: parseFloat(profit) || 0,
+                date: date,
+                hour: hour,
+                sport: sport || 'Futebol',
+                period: null,
+                minutes: null,
+                anchorh1: null,
+                anchorh2: null,
+                chance: parseFloat(roi) || null,
+                metadata: {
+                  source: 'external_api',
+                  timestamp: timestamp,
+                  selection1: selection1 || null,
+                  selection2: selection2 || null,
+                  selection3: selection3 || null,
+                  odds1: parseFloat(odds1) || null,
+                  odds2: parseFloat(odds2) || null,
+                  odds3: parseFloat(odds3) || null,
+                  stake: parseFloat(stake) || 100,
+                  status: status || 'active',
+                  processed_at: new Date().toISOString()
+                }
+              }
+              
+              processedData.push(processedSurebet)
+              
+            } catch (partError) {
+              console.error(`Erro ao processar parte ${index + 1} do surebet ${surebetId}:`, partError)
+            }
+          })
+        } else {
+          console.warn(`Formato inválido para surebet ${surebetId}:`, surebetParts)
+        }
+      })
+      
+      console.log(`🎯 Processados ${processedData.length} registros únicos de ${processedIds.size} IDs únicos`)
+      return processedData
     },
 
     generateSampleData() {
@@ -687,6 +852,13 @@ export default {
     
     async saveDataToDatabase() {
       try {
+        if (!this.surebets || this.surebets.length === 0) {
+          console.log('📊 Nenhum dado para salvar')
+          return
+        }
+        
+        console.log(`💾 Salvando ${this.surebets.length} registros no banco...`)
+        
         // Preparar dados para salvar no banco
         const statsToSave = this.surebets.map(item => ({
           surebet_id: item.surebet_id,
@@ -704,16 +876,85 @@ export default {
           chance: item.chance || null,
           metadata: {
             source: 'ranking_view',
-            generated_at: new Date().toISOString()
+            generated_at: new Date().toISOString(),
+            ...item.metadata
           }
         }))
         
-        // Salvar no banco
-        const result = await this.$store.dispatch('saveSurebetStats', statsToSave)
-        console.log('✅ Dados salvos no banco:', result)
+        // Usar endpoint bulk para salvar múltiplos registros de uma vez
+        const response = await fetch('/api/surebet-stats/bulk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify({ stats: statsToSave })
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
+        }
+        
+        const result = await response.json()
+        console.log('✅ Dados salvos no banco:', result.message)
+        
+        // Salvar análise também
+        await this.saveAnalyticsToDatabase(this.filteredSurebets)
         
       } catch (error) {
         console.error('❌ Erro ao salvar dados no banco:', error)
+        
+        // Tentar salvar individualmente se o bulk falhar
+        try {
+          console.log('🔄 Tentando salvar registros individualmente...')
+          for (const item of this.surebets.slice(0, 10)) { // Limitar a 10 para não sobrecarregar
+            await this.saveIndividualRecord(item)
+          }
+          console.log('✅ Alguns registros salvos individualmente')
+        } catch (individualError) {
+          console.error('❌ Erro ao salvar individualmente:', individualError)
+        }
+      }
+    },
+    
+    async saveIndividualRecord(item) {
+      try {
+        const response = await fetch('/api/surebet-stats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify({
+            surebet_id: item.surebet_id,
+            house: item.house,
+            market: item.market,
+            match: item.match || 'Partida não especificada',
+            profit: item.profit,
+            date: item.date,
+            hour: item.hour,
+            sport: item.sport,
+            period: item.period || null,
+            minutes: item.minutes || null,
+            anchorh1: item.anchorh1 || null,
+            anchorh2: item.anchorh2 || null,
+            chance: item.chance || null,
+            metadata: {
+              source: 'ranking_view',
+              generated_at: new Date().toISOString(),
+              ...item.metadata
+            }
+          })
+        })
+        
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status}`)
+        }
+        
+        return await response.json()
+      } catch (error) {
+        console.error(`Erro ao salvar registro ${item.surebet_id}:`, error)
+        throw error
       }
     },
     
@@ -825,6 +1066,92 @@ export default {
     forceRefresh() { 
       this.loadSurebetsData()
     },
+    
+    // Métodos para busca automática de dados
+    startAutoRefresh() {
+      // Parar intervalo existente se houver
+      this.stopAutoRefresh()
+      
+      // Iniciar novo intervalo (buscar a cada 2 minutos)
+      this.autoRefreshInterval = setInterval(async () => {
+        try {
+          console.log('🔄 Busca automática de novos dados...')
+          await this.checkForNewData()
+        } catch (error) {
+          console.error('❌ Erro na busca automática:', error)
+        }
+      }, 2 * 60 * 1000) // 2 minutos
+      
+      console.log('✅ Busca automática iniciada (intervalo: 2 minutos)')
+    },
+    
+    stopAutoRefresh() {
+      if (this.autoRefreshInterval) {
+        clearInterval(this.autoRefreshInterval)
+        this.autoRefreshInterval = null
+        console.log('⏹️ Busca automática parada')
+      }
+    },
+
+    toggleAutoRefresh() {
+      if (this.autoRefreshInterval) {
+        this.stopAutoRefresh()
+      } else {
+        this.startAutoRefresh()
+      }
+    },
+    
+    async checkForNewData() {
+      try {
+        // Buscar dados da API externa
+        const apiData = await this.fetchFromExternalAPI()
+        
+        if (apiData && apiData.length > 0) {
+          // Verificar se há novos dados
+          const currentCount = this.surebets.length
+          const newCount = apiData.length
+          
+          if (newCount > currentCount || this.hasNewSurebets(apiData)) {
+            console.log(`🆕 Novos dados encontrados! Atual: ${currentCount}, Novo: ${newCount}`)
+            
+            // Atualizar dados
+            this.surebets = apiData
+            this.dataUpdateCount++
+            this.lastDataUpdate = new Date()
+            
+            // Reprocessar análises
+            this.processAnalytics()
+            
+            // Salvar no banco
+            await this.saveDataToDatabase()
+            
+            // Atualizar gráficos
+            this.updateCharts()
+            
+            console.log('✅ Dados atualizados com sucesso')
+          } else {
+            console.log('📊 Nenhum novo dado encontrado')
+          }
+        }
+      } catch (error) {
+        console.error('❌ Erro ao verificar novos dados:', error)
+      }
+    },
+    
+    hasNewSurebets(newData) {
+      // Verificar se há surebets com IDs que não existem nos dados atuais
+      const currentIds = new Set(this.surebets.map(s => s.surebet_id))
+      const newIds = new Set(newData.map(s => s.surebet_id))
+      
+      for (const newId of newIds) {
+        if (!currentIds.has(newId)) {
+          return true
+        }
+      }
+      
+      return false
+    },
+
     destroyCharts() {
       if (this.housesChart) this.housesChart.destroy()
       if (this.marketsChart) this.marketsChart.destroy()
@@ -848,6 +1175,16 @@ export default {
       if (value >= 80) return 'high'
       if (value >= 60) return 'medium'
       return 'low'
+    },
+    formatDateTime(date) {
+      const options = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      };
+      return new Date(date).toLocaleDateString('pt-BR', options);
     }
   }
 }
@@ -1271,6 +1608,88 @@ export default {
   color: #888888;
   font-style: italic;
   font-size: 12px;
+}
+
+.auto-refresh-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background: rgba(26, 26, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #ff4444; /* Red for inactive */
+  transition: background-color 0.3s ease;
+}
+
+.status-dot.active {
+  background-color: #00ff88; /* Green for active */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+.update-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.update-text {
+  color: #cccccc;
+}
+
+.update-count {
+  color: #00ff88;
+  font-weight: 700;
+}
+
+.toggle-auto-refresh-btn {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: #1a1a1a;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.toggle-auto-refresh-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+}
+
+.toggle-auto-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-auto-refresh-btn.active {
+  background: linear-gradient(135deg, #ff4444, #dc3545);
+  color: #ffffff;
 }
 
 @media (max-width: 1200px) {
