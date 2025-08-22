@@ -360,7 +360,7 @@ export default {
   background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
   border-radius: 16px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  max-width: 1000px;
+  max-width: 1400px;
   width: 95%;
   max-height: 90vh;
   overflow: hidden;

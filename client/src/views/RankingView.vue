@@ -99,36 +99,44 @@
         </div>
       </div>
 
-      <div class="ranking-section">
-        <h3>🏢 Ranking das Casas</h3>
-        <div class="ranking-table-container">
-          <table class="ranking-table">
-            <thead>
-              <tr>
-                <th>Pos</th>
-                <th>Casa</th>
-                <th>Aparições</th>
-                <th>%</th>
-                <th>Lucro Médio</th>
-                <th>Lucro Max</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(house, index) in topHouses" :key="house.name" class="ranking-row">
-                <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
-                <td class="house-name">
-                  <span class="house-logo">{{ house.name.charAt(0) }}</span>
-                  {{ house.name }}
-                </td>
-                <td>{{ house.count }}</td>
-                <td>{{ formatPercentage(house.percentage) }}%</td>
-                <td class="positive">{{ formatCurrency(house.averageProfit) }}</td>
-                <td class="positive">{{ formatCurrency(house.maxProfit) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+             <div class="ranking-section">
+         <h3>🏢 Ranking das Casas</h3>
+         <div class="ranking-table-container">
+           <table class="ranking-table">
+             <thead>
+               <tr>
+                 <th>Pos</th>
+                 <th>Casa</th>
+                 <th>Aparições</th>
+                 <th>%</th>
+                 <th>Lucro Médio</th>
+                 <th>Lucro Max</th>
+               </tr>
+             </thead>
+             <tbody>
+               <tr v-for="(house, index) in topHouses" :key="house.name" class="ranking-row">
+                 <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
+                 <td class="house-name">
+                   <span class="house-logo">{{ house.name.charAt(0) }}</span>
+                   {{ house.name }}
+                 </td>
+                 <td>{{ house.count }}</td>
+                 <td>{{ formatPercentage(house.percentage) }}%</td>
+                 <td class="positive">{{ formatCurrency(house.averageProfit) }}</td>
+                 <td class="positive">{{ formatCurrency(house.maxProfit) }}</td>
+               </tr>
+             </tbody>
+           </table>
+         </div>
+         
+         <!-- Estatísticas das casas não ativas -->
+         <div class="inactive-houses-info">
+           <h4>📊 Casas Não Ativas no Período</h4>
+           <p>Total de casas disponíveis: <strong>{{ totalAvailableHouses }}</strong></p>
+           <p>Casas ativas: <strong class="positive">{{ activeHousesCount }}</strong></p>
+           <p>Casas inativas: <strong class="neutral">{{ inactiveHousesCount }}</strong></p>
+         </div>
+       </div>
 
       <div class="ranking-section">
         <h3>🤝 Duplas Mais Frequentes</h3>
@@ -232,6 +240,7 @@ import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import { Chart, registerables } from 'chart.js'
+import { filterOptions } from '../config/filters.js'
 Chart.register(...registerables)
 
 export default {
@@ -280,6 +289,19 @@ export default {
         filtered = filtered.filter(s => s.sport === this.selectedSport)
       }
       return filtered
+    },
+    
+    // Estatísticas das casas disponíveis
+    totalAvailableHouses() {
+      return filterOptions.houses.length
+    },
+    
+    activeHousesCount() {
+      return this.uniqueHouses
+    },
+    
+    inactiveHousesCount() {
+      return this.totalAvailableHouses - this.activeHousesCount
     }
   },
   
@@ -306,26 +328,55 @@ export default {
       if (this.isLoading) return
       try {
         this.isLoading = true
+        
+        // Tentar carregar dados do banco primeiro
+        try {
+          const dbStats = await this.$store.dispatch('fetchSurebetStats', {
+            period: this.selectedPeriod,
+            sport: this.selectedSport,
+            limit: 1000
+          })
+          
+          if (dbStats && dbStats.length > 0) {
+            console.log(`✅ Carregados ${dbStats.length} registros do banco de dados`)
+            this.surebets = dbStats
+          } else {
+            console.log('📊 Nenhum dado encontrado no banco, usando dados de exemplo')
+            this.surebets = this.generateSampleData()
+          }
+        } catch (dbError) {
+          console.warn('⚠️ Erro ao carregar do banco, usando dados de exemplo:', dbError)
+          this.surebets = this.generateSampleData()
+        }
+        
+        this.processAnalytics()
+        
+        // Salvar dados no banco se não existirem
+        if (this.surebets.length > 0) {
+          this.saveDataToDatabase()
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao carregar dados:', error)
+        // Fallback para dados de exemplo
         this.surebets = this.generateSampleData()
         this.processAnalytics()
-      } catch (error) {
-        console.error('Erro:', error)
       } finally {
         this.isLoading = false
       }
     },
 
     generateSampleData() {
-      const houses = ['Bet365', 'Betfair', 'William Hill', 'Unibet', 'Pinnacle', 'Betway', 'Marathonbet', '1xBet']
-      const markets = ['Resultado Final', 'Over/Under 2.5', 'Ambas Marcam', 'Handicap', 'Dupla Chance']
-      const sports = ['Futebol', 'Tênis', 'Basquete', 'Vôlei']
+      // Usar as casas reais do filtro
+      const houses = filterOptions.houses
+      const markets = ['Resultado Final', 'Over/Under 2.5', 'Ambas Marcam', 'Handicap', 'Dupla Chance', 'Escanteios', 'Cartões', 'Gols por Tempo']
+      const sports = ['Futebol', 'Tênis', 'Basquete', 'Vôlei', 'Handebol', 'Futsal', 'Rugby', 'Hóquei']
       const data = []
 
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 150; i++) {
         const surebetId = `surebet_${i}`
-        const cloneCount = Math.floor(Math.random() * 3) + 2
-        const house1 = houses[Math.floor(Math.random() * houses.length)]
-        const house2 = houses[Math.floor(Math.random() * houses.length)]
+        const cloneCount = Math.floor(Math.random() * 4) + 2 // 2 a 5 casas por surebet
+        const selectedHouses = this.getRandomHouses(houses, cloneCount)
         const selectedMarket = markets[Math.floor(Math.random() * markets.length)]
         const selectedSport = sports[Math.floor(Math.random() * sports.length)]
         
@@ -334,17 +385,19 @@ export default {
         let hour = Math.floor(Math.random() * 24)
         if (Math.random() < 0.6) hour = 14 + Math.floor(Math.random() * 9)
         
-        const baseProfit = 10 + Math.random() * 50
+        const baseProfit = 8 + Math.random() * 60 // Lucro entre 8% e 68%
 
         for (let j = 0; j < cloneCount; j++) {
           data.push({
             surebet_id: surebetId,
-            house: j === 0 ? house1 : house2,
+            house: selectedHouses[j],
             market: selectedMarket,
-            profit: parseFloat((baseProfit + (Math.random() - 0.5) * 5).toFixed(2)),
+            profit: parseFloat((baseProfit + (Math.random() - 0.5) * 8).toFixed(2)),
             date: baseDate.toISOString().split('T')[0],
             hour: hour,
-            sport: selectedSport
+            sport: selectedSport,
+            period: Math.random() < 0.7 ? '90min' : '45min',
+            minutes: Math.random() < 0.3 ? Math.floor(Math.random() * 90) : 0
           })
         }
       }
@@ -373,6 +426,16 @@ export default {
       this.processMarketsRanking(filtered)
       this.processInsights(filtered)
       this.updateCharts()
+      
+      // Log das estatísticas das casas
+      console.log(`📊 Estatísticas das Casas:`)
+      console.log(`Total disponíveis: ${this.totalAvailableHouses}`)
+      console.log(`Ativas no período: ${this.activeHousesCount}`)
+      console.log(`Inativas no período: ${this.inactiveHousesCount}`)
+      console.log(`Taxa de atividade: ${((this.activeHousesCount / this.totalAvailableHouses) * 100).toFixed(1)}%`)
+      
+      // Salvar análises no banco
+      this.saveAnalyticsToDatabase(filtered)
     },
 
     processHousesRanking(data) {
@@ -390,7 +453,7 @@ export default {
         percentage: (house.count / data.length) * 100,
         averageProfit: house.profits.reduce((sum, p) => sum + p, 0) / house.profits.length,
         maxProfit: Math.max(...house.profits)
-      })).sort((a, b) => b.count - a.count).slice(0, 10)
+      })).sort((a, b) => b.count - a.count).slice(0, 15) // Mostrar top 15 casas
     },
 
     processHousePairsRanking(data) {
@@ -491,20 +554,37 @@ export default {
       if (!ctx) return
       if (this.housesChart) this.housesChart.destroy()
       
-      const data = this.topHouses.slice(0, 8)
+      const data = this.topHouses.slice(0, 12) // Mostrar top 12 casas no gráfico
       this.housesChart = new Chart(ctx, {
         type: 'bar',
         data: {
           labels: data.map(h => h.name),
-          datasets: [{ label: 'Aparições', data: data.map(h => h.count), backgroundColor: 'rgba(0, 255, 136, 0.8)' }]
+          datasets: [{ 
+            label: 'Aparições', 
+            data: data.map(h => h.count), 
+            backgroundColor: 'rgba(0, 255, 136, 0.8)',
+            borderColor: 'rgba(0, 255, 136, 1)',
+            borderWidth: 1
+          }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            y: { beginAtZero: true, ticks: { color: '#ffffff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-            x: { ticks: { color: '#ffffff' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+            y: { 
+              beginAtZero: true, 
+              ticks: { color: '#ffffff' }, 
+              grid: { color: 'rgba(255, 255, 255, 0.1)' } 
+            },
+            x: { 
+              ticks: { 
+                color: '#ffffff',
+                maxRotation: 45,
+                minRotation: 0
+              }, 
+              grid: { color: 'rgba(255, 255, 255, 0.1)' } 
+            }
           }
         }
       })
@@ -604,9 +684,88 @@ export default {
         if (this.sportsChart) this.updateSportsChart()
       }, 100))
     },
+    
+    async saveDataToDatabase() {
+      try {
+        // Preparar dados para salvar no banco
+        const statsToSave = this.surebets.map(item => ({
+          surebet_id: item.surebet_id,
+          house: item.house,
+          market: item.market,
+          match: item.match || 'Partida não especificada',
+          profit: item.profit,
+          date: item.date,
+          hour: item.hour,
+          sport: item.sport,
+          period: item.period || null,
+          minutes: item.minutes || null,
+          anchorh1: item.anchorh1 || null,
+          anchorh2: item.anchorh2 || null,
+          chance: item.chance || null,
+          metadata: {
+            source: 'ranking_view',
+            generated_at: new Date().toISOString()
+          }
+        }))
+        
+        // Salvar no banco
+        const result = await this.$store.dispatch('saveSurebetStats', statsToSave)
+        console.log('✅ Dados salvos no banco:', result)
+        
+      } catch (error) {
+        console.error('❌ Erro ao salvar dados no banco:', error)
+      }
+    },
+    
+    async saveAnalyticsToDatabase(filteredData) {
+      try {
+        // Calcular estatísticas para salvar
+        const totalSurebets = new Set(filteredData.map(s => s.surebet_id)).size
+        const uniqueHouses = new Set(filteredData.map(s => s.house)).size
+        const uniqueMarkets = new Set(filteredData.map(s => s.market)).size
+        
+        const surebetProfits = {}
+        filteredData.forEach(item => {
+          if (!surebetProfits[item.surebet_id]) {
+            surebetProfits[item.surebet_id] = item.profit
+          }
+        })
+        const profits = Object.values(surebetProfits)
+        const averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
+        
+        // Preparar dados de análise
+        const analyticsData = {
+          analysis_type: 'comprehensive',
+          period_days: parseInt(this.selectedPeriod),
+          sport_filter: this.selectedSport,
+          analysis_data: {
+            topHouses: this.topHouses,
+            topHousePairs: this.topHousePairs,
+            topMarkets: this.topMarkets,
+            insights: {
+              bestPair: this.bestPair,
+              peakHour: this.peakHour,
+              bestMarket: this.bestMarket,
+              mostActiveSport: this.mostActiveSport
+            }
+          },
+          total_surebets: totalSurebets,
+          unique_houses: uniqueHouses,
+          unique_markets: uniqueMarkets,
+          average_profit: averageProfit
+        }
+        
+        // Salvar análise no banco
+        const result = await this.$store.dispatch('saveSurebetAnalytics', analyticsData)
+        console.log('✅ Análise salva no banco:', result)
+        
+      } catch (error) {
+        console.error('❌ Erro ao salvar análise no banco:', error)
+      }
+    },
 
     updateHousesChart() {
-      const data = this.topHouses.slice(0, 8)
+      const data = this.topHouses.slice(0, 12)
       this.housesChart.data.labels = data.map(h => h.name)
       this.housesChart.data.datasets[0].data = data.map(h => h.count)
       this.housesChart.update('none')
@@ -656,8 +815,16 @@ export default {
       return mean > 0 ? (stdDev / mean) * 100 : 0
     },
 
+    // Método auxiliar para selecionar casas aleatórias únicas
+    getRandomHouses(houses, count) {
+      const shuffled = [...houses].sort(() => 0.5 - Math.random())
+      return shuffled.slice(0, count)
+    },
+
     updateAnalysis() { this.processAnalytics() },
-    forceRefresh() { this.loadSurebetsData() },
+    forceRefresh() { 
+      this.loadSurebetsData()
+    },
     destroyCharts() {
       if (this.housesChart) this.housesChart.destroy()
       if (this.marketsChart) this.marketsChart.destroy()
@@ -1034,6 +1201,32 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
+}
+
+.inactive-houses-info {
+  margin-top: 24px;
+  padding: 20px;
+  background: rgba(26, 26, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.inactive-houses-info h4 {
+  color: #00ff88;
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.inactive-houses-info p {
+  color: #ffffff;
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.inactive-houses-info strong {
+  color: #00ff88;
+  font-weight: 600;
 }
 
 .insight-card {

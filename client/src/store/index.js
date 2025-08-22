@@ -519,6 +519,133 @@ export default createStore({
       } catch (error) {
         console.error('❌ Erro ao buscar usuários:', error)
       }
+    },
+    
+    // Actions para estatísticas de surebets
+    async fetchSurebetStats({ state }, { period = 'all', sport = 'all', limit = 100 } = {}) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+        
+        const params = new URLSearchParams()
+        if (period !== 'all') params.append('period', period)
+        if (sport !== 'all') params.append('sport', sport)
+        if (limit !== 100) params.append('limit', limit)
+        
+        const response = await fetch(`/api/surebet-stats?${params}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data.success ? data.data : []
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar estatísticas de surebets:', error)
+        throw error
+      }
+    },
+    
+    async saveSurebetStats({ state }, statsData) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+        
+        const response = await fetch('/api/surebet-stats/bulk', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ stats: statsData })
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao salvar estatísticas')
+        }
+        
+        const result = await response.json()
+        return result
+        
+      } catch (error) {
+        console.error('❌ Erro ao salvar estatísticas de surebets:', error)
+        throw error
+      }
+    },
+    
+    async saveSurebetAnalytics({ state }, analyticsData) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+        
+        const response = await fetch('/api/surebet-stats/analytics', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(analyticsData)
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao salvar análise')
+        }
+        
+        const result = await response.json()
+        return result
+        
+      } catch (error) {
+        console.error('❌ Erro ao salvar análise de surebets:', error)
+        throw error
+      }
+    },
+    
+    async fetchSurebetAnalytics({ state }, { period = 'all', sport = 'all', type } = {}) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+        
+        const params = new URLSearchParams()
+        if (period !== 'all') params.append('period', period)
+        if (sport !== 'all') params.append('sport', sport)
+        if (type) params.append('type', type)
+        
+        const response = await fetch(`/api/surebet-stats/analytics?${params}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        return data.success ? data.data : []
+        
+      } catch (error) {
+        console.error('❌ Erro ao buscar análises de surebets:', error)
+        throw error
+      }
     }
   },
   

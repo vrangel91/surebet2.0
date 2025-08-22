@@ -5,6 +5,8 @@ const User = require('./User')(sequelize);
 const UserSession = require('./UserSession')(sequelize);
 const BookmakerAccount = require('./BookmakerAccount')(sequelize);
 const TransactionHistory = require('./TransactionHistory')(sequelize);
+const SurebetStats = require('./SurebetStats')(sequelize);
+const SurebetAnalytics = require('./SurebetAnalytics')(sequelize);
 
 // Definir associações
 User.hasMany(UserSession, {
@@ -65,5 +67,7 @@ module.exports = {
   UserSession,
   BookmakerAccount,
   TransactionHistory,
+  SurebetStats,
+  SurebetAnalytics,
   syncModels
 };

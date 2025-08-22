@@ -13,6 +13,7 @@ const { syncModels } = require('./models');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const bookmakerAccountsRoutes = require('./routes/bookmakerAccounts');
+const surebetStatsRoutes = require('./routes/surebetStats');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,6 +27,7 @@ app.use(express.static(path.join(__dirname, 'client/dist')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
+app.use('/api/surebet-stats', surebetStatsRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 8080 });
