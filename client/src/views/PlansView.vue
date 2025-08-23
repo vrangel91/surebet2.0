@@ -132,46 +132,327 @@
     <!-- Glossary Modal -->
     <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
     
+    <!-- Payment Method Selection Modal -->
+    <div v-if="showPaymentMethodModal" class="modal-overlay" @click="closePaymentMethodModal">
+      <div class="payment-method-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Escolha o Método de Pagamento</h3>
+          <button class="close-btn" @click="closePaymentMethodModal">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="selected-plan-info">
+            <p class="selected-plan">Plano selecionado:</p>
+            <h4 class="plan-name">{{ selectedPlan?.title }}</h4>
+            <div class="plan-price-display">
+              <span class="price-currency">R$</span>
+              <span class="price-value">{{ selectedPlan?.price }}</span>
+              <span class="price-decimal">,00</span>
+            </div>
+          </div>
+          
+          <div class="payment-methods">
+            <div class="payment-method-option" @click="selectPaymentMethod('pix')">
+              <div class="method-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+                </svg>
+              </div>
+              <div class="method-info">
+                <h4>PIX</h4>
+                <p>Pagamento instantâneo via PIX</p>
+                <span class="method-advantage">Aprovação imediata</span>
+              </div>
+              <div class="method-arrow">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="payment-method-option" @click="selectPaymentMethod('credit_card')">
+              <div class="method-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                  <path d="M6 8h2v2H6zm3 0h2v2H9zm3 0h2v2h-2z"/>
+                </svg>
+              </div>
+              <div class="method-info">
+                <h4>Cartão de Crédito</h4>
+                <p>Pagamento em até 12x sem juros</p>
+                <span class="method-advantage">Checkout transparente</span>
+              </div>
+              <div class="method-arrow">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 .5-.5z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Payment Method Modal -->
     <div v-if="showPaymentModal" class="modal-overlay" @click="closePaymentModal">
       <div class="payment-modal" @click.stop>
         <div class="modal-header">
-          <h3>Escolha a forma de pagamento</h3>
+          <h3>Checkout Seguro</h3>
           <button class="close-btn" @click="closePaymentModal">×</button>
         </div>
         
         <div class="modal-body">
-          <p class="selected-plan">Você selecionou:</p>
-          <h4 class="plan-name">{{ selectedPlan?.title }}</h4>
-          <div class="plan-price-display">
-            <span class="price-currency">R$</span>
-            <span class="price-value">{{ selectedPlan?.price }}</span>
-            <span class="price-decimal">,00</span>
+          <div class="selected-plan-info">
+            <p class="selected-plan">Plano selecionado:</p>
+            <h4 class="plan-name">{{ selectedPlan?.title }}</h4>
+            <div class="plan-price-display">
+              <span class="price-currency">R$</span>
+              <span class="price-value">{{ selectedPlan?.price }}</span>
+              <span class="price-decimal">,00</span>
+            </div>
           </div>
           
-          <div class="payment-methods">
-            <button class="payment-method-btn" @click="selectPaymentMethod('pix')">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H5a.5.5 0 0 1-.5-.5v-1z"/>
-                <path d="M7.5 4.5a.5.5 0 0 1 .5-.5h.5a.5.5 0 0 1 .5.5v.5a.5.5 0 0 1-.5.5H8a.5.5 0 0 1-.5-.5v-.5z"/>
-              </svg>
-              <div class="payment-info">
-                <span class="payment-title">Pagar com PIX</span>
-                <span class="payment-subtitle">QR Code • Confirmação rápida</span>
+          <!-- Checkout Form -->
+          <form @submit.prevent="processPayment" class="checkout-form">
+            <div class="form-section">
+              <h5 class="section-title">Dados Pessoais</h5>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Nome Completo</label>
+                  <input 
+                    v-model="checkoutData.firstName" 
+                    type="text" 
+                    required 
+                    placeholder="Seu nome completo"
+                    class="form-input"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Sobrenome</label>
+                  <input 
+                    v-model="checkoutData.lastName" 
+                    type="text" 
+                    required 
+                    placeholder="Seu sobrenome"
+                    class="form-input"
+                  />
+                </div>
               </div>
-            </button>
+              
+              <div class="form-group">
+                <label>E-mail</label>
+                <input 
+                  v-model="checkoutData.email" 
+                  type="email" 
+                  required 
+                  placeholder="seu@email.com"
+                  class="form-input"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label>CPF</label>
+                <input 
+                  v-model="checkoutData.cpf" 
+                  type="text" 
+                  required 
+                  placeholder="000.000.000-00"
+                  class="form-input cpf-input"
+                  v-mask="'###.###.###-##'"
+                />
+              </div>
+            </div>
             
-            <button class="payment-method-btn" @click="selectPaymentMethod('credit')">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2z"/>
-                <path d="M0 7v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7H0zm3 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5V9z"/>
-              </svg>
-              <div class="payment-info">
-                <span class="payment-title">Cartão de Crédito</span>
-                <span class="payment-subtitle">Checkout seguro Mercado Pago</span>
+            <div class="form-section">
+              <h5 class="section-title">Dados de Pagamento</h5>
+              <div class="form-group">
+                <label>Número do Cartão</label>
+                <input 
+                  v-model="checkoutData.cardNumber" 
+                  type="text" 
+                  required 
+                  placeholder="0000 0000 0000 0000"
+                  class="form-input card-input"
+                  v-mask="'#### #### #### ####'"
+                />
               </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Validade</label>
+                  <input 
+                    v-model="checkoutData.expiry" 
+                    type="text" 
+                    required 
+                    placeholder="MM/AA"
+                    class="form-input expiry-input"
+                    v-mask="'##/##'"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>CVV</label>
+                  <input 
+                    v-model="checkoutData.cvv" 
+                    type="text" 
+                    required 
+                    placeholder="123"
+                    class="form-input cvv-input"
+                    v-mask="'###'"
+                  />
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Nome no Cartão</label>
+                <input 
+                  v-model="checkoutData.cardName" 
+                  type="text" 
+                  required 
+                  placeholder="Como está impresso no cartão"
+                  class="form-input"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label>Parcelas</label>
+                <select v-model="checkoutData.installments" class="form-input">
+                  <option value="1">1x sem juros</option>
+                  <option value="2">2x sem juros</option>
+                  <option value="3">3x sem juros</option>
+                  <option value="4">4x sem juros</option>
+                  <option value="5">5x sem juros</option>
+                  <option value="6">6x sem juros</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-section">
+              <h5 class="section-title">Endereço de Cobrança</h5>
+              <div class="form-group">
+                <label>CEP</label>
+                <input 
+                  v-model="checkoutData.cep" 
+                  type="text" 
+                  required 
+                  placeholder="00000-000"
+                  class="form-input cep-input"
+                  v-mask="'#####-###'"
+                  @blur="searchCep"
+                />
+              </div>
+              
+              <div class="form-group">
+                <label>Endereço</label>
+                <input 
+                  v-model="checkoutData.address" 
+                  type="text" 
+                  required 
+                  placeholder="Rua, número e complemento"
+                  class="form-input"
+                />
+              </div>
+              
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Bairro</label>
+                  <input 
+                    v-model="checkoutData.neighborhood" 
+                    type="text" 
+                    required 
+                    placeholder="Bairro"
+                    class="form-input"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Cidade</label>
+                  <input 
+                    v-model="checkoutData.city" 
+                    type="text" 
+                    required 
+                    placeholder="Cidade"
+                    class="form-input"
+                  />
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>Estado</label>
+                <select v-model="checkoutData.state" class="form-input" required>
+                  <option value="">Selecione o estado</option>
+                  <option value="AC">Acre</option>
+                  <option value="AL">Alagoas</option>
+                  <option value="AP">Amapá</option>
+                  <option value="AM">Amazonas</option>
+                  <option value="BA">Bahia</option>
+                  <option value="CE">Ceará</option>
+                  <option value="DF">Distrito Federal</option>
+                  <option value="ES">Espírito Santo</option>
+                  <option value="GO">Goiás</option>
+                  <option value="MA">Maranhão</option>
+                  <option value="MT">Mato Grosso</option>
+                  <option value="MS">Mato Grosso do Sul</option>
+                  <option value="MG">Minas Gerais</option>
+                  <option value="PA">Pará</option>
+                  <option value="PB">Paraíba</option>
+                  <option value="PR">Paraná</option>
+                  <option value="PE">Pernambuco</option>
+                  <option value="PI">Piauí</option>
+                  <option value="RJ">Rio de Janeiro</option>
+                  <option value="RN">Rio Grande do Norte</option>
+                  <option value="RS">Rio Grande do Sul</option>
+                  <option value="RO">Rondônia</option>
+                  <option value="RR">Roraima</option>
+                  <option value="SC">Santa Catarina</option>
+                  <option value="SP">São Paulo</option>
+                  <option value="SE">Sergipe</option>
+                  <option value="TO">Tocantins</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="payment-summary">
+              <div class="summary-item">
+                <span>Subtotal:</span>
+                <span>R$ {{ selectedPlan?.price }},00</span>
+              </div>
+              <div class="summary-item">
+                <span>Taxa:</span>
+                <span>R$ 0,00</span>
+              </div>
+              <div class="summary-total">
+                <span>Total:</span>
+                <span>R$ {{ selectedPlan?.price }},00</span>
+              </div>
+            </div>
+            
+            <div class="security-info">
+              <div class="security-item">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+                <span>Pagamento 100% seguro</span>
+              </div>
+              <div class="security-item">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                </svg>
+                <span>SSL criptografado</span>
+              </div>
+            </div>
+            
+            <button type="submit" class="submit-payment-btn" :disabled="processingPayment">
+              <svg v-if="processingPayment" class="loading-spinner" width="20" height="20" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" stroke-dasharray="31.416" stroke-dashoffset="31.416">
+                  <animate attributeName="stroke-dasharray" dur="2s" values="0 31.416;15.708 15.708;0 31.416" repeatCount="indefinite"/>
+                  <animate attributeName="stroke-dashoffset" dur="2s" values="0;-15.708;-31.416" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+              <span v-if="!processingPayment">Finalizar Compra</span>
+              <span v-else>Processando...</span>
             </button>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -206,35 +487,36 @@
           
           <div class="qr-code-section">
             <div class="qr-code">
-              <!-- QR Code genérico -->
-              <svg width="200" height="200" viewBox="0 0 200 200" fill="none">
-                <rect width="200" height="200" fill="white"/>
-                <rect x="20" y="20" width="20" height="20" fill="black"/>
-                <rect x="60" y="20" width="20" height="20" fill="black"/>
-                <rect x="100" y="20" width="20" height="20" fill="black"/>
-                <rect x="140" y="20" width="20" height="20" fill="black"/>
-                <rect x="180" y="20" width="20" height="20" fill="black"/>
-                <rect x="20" y="60" width="20" height="20" fill="black"/>
-                <rect x="180" y="60" width="20" height="20" fill="black"/>
-                <rect x="20" y="100" width="20" height="20" fill="black"/>
-                <rect x="60" y="100" width="20" height="20" fill="black"/>
-                <rect x="100" y="100" width="20" height="20" fill="black"/>
-                <rect x="140" y="100" width="20" height="20" fill="black"/>
-                <rect x="180" y="100" width="20" height="20" fill="black"/>
-                <rect x="20" y="140" width="20" height="20" fill="black"/>
-                <rect x="180" y="140" width="20" height="20" fill="black"/>
-                <rect x="20" y="180" width="20" height="20" fill="black"/>
-                <rect x="60" y="180" width="20" height="20" fill="black"/>
-                <rect x="100" y="180" width="20" height="20" fill="black"/>
-                <rect x="140" y="180" width="20" height="20" fill="black"/>
-                <rect x="180" y="180" width="20" height="20" fill="black"/>
-              </svg>
+              <!-- QR Code real do PIX -->
+              <div v-if="pixCodeBase64" class="qr-code-generated">
+                <img :src="`data:image/jpeg;base64,${pixCodeBase64}`" alt="QR Code PIX" class="qr-code-image">
+              </div>
+              <div v-else-if="pixCode" class="qr-code-text">
+                <p>PIX Gerado</p>
+                <small>Código: {{ pixCode.substring(0, 20) }}...</small>
+              </div>
+              <div v-else class="qr-code-loading">
+                <p>Gerando PIX...</p>
+                <div class="spinner"></div>
+              </div>
             </div>
             
             <p class="qr-instructions">Use seu aplicativo bancário para ler o QR Code acima ou copie o código abaixo.</p>
             
+            <!-- Botão para abrir PIX em nova janela -->
+            <div v-if="ticketUrl" class="pix-ticket-section">
+              <a :href="ticketUrl" target="_blank" class="pix-ticket-btn">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                </svg>
+                Abrir PIX em nova janela
+              </a>
+            </div>
+            
             <div class="pix-code-section">
+              <label for="pixCodeInput">Código PIX (Copia e Cola):</label>
               <input 
+                id="pixCodeInput"
                 ref="pixCodeInput"
                 type="text" 
                 :value="pixCode" 
@@ -331,19 +613,52 @@ export default {
       showGlossaryModal: false,
       selectedCategory: 'pre-game',
       
+      // Mercado Pago Configuration
+      mercadopagoConfig: {
+        publicKey: 'APP_USR-b493216a-34ea-4dab-98ab-a0d38aa43828',
+        accessToken: 'APP_USR-3182761403687473-051409-e381080719c0060d8dd1dc1582618d3d-266645918'
+      },
+      
       // Payment modals
       showPaymentModal: false,
+      showPaymentMethodModal: false,
       showProcessingModal: false,
       showPixModal: false,
       showRedirectModal: false,
       selectedPlan: null,
       processingText: 'Processando...',
       
+      // Checkout data
+      checkoutData: {
+        firstName: '',
+        lastName: '',
+        email: '',
+        cpf: '',
+        cardNumber: '',
+        expiry: '',
+        cvv: '',
+        cardName: '',
+        installments: '1',
+        cep: '',
+        address: '',
+        neighborhood: '',
+        city: '',
+        state: ''
+      },
+      
+      // Payment processing
+      processingPayment: false,
+      currentOrder: null,
+      
       // PIX payment data
       timeRemaining: 570, // 9:30 em segundos
-      pixCode: '00020126580014br.gov.bcb.pix0136434b7a2b-3b63-4de5-bfab-3f0ac5c5e2f952040000530398654041900621622',
+      pixCode: '',
+      pixCodeBase64: '',
+      ticketUrl: '',
       codeCopied: false,
       timerInterval: null,
+      
+      // Plan categories data
       planCategories: [
         {
           id: 'pre-game',
@@ -357,6 +672,7 @@ export default {
               duration: 'Diário',
               title: 'SUREBET PRÉ JOGO DIÁRIO',
               price: '19',
+              days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -369,6 +685,7 @@ export default {
               duration: 'Semanal',
               title: 'SUREBET PRÉ JOGO SEMANAL',
               price: '67',
+              days: 7,
               features: [
                 { text: '7 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -381,6 +698,7 @@ export default {
               duration: 'Mensal',
               title: 'SUREBET PRÉ JOGO MENSAL',
               price: '147',
+              days: 30,
               features: [
                 { text: '30 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -393,6 +711,7 @@ export default {
               duration: 'Anual',
               title: 'SUREBET PRÉ JOGO ANUAL',
               price: '897',
+              days: 365,
               features: [
                 { text: '365 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -414,6 +733,7 @@ export default {
               duration: 'Diário',
               title: 'SUREBET LIVE DIÁRIO',
               price: '29',
+              days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -427,6 +747,7 @@ export default {
               duration: 'Semanal',
               title: 'SUREBET LIVE SEMANAL',
               price: '127',
+              days: 7,
               features: [
                 { text: '7 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -440,6 +761,7 @@ export default {
               duration: 'Mensal',
               title: 'SUREBET LIVE MENSAL',
               price: '297',
+              days: 30,
               features: [
                 { text: '30 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -453,6 +775,7 @@ export default {
               duration: 'Anual',
               title: 'SUREBET LIVE ANUAL',
               price: '1697',
+              days: 365,
               features: [
                 { text: '365 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -475,6 +798,7 @@ export default {
               duration: 'Diário',
               title: 'SUREBET PRÉ + LIVE DIÁRIO',
               price: '39',
+              days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -488,6 +812,7 @@ export default {
               duration: 'Semanal',
               title: 'SUREBET PRÉ + LIVE SEMANAL',
               price: '137',
+              days: 7,
               features: [
                 { text: '7 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -501,6 +826,7 @@ export default {
               duration: 'Mensal',
               title: 'SUREBET PRÉ + LIVE MENSAL',
               price: '347',
+              days: 30,
               features: [
                 { text: '30 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -514,6 +840,7 @@ export default {
               duration: 'Anual',
               title: 'SUREBET PRÉ + LIVE ANUAL',
               price: '1997',
+              days: 365,
               features: [
                 { text: '365 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -536,6 +863,7 @@ export default {
               duration: 'Diário',
               title: 'VALUEBET DIÁRIO',
               price: '39',
+              days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -549,6 +877,7 @@ export default {
               duration: 'Semanal',
               title: 'VALUEBET SEMANAL',
               price: '137',
+              days: 7,
               features: [
                 { text: '7 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -562,6 +891,7 @@ export default {
               duration: 'Mensal',
               title: 'VALUEBET MENSAL',
               price: '347',
+              days: 30,
               features: [
                 { text: '30 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -575,6 +905,7 @@ export default {
               duration: 'Anual',
               title: 'VALUEBET ANUAL',
               price: '1997',
+              days: 365,
               features: [
                 { text: '365 dias de acesso', included: true },
                 { text: 'Jogos Pré-Jogo', included: false },
@@ -594,9 +925,10 @@ export default {
           plans: [
             {
               id: 'full-daily',
-              duration: 'Anual',
+              duration: 'Diário',
               title: 'FULL - PRÉLIVE + LIVE + VALUEBET DIÁRIO',
               price: '67',
+              days: 1,
               features: [
                 { text: '1 dia de acesso completo', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -609,9 +941,10 @@ export default {
             },
             {
               id: 'full-weekly',
-              duration: 'Anual',
+              duration: 'Semanal',
               title: 'FULL - PRÉLIVE + LIVE + VALUEBET SEMANAL',
               price: '197',
+              days: 7,
               features: [
                 { text: '7 dias de acesso completo', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -624,9 +957,10 @@ export default {
             },
             {
               id: 'full-monthly',
-              duration: 'Anual',
+              duration: 'Mensal',
               title: 'FULL - PRÉLIVE + LIVE + VALUEBET MENSAL',
               price: '497',
+              days: 30,
               features: [
                 { text: '30 dias de acesso completo', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -642,6 +976,7 @@ export default {
               duration: 'Anual',
               title: 'FULL - PRÉLIVE + LIVE + VALUEBET ANUAL',
               price: '2997',
+              days: 365,
               features: [
                 { text: '365 dias de acesso completo', included: true },
                 { text: 'Jogos Pré-Jogo', included: true },
@@ -668,6 +1003,19 @@ export default {
     currentCategory() {
       return this.planCategories.find(cat => cat.id === this.selectedCategory)
     }
+  },
+  
+  mounted() {
+    // Preencher dados do usuário logado se disponível
+    if (this.currentUser) {
+      this.checkoutData.firstName = this.currentUser.firstName || ''
+      this.checkoutData.lastName = this.currentUser.lastName || ''
+      this.checkoutData.email = this.currentUser.email || ''
+      this.checkoutData.cpf = this.currentUser.cpf || ''
+    }
+    
+    // Inicializar Mercado Pago
+    this.initializeMercadoPago()
   },
   
   methods: {
@@ -704,41 +1052,523 @@ export default {
     },
     
     buyPlan(plan) {
+      console.log('buyPlan chamado com:', plan)
       this.selectedPlan = plan
-      this.showPaymentModal = true
+      this.showPaymentMethodModal = true
+      console.log('showPaymentMethodModal definido como:', this.showPaymentMethodModal)
+    },
+    
+    resetCheckoutForm() {
+      // Manter dados do usuário se já estiver logado
+      if (this.currentUser) {
+        this.checkoutData.firstName = this.currentUser.firstName || ''
+        this.checkoutData.lastName = this.currentUser.lastName || ''
+        this.checkoutData.email = this.currentUser.email || ''
+        this.checkoutData.cpf = this.currentUser.cpf || ''
+      } else {
+        this.checkoutData.firstName = ''
+        this.checkoutData.lastName = ''
+        this.checkoutData.email = ''
+        this.checkoutData.cpf = ''
+      }
+      
+      // Resetar outros campos
+      this.checkoutData.cardNumber = ''
+      this.checkoutData.expiry = ''
+      this.checkoutData.cvv = ''
+      this.checkoutData.cardName = ''
+      this.checkoutData.installments = '1'
+      this.checkoutData.cep = ''
+      this.checkoutData.address = ''
+      this.checkoutData.neighborhood = ''
+      this.checkoutData.city = ''
+      this.checkoutData.state = ''
+    },
+    
+    // Payment method selection methods
+    closePaymentMethodModal() {
+      this.showPaymentMethodModal = false
+      this.selectedPlan = null
+    },
+    
+    selectPaymentMethod(method) {
+      console.log('selectPaymentMethod chamado com:', method)
+      if (method === 'pix') {
+        console.log('Abrindo modal PIX')
+        this.showPaymentMethodModal = false
+        this.showPixModal = true
+        this.processPixPayment()
+      } else if (method === 'credit_card') {
+        console.log('Abrindo modal de cartão de crédito')
+        this.showPaymentMethodModal = false
+        this.showPaymentModal = true
+        this.resetCheckoutForm()
+      }
     },
     
     // Payment modal methods
     closePaymentModal() {
       this.showPaymentModal = false
       this.selectedPlan = null
+      this.processingPayment = false
     },
     
-    selectPaymentMethod(method) {
-      this.showPaymentModal = false
-      
-      if (method === 'pix') {
-        this.showProcessingModal = true
-        this.processingText = 'Gerando cobrança PIX...'
-        
-        // Simula processamento por 2 segundos
-        setTimeout(() => {
-          this.showProcessingModal = false
-          this.showPixModal = true
-          this.startTimer()
-        }, 2000)
-      } else if (method === 'credit') {
-        // Mostra modal de redirecionamento
-        this.showRedirectModal = true
-        
-        // Simula redirecionamento após 3 segundos
-        setTimeout(() => {
-          this.showRedirectModal = false
-          this.selectedPlan = null
-          // Aqui você pode adicionar o redirecionamento real para o Mercado Pago
-          // window.location.href = 'https://www.mercadopago.com.br/checkout/...'
-        }, 3000)
+    async searchCep() {
+      if (this.checkoutData.cep.length === 9) {
+        try {
+          const cep = this.checkoutData.cep.replace(/\D/g, '')
+          const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+          const data = await response.json()
+          
+          if (!data.erro) {
+            this.checkoutData.address = data.logradouro
+            this.checkoutData.neighborhood = data.bairro
+            this.checkoutData.city = data.localidade
+            this.checkoutData.state = data.uf
+          }
+        } catch (error) {
+          console.error('Erro ao buscar CEP:', error)
+        }
       }
+    },
+    
+    initializeMercadoPago() {
+      // Carregar SDK do Mercado Pago
+      const script = document.createElement('script')
+      script.src = 'https://sdk.mercadopago.com/js/v2'
+      script.onload = () => {
+        if (window.Mercadopago) {
+          window.Mercadopago.setPublishableKey(this.mercadopagoConfig.publicKey)
+          console.log('Mercado Pago SDK carregado com sucesso')
+        }
+      }
+      document.head.appendChild(script)
+    },
+    
+    async processPixPayment() {
+      try {
+        // 1. Preparar dados do pedido PIX
+        const orderData = {
+          userId: this.currentUser?.id || 'guest',
+          planId: this.selectedPlan.id,
+          planName: this.selectedPlan.title,
+          planDays: this.selectedPlan.days,
+          amount: parseFloat(this.selectedPlan.price),
+          customerData: {
+            firstName: this.currentUser?.firstName || 'Usuário',
+            lastName: this.currentUser?.lastName || 'Convidado',
+            email: this.currentUser?.email || 'guest@example.com',
+            cpf: this.currentUser?.cpf || '00000000000'
+          }
+        }
+
+        // 2. Criar pedido PIX via API
+        const response = await fetch('/api/orders/pix', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify(orderData)
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao criar pedido PIX')
+        }
+
+        const result = await response.json()
+        
+        if (!result.success) {
+          throw new Error('Falha ao processar pedido PIX')
+        }
+
+        // 3. Configurar dados do PIX
+        this.pixCode = result.pix.pixCode
+        this.pixCodeBase64 = result.pix.pixCodeBase64
+        this.ticketUrl = result.pix.ticketUrl
+        this.currentOrder = result.order
+        this.timeRemaining = 570 // 9:30 em segundos
+        
+        // 4. Iniciar timer para verificação de pagamento
+        this.startPixTimer(result.order.id)
+        
+        console.log('PIX gerado com sucesso:', result.pix)
+        
+      } catch (error) {
+        console.error('Erro ao processar PIX:', error)
+        this.showErrorMessage(error.message || 'Erro ao gerar PIX. Tente novamente.')
+        this.closePixModal()
+      }
+    },
+    
+
+    
+    startPixTimer(orderId) {
+      this.timerInterval = setInterval(() => {
+        this.timeRemaining--
+        
+        if (this.timeRemaining <= 0) {
+          clearInterval(this.timerInterval)
+          this.checkPixPaymentStatus(orderId)
+        }
+      }, 1000)
+    },
+    
+    async checkPixPaymentStatus(orderId) {
+      try {
+        // Verificar status real do pagamento via API
+        const response = await fetch(`/api/orders/${orderId}`, {
+          headers: {
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('Erro ao verificar status do pedido')
+        }
+
+        const result = await response.json()
+        const order = result.order
+        
+        if (order.status === 'approved') {
+          await this.activateVIP(orderId)
+          this.showSuccessMessage('PIX aprovado! Seu VIP foi ativado com sucesso.')
+          this.closePixModal()
+        } else if (order.status === 'pending') {
+          // Continuar verificando se ainda há tempo
+          if (this.timeRemaining > 0) {
+            this.showSuccessMessage('PIX ainda pendente. Aguarde a confirmação.')
+          } else {
+            this.showErrorMessage('Tempo expirado. PIX não foi confirmado.')
+            this.closePixModal()
+          }
+        } else if (order.status === 'rejected') {
+          this.showErrorMessage('PIX foi rejeitado. Tente novamente.')
+          this.closePixModal()
+        }
+      } catch (error) {
+        console.error('Erro ao verificar status PIX:', error)
+        this.showErrorMessage('Erro ao verificar status do PIX')
+      }
+    },
+    
+    async processPayment() {
+      if (this.processingPayment) return
+      
+      this.processingPayment = true
+      
+      try {
+        // 1. Validar dados do formulário
+        if (!this.validateCheckoutForm()) {
+          throw new Error('Por favor, preencha todos os campos obrigatórios')
+        }
+        
+        // 2. Criar pedido no sistema
+        const order = await this.createOrder()
+        
+        // 3. Processar pagamento no Mercado Pago
+        const paymentResult = await this.processMercadoPagoPayment(order)
+        
+        // 4. Atualizar status do pedido
+        await this.updateOrderStatus(order.id, paymentResult.status)
+        
+        // 5. Se aprovado, ativar VIP
+        if (paymentResult.status === 'approved') {
+          await this.activateVIP(order)
+          this.showSuccessMessage('Pagamento aprovado! Seu VIP foi ativado.')
+        } else if (paymentResult.status === 'pending') {
+          this.showSuccessMessage('Pagamento em análise. Você receberá uma notificação quando for aprovado.')
+        } else {
+          this.showErrorMessage('Pagamento não aprovado. Tente novamente.')
+        }
+        
+        // 6. Fechar modal e limpar dados
+        this.closePaymentModal()
+        
+      } catch (error) {
+        console.error('Erro no processamento do pagamento:', error)
+        this.showErrorMessage(error.message || 'Erro ao processar pagamento. Tente novamente.')
+      } finally {
+        this.processingPayment = false
+      }
+    },
+    
+    validateCheckoutForm() {
+      const requiredFields = [
+        'firstName', 'lastName', 'email', 'cpf', 'cardNumber', 
+        'expiry', 'cvv', 'cardName', 'cep', 'address', 
+        'neighborhood', 'city', 'state'
+      ]
+      
+      for (const field of requiredFields) {
+        if (!this.checkoutData[field] || this.checkoutData[field].trim() === '') {
+          return false
+        }
+      }
+      
+      // Validar formato do CPF
+      const cpf = this.checkoutData.cpf.replace(/\D/g, '')
+      if (cpf.length !== 11) {
+        return false
+      }
+      
+      // Validar formato do cartão
+      const cardNumber = this.checkoutData.cardNumber.replace(/\s/g, '')
+      if (cardNumber.length < 13 || cardNumber.length > 19) {
+        return false
+      }
+      
+      // Validar formato da data de validade
+      const expiry = this.checkoutData.expiry
+      if (!/^\d{2}\/\d{2}$/.test(expiry)) {
+        return false
+      }
+      
+      // Validar CVV
+      const cvv = this.checkoutData.cvv
+      if (cvv.length < 3 || cvv.length > 4) {
+        return false
+      }
+      
+      return true
+    },
+    
+    async createOrder() {
+      const orderData = {
+        userId: this.currentUser?.id || 'guest',
+        planId: this.selectedPlan.id,
+        planName: this.selectedPlan.title,
+        planDays: this.selectedPlan.days,
+        amount: parseFloat(this.selectedPlan.price),
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        paymentMethod: 'credit_card',
+        installments: parseInt(this.checkoutData.installments),
+        customerData: {
+          firstName: this.checkoutData.firstName,
+          lastName: this.checkoutData.lastName,
+          email: this.checkoutData.email,
+          cpf: this.checkoutData.cpf.replace(/\D/g, ''),
+          address: {
+            cep: this.checkoutData.cep.replace(/\D/g, ''),
+            street: this.checkoutData.address,
+            neighborhood: this.checkoutData.neighborhood,
+            city: this.checkoutData.city,
+            state: this.checkoutData.state
+          }
+        }
+      }
+      
+      try {
+        const response = await fetch('/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify(orderData)
+        })
+        
+        if (!response.ok) {
+          throw new Error('Erro ao criar pedido')
+        }
+        
+        const order = await response.json()
+        this.currentOrder = order
+        return order
+        
+      } catch (error) {
+        console.error('Erro ao criar pedido:', error)
+        throw error
+      }
+    },
+    
+    async processMercadoPagoPayment(order) {
+      try {
+        // Criar token do cartão usando SDK do Mercado Pago
+        const cardToken = await this.createCardToken()
+        
+        const paymentData = {
+          transaction_amount: order.amount,
+          description: `Plano ${order.planName}`,
+          payment_method_id: 'master', // Será detectado automaticamente
+          installments: order.installments,
+          payer: {
+            email: this.checkoutData.email,
+            first_name: this.checkoutData.firstName,
+            last_name: this.checkoutData.lastName,
+            identification: {
+              type: 'CPF',
+              number: this.checkoutData.cpf.replace(/\D/g, '')
+            },
+            address: {
+              zip_code: this.checkoutData.cep.replace(/\D/g, ''),
+              street_name: this.checkoutData.address,
+              street_number: '123',
+              neighborhood: this.checkoutData.neighborhood,
+              city: this.checkoutData.city,
+              federal_unit: this.checkoutData.state
+            }
+          },
+          card_token: cardToken,
+          external_reference: order.id,
+          notification_url: `${window.location.origin}/api/webhooks/mercadopago`,
+          statement_descriptor: 'SUREBET'
+        }
+        
+        // Processar pagamento via API do Mercado Pago
+        const response = await fetch('https://api.mercadopago.com/v1/payments', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.mercadopagoConfig.accessToken}`
+          },
+          body: JSON.stringify(paymentData)
+        })
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.message || 'Erro ao processar pagamento')
+        }
+        
+        const paymentResult = await response.json()
+        
+        // Salvar dados do pagamento no pedido
+        await this.savePaymentData(order.id, paymentResult)
+        
+        return {
+          status: paymentResult.status,
+          paymentId: paymentResult.id,
+          transactionId: paymentResult.external_reference
+        }
+        
+      } catch (error) {
+        console.error('Erro ao processar pagamento MP:', error)
+        throw error
+      }
+    },
+    
+    async createCardToken() {
+      return new Promise((resolve, reject) => {
+        if (!window.Mercadopago) {
+          reject(new Error('SDK do Mercado Pago não carregado'))
+          return
+        }
+        
+        const cardData = {
+          cardNumber: this.checkoutData.cardNumber.replace(/\s/g, ''),
+          cardholderName: this.checkoutData.cardName,
+          expirationMonth: this.checkoutData.expiry.split('/')[0],
+          expirationYear: '20' + this.checkoutData.expiry.split('/')[1],
+          securityCode: this.checkoutData.cvv
+        }
+        
+        window.Mercadopago.createCardToken(cardData, (status, response) => {
+          if (status === 200 || status === 201) {
+            resolve(response.id)
+          } else {
+            reject(new Error(response.error || 'Erro ao criar token do cartão'))
+          }
+        })
+      })
+    },
+    
+    async savePaymentData(orderId, paymentData) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/payment-data`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify({
+            paymentId: paymentData.id,
+            status: paymentData.status,
+            paymentMethod: paymentData.payment_method_id,
+            installments: paymentData.installments,
+            transactionAmount: paymentData.transaction_amount,
+            processedAt: new Date().toISOString()
+          })
+        })
+        
+        if (!response.ok) {
+          console.error('Erro ao salvar dados do pagamento')
+        }
+        
+      } catch (error) {
+        console.error('Erro ao salvar dados do pagamento:', error)
+      }
+    },
+    
+    async updateOrderStatus(orderId, status) {
+      try {
+        const response = await fetch(`/api/orders/${orderId}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify({ status })
+        })
+        
+        if (!response.ok) {
+          throw new Error('Erro ao atualizar status do pedido')
+        }
+        
+      } catch (error) {
+        console.error('Erro ao atualizar status:', error)
+        throw error
+      }
+    },
+    
+    async activateVIP(order) {
+      try {
+        const vipData = {
+          userId: order.userId,
+          planId: order.planId,
+          planDays: order.planDays,
+          activatedAt: new Date().toISOString(),
+          expiresAt: this.calculateExpiryDate(order.planDays),
+          orderId: order.id
+        }
+        
+        const response = await fetch('/api/users/activate-vip', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: JSON.stringify(vipData)
+        })
+        
+        if (!response.ok) {
+          throw new Error('Erro ao ativar VIP')
+        }
+        
+        // Atualizar estado do usuário no store
+        await this.$store.dispatch('refreshUserData')
+        
+      } catch (error) {
+        console.error('Erro ao ativar VIP:', error)
+        throw error
+      }
+    },
+    
+    calculateExpiryDate(days) {
+      const expiryDate = new Date()
+      expiryDate.setDate(expiryDate.getDate() + days)
+      return expiryDate.toISOString()
+    },
+    
+    showSuccessMessage(message) {
+      // Implementar notificação de sucesso
+      alert(message) // Substituir por sistema de notificação real
+    },
+    
+    showErrorMessage(message) {
+      // Implementar notificação de erro
+      alert(message) // Substituir por sistema de notificação real
     },
     
     cancelProcessing() {
@@ -751,7 +1581,7 @@ export default {
       this.showPaymentModal = true
     },
     
-    // PIX modal methods
+    // PIX modal methods (mantidos para compatibilidade)
     closePixModal() {
       this.showPixModal = false
       this.selectedPlan = null
@@ -760,7 +1590,7 @@ export default {
     },
     
     startTimer() {
-      this.timeRemaining = 570 // Reset timer to 9:30
+      this.timeRemaining = 570
       this.timerInterval = setInterval(() => {
         if (this.timeRemaining > 0) {
           this.timeRemaining--
@@ -793,7 +1623,6 @@ export default {
           this.codeCopied = false
         }, 2000)
       } catch (err) {
-        // Fallback para browsers que não suportam clipboard API
         this.$refs.pixCodeInput.select()
         document.execCommand('copy')
         this.codeCopied = true
@@ -805,7 +1634,6 @@ export default {
   },
   
   beforeDestroy() {
-    // Limpa o timer se o componente for destruído
     this.stopTimer()
   }
 }
@@ -1158,13 +1986,14 @@ export default {
   }
   
   .payment-modal,
+  .payment-method-modal,
   .processing-modal,
   .pix-modal {
     background: var(--bg-secondary, #2a2a2a);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    max-width: 500px;
-    width: 90%;
+    max-width: 600px;
+    width: 95%;
     max-height: 90vh;
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
@@ -1222,6 +2051,10 @@ export default {
   }
   
   /* Payment Modal Specific */
+  .selected-plan-info {
+    margin-bottom: 32px;
+  }
+
   .selected-plan {
     color: var(--text-secondary, #888888);
     margin: 0 0 8px 0;
@@ -1233,6 +2066,83 @@ export default {
     margin: 0 0 16px 0;
     font-size: 18px;
     font-weight: 600;
+  }
+  
+  /* Payment Method Selection Modal */
+  .payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .payment-method-option {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  
+  .payment-method-option:hover {
+    border-color: #00ff88;
+    background: rgba(0, 255, 136, 0.05);
+    transform: translateY(-2px);
+  }
+  
+  .payment-method-option:active {
+    transform: translateY(0);
+  }
+  
+  .method-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000;
+    flex-shrink: 0;
+  }
+  
+  .method-info {
+    flex: 1;
+  }
+  
+  .method-info h4 {
+    margin: 0 0 4px 0;
+    color: var(--text-primary, #ffffff);
+    font-size: 18px;
+    font-weight: 600;
+  }
+  
+  .method-info p {
+    margin: 0 0 8px 0;
+    color: var(--text-secondary, #cccccc);
+    font-size: 14px;
+  }
+  
+  .method-advantage {
+    display: inline-block;
+    background: rgba(0, 255, 136, 0.1);
+    color: #00ff88;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .method-arrow {
+    color: var(--text-secondary, #888888);
+    transition: color 0.3s ease;
+  }
+  
+  .payment-method-option:hover .method-arrow {
+    color: #00ff88;
   }
   
   .plan-price-display {
@@ -1256,10 +2166,117 @@ export default {
     font-weight: 600;
   }
   
+  .checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .form-section {
+    background: rgba(42, 42, 42, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #00ff88;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 16px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-size: 14px;
+    color: var(--text-secondary, #888888);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .form-input {
+    padding: 12px;
+    background: rgba(42, 42, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-primary, #ffffff);
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-input:focus {
+    border-color: #00ff88;
+    outline: none;
+  }
+
+  .form-input.cpf-input {
+    width: 150px; /* Adjust as needed */
+  }
+
+  .form-input.card-input {
+    width: 100%;
+  }
+
+  .form-input.expiry-input {
+    width: 80px; /* Adjust as needed */
+  }
+
+  .form-input.cvv-input {
+    width: 60px; /* Adjust as needed */
+  }
+
+  .form-input.cep-input {
+    width: 100px; /* Adjust as needed */
+  }
+
+  .payment-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .summary-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .summary-total {
+    font-size: 20px;
+    font-weight: 700;
+    color: #00ff88;
+    margin-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+  }
+
   .payment-methods {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    margin-top: 24px;
   }
   
   .payment-method-btn {
@@ -1328,72 +2345,133 @@ export default {
   
   /* PIX Modal */
   .timer-section {
-    text-align: center;
-    margin-bottom: 24px;
+    text-align: right;
+    margin-bottom: 20px;
+    padding: 0 8px;
   }
   
   .timer-text {
     color: var(--text-primary, #ffffff);
     margin: 0;
-    font-size: 16px;
+    font-size: 14px;
   }
   
   .timer {
     color: #00ff88;
     font-weight: 600;
-    font-size: 18px;
+    font-size: 16px;
   }
   
   .qr-code-section {
     text-align: center;
+    padding: 0 16px;
   }
   
   .qr-code {
     display: inline-block;
-    padding: 16px;
+    padding: 20px;
     background: white;
-    border-radius: 8px;
-    margin-bottom: 24px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  .qr-code-placeholder,
+  .qr-code-generated,
+  .qr-code-loading {
+    width: 220px;
+    height: 220px;
+    border: 2px solid #e0e0e0;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    background: #ffffff;
+    padding: 20px;
+  }
+  
+  .qr-code-placeholder p {
+    font-weight: bold;
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 16px;
+  }
+  
+  .qr-code-loading p {
+    font-weight: bold;
+    margin: 0 0 16px 0;
+    color: #333;
+  }
+  
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
   
   .qr-instructions {
     color: var(--text-secondary, #888888);
-    margin: 0 0 24px 0;
+    margin: 0 0 20px 0;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
+    padding: 0 16px;
   }
   
   .pix-code-section {
     display: flex;
+    flex-direction: column;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    padding: 0 16px;
+  }
+  
+  .pix-code-section label {
+    color: var(--text-primary, #ffffff);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
   }
   
   .pix-code-input {
-    flex: 1;
-    padding: 12px;
+    width: 100%;
+    padding: 14px;
     background: rgba(42, 42, 42, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px;
+    border-radius: 8px;
     color: var(--text-primary, #ffffff);
-    font-size: 12px;
+    font-size: 13px;
     font-family: monospace;
+    word-break: break-all;
+    min-height: 48px;
   }
   
   .copy-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 12px 16px;
+    padding: 14px 20px;
     background: #00ff88;
     color: #1a1a1a;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
+    width: 100%;
+    margin-top: 8px;
   }
   
   .copy-btn:hover {
@@ -1403,8 +2481,10 @@ export default {
   
   .payment-wait {
     color: var(--text-secondary, #888888);
-    margin: 0 0 24px 0;
+    margin: 0 0 20px 0;
     font-size: 14px;
+    text-align: center;
+    padding: 0 16px;
   }
   
   .secondary-btn {
@@ -1422,6 +2502,50 @@ export default {
   .secondary-btn:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-1px);
+  }
+
+  .submit-payment-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .submit-payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+  }
+
+  .submit-payment-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #888888);
+    border-color: rgba(255, 255, 255, 0.2);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .submit-payment-btn .loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
   }
 
   /* Redirect Modal Styles */
@@ -1686,6 +2810,42 @@ export default {
   .plan-description {
     max-width: 100%;
   }
+  
+  /* Checkout responsivo */
+  .payment-modal {
+    max-width: 95%;
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .form-section {
+    padding: 16px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .payment-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .summary-total {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1723,5 +2883,349 @@ export default {
   .plan-content {
     padding: 16px;
   }
+  
+  /* Checkout mobile */
+  .payment-modal {
+    max-width: 98%;
+    width: 98%;
+    margin: 10px;
+  }
+  
+  .modal-header {
+    padding: 16px 16px 12px 16px;
+  }
+  
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .form-section {
+    padding: 12px;
+  }
+  
+  .form-input {
+    padding: 10px;
+    font-size: 13px;
+  }
+  
+  .submit-payment-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .selected-plan-info {
+    margin-bottom: 24px;
+  }
+  
+  .plan-name {
+    font-size: 16px;
+  }
+  
+  .plan-price-display .price-value {
+    font-size: 28px;
+  }
 }
+  
+  /* Estilos específicos para o checkout */
+  .checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .form-section {
+    background: rgba(42, 42, 42, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #00ff88;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 16px;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  .form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-group label {
+    font-size: 14px;
+    color: var(--text-secondary, #888888);
+    margin-bottom: 8px;
+    font-weight: 500;
+  }
+
+  .form-input {
+    padding: 12px;
+    background: rgba(42, 42, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text-primary, #ffffff);
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+  }
+
+  .form-input:focus {
+    border-color: #00ff88;
+    outline: none;
+  }
+
+  .form-input.cpf-input {
+    width: 150px;
+  }
+
+  .form-input.card-input {
+    width: 100%;
+  }
+
+  .form-input.expiry-input {
+    width: 80px;
+  }
+
+  .form-input.cvv-input {
+    width: 60px;
+  }
+
+  .form-input.cep-input {
+    width: 100px;
+  }
+
+  .payment-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    color: var(--text-secondary, #cccccc);
+    font-size: 14px;
+  }
+
+  .summary-total {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 20px;
+    font-weight: 700;
+    color: #00ff88;
+    margin-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+  }
+
+  .submit-payment-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .submit-payment-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+  }
+
+  .submit-payment-btn:disabled {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #888888);
+    border-color: rgba(255, 255, 255, 0.2);
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .submit-payment-btn .loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top: 3px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Melhorias no modal de pagamento */
+  .payment-modal {
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .selected-plan-info {
+    text-align: center;
+    margin-bottom: 32px;
+    padding: 20px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+  }
+  
+  .selected-plan-info .plan-name {
+    color: #00ff88;
+    font-size: 20px;
+    margin: 12px 0;
+  }
+  
+  .selected-plan-info .plan-price-display {
+    margin: 0;
+  }
+  
+  /* Animações para o formulário */
+  .form-section {
+    animation: slideInUp 0.3s ease-out;
+  }
+  
+  .form-section:nth-child(1) { animation-delay: 0.1s; }
+  .form-section:nth-child(2) { animation-delay: 0.2s; }
+  .form-section:nth-child(3) { animation-delay: 0.3s; }
+  
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Estados de foco e erro */
+  .form-input.error {
+    border-color: #ff4444;
+    box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+  }
+  
+  .form-input.success {
+    border-color: #00ff88;
+    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+  }
+  
+  /* Validação visual */
+  .form-group.error label {
+    color: #ff4444;
+  }
+  
+  .form-group.success label {
+    color: #00ff88;
+  }
+  
+  /* Mensagens de erro */
+  .error-message {
+    color: #ff4444;
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .error-message::before {
+    content: "⚠";
+    font-size: 14px;
+  }
+  
+  /* Sucesso visual */
+  .success-message {
+    color: #00ff88;
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  
+  .success-message::before {
+    content: "✓";
+    font-size: 14px;
+  }
+  
+  /* Estilos para PIX */
+  .qr-code-image {
+    width: 180px;
+    height: 180px;
+    border: none;
+    border-radius: 8px;
+    margin: 0 auto 12px;
+    display: block;
+    object-fit: contain;
+  }
+  
+  /* Título do QR Code removido */
+  
+  .pix-ticket-section {
+    text-align: center;
+    margin: 20px 0;
+    padding: 0 16px;
+  }
+  
+  .pix-ticket-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #1a1a1a;
+    text-decoration: none;
+    padding: 16px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    min-width: 200px;
+  }
+  
+  .pix-ticket-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+  }
+  
+  /* Removendo label duplicado - já definido acima */
+  
+  .qr-code-text {
+    text-align: center;
+    padding: 20px;
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+  }
 </style>

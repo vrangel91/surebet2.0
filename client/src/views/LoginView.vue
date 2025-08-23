@@ -29,23 +29,13 @@
       <!-- Logo e Header -->
       <div class="login-header">
         <div class="logo">
-          <span class="logo-icon">🦁</span>
+          <img class="logo-icon" src="@/assets/img/logo.png" alt="SureStake Logo" width="40" height="40">
           <h1 class="logo-text">
-            <span class="zero">SURE</span>
-            <span class="loss">STAKE</span>
+            <span class="sure-text">SURE</span>
+            <span class="stake-text">STAKE</span>
           </h1>
         </div>
         <h2 class="login-title">{{ isLoginMode ? 'Acesse sua conta' : 'Crie sua conta' }}</h2>
-        <div class="login-subtitle">
-          <span class="subtitle-text">{{ isLoginMode ? 'Novo por aqui?' : 'Já tem uma conta?' }}</span>
-          <button 
-            type="button" 
-            class="mode-toggle-btn"
-            @click="toggleMode"
-          >
-            {{ isLoginMode ? 'Criar conta' : 'Fazer login' }}
-          </button>
-        </div>
       </div>
 
       <!-- Formulário de Login -->
@@ -104,14 +94,24 @@
           </button>
         </div>
 
-        <button
-          type="submit"
-          class="login-btn"
-          :disabled="isLoading || !isFormValid"
-        >
-          <span v-if="isLoading" class="loading-spinner"></span>
-          <span v-else>{{ loginButtonText }}</span>
-        </button>
+        <div class="button-group">
+          <button
+            type="submit"
+            class="login-btn primary"
+            :disabled="isLoading || !isFormValid"
+          >
+            <span v-if="isLoading" class="loading-spinner"></span>
+            <span v-else>{{ loginButtonText }}</span>
+          </button>
+          <button
+            type="button"
+            class="login-btn secondary"
+            @click="toggleMode"
+            :disabled="isLoading"
+          >
+            Criar conta
+          </button>
+        </div>
       </form>
 
       <!-- Formulário de Registro -->
@@ -207,23 +207,31 @@
           </p>
         </div>
 
-        <button
-          type="submit"
-          class="register-btn"
-          :disabled="isLoading || !isRegisterFormValid"
-        >
-          <span v-if="isLoading" class="loading-spinner"></span>
-          <span v-else>Criar conta</span>
-        </button>
+                 <div class="button-group">
+           <button
+             type="submit"
+             class="register-btn primary"
+             :disabled="isLoading || !isRegisterFormValid"
+           >
+             <span v-if="isLoading" class="loading-spinner"></span>
+             <span v-else>Criar conta</span>
+           </button>
+           <button
+             type="button"
+             class="register-btn secondary"
+             @click="toggleMode"
+             :disabled="isLoading"
+           >
+             Voltar ao login
+           </button>
+         </div>
       </form>
 
       <!-- Mensagens de Erro/Sucesso -->
       <div v-if="loginError" class="alert alert-error">
         {{ loginError }}
       </div>
-      <div v-if="loginSuccess" class="alert alert-success">
-        {{ loginSuccess }}
-      </div>
+
       <div v-if="registerError" class="alert alert-error">
         {{ registerError }}
       </div>
@@ -247,7 +255,7 @@ export default {
       emailError: '',
       passwordError: '',
       loginError: '',
-      loginSuccess: '',
+
       loginAttempts: 0,
       maxLoginAttempts: 5,
       lockoutTime: 15 * 60 * 1000, // 15 minutos
@@ -390,13 +398,13 @@ export default {
       
       this.isLoading = true
       this.loginError = ''
-      this.loginSuccess = ''
+
       
       try {
         const response = await this.authenticateUser()
         
         if (response.success) {
-          this.loginSuccess = 'Login realizado com sucesso!'
+
           
           // Salva o token e dados do usuário
           this.$store.dispatch('login', {
@@ -412,17 +420,17 @@ export default {
             this.saveRememberedUser()
           }
         
-          // Redireciona baseado no tipo de conta após 1 segundo
-          setTimeout(() => {
-            // Verifica se o usuário é VIP/Premium ou Básico
-            if (response.user.accountType === 'basic') {
-              // Usuário básico vai para página de planos
-              this.$router.push('/plans')
-            } else {
-              // Usuário VIP/Premium vai para dashboard
-              this.$router.push('/')
-            }
-          }, 1000)
+                     // Redireciona baseado no tipo de conta após 1 segundo
+           setTimeout(() => {
+             // Verifica se o usuário é VIP/Premium ou Básico
+             if (response.user.accountType === 'basic') {
+               // Usuário básico vai para página de planos
+               this.$router.push('/plans')
+             } else {
+               // Usuário VIP/Premium vai para dashboard
+               this.$router.push('/')
+             }
+           }, 1500)
         } else {
           this.handleLoginFailure(response.message)
         }
@@ -812,6 +820,7 @@ export default {
   }
 }
 
+
 .login-header {
   text-align: center;
   margin-bottom: 32px;
@@ -826,7 +835,10 @@ export default {
 }
 
 .logo-icon {
-  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  object-fit: contain;
+  border-radius: 6px;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
   animation: logoGlow 2s ease-in-out infinite alternate;
 }
@@ -847,12 +859,15 @@ export default {
   letter-spacing: 1px;
 }
 
-.zero {
+.sure-text {
   color: #ffffff;
+  font-weight: 700;
 }
 
-.loss {
+.stake-text {
   color: #00ff88;
+  font-style: italic;
+  font-weight: 700;
   text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
@@ -863,64 +878,9 @@ export default {
   margin: 0;
 }
 
-.login-subtitle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-top: 16px;
-}
 
-.subtitle-text {
-  color: #a0a0a0;
-  font-size: 15px;
-  text-align: center;
-  line-height: 1.5;
-  font-weight: 400;
-}
 
-.mode-toggle-btn {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  border: none;
-  color: #000000;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 25px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
-  position: relative;
-  overflow: hidden;
-  min-width: 120px;
-}
 
-.mode-toggle-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.mode-toggle-btn:hover::before {
-  left: 100%;
-}
-
-.mode-toggle-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
-  background: linear-gradient(135deg, #00ffaa, #00dd7a);
-}
-
-.mode-toggle-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 10px rgba(0, 255, 136, 0.3);
-}
 
 .login-form, .register-form {
   display: flex;
@@ -1110,6 +1070,44 @@ export default {
   box-shadow: none;
 }
 
+.button-group {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.login-btn {
+  flex: 1;
+}
+
+.login-btn.primary {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+  color: #1a1a1a;
+}
+
+.login-btn.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+}
+
+.login-btn.secondary {
+  background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.login-btn.secondary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #404040 0%, #505050 100%);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.login-btn.secondary::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
 .loading-spinner {
   width: 20px;
   height: 20px;
@@ -1170,13 +1168,45 @@ export default {
   left: 100%;
 }
 
-.register-btn:disabled {
-  background: #404040;
-  color: #808080;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
+ .register-btn:disabled {
+   background: #404040;
+   color: #808080;
+   cursor: not-allowed;
+   transform: none;
+   box-shadow: none;
+ }
+
+ .register-btn {
+   flex: 1;
+ }
+
+ .register-btn.primary {
+   background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+   color: #1a1a1a;
+ }
+
+ .register-btn.primary:hover:not(:disabled) {
+   background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+ }
+
+ .register-btn.secondary {
+   background: linear-gradient(135deg, #2a2a2a 0%, #404040 100%);
+   color: #ffffff;
+   border: 1px solid rgba(255, 255, 255, 0.1);
+ }
+
+ .register-btn.secondary:hover:not(:disabled) {
+   background: linear-gradient(135deg, #404040 0%, #505050 100%);
+   border-color: rgba(255, 255, 255, 0.2);
+   transform: translateY(-2px);
+   box-shadow: 
+     0 8px 25px rgba(0, 0, 0, 0.3),
+     0 0 0 1px rgba(255, 255, 255, 0.1);
+ }
+
+ .register-btn.secondary::before {
+   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+ }
 
 .alert {
   padding: 12px 16px;

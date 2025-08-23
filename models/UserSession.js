@@ -9,7 +9,7 @@ module.exports = (sequelize) => {
     },
     user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: 'users',
         key: 'id'
@@ -23,24 +23,12 @@ module.exports = (sequelize) => {
     expires_at: {
       type: DataTypes.DATE,
       allowNull: false
-    },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true
-    },
-    user_agent: {
-      type: DataTypes.STRING,
-      allowNull: true
-    },
-    ip_address: {
-      type: DataTypes.STRING,
-      allowNull: true
     }
+    // Colunas removidas pois não existem no banco surestake:
+    // is_active, user_agent, ip_address
   }, {
     tableName: 'user_sessions',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
+    timestamps: false, // Desabilitar timestamps automáticos
     indexes: [
       {
         fields: ['token']
@@ -56,13 +44,12 @@ module.exports = (sequelize) => {
 
   // Método para verificar se a sessão é válida
   UserSession.prototype.isValid = function() {
-    return this.is_active && new Date() < this.expires_at;
+    return new Date() < this.expires_at;
   };
 
-  // Método para invalidar sessão
+  // Método para invalidar sessão (remover do banco)
   UserSession.prototype.invalidate = async function() {
-    this.is_active = false;
-    await this.save();
+    await this.destroy();
   };
 
   return UserSession;

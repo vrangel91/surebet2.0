@@ -8,73 +8,56 @@ module.exports = (sequelize) => {
       autoIncrement: true
     },
     
-    // Tipo de análise
-    analysis_type: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: 'Tipo de análise realizada'
-    },
-    
-    // Período da análise
-    period_days: {
+    // Usuário que fez a análise
+    user_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Período em dias para a análise'
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
     
-    // Esporte filtrado (ou 'all' para todos)
-    sport_filter: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      defaultValue: 'all',
-      comment: 'Esporte filtrado para a análise'
+    // Data da análise
+    date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'Data da análise'
     },
     
-    // Dados da análise em JSON
-    analysis_data: {
-      type: DataTypes.JSON,
-      allowNull: false,
-      comment: 'Dados da análise em formato JSON'
-    },
-    
-    // Estatísticas resumidas
+    // Total de surebets
     total_surebets: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      defaultValue: 0,
       comment: 'Total de surebets analisadas'
     },
     
-    unique_houses: {
+    // Surebets bem-sucedidas
+    successful_surebets: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Número de casas únicas'
+      defaultValue: 0,
+      comment: 'Número de surebets bem-sucedidas'
     },
     
-    unique_markets: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Número de mercados únicos'
-    },
-    
-    average_profit: {
+    // Lucro total
+    total_profit: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      comment: 'Lucro médio das surebets'
+      defaultValue: 0,
+      comment: 'Lucro total das surebets'
     },
     
-    // Timestamp da análise
-    analyzed_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-      comment: 'Data e hora da análise'
+    // Total de apostas
+    total_bets: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      comment: 'Total de apostas realizadas'
     },
     
-    // Hash para verificar se os dados mudaram
-    data_hash: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: 'Hash dos dados para verificar mudanças'
+    // ROI percentual
+    roi_percentage: {
+      type: DataTypes.DECIMAL(5, 2),
+      defaultValue: 0,
+      comment: 'Retorno sobre investimento em percentual'
     }
     
   }, {
@@ -82,16 +65,13 @@ module.exports = (sequelize) => {
     timestamps: true,
     indexes: [
       {
-        fields: ['analysis_type', 'period_days', 'sport_filter']
+        fields: ['user_id']
       },
       {
-        fields: ['analyzed_at']
-      },
-      {
-        fields: ['data_hash']
+        fields: ['date']
       }
     ],
-    comment: 'Tabela para armazenar análises agregadas de surebets'
+    comment: 'Tabela para armazenar análises de surebets por usuário'
   });
 
   return SurebetAnalytics;

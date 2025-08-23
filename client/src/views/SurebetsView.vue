@@ -20,29 +20,31 @@
                  <div class="header-right">
            <!-- Controles de Busca -->
            <div class="search-controls">
-                                         <button 
-                class="control-btn" 
-                :class="{ active: isSearching }"
-                @click="toggleSearch"
-              >
-                <span class="control-text">{{ isSearching ? 'Pausar' : 'Retomar' }}</span>
-              </button>
-              
-              <button 
-                class="control-btn" 
-                :class="{ active: soundEnabled }"
-                @click="toggleSound"
-              >
-                <span class="control-text">{{ soundEnabled ? 'Som On' : 'Som Off' }}</span>
-              </button>
-              
-              <button 
-                class="control-btn filter-toggle-btn"
-                @click="toggleFilterOverlay"
-              >
-                <span class="control-text">Filtros</span>
-                <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
-              </button>
+             <button 
+               class="control-btn" 
+               :class="{ active: isSearching }"
+               @click="toggleSearch"
+             >
+               <span class="control-text">{{ isSearching ? 'Pausar' : 'Retomar' }}</span>
+             </button>
+             
+             <button 
+               class="control-btn" 
+               :class="{ active: soundEnabled }"
+               @click="toggleSound"
+             >
+               <span class="control-text">{{ soundEnabled ? 'Som On' : 'Som Off' }}</span>
+             </button>
+             
+             <button 
+               class="control-btn filter-toggle-btn"
+               @click="toggleFilterOverlay"
+             >
+               <span class="control-text">Filtros</span>
+               <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
+             </button>
+             
+
            </div>
                   </div>
        </header>
@@ -55,24 +57,39 @@
           <div class="filter-tabs">
             <button 
               class="filter-tab" 
-              :class="{ active: activeFilter === 'all' }"
-              @click="setFilter('all')"
-            >
-              Todas ({{ totalSurebets }})
-            </button>
-            <button 
-              class="filter-tab" 
               :class="{ active: activeFilter === 'prelive' }"
               @click="setFilter('prelive')"
             >
               Pré-live ({{ preliveCount }})
             </button>
             <button 
-              class="filter-tab" 
+              class="filter-tab disabled-tab" 
               :class="{ active: activeFilter === 'live' }"
               @click="setFilter('live')"
+              disabled
+              title="Funcionalidade em breve"
             >
               Live ({{ liveCount }})
+              <span class="coming-soon-badge">EM BREVE</span>
+            </button>
+          </div>
+          
+          <!-- Filtros de Data -->
+          <div class="date-filters">
+            <label class="date-filter-label">Filtrar por data:</label>
+            <input 
+              type="date" 
+              v-model="selectedDate"
+              class="date-filter-input"
+              @change="onDateChange"
+            />
+            <button 
+              v-if="selectedDate"
+              class="clear-date-btn"
+              @click="clearDateFilter"
+              title="Limpar filtro de data"
+            >
+              ×
             </button>
           </div>
           
@@ -83,9 +100,6 @@
             </div>
             <div v-else-if="activeFilter === 'live'" class="games-count">
               Total de jogos encontrados: {{ liveCount }}
-            </div>
-            <div v-else class="games-count">
-              Total de jogos encontrados: {{ totalSurebets }}
             </div>
             
 
@@ -149,23 +163,7 @@
          </div>
          
          <div class="filter-content">
-           <!-- Filtro por Data do Evento -->
-           <div class="filter-section">
-             <label class="filter-section-label">Data do evento:</label>
-             <div class="date-filter">
-               <select v-model="selectedDateFilter" class="date-select">
-                 <option value="any">Qualquer horário</option>
-                 <option value="12h">12 horas</option>
-                 <option value="16h">16 horas</option>
-                 <option value="24h">24 horas</option>
-                 <option value="48h">48 horas</option>
-                 <option value="1w">1 semana</option>
-               </select>
-               <p class="date-help">Selecione o intervalo de tempo dos eventos</p>
-             </div>
-           </div>
-           
-           <div class="filter-divider"></div>
+
            
            <!-- Filtro por Faixa de Lucro -->
            <div class="filter-section">
@@ -372,9 +370,7 @@
               <div class="preview-item">
                 <strong>Lucro:</strong> {{ minProfit }}% - {{ maxProfit }}%
               </div>
-              <div class="preview-item">
-                <strong>Data:</strong> {{ selectedDateFilter === 'any' ? 'Qualquer horário' : selectedDateFilter }}
-              </div>
+
             </div>
           </div>
           <div class="modal-footer">
@@ -409,7 +405,7 @@
                     <span class="detail-item">⚽ {{ filter.sports.length }} esportes</span>
                     <span class="detail-item">💰 {{ filter.currencies.length }} moedas</span>
                     <span class="detail-item">🎯 {{ filter.marketSubcategories ? filter.marketSubcategories.length : 0 }} mercados</span>
-                    <span class="detail-item">📅 {{ filter.dateFilter === 'any' ? 'Qualquer horário' : filter.dateFilter }}</span>
+
                   </div>
                 </div>
                 <div class="filter-actions">
@@ -430,6 +426,8 @@ import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import CreditStatus from '../components/CreditStatus.vue'
 import { filterOptions } from '../config/filters.js'
+import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
+
 
 export default {
   name: 'SurebetsView',
@@ -444,7 +442,7 @@ export default {
       surebets: {},
       isSearching: true,
       soundEnabled: true,
-      activeFilter: 'all',
+      activeFilter: 'prelive',
       loading: true,
       ws: null,
       sidebarCollapsed: false,
@@ -453,10 +451,12 @@ export default {
       selectedSports: filterOptions.sports.map(sport => sport.value), // Inicia com todos os esportes selecionados
       selectedCurrencies: filterOptions.currencies.map(currency => currency.code), // Inicia com todas as moedas selecionadas
       filterOptions: filterOptions,
-             showFilterOverlay: false,
-       selectedDateFilter: 'any',
-       minProfit: 0,
-       maxProfit: 1000,
+      availableBookmakers: [], // Casas de apostas disponíveis da API
+      bookmakerUrls: {}, // URLs das casas de apostas
+                         showFilterOverlay: false,
+      selectedDate: '',
+      minProfit: 0,
+      maxProfit: 1000,
        lastCheckCount: 0,
        startTime: Date.now(),
        uptimeMinutes: 0,
@@ -603,14 +603,18 @@ export default {
       return Object.keys(this.surebets).length
     },
     preliveCount() {
-      return Object.values(this.surebets).filter(surebet => 
-        surebet[0]?.minutes === 0
-      ).length
+      return Object.values(this.surebets).filter(surebet => {
+        const firstBet = surebet[0]
+        // Pre-match: isLive = false (ignora campo minutes)
+        return !firstBet?.isLive
+      }).length
     },
     liveCount() {
-      return Object.values(this.surebets).filter(surebet => 
-        surebet[0]?.minutes > 0
-      ).length
+      return Object.values(this.surebets).filter(surebet => {
+        const firstBet = surebet[0]
+        // Live: isLive = true (ignora campo minutes)
+        return firstBet?.isLive === true
+      }).length
     },
     filteredSurebets() {
       let surebetsArray = Object.values(this.surebets)
@@ -652,18 +656,44 @@ export default {
          console.log(`📊 Total: ${surebetsArray.length} surebet(s) únicos`)
        }
       
-      // Filtro por status (prelive/live)
+      // Filtro por status (prelive/live) - usar APENAS o campo isLive
       switch (this.activeFilter) {
         case 'prelive':
-          surebetsArray = surebetsArray.filter(surebet => surebet[0]?.minutes === 0)
+          surebetsArray = surebetsArray.filter(surebet => {
+            const firstBet = surebet[0]
+            // Pre-match: isLive = false (ignora campo minutes)
+            return !firstBet?.isLive
+          })
           break
         case 'live':
-          surebetsArray = surebetsArray.filter(surebet => surebet[0]?.minutes > 0)
+          surebetsArray = surebetsArray.filter(surebet => {
+            const firstBet = surebet[0]
+            // Live: isLive = true (ignora campo minutes)
+            return firstBet?.isLive === true
+          })
           break
       }
       console.log('Após filtro status:', surebetsArray.length)
       
-             // Filtro por casas de aposta (vinculado ao campo "house" da API)
+      // Filtro por data específica
+      if (this.selectedDate) {
+        console.log('📅 Aplicando filtro de data:', this.selectedDate)
+        const beforeFilter = surebetsArray.length
+        
+        surebetsArray = surebetsArray.filter(surebet => {
+          const firstBet = surebet[0]
+          if (!firstBet?.date) return false
+          
+          // Compara a data do surebet com a data selecionada
+          const surebetDate = firstBet.date // Formato: "2025-08-23"
+          return surebetDate === this.selectedDate
+        })
+        
+        console.log(`Filtro data: ${beforeFilter} -> ${surebetsArray.length}`)
+      }
+
+      
+      // Filtro por casas de aposta (vinculado ao campo "house" da API)
        if (this.selectedHouses.length !== this.filterOptions.houses.length) {
          console.log('🏠 Aplicando filtro de casas...')
          console.log('Casas selecionadas:', this.selectedHouses)
@@ -786,23 +816,7 @@ export default {
         console.log(`Filtro mercados: ${beforeFilter} -> ${surebetsArray.length}`)
       }
       
-      // Filtro por data (intervalo até o evento)
-      if (this.selectedDateFilter !== 'any') {
-        const hoursMap = { '12h': 12, '16h': 16, '24h': 24, '48h': 48, '1w': 168 }
-        const maxHours = hoursMap[this.selectedDateFilter] || null
-        if (maxHours) {
-          const now = new Date()
-          const beforeFilter = surebetsArray.length
-          surebetsArray = surebetsArray.filter(surebet => {
-            const ts = surebet[0]?.timestamp || null
-            if (!ts) return true
-            const eventTime = new Date(ts)
-            const diffHours = (eventTime - now) / (1000 * 60 * 60)
-            return diffHours <= maxHours
-          })
-          console.log(`Filtro data: ${beforeFilter} -> ${surebetsArray.length}`)
-        }
-      }
+
 
       // Filtro por faixa de lucro
       if (this.minProfit > 0 || this.maxProfit < 1000) {
@@ -825,8 +839,8 @@ export default {
       const allCurrenciesSelected = this.selectedCurrencies.length === this.filterOptions.currencies.length
       const allMarketsSelected = this.selectedMarketSubcategories.length === 0 // Se não há mercados selecionados, considera como "todos selecionados"
       const profitDefault = this.minProfit === 0 && this.maxProfit === 1000
-      const dateDefault = this.selectedDateFilter === 'any'
-      return (!allHousesSelected) || (!allSportsSelected) || (!allCurrenciesSelected) || (!allMarketsSelected) || this.activeFilter !== 'all' || !profitDefault || !dateDefault
+      const dateDefault = !this.selectedDate
+      return (!allHousesSelected) || (!allSportsSelected) || (!allCurrenciesSelected) || (!allMarketsSelected) || this.activeFilter !== 'prelive' || !profitDefault || !dateDefault
     },
     
     activeFiltersCount() {
@@ -835,9 +849,9 @@ export default {
       if (this.selectedSports.length !== this.filterOptions.sports.length) count++
       if (this.selectedCurrencies.length !== this.filterOptions.currencies.length) count++
       if (this.selectedMarketSubcategories.length > 0) count++
-      if (this.activeFilter !== 'all') count++
+      if (this.activeFilter !== 'prelive') count++
       if (!(this.minProfit === 0 && this.maxProfit === 1000)) count++
-      if (this.selectedDateFilter !== 'any') count++
+      if (this.selectedDate) count++
       return count
     },
     
@@ -880,7 +894,18 @@ export default {
       this.saveFiltersToSettings()
     },
     
-    selectedDateFilter() {
+    selectedDate() {
+      this.saveFiltersToSettings()
+    },
+
+    
+
+    
+    selectedMarketCategories() {
+      this.saveFiltersToSettings()
+    },
+    
+    selectedMarketSubcategories() {
       this.saveFiltersToSettings()
     },
     
@@ -889,10 +914,6 @@ export default {
     },
     
     selectedMarketCategories() {
-      this.saveFiltersToSettings()
-    },
-    
-    selectedMarketSubcategories() {
       this.saveFiltersToSettings()
     }
   },
@@ -991,7 +1012,19 @@ export default {
           if (settings.filters) {
             // Carrega filtros salvos das configurações
             if (settings.filters.selectedHouses) {
-              this.selectedHouses = settings.filters.selectedHouses
+              // Filtra apenas as casas que estão disponíveis na API
+              const availableHouses = this.availableBookmakers.length > 0 
+                ? this.availableBookmakers 
+                : filterOptions.houses
+              
+              this.selectedHouses = settings.filters.selectedHouses.filter(house => 
+                availableHouses.includes(house)
+              )
+              
+              // Se não há casas selecionadas válidas, seleciona todas as disponíveis
+              if (this.selectedHouses.length === 0) {
+                this.selectedHouses = [...availableHouses]
+              }
             }
             if (settings.filters.selectedSports) {
               this.selectedSports = settings.filters.selectedSports
@@ -1005,12 +1038,14 @@ export default {
             if (settings.filters.selectedMarketSubcategories) {
               this.selectedMarketSubcategories = settings.filters.selectedMarketSubcategories
             }
-            if (settings.filters.selectedDateFilter) {
-              this.selectedDateFilter = settings.filters.selectedDateFilter
+            if (settings.filters.selectedDate) {
+              this.selectedDate = settings.filters.selectedDate
             }
             if (settings.filters.activeFilter) {
               this.activeFilter = settings.filters.activeFilter
             }
+            
+            localStorage.setItem('app_settings', JSON.stringify(settings))
           }
         }
       } catch (error) {
@@ -1033,7 +1068,7 @@ export default {
         settings.filters.selectedCurrencies = this.selectedCurrencies
         settings.filters.selectedMarketCategories = this.selectedMarketCategories
         settings.filters.selectedMarketSubcategories = this.selectedMarketSubcategories
-        settings.filters.selectedDateFilter = this.selectedDateFilter
+        settings.filters.selectedDate = this.selectedDate
         settings.filters.activeFilter = this.activeFilter
         
         localStorage.setItem('app_settings', JSON.stringify(settings))
@@ -1121,6 +1156,8 @@ export default {
       this.loading = false
       console.log('📊 Dados de teste adicionados:', this.surebets)
     },
+    
+
     initWebSocket() {
       // Verificar se WebSocket está disponível
       if (typeof WebSocket === 'undefined') {
@@ -1260,6 +1297,7 @@ export default {
             if (settings.defaultFilters.activeFilter) {
               this.activeFilter = settings.defaultFilters.activeFilter
             }
+
           }
         }
       } catch (error) {
@@ -1324,38 +1362,139 @@ export default {
       }
     },
     
-         async fetchSurebets() {
-       try {
-         const response = await fetch('/api/surebets')
-         
-         if (!response.ok) {
-           throw new Error(`HTTP ${response.status}`)
-         }
-         
-         const data = await response.json()
-         
-         // Verifica se há novos dados comparando com os dados atuais
-         const currentKeys = Object.keys(this.surebets)
-         const newKeys = Object.keys(data)
-         const hasNewData = newKeys.length > currentKeys.length || 
-                           newKeys.some(key => !currentKeys.includes(key))
-         
-         this.surebets = data
-         this.loading = false
-         this.updateStats() // Atualiza estatísticas
-         
-         // Toca som apenas se há novos dados e o som está habilitado
-         if (this.soundEnabled && hasNewData) {
-           this.playNotificationSound()
-         }
-       } catch (error) {
-         // Log silencioso para evitar spam no console
-         this.loading = false
-         this.updateStats() // Atualiza estatísticas mesmo em caso de erro
-       }
-     },
+             async fetchSurebets() {
+      try {
+        const response = await fetch('/api/surebets')
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        // Verifica se há novos dados comparando com os dados atuais
+        const currentKeys = Object.keys(this.surebets)
+        const newKeys = Object.keys(data)
+        const hasNewData = newKeys.length > currentKeys.length || 
+                          newKeys.some(key => !currentKeys.includes(key))
+        
+        this.surebets = data
+        this.loading = false
+        this.updateStats() // Atualiza estatísticas
+        
+        // Atualiza as casas de apostas disponíveis baseado nos dados da API
+        this.updateAvailableBookmakers(data)
+        
+        // Toca som apenas se há novos dados e o som está habilitado
+        if (this.soundEnabled && hasNewData) {
+          this.playNotificationSound()
+        }
+      } catch (error) {
+        // Log silencioso para evitar spam no console
+        this.loading = false
+        this.updateStats() // Atualiza estatísticas mesmo em caso de erro
+            }
+    },
     
-    toggleSearch() {
+    updateAvailableBookmakers(surebetsData) {
+      try {
+        // Extrai todas as casas de apostas únicas dos dados
+        const uniqueBookmakers = new Set()
+        const dynamicUrls = {}
+        
+        // Processa cada surebet para extrair casas de apostas
+        Object.values(surebetsData).forEach(surebet => {
+          if (Array.isArray(surebet) && surebet.length > 0) {
+            surebet.forEach(bet => {
+              if (bet.house) {
+                uniqueBookmakers.add(bet.house)
+                
+                // Extrai URL específica da API se disponível
+                if (bet.anchorh1 || bet.anchorh2) {
+                  const apiUrl = bet.anchorh1 || bet.anchorh2
+                  if (apiUrl && apiUrl.includes('http')) {
+                    dynamicUrls[bet.house] = apiUrl
+                    
+                    // Adiciona URL dinamicamente ao mapeamento se não existir
+                    const mappedUrl = getBookmakerUrl(bet.house, bet.isLive)
+                    if (mappedUrl.includes('google.com/search')) {
+                      // Se não encontrou URL mapeada, adiciona a URL da API
+                      addBookmakerUrl(bet.house, this.extractBaseUrl(apiUrl), bet.isLive)
+                      console.log(`🆕 Nova casa adicionada: ${bet.house} -> ${apiUrl}`)
+                    }
+                  }
+                }
+              }
+            })
+          }
+        })
+        
+        // Converte para array e ordena alfabeticamente
+        const sortedBookmakers = Array.from(uniqueBookmakers).sort()
+        
+        // Atualiza as propriedades
+        this.availableBookmakers = sortedBookmakers
+        this.bookmakerUrls = this.buildBookmakerUrlsMap(sortedBookmakers)
+        
+        // Atualiza os filtros de casas se necessário
+        this.updateHouseFilters(sortedBookmakers)
+        
+        console.log('🏠 Casas de apostas atualizadas:', sortedBookmakers.length, 'casas encontradas')
+        console.log('🔗 URLs mapeadas:', Object.keys(this.bookmakerUrls).length, 'URLs disponíveis')
+        
+      } catch (error) {
+        console.error('Erro ao atualizar casas de apostas:', error)
+      }
+    },
+    
+    // Constrói mapa de URLs para as casas disponíveis
+    buildBookmakerUrlsMap(bookmakers) {
+      const urlsMap = {}
+      bookmakers.forEach(house => {
+        urlsMap[house] = {
+          prematch: getBookmakerUrl(house, false),
+          live: getBookmakerUrl(house, true)
+        }
+      })
+      return urlsMap
+    },
+    
+    // Extrai URL base de uma URL completa
+    extractBaseUrl(fullUrl) {
+      try {
+        const url = new URL(fullUrl)
+        return `${url.protocol}//${url.hostname}/`
+      } catch (error) {
+        console.warn('Erro ao extrair URL base:', error)
+        return fullUrl
+      }
+    },
+    
+    updateHouseFilters(availableBookmakers) {
+      // Se não há casas disponíveis, mantém as padrão
+      if (!availableBookmakers || availableBookmakers.length === 0) {
+        return
+      }
+      
+      // Atualiza as opções de filtro de casas
+      this.filterOptions.houses = availableBookmakers
+      
+      // Ajusta as casas selecionadas para incluir apenas as disponíveis
+      const currentSelected = [...this.selectedHouses]
+      this.selectedHouses = availableBookmakers.filter(house => 
+        currentSelected.includes(house)
+      )
+      
+      // Se não há casas selecionadas, seleciona todas
+      if (this.selectedHouses.length === 0) {
+        this.selectedHouses = [...availableBookmakers]
+      }
+      
+      // Salva as configurações atualizadas
+      this.saveFiltersToSettings()
+    },
+    
+         toggleSearch() {
       this.isSearching = !this.isSearching
       this.sendWebSocketMessage('toggle_search', { isSearching: this.isSearching })
       
@@ -1372,19 +1511,40 @@ export default {
     },
     
     setFilter(filter) {
+      // Previne a seleção do filtro "live" que está desabilitado
+      if (filter === 'live') {
+        return
+      }
       this.activeFilter = filter
       this.saveFiltersToSettings()
     },
+    
+
     
     applyFilters() {
       // Os filtros são aplicados automaticamente através do computed filteredSurebets
       this.saveFiltersToSettings()
       this.toggleFilterOverlay()
     },
+
+    onDateChange() {
+      console.log('Data selecionada:', this.selectedDate)
+      this.saveFiltersToSettings()
+    },
+
+    clearDateFilter() {
+      this.selectedDate = ''
+      this.saveFiltersToSettings()
+    },
     
     clearFilters() {
       // Limpa filtros mas mantém tudo selecionado por padrão
-      this.selectedHouses = [...this.filterOptions.houses]
+      // Usa as casas disponíveis da API ou as padrão se não houver dados
+      const housesToSelect = this.availableBookmakers.length > 0 
+        ? [...this.availableBookmakers] 
+        : [...filterOptions.houses]
+      
+      this.selectedHouses = housesToSelect
       this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
       this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
       this.selectedMarketCategories = Object.keys(this.marketOptions)
@@ -1395,10 +1555,10 @@ export default {
           this.selectedMarketSubcategories.push(`${category}|${subcategory}`)
         })
       })
-      this.activeFilter = 'all'
-      this.selectedDateFilter = 'any'
+      this.selectedDate = ''
       this.minProfit = 0
       this.maxProfit = 1000
+      this.activeFilter = 'prelive'
       
       // Salvar filtros nas configurações
       this.saveFiltersToSettings()
@@ -1717,7 +1877,7 @@ export default {
              currencies: [...this.selectedCurrencies],
              marketCategories: [...this.selectedMarketCategories],
              marketSubcategories: [...this.selectedMarketSubcategories],
-             dateFilter: this.selectedDateFilter,
+             selectedDate: this.selectedDate,
              minProfit: this.minProfit,
              maxProfit: this.maxProfit,
              activeFilter: this.activeFilter,
@@ -1739,12 +1899,25 @@ export default {
          },
          
          loadFilter(filter) {
-           this.selectedHouses = [...filter.houses]
+           // Filtra apenas as casas que estão disponíveis na API
+           const availableHouses = this.availableBookmakers.length > 0 
+             ? this.availableBookmakers 
+             : filterOptions.houses
+           
+           this.selectedHouses = filter.houses 
+             ? filter.houses.filter(house => availableHouses.includes(house))
+             : []
+           
+           // Se não há casas selecionadas válidas, seleciona todas as disponíveis
+           if (this.selectedHouses.length === 0) {
+             this.selectedHouses = [...availableHouses]
+           }
+           
            this.selectedSports = [...filter.sports]
            this.selectedCurrencies = [...filter.currencies]
            this.selectedMarketCategories = filter.marketCategories ? [...filter.marketCategories] : []
            this.selectedMarketSubcategories = filter.marketSubcategories ? [...filter.marketSubcategories] : []
-           this.selectedDateFilter = filter.dateFilter
+           this.selectedDate = filter.selectedDate || ''
            this.minProfit = filter.minProfit
            this.maxProfit = filter.maxProfit
            this.activeFilter = filter.activeFilter
@@ -2274,6 +2447,7 @@ export default {
   color: #b0b0b0;
   cursor: pointer;
   transition: all 0.3s ease;
+  position: relative;
   
   &:hover {
     background: #404040;
@@ -2284,6 +2458,46 @@ export default {
     background: #00ff88;
     color: #1a1a1a;
     border-color: #00ff88;
+  }
+  
+  &.disabled-tab {
+    cursor: not-allowed;
+    opacity: 0.6;
+    background: #1a1a1a;
+    border-color: #333;
+    color: #666;
+    
+    &:hover {
+      background: #1a1a1a;
+      color: #666;
+    }
+    
+    .coming-soon-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ff6b35;
+      color: white;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      animation: pulse 2s infinite;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
@@ -3194,6 +3408,78 @@ export default {
 .market-subcategory {
   font-size: 12px;
   padding: 4px 6px;
+}
+
+/* Filtros de Data */
+.date-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.date-filter-label {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.date-filter-input {
+  padding: 8px 12px;
+  border: 2px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 8px;
+  font-size: 0.9em;
+  min-width: 150px;
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  }
+
+  &:hover {
+    border-color: var(--accent-primary);
+  }
+
+  // Estilizar o calendário no Chrome/Safari
+  &::-webkit-calendar-picker-indicator {
+    background-color: var(--accent-primary);
+    border-radius: 3px;
+    cursor: pointer;
+    filter: invert(1);
+  }
+}
+
+.clear-date-btn {
+  padding: 6px 10px;
+  border: 2px solid #ff4757;
+  background: transparent;
+  color: #ff4757;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1.1em;
+  font-weight: bold;
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background: #ff4757;
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 </style>
 

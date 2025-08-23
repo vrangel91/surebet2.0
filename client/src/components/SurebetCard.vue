@@ -33,8 +33,8 @@
           <span class="time-icon">📅</span>
           {{ surebet[0]?.date || '2025-08-18' }} às {{ surebet[0]?.hour || '23:00' }}
         </span>
-        <span class="match-status" :class="{ 'live': surebet[0]?.minutes > 0 }">
-          {{ surebet[0]?.minutes > 0 ? `Live - ${surebet[0]?.minutes}'` : 'Pré-live' }}
+        <span class="match-status" :class="{ 'live': surebet[0]?.isLive }">
+          {{ surebet[0]?.isLive ? `Live - ${surebet[0]?.minutes || '1'}'` : `Pré-live${surebet[0]?.minutes ? ` - ${surebet[0]?.minutes}'` : ''}` }}
         </span>
       </div>
     </div>
@@ -70,7 +70,12 @@
             <span class="stake-value">{{ formatCurrency(calculatedStakes[index]) }}</span>
           </div>
           
-          <button class="bet-btn" @click="placeBet(bet)">
+          <button 
+            class="bet-btn" 
+            :class="{ 'disabled': !hasValidUrl(bet) }"
+            @click="placeBet(bet)"
+            :title="getButtonTooltip(bet)"
+          >
             <span class="bet-icon">💰</span>
             <span class="bet-text">Apostar</span>
           </button>
@@ -81,6 +86,8 @@
 </template>
 
 <script>
+import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
+
 export default {
   name: 'SurebetCard',
   props: {
@@ -214,10 +221,61 @@ export default {
     },
     
     placeBet(bet) {
-      if (bet.url_redirect) {
-        window.open(bet.url_redirect, '_blank')
-      } else {
-        console.log('URL de aposta não disponível')
+      try {
+        // Primeiro, tenta extrair o domínio dos campos anchorh1 ou anchorh2
+        let targetUrl = null
+        
+        // Tenta extrair do anchorh1 primeiro (casa principal)
+        if (bet.anchorh1) {
+          const domain = extractDomainFromAnchorh(bet.anchorh1)
+          if (domain) {
+            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+            console.log(`🔗 URL extraída de anchorh1 para ${bet.house}:`, targetUrl)
+          }
+        }
+        
+        // Se não encontrou no anchorh1, tenta no anchorh2
+        if (!targetUrl && bet.anchorh2) {
+          const domain = extractDomainFromAnchorh(bet.anchorh2)
+          if (domain) {
+            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+            console.log(`🔗 URL extraída de anchorh2 para ${bet.house}:`, targetUrl)
+          }
+        }
+        
+        // Se conseguiu extrair URL dos anchorh, usa ela
+        if (targetUrl) {
+          console.log(`🚀 Redirecionando para ${bet.house} usando domínio extraído:`, targetUrl)
+          window.open(targetUrl, '_blank')
+          return
+        }
+        
+        // Fallback: tenta usar a URL de redirecionamento da API
+        if (bet.url_redirect && bet.url_redirect.includes('http')) {
+          console.log(`🔗 Usando URL da API para ${bet.house}:`, bet.url_redirect)
+          window.open(bet.url_redirect, '_blank')
+          return
+        }
+        
+        // Último fallback: usa o mapeamento baseado no nome da casa
+        if (bet.house) {
+          const isLive = bet.isLive || false
+          const bookmakerUrl = getBookmakerUrl(bet.house, isLive)
+          
+          if (bookmakerUrl && !bookmakerUrl.includes('google.com/search')) {
+            console.log(`🏠 Redirecionando para ${bet.house} (${isLive ? 'Live' : 'Pre-match'}):`, bookmakerUrl)
+            window.open(bookmakerUrl, '_blank')
+          } else {
+            console.warn(`⚠️ URL não encontrada para ${bet.house}. Usando busca no Google.`)
+            window.open(bookmakerUrl, '_blank')
+          }
+        } else {
+          console.error('❌ Casa de apostas não informada')
+          this.showNotification('Casa de apostas não identificada!', 'error')
+        }
+      } catch (error) {
+        console.error('Erro ao abrir casa de apostas:', error)
+        this.showNotification('Erro ao abrir casa de apostas!', 'error')
       }
     },
     
@@ -258,6 +316,30 @@ export default {
           }
         }, 300)
       }, 3000)
+    },
+    
+    // Verifica se a aposta tem uma URL válida
+    hasValidUrl(bet) {
+      return !!(bet.anchorh1 || bet.anchorh2 || (bet.url_redirect && bet.url_redirect.includes('http')))
+    },
+    
+
+    
+    // Gera tooltip para o botão
+    getButtonTooltip(bet) {
+      if (!this.hasValidUrl(bet)) return 'URL não disponível'
+      
+      let tooltip = `Casa: ${bet.house}\n`
+      
+      if (bet.anchorh1) {
+        tooltip += `URL extraída de anchorh1\n${bet.anchorh1}`
+      } else if (bet.anchorh2) {
+        tooltip += `URL extraída de anchorh2\n${bet.anchorh2}`
+      } else if (bet.url_redirect) {
+        tooltip += `URL da API\n${bet.url_redirect}`
+      }
+      
+      return tooltip
     }
   }
 }
@@ -585,6 +667,19 @@ export default {
 
 .bet-text {
   font-size: 12px;
+}
+
+
+
+.bet-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--text-secondary);
+  
+  &:hover {
+    transform: none;
+    box-shadow: none;
+  }
 }
 
 @media (max-width: 768px) {

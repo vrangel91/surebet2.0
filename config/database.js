@@ -8,7 +8,7 @@ const sequelize = new Sequelize({
   port: process.env.DB_PORT || 5432,
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'surestake_db',
+  database: process.env.DB_NAME || 'surestake',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   pool: {
     max: 5,

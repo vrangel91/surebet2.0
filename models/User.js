@@ -8,12 +8,18 @@ module.exports = (sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    name: {
+    username: {
       type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        len: [2, 255]
-      }
+      allowNull: true,
+      unique: true
+    },
+    first_name: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    last_name: {
+      type: DataTypes.STRING,
+      allowNull: true
     },
     email: {
       type: DataTypes.STRING,
@@ -27,35 +33,28 @@ module.exports = (sequelize) => {
       type: DataTypes.STRING,
       allowNull: false
     },
-    role: {
-      type: DataTypes.ENUM('user', 'admin'),
-      defaultValue: 'user'
+    cpf: {
+      type: DataTypes.STRING(14),
+      allowNull: true
     },
-    account_type: {
-      type: DataTypes.ENUM('basic', 'premium', 'vip'),
-      defaultValue: 'basic'
+    phone: {
+      type: DataTypes.STRING(20),
+      allowNull: true
     },
-    credits: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
+    is_admin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
-    status: {
-      type: DataTypes.ENUM('active', 'inactive', 'suspended'),
-      defaultValue: 'active'
+    is_vip: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     },
-    last_login: {
-      type: DataTypes.DATE
+    vip_expires_at: {
+      type: DataTypes.DATE,
+      allowNull: true
     },
-    login_attempts: {
-      type: DataTypes.INTEGER,
-      defaultValue: 0
-    },
-    locked_until: {
-      type: DataTypes.DATE
-    },
-    last_credit_consumption: {
-      type: DataTypes.DATE
-    }
+    // Colunas removidas pois não existem no banco surestake
+    // role, account_type, credits, status, last_login, login_attempts, locked_until, last_credit_consumption
   }, {
     tableName: 'users',
     timestamps: true,
@@ -80,58 +79,9 @@ module.exports = (sequelize) => {
     return await bcrypt.compare(password, this.password_hash);
   };
 
-  // Método para consumir crédito
-  User.prototype.consumeCredit = async function() {
-    if (this.credits > 0) {
-      this.credits -= 1;
-      this.last_credit_consumption = new Date();
-      await this.save();
-      return true;
-    }
-    return false;
-  };
-
-  // Método para adicionar créditos
-  User.prototype.addCredits = async function(amount) {
-    this.credits += amount;
-    await this.save();
-  };
-
   // Método para verificar se pode usar o sistema
   User.prototype.canUseSystem = function() {
-    if (this.role === 'admin') return true;
-    
-    const today = new Date().toDateString();
-    const lastConsumption = this.last_credit_consumption 
-      ? new Date(this.last_credit_consumption).toDateString() 
-      : null;
-    
-    return lastConsumption === today || this.credits > 0;
-  };
-
-  // Método para incrementar tentativas de login
-  User.prototype.incrementLoginAttempts = async function() {
-    this.login_attempts += 1;
-    
-    // Bloquear após 5 tentativas por 15 minutos
-    if (this.login_attempts >= 5) {
-      this.locked_until = new Date(Date.now() + 15 * 60 * 1000);
-    }
-    
-    await this.save();
-  };
-
-  // Método para resetar tentativas de login
-  User.prototype.resetLoginAttempts = async function() {
-    this.login_attempts = 0;
-    this.locked_until = null;
-    this.last_login = new Date();
-    await this.save();
-  };
-
-  // Método para verificar se está bloqueado
-  User.prototype.isLocked = function() {
-    return this.locked_until && new Date() < this.locked_until;
+    return this.is_admin || this.is_vip;
   };
 
   return User;

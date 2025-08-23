@@ -15,87 +15,59 @@ module.exports = (sequelize) => {
       comment: 'ID único da surebet'
     },
     
-    // Casa de aposta
-    house: {
-      type: DataTypes.STRING,
+    // Usuário que fez a aposta
+    user_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
-      comment: 'Nome da casa de aposta'
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
     
-    // Mercado da aposta
-    market: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: 'Tipo de mercado (ex: Resultado Final, Over/Under)'
-    },
-    
-    // Partida ou evento
-    match: {
-      type: DataTypes.STRING,
+    // Conta da casa de apostas
+    bookmaker_account_id: {
+      type: DataTypes.INTEGER,
       allowNull: true,
-      comment: 'Nome da partida ou evento esportivo'
+      references: {
+        model: 'bookmaker_accounts',
+        key: 'id'
+      }
     },
     
-    // Lucro da surebet
-    profit: {
+    // Lucro/Perda da surebet
+    profit_loss: {
       type: DataTypes.DECIMAL(10, 2),
-      allowNull: false,
-      comment: 'Lucro em reais da surebet'
+      defaultValue: 0,
+      comment: 'Lucro ou perda da surebet'
     },
     
-    // Data da surebet
-    date: {
-      type: DataTypes.DATEONLY,
-      allowNull: false,
-      comment: 'Data da surebet'
+    // Valor da aposta
+    bet_amount: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0,
+      comment: 'Valor apostado'
     },
     
-    // Hora da surebet
-    hour: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      comment: 'Hora da surebet (0-23)'
-    },
-    
-    // Esporte
-    sport: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: 'Tipo de esporte'
-    },
-    
-    // Período da partida
-    period: {
-      type: DataTypes.INTEGER,
+    // Odds da primeira aposta
+    odds_1: {
+      type: DataTypes.DECIMAL(8, 4),
       allowNull: true,
-      comment: 'Período da partida em minutos'
+      comment: 'Odds da primeira aposta'
     },
     
-    // Minutos decorridos
-    minutes: {
-      type: DataTypes.INTEGER,
+    // Odds da segunda aposta
+    odds_2: {
+      type: DataTypes.DECIMAL(8, 4),
       allowNull: true,
-      comment: 'Minutos decorridos desde o início'
+      comment: 'Odds da segunda aposta'
     },
     
-    // URLs de referência
-    anchorh1: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Primeira URL de referência'
-    },
-    
-    anchorh2: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Segunda URL de referência'
-    },
-    
-    // Percentual de chance
-    chance: {
-      type: DataTypes.DECIMAL(5, 2),
-      allowNull: true,
-      comment: 'Percentual de chance da surebet'
+    // Status da surebet
+    status: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'pending',
+      comment: 'Status da surebet (pending, completed, cancelled)'
     },
     
     // Status da surebet
@@ -120,19 +92,10 @@ module.exports = (sequelize) => {
         fields: ['surebet_id']
       },
       {
-        fields: ['house']
+        fields: ['user_id']
       },
       {
-        fields: ['market']
-      },
-      {
-        fields: ['sport']
-      },
-      {
-        fields: ['date']
-      },
-      {
-        fields: ['hour']
+        fields: ['bookmaker_account_id']
       },
       {
         fields: ['status']

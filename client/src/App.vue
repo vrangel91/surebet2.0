@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <!-- Loading após login -->
+    <LoginLoading :isVisible="showLoginLoading" />
+    
     <router-view />
     <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->
     <FloatingGuideButton />
@@ -8,9 +11,32 @@
 
 <script>
 import { useTheme } from './composables/useTheme'
+import LoginLoading from './components/LoginLoading.vue'
+import FloatingGuideButton from './components/FloatingGuideButton.vue'
 
 export default {
   name: 'App',
+  components: {
+    LoginLoading,
+    FloatingGuideButton
+  },
+  data() {
+    return {
+      showLoginLoading: false
+    }
+  },
+  watch: {
+    '$route'(to, from) {
+      // Mostrar loading quando navegar para dashboard após login
+      if (from.path === '/login' && to.path === '/') {
+        this.showLoginLoading = true
+        // Esconder loading após 2 segundos
+        setTimeout(() => {
+          this.showLoginLoading = false
+        }, 2000)
+      }
+    }
+  },
   setup() {
     const { loadTheme, applyTheme } = useTheme()
     

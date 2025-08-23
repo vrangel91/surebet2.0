@@ -34,15 +34,10 @@
             <option v-for="sport in availableSports" :key="sport" :value="sport">{{ sport }}</option>
           </select>
         </div>
-        <div class="filter-group">
-          <button @click="forceRefresh" :disabled="isLoading" class="refresh-btn">
-            {{ isLoading ? '🔄 Atualizando...' : '🔄 Atualizar' }}
-          </button>
-        </div>
       </div>
 
-      <!-- Status da busca automática -->
-      <div class="auto-refresh-status">
+      <!-- Status da busca automática - OCULTO -->
+      <div class="auto-refresh-status" style="display: none;">
         <div class="status-indicator">
           <span class="status-dot" :class="{ active: autoRefreshInterval }"></span>
           <span class="status-text">
@@ -357,6 +352,8 @@ export default {
     openGlossary() { this.showGlossaryModal = true },
     closeGlossary() { this.showGlossaryModal = false },
 
+
+
     async loadSurebetsData() {
       if (this.isLoading) return
       try {
@@ -486,6 +483,39 @@ export default {
               const date = dateObj.toISOString().split('T')[0]
               const hour = dateObj.getHours()
               
+              // Determinar se é Live ou Pre Live baseado na URL e campo minutes
+              let isLive = false
+              let minutes = part.minutes || 0
+              
+              // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
+              const anchorUrl = part.anchorh1 || part.anchorh2 || ''
+              
+              let isLiveParam = null
+              
+              // Tentar extrair is_live da URL
+              if (anchorUrl && anchorUrl.includes('is_live=')) {
+                const match = anchorUrl.match(/is_live=([01])/)
+                if (match) {
+                  isLiveParam = match[1]
+                }
+              }
+              
+              // Determinar status baseado no parâmetro oficial is_live
+              if (isLiveParam === '1') {
+                isLive = true
+                // Manter os minutos originais da API
+              } else if (isLiveParam === '0') {
+                isLive = false
+                // Manter os minutos originais da API (pode ter minutos mesmo sendo pre-match)
+              } else {
+                // Fallback: usar campo minutes se não conseguir extrair is_live
+                if (minutes && minutes > 0) {
+                  isLive = true
+                } else {
+                  isLive = false
+                }
+              }
+              
               // Criar objeto surebet processado
               const processedSurebet = {
                 surebet_id: surebetId,
@@ -496,11 +526,12 @@ export default {
                 date: date,
                 hour: hour,
                 sport: sport || 'Futebol',
-                period: null,
-                minutes: null,
+                period: part.period || null,
+                minutes: minutes,
                 anchorh1: null,
                 anchorh2: null,
                 chance: parseFloat(roi) || null,
+                isLive: isLive,
                 metadata: {
                   source: 'external_api',
                   timestamp: timestamp,
@@ -1063,9 +1094,6 @@ export default {
     },
 
     updateAnalysis() { this.processAnalytics() },
-    forceRefresh() { 
-      this.loadSurebetsData()
-    },
     
     // Métodos para busca automática de dados
     startAutoRefresh() {

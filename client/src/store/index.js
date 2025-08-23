@@ -654,10 +654,11 @@ export default createStore({
     currentUser: state => state.user,
     authToken: state => state.authToken,
     allUsers: state => state.users,
-    isAdmin: state => state.user?.role === 'admin',
+    isAdmin: state => state.user?.is_admin === true,
     isVIP: state => {
       if (!state.user) return false
-      if (state.user.role === 'admin') return true
+      if (state.user.is_admin === true) return true
+      if (state.user.is_vip === true) return true
       return ['premium', 'vip'].includes(state.user.accountType)
     },
     activeUsers: state => state.users.filter(user => user.status === 'active'),
@@ -673,7 +674,8 @@ export default createStore({
     userAccountType: state => state.user?.accountType || 'basic',
     canUseSystem: state => {
       if (!state.user) return false
-      if (state.user.role === 'admin') return true
+      if (state.user.is_admin === true) return true
+      if (state.user.is_vip === true) return true
       
       const today = new Date().toDateString()
       const lastConsumption = state.user.lastCreditConsumption 

@@ -54,7 +54,8 @@ TransactionHistory.belongsTo(BookmakerAccount, {
 // Função para sincronizar modelos com o banco
 async function syncModels() {
   try {
-    await sequelize.sync({ alter: true });
+    // Usar force: false para não alterar tabelas existentes
+    await sequelize.sync({ force: false, alter: false });
     console.log('✅ Modelos sincronizados com o banco de dados');
   } catch (error) {
     console.error('❌ Erro ao sincronizar modelos:', error);

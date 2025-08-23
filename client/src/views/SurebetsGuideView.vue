@@ -54,7 +54,7 @@
 
            <div class="system-highlight">
              <h4>🚀 <strong>NOSSO SISTEMA AUTOMATIZADO</strong></h4>
-             <p>O <strong>SureStake</strong> identifica, calcula e executa surebets automaticamente 24/7, eliminando a necessidade de monitoramento manual e cálculos complexos!</p>
+             <p>O <strong><span class="sure-text">Sure</span><span class="stake-text">Stake</span></strong> identifica, calcula e executa surebets automaticamente 24/7, eliminando a necessidade de monitoramento manual e cálculos complexos!</p>
              <ul>
                <li><strong>✅ Detecção Automática:</strong> Encontra oportunidades em tempo real</li>
                <li><strong>✅ Cálculos Precisos:</strong> Determina valores exatos para cada aposta</li>
@@ -372,7 +372,7 @@
          <!-- Nosso Sistema Automatizado -->
          <div class="content-card">
            <h3>🤖 <strong>NOSSO SISTEMA AUTOMATIZADO</strong></h3>
-           <p>O <strong>SureStake</strong> é a ferramenta mais avançada do mercado, desenvolvida com anos de experiência em arbitragem esportiva.</p>
+                       <p>O <strong><span class="sure-text">Sure</span><span class="stake-text">Stake</span></strong> é a ferramenta mais avançada do mercado, desenvolvida com anos de experiência em arbitragem esportiva.</p>
            
            <div class="tool-features">
              <h4>🚀 <strong>Vantagens Exclusivas:</strong></h4>
@@ -473,7 +473,7 @@
            <p>Agora que você entende como funcionam as surebets, deixe nosso <strong>sistema inteligente</strong> fazer todo o trabalho pesado por você!</p>
            
            <div class="system-benefits">
-             <h4>🎯 <strong>Por que Escolher o SureStake?</strong></h4>
+             <h4>🎯 <strong>Por que Escolher o <span class="sure-text">Sure</span><span class="stake-text">Stake</span>?</strong></h4>
              <ul>
                <li><strong>🤖 100% Automatizado:</strong> Você só precisa configurar e lucrar</li>
                <li><strong>⚡ Velocidade de Execução:</strong> Aproveita oportunidades em milissegundos</li>
@@ -1012,6 +1012,19 @@ export default {
   color: #cccccc;
   margin: 0;
   line-height: 1.5;
+}
+
+/* Estilos para o nome do sistema */
+.sure-text {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.stake-text {
+  color: #00ff88;
+  font-style: italic;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
 }
 
 /* Call to Action */

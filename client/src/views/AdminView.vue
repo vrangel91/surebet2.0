@@ -1110,7 +1110,7 @@ export default {
                 accountType: this.userForm.accountType
               }
             })
-            this.showSuccessNotification('Usuário atualizado com sucesso!', 'Usuário Atualizado')
+            this.showNotification('Usuário atualizado com sucesso!', 'success')
           }
         } else {
           // Criar novo usuário
@@ -1123,7 +1123,7 @@ export default {
             accountType: this.userForm.accountType || 'basic'
           })
           
-          this.showSuccessNotification('Usuário criado com sucesso!', 'Novo Usuário')
+          this.showNotification('Usuário criado com sucesso!', 'success')
         }
         
         this.closeModal()
@@ -1148,7 +1148,7 @@ export default {
           errorTitle = 'Erro de Conexão'
         }
         
-        this.showErrorNotification(errorMessage, errorTitle)
+        this.showNotification(errorMessage, 'error')
       }
     },
     
@@ -1182,7 +1182,7 @@ export default {
         // Recarregar usuários da API para garantir sincronização
         await this.fetchUsersFromAPI()
         
-        this.showSuccessNotification('Usuário excluído com sucesso!', 'Usuário Excluído')
+        this.showNotification('Usuário excluído com sucesso!', 'success')
         
       } catch (error) {
         console.error('❌ Erro ao excluir usuário:', error)
@@ -1198,7 +1198,7 @@ export default {
           errorTitle = 'Operação Negada'
         }
         
-        this.showErrorNotification(errorMessage, errorTitle)
+        this.showNotification(errorMessage, 'error')
       }
     },
     

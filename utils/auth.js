@@ -10,8 +10,8 @@ function generateToken(user) {
   const payload = {
     userId: user.id,
     email: user.email,
-    role: user.role,
-    accountType: user.account_type
+    is_admin: user.is_admin,
+    is_vip: user.is_vip
   };
 
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
@@ -34,20 +34,20 @@ async function createUserSession(user, token, req = null) {
   await UserSession.create({
     user_id: user.id,
     token: token,
-    expires_at: expiresAt,
-    user_agent: req ? req.headers['user-agent'] : null,
-    ip_address: req ? req.ip : null
+    expires_at: expiresAt
+    // Colunas removidas pois não existem no banco surestake:
+    // user_agent: req ? req.headers['user-agent'] : null,
+    // ip_address: req ? req.ip : null
   });
 }
 
 // Verificar sessão de usuário
 async function verifyUserSession(token) {
   const session = await UserSession.findOne({
-    where: { token, is_active: true },
+    where: { token },
     include: [{
       model: User,
-      as: 'user',
-      where: { status: 'active' }
+      as: 'user'
     }]
   });
 
@@ -108,7 +108,7 @@ async function authenticateToken(req, res, next) {
 
 // Middleware para verificar se é admin
 function requireAdmin(req, res, next) {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && req.user.is_admin) {
     next();
   } else {
     res.status(403).json({ 

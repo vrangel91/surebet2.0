@@ -3,15 +3,18 @@
     <!-- Logo e Header -->
     <div class="sidebar-header">
       <div class="logo">
-        <svg class="logo-icon" v-show="!shouldBeCollapsed" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-          <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-        </svg>
-        <h1 v-show="!shouldBeCollapsed">SureStake</h1>
+        <img class="logo-icon" v-show="!shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
+        <img class="logo-icon" v-show="shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
+        <h1 v-show="!shouldBeCollapsed">
+          <span class="sure-text">Sure</span><span class="stake-text">Stake</span>
+        </h1>
       </div>
-      <button class="sidebar-toggle" @click="toggleSidebar">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <button class="sidebar-toggle" @click="toggleSidebar" :title="shouldBeCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'">
+        <svg v-if="!shouldBeCollapsed" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
           <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+        </svg>
+        <svg v-else width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
         </svg>
       </button>
     </div>
@@ -520,12 +523,27 @@ export default {
 .sidebar.collapsed .sidebar-header {
   padding: 16px 8px;
   justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+  margin-bottom: 4px;
 }
 
 .sidebar.collapsed .sidebar-toggle {
-  position: absolute;
-  top: 16px;
-  right: 8px;
+  position: static;
+  margin: 0;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar.collapsed .sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00ff88;
 }
 
 .sidebar-header {
@@ -544,11 +562,29 @@ export default {
   cursor: pointer;
   padding: 8px;
   border-radius: 6px;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+.sidebar-toggle:active {
+  transform: scale(0.95);
+}
+
+.sidebar-toggle svg {
+  transition: transform 0.3s ease;
+}
+
+.sidebar-toggle:hover svg {
+  transform: scale(1.1);
 }
 
 .logo {
@@ -558,16 +594,32 @@ export default {
 }
 
 .logo-icon {
-  width: 24px;
-  height: 24px;
-  color: #00ff88;
+  width: 45px;
+  height: 45x;
   flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 4px;
 }
 
 .logo h1 {
   font-size: 20px;
   font-weight: 700;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sure-text {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.stake-text {
+  color: #00ff88;
+  font-style: italic;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
 }
 
 .user-profile {
@@ -845,5 +897,13 @@ export default {
   .status-text {
     font-size: 10px;
   }
+}
+
+.sidebar.collapsed .sidebar-toggle svg {
+  transform: rotate(0deg);
+}
+
+.sidebar.collapsed .sidebar-toggle:hover svg {
+  transform: rotate(0deg) scale(1.1);
 }
 </style>

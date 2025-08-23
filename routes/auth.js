@@ -1,4 +1,5 @@
 const express = require('express');
+const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const { 
   generateToken, 
@@ -21,62 +22,67 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Buscar usuário
+    console.log('🔍 Tentativa de login para:', email);
+
+    // Buscar usuário diretamente no banco
     const user = await User.findOne({
-      where: { email: email.toLowerCase() }
+      where: { email: email.toLowerCase() },
+      attributes: ['id', 'username', 'first_name', 'last_name', 'email', 'password_hash', 'is_admin', 'is_vip', 'created_at']
     });
 
     if (!user) {
+      console.log('❌ Usuário não encontrado:', email);
       return res.status(401).json({
         error: 'E-mail ou senha incorretos'
       });
     }
 
-    // Verificar se usuário está ativo
-    if (user.status !== 'active') {
-      return res.status(401).json({
-        error: 'Conta desativada. Entre em contato com o suporte.'
-      });
-    }
-
-    // Verificar se está bloqueado
-    if (user.isLocked()) {
-      const remainingTime = Math.ceil((user.locked_until - new Date()) / 1000 / 60);
-      return res.status(423).json({
-        error: `Conta bloqueada. Tente novamente em ${remainingTime} minutos.`
-      });
-    }
+    console.log('✅ Usuário encontrado:', user.email);
 
     // Verificar senha
-    const isValidPassword = await user.verifyPassword(password);
+    const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
-      await user.incrementLoginAttempts();
+      console.log('❌ Senha incorreta para:', email);
       return res.status(401).json({
         error: 'E-mail ou senha incorretos'
       });
     }
 
-    // Resetar tentativas de login
-    await user.resetLoginAttempts();
+    console.log('✅ Senha válida para:', email);
 
-    // Gerar token
+    // Verificar privilégios
+    if (!user.is_admin && !user.is_vip) {
+      console.log('❌ Usuário sem privilégios:', email);
+      return res.status(401).json({
+        error: 'Conta sem privilégios. Entre em contato com o suporte.'
+      });
+    }
+
+    // Gerar token simples
     const token = generateToken(user);
 
-    // Criar sessão
+    // Criar sessão no banco
     await createUserSession(user, token, req);
 
-    // Retornar dados do usuário (sem senha)
+    // Retornar dados do usuário (sem senha) - mapeando para formato esperado pelo frontend
     const userData = {
       id: user.id,
-      name: user.name,
+      username: user.username,
+      name: user.username, // Mapeamento para compatibilidade
+      first_name: user.first_name,
+      last_name: user.last_name,
       email: user.email,
-      role: user.role,
-      account_type: user.account_type,
-      credits: user.credits,
-      status: user.status,
-      last_login: user.last_login,
-      can_use_system: user.canUseSystem()
+      is_admin: user.is_admin,
+      is_vip: user.is_vip,
+      can_use_system: user.is_admin || user.is_vip,
+      // Mapeamento para propriedades esperadas pelo frontend
+      role: user.is_admin ? 'admin' : 'user',
+      accountType: user.is_vip ? 'vip' : (user.is_admin ? 'admin' : 'basic'),
+      credits: 999, // Admins/VIPs têm créditos ilimitados
+      status: 'active'
     };
+
+    console.log('✅ Login bem-sucedido para:', email);
 
     res.json({
       success: true,
@@ -86,7 +92,8 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('❌ Erro no login:', error.message);
+    console.error('Stack:', error.stack);
     res.status(500).json({
       error: 'Erro interno do servidor'
     });
@@ -127,10 +134,9 @@ router.post('/register', async (req, res) => {
       name,
       email: email.toLowerCase(),
       password_hash: password, // Será hasheada automaticamente
-      role: 'user',
-      account_type: 'basic',
-      credits: 5, // 5 créditos gratuitos
-      status: 'active'
+              // role removido - não existe no banco surestake
+      is_admin: false,
+      is_vip: false
     });
 
     // Gerar token
@@ -142,14 +148,11 @@ router.post('/register', async (req, res) => {
     // Retornar dados do usuário
     const userData = {
       id: user.id,
-      name: user.name,
+      username: user.username,
       email: user.email,
-      role: user.role,
-      account_type: user.account_type,
-      credits: user.credits,
-      status: user.status,
-      last_login: user.last_login,
-      can_use_system: user.canUseSystem()
+      is_admin: user.is_admin,
+      is_vip: user.is_vip,
+      can_use_system: user.is_admin || user.is_vip
     };
 
     res.status(201).json({
@@ -193,14 +196,11 @@ router.get('/verify', authenticateToken, async (req, res) => {
   try {
     const userData = {
       id: req.user.id,
-      name: req.user.name,
+      username: req.user.username,
       email: req.user.email,
-      role: req.user.role,
-      account_type: req.user.account_type,
-      credits: req.user.credits,
-      status: req.user.status,
-      last_login: req.user.last_login,
-      can_use_system: req.user.canUseSystem()
+      is_admin: req.user.is_admin,
+      is_vip: req.user.is_vip,
+      can_use_system: req.user.is_admin || req.user.is_vip
     };
 
     res.json({
@@ -221,7 +221,7 @@ router.post('/consume-credit', authenticateToken, async (req, res) => {
   try {
     const user = req.user;
 
-    if (user.role === 'admin') {
+    if (user.is_admin) {
       return res.json({
         success: true,
         message: 'Administradores não consomem créditos'
@@ -234,7 +234,7 @@ router.post('/consume-credit', authenticateToken, async (req, res) => {
       res.json({
         success: true,
         message: 'Crédito consumido com sucesso',
-        credits_remaining: user.credits
+        is_vip: user.is_vip
       });
     } else {
       res.status(403).json({
