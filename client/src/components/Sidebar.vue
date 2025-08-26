@@ -99,6 +99,22 @@
           </div>
         </li>
 
+        <!-- Perfis de Aposta -->
+        <li class="nav-item" :class="{ active: $route.path === '/betting-profiles' }">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBettingProfilesClick" :title="shouldBeCollapsed ? 'Perfis de Aposta' : ''">
+            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215z"/>
+            </svg>
+            <span class="nav-text" v-show="!shouldBeCollapsed">Perfis de Aposta</span>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
+          </div>
+        </li>
+
         <!-- Indicações -->
         <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
           <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
@@ -297,6 +313,15 @@ export default {
     handleCompoundInterestClick() {
       if (this.isVIP) {
         this.$router.push('/compound-interest')
+      } else {
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    
+    handleBettingProfilesClick() {
+      if (this.isVIP) {
+        this.$router.push('/betting-profiles')
       } else {
         this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
         this.$router.push('/plans')
