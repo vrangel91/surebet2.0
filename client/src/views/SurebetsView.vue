@@ -119,9 +119,10 @@
               <!-- Cards Fixos -->
     <div v-if="pinnedCards.length > 0" class="pinned-cards-section">
       <div class="pinned-header">
-        <h3 class="pinned-title">
+        <h3 class="pinned-title" :class="{ 'limit-reached': pinnedCards.length >= 3 }">
           <MapPin class="pin-icon" size="18" />
-          Cards Fixos ({{ pinnedCards.length }})
+          Cards Fixos ({{ pinnedCards.length }}/3)
+          <span v-if="pinnedCards.length >= 3" class="limit-indicator" title="Limite máximo atingido">⚠️</span>
         </h3>
         <div class="pinned-controls">
           <button 
@@ -270,9 +271,29 @@
                  <button @click="deselectAllHouses" class="action-btn">Desmarcar Todos</button>
                </div>
              </div>
+             
+             <!-- Campo de busca para casas de apostas -->
+             <div class="search-field-container">
+               <input 
+                 type="text" 
+                 v-model="houseSearchTerm"
+                 placeholder="Pesquisar casa de aposta..."
+                 class="house-search-input"
+                 @input="onHouseSearchInput"
+               />
+               <button 
+                 v-if="houseSearchTerm"
+                 @click="clearHouseSearch"
+                 class="clear-search-btn"
+                 title="Limpar pesquisa"
+               >
+                 ×
+               </button>
+             </div>
+             
              <div class="houses-grid">
                <label 
-                 v-for="house in filterOptions.houses" 
+                 v-for="house in filteredHouses" 
                  :key="house" 
                  class="checkbox-item"
                >
@@ -284,6 +305,13 @@
                  />
                  <span class="checkbox-label">{{ house }}</span>
                </label>
+             </div>
+             
+             <!-- Indicador de resultados da pesquisa -->
+             <div v-if="houseSearchTerm" class="search-results-info">
+               <span class="search-results-text">
+                 {{ filteredHouses.length }} de {{ filterOptions.houses.length }} casas encontradas
+               </span>
              </div>
            </div>
            
@@ -542,6 +570,21 @@ export default {
              showSavedFiltersModal: false,
        showSaveFilterModal: false,
        currentFilterName: '',
+       // Cache para preservar filtros durante atualizações da API
+       filtersCache: {
+         selectedHouses: [],
+         selectedSports: [],
+         selectedCurrencies: [],
+         selectedMarketCategories: [],
+         selectedMarketSubcategories: [],
+         selectedDate: '',
+         activeFilter: 'prelive',
+         minProfit: 0,
+         maxProfit: 1000,
+         houseSearchTerm: ''
+       },
+       // Termo de pesquisa para casas de apostas
+       houseSearchTerm: '',
        // Novas variáveis para filtros de mercado
        marketOptions: {
          "Handicap Asiático (AH)": {
@@ -675,6 +718,17 @@ export default {
   computed: {
     currentUser() {
       return this.$store.getters.currentUser
+    },
+    // Casas de apostas filtradas pela pesquisa
+    filteredHouses() {
+      if (!this.houseSearchTerm.trim()) {
+        return this.filterOptions.houses
+      }
+      
+      const searchTerm = this.houseSearchTerm.toLowerCase().trim()
+      return this.filterOptions.houses.filter(house => 
+        house.toLowerCase().includes(searchTerm)
+      )
     },
     isAdmin() {
       return this.$store.getters.isAdmin
@@ -1021,6 +1075,10 @@ export default {
           })
         }
         
+        // Inicializar o cache dos filtros após carregar as configurações
+        this.updateFiltersCache()
+        console.log('📦 Cache de filtros inicializado')
+        
         // Carregar filtros salvos do usuário
         this.loadSavedFilters()
         
@@ -1054,6 +1112,7 @@ export default {
           if (event.key === 'app_settings') {
             this.loadDefaultFilters()
             this.loadFiltersFromSettings()
+            this.updateFiltersCache() // Atualiza cache quando configurações mudam
           }
         })
         
@@ -1085,6 +1144,17 @@ export default {
   },
      methods: {
 
+     // Métodos para pesquisa de casas de apostas
+     onHouseSearchInput() {
+       // Método chamado quando o usuário digita no campo de pesquisa
+       // A filtragem é feita automaticamente pela propriedade computada filteredHouses
+       console.log('🔍 Pesquisando casas:', this.houseSearchTerm)
+     },
+     
+     clearHouseSearch() {
+       this.houseSearchTerm = ''
+       console.log('🧹 Pesquisa de casas limpa')
+     },
      
      // Carrega filtros das configurações (não atualiza automaticamente com dados)
      loadFiltersFromSettings() {
@@ -1093,6 +1163,8 @@ export default {
         if (savedSettings) {
           const settings = JSON.parse(savedSettings)
           if (settings.filters) {
+            console.log('🔄 Carregando filtros salvos...')
+            
             // Carrega filtros salvos das configurações
             if (settings.filters.selectedHouses) {
               // Filtra apenas as casas que estão disponíveis na API
@@ -1100,35 +1172,55 @@ export default {
                 ? this.availableBookmakers 
                 : filterOptions.houses
               
-              this.selectedHouses = settings.filters.selectedHouses.filter(house => 
+              const validHouses = settings.filters.selectedHouses.filter(house => 
                 availableHouses.includes(house)
               )
               
-              // Se não há casas selecionadas válidas, seleciona todas as disponíveis
-              if (this.selectedHouses.length === 0) {
+              // Se há casas válidas salvas, usa elas
+              if (validHouses.length > 0) {
+                this.selectedHouses = validHouses
+                console.log('✅ Casas carregadas:', validHouses)
+              } else {
+                // Se não há casas válidas, seleciona todas as disponíveis
                 this.selectedHouses = [...availableHouses]
+                console.log('🔄 Nenhuma casa válida encontrada, selecionando todas:', availableHouses)
               }
             }
-            if (settings.filters.selectedSports) {
+            
+            // Carrega outros filtros apenas se não foram carregados antes
+            if (settings.filters.selectedSports && this.selectedSports.length === 0) {
               this.selectedSports = settings.filters.selectedSports
-            }
-            if (settings.filters.selectedCurrencies) {
-              this.selectedCurrencies = settings.filters.selectedCurrencies
-            }
-            if (settings.filters.selectedMarketCategories) {
-              this.selectedMarketCategories = settings.filters.selectedMarketCategories
-            }
-            if (settings.filters.selectedMarketSubcategories) {
-              this.selectedMarketSubcategories = settings.filters.selectedMarketSubcategories
-            }
-            if (settings.filters.selectedDate) {
-              this.selectedDate = settings.filters.selectedDate
-            }
-            if (settings.filters.activeFilter) {
-              this.activeFilter = settings.filters.activeFilter
+              console.log('✅ Esportes carregados:', this.selectedSports)
             }
             
+            if (settings.filters.selectedCurrencies && this.selectedCurrencies.length === 0) {
+              this.selectedCurrencies = settings.filters.selectedCurrencies
+              console.log('✅ Moedas carregadas:', this.selectedCurrencies)
+            }
+            
+            if (settings.filters.selectedMarketCategories && this.selectedMarketCategories.length === 0) {
+              this.selectedMarketCategories = settings.filters.selectedMarketCategories
+              console.log('✅ Categorias de mercado carregadas:', this.selectedMarketCategories)
+            }
+            
+            if (settings.filters.selectedMarketSubcategories && this.selectedMarketSubcategories.length === 0) {
+              this.selectedMarketSubcategories = settings.filters.selectedMarketSubcategories
+              console.log('✅ Subcategorias de mercado carregadas:', this.selectedMarketSubcategories)
+            }
+            
+            if (settings.filters.selectedDate) {
+              this.selectedDate = settings.filters.selectedDate
+              console.log('✅ Data carregada:', this.selectedDate)
+            }
+            
+            if (settings.filters.activeFilter) {
+              this.activeFilter = settings.filters.activeFilter
+              console.log('✅ Filtro ativo carregado:', this.activeFilter)
+            }
+            
+            // Salva as configurações atualizadas
             localStorage.setItem('app_settings', JSON.stringify(settings))
+            console.log('💾 Filtros salvos no localStorage')
           }
         }
       } catch (error) {
@@ -1146,6 +1238,9 @@ export default {
           settings.filters = {}
         }
         
+        // Atualiza o cache local
+        this.updateFiltersCache()
+        
         settings.filters.selectedHouses = this.selectedHouses
         settings.filters.selectedSports = this.selectedSports
         settings.filters.selectedCurrencies = this.selectedCurrencies
@@ -1155,8 +1250,137 @@ export default {
         settings.filters.activeFilter = this.activeFilter
         
         localStorage.setItem('app_settings', JSON.stringify(settings))
+        console.log('💾 Filtros salvos no localStorage e cache atualizado')
       } catch (error) {
         console.error('Erro ao salvar filtros nas configurações:', error)
+      }
+    },
+    
+    // Atualiza o cache dos filtros
+    updateFiltersCache() {
+      this.filtersCache = {
+        selectedHouses: [...this.selectedHouses],
+        selectedSports: [...this.selectedSports],
+        selectedCurrencies: [...this.selectedCurrencies],
+        selectedMarketCategories: [...this.selectedMarketCategories],
+        selectedMarketSubcategories: [...this.selectedMarketSubcategories],
+        selectedDate: this.selectedDate,
+        activeFilter: this.activeFilter,
+        minProfit: this.minProfit,
+        maxProfit: this.maxProfit,
+        houseSearchTerm: this.houseSearchTerm
+      }
+      console.log('📦 Cache de filtros atualizado')
+    },
+    
+    // Restaura filtros do cache
+    restoreFiltersFromCache() {
+      let restoredCount = 0
+      let changesDetected = false
+      
+      // Verifica se houve mudanças nos filtros
+      if (this.filtersCache.selectedHouses.length > 0) {
+        const currentHouses = [...this.selectedHouses].sort()
+        const cachedHouses = [...this.filtersCache.selectedHouses].sort()
+        
+        if (JSON.stringify(currentHouses) !== JSON.stringify(cachedHouses)) {
+          this.selectedHouses = [...this.filtersCache.selectedHouses]
+          console.log('🔄 Restaurando casas do cache:', this.selectedHouses)
+          restoredCount++
+          changesDetected = true
+        }
+      }
+      
+      if (this.filtersCache.selectedSports.length > 0) {
+        const currentSports = [...this.selectedSports].sort()
+        const cachedSports = [...this.filtersCache.selectedSports].sort()
+        
+        if (JSON.stringify(currentSports) !== JSON.stringify(cachedSports)) {
+          this.selectedSports = [...this.filtersCache.selectedSports]
+          console.log('🔄 Restaurando esportes do cache:', this.selectedSports)
+          restoredCount++
+          changesDetected = true
+        }
+      }
+      
+      if (this.filtersCache.selectedCurrencies.length > 0) {
+        const currentCurrencies = [...this.selectedCurrencies].sort()
+        const cachedCurrencies = [...this.filtersCache.selectedCurrencies].sort()
+        
+        if (JSON.stringify(currentCurrencies) !== JSON.stringify(cachedCurrencies)) {
+          this.selectedCurrencies = [...this.filtersCache.selectedCurrencies]
+          console.log('🔄 Restaurando moedas do cache:', this.selectedCurrencies)
+          restoredCount++
+          changesDetected = true
+        }
+      }
+      
+      if (this.filtersCache.selectedMarketCategories.length > 0) {
+        const currentCategories = [...this.selectedMarketCategories].sort()
+        const cachedCategories = [...this.filtersCache.selectedMarketCategories].sort()
+        
+        if (JSON.stringify(currentCategories) !== JSON.stringify(cachedCategories)) {
+          this.selectedMarketCategories = [...this.filtersCache.selectedMarketCategories]
+          console.log('🔄 Restaurando categorias de mercado do cache:', this.selectedMarketCategories)
+          restoredCount++
+          changesDetected = true
+        }
+      }
+      
+      if (this.filtersCache.selectedMarketSubcategories.length > 0) {
+        const currentSubcategories = [...this.selectedMarketSubcategories].sort()
+        const cachedSubcategories = [...this.filtersCache.selectedMarketSubcategories].sort()
+        
+        if (JSON.stringify(currentSubcategories) !== JSON.stringify(cachedSubcategories)) {
+          this.selectedMarketSubcategories = [...this.filtersCache.selectedMarketSubcategories]
+          console.log('🔄 Restaurando subcategorias de mercado do cache:', this.selectedMarketSubcategories)
+          restoredCount++
+          changesDetected = true
+        }
+      }
+      
+      if (this.filtersCache.selectedDate && this.selectedDate !== this.filtersCache.selectedDate) {
+        this.selectedDate = this.filtersCache.selectedDate
+        console.log('🔄 Restaurando data do cache:', this.selectedDate)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (this.filtersCache.activeFilter && this.activeFilter !== this.filtersCache.activeFilter) {
+        this.activeFilter = this.filtersCache.activeFilter
+        console.log('🔄 Restaurando filtro ativo do cache:', this.activeFilter)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (this.filtersCache.minProfit !== undefined && this.minProfit !== this.filtersCache.minProfit) {
+        this.minProfit = this.filtersCache.minProfit
+        console.log('🔄 Restaurando lucro mínimo do cache:', this.minProfit)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (this.filtersCache.maxProfit !== undefined && this.maxProfit !== this.filtersCache.maxProfit) {
+        this.maxProfit = this.filtersCache.maxProfit
+        console.log('🔄 Restaurando lucro máximo do cache:', this.maxProfit)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (this.filtersCache.houseSearchTerm !== undefined && this.houseSearchTerm !== this.filtersCache.houseSearchTerm) {
+        this.houseSearchTerm = this.filtersCache.houseSearchTerm
+        console.log('🔄 Restaurando termo de pesquisa de casas do cache:', this.houseSearchTerm)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (restoredCount > 0) {
+        console.log(`✅ ${restoredCount} filtro(s) restaurado(s) do cache`)
+        
+        // Mostra notificação apenas se houve mudanças significativas
+        if (changesDetected && restoredCount > 2) {
+          this.showNotification(`Filtros preservados após atualização da API`, 'info')
+        }
       }
     },
     
@@ -1447,6 +1671,9 @@ export default {
     
              async fetchSurebets() {
       try {
+        // Preserva os filtros atuais antes da atualização
+        this.updateFiltersCache()
+        
         const response = await fetch('/api/surebets')
         
         if (!response.ok) {
@@ -1468,6 +1695,9 @@ export default {
         // Atualiza as casas de apostas disponíveis baseado nos dados da API
         this.updateAvailableBookmakers(data)
         
+        // Restaura os filtros do cache após a atualização
+        this.restoreFiltersFromCache()
+        
         // Atualiza cards fixos com dados mais recentes
         this.updatePinnedCards(data)
         
@@ -1475,11 +1705,16 @@ export default {
         if (this.soundEnabled && hasNewData) {
           this.playNotificationSound()
         }
+        
+        console.log('✅ Dados da API atualizados e filtros preservados')
       } catch (error) {
         // Log silencioso para evitar spam no console
         this.loading = false
         this.updateStats() // Atualiza estatísticas mesmo em caso de erro
-            }
+        
+        // Restaura filtros do cache mesmo em caso de erro
+        this.restoreFiltersFromCache()
+      }
     },
     
     updateAvailableBookmakers(surebetsData) {
@@ -1565,15 +1800,22 @@ export default {
       // Atualiza as opções de filtro de casas
       this.filterOptions.houses = availableBookmakers
       
-      // Ajusta as casas selecionadas para incluir apenas as disponíveis
+      // Preserva as seleções do usuário de forma mais inteligente
       const currentSelected = [...this.selectedHouses]
-      this.selectedHouses = availableBookmakers.filter(house => 
-        currentSelected.includes(house)
+      
+      // Filtra apenas as casas que ainda estão disponíveis
+      const validSelectedHouses = currentSelected.filter(house => 
+        availableBookmakers.includes(house)
       )
       
-      // Se não há casas selecionadas, seleciona todas
-      if (this.selectedHouses.length === 0) {
+      // Se o usuário tinha casas selecionadas e algumas ainda estão disponíveis, mantém apenas as válidas
+      if (validSelectedHouses.length > 0) {
+        this.selectedHouses = validSelectedHouses
+        console.log('🔒 Preservando seleções do usuário:', validSelectedHouses)
+      } else {
+        // Se nenhuma casa selecionada está disponível, seleciona todas as disponíveis
         this.selectedHouses = [...availableBookmakers]
+        console.log('🔄 Nenhuma casa selecionada disponível, selecionando todas:', availableBookmakers)
       }
       
       // Salva as configurações atualizadas
@@ -2072,6 +2314,12 @@ export default {
              )
              this.showNotification('Card desafixado!')
            } else {
+             // Verifica se já atingiu o limite de 3 cards fixos
+             if (this.pinnedCards.length >= 3) {
+               this.showNotification('Limite máximo de 3 cards fixos atingido!', 'warning')
+               return
+             }
+             
              // Adiciona o card fixo
              this.pinnedCardKeys.add(cardKey)
              this.pinnedCards.push(surebet)
@@ -3050,17 +3298,24 @@ export default {
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
   overflow: hidden; /* Previne overflow */
+  
+  /* Adiciona margin-top aos primeiros cards para evitar que o efeito hover seja cortado */
+  > *:nth-child(-n+4) {
+    margin-top: 8px;
+  }
 }
 
 /* Seção de Cards Fixos */
 .pinned-cards-section {
   padding: 24px 32px;
+  padding-top: 40px; /* Aumentado padding-top para dar mais espaço */
+  padding-bottom: 32px; /* Adicionado padding-bottom para melhor espaçamento */
   border-bottom: 2px solid #ff6b6b;
   background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 107, 107, 0.02) 100%);
   position: relative;
   width: 100%; /* Garante que a seção ocupe toda a largura disponível */
   max-width: 100%; /* Previne overflow horizontal */
-  overflow: hidden; /* Previne overflow */
+  overflow: visible; /* Mudado para visible para permitir efeitos hover */
   
   &::before {
     content: '';
@@ -3083,27 +3338,46 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 16px 20px;
+  margin-bottom: 24px; /* Aumentado margin-bottom para mais espaço */
+  padding: 20px 24px; /* Aumentado padding para mais espaço interno */
   background: rgba(255, 107, 107, 0.1);
   border: 1px solid rgba(255, 107, 107, 0.3);
   border-radius: 12px;
   backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.1); /* Adicionado sombra sutil */
 }
 
 .pinned-title {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 20px;
+  gap: 14px; /* Aumentado gap para mais espaço entre ícone e texto */
+  font-size: 22px; /* Aumentado tamanho da fonte */
   font-weight: 700;
   color: #ffffff;
   margin: 0;
+  transition: all 0.3s ease;
   
   .pin-icon {
     color: #ff6b6b;
     stroke-width: 2;
     animation: pinFloat 2s ease-in-out infinite;
+    flex-shrink: 0; /* Previne que o ícone seja comprimido */
+  }
+  
+  &.limit-reached {
+    color: #ff6b6b;
+    
+    .pin-icon {
+      color: #ff4757;
+      animation: pinGlow 1.5s ease-in-out infinite;
+    }
+  }
+  
+  .limit-indicator {
+    font-size: 16px;
+    margin-left: 8px;
+    animation: pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
   }
 }
 
@@ -3121,11 +3395,22 @@ export default {
   }
 }
 
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
 .clear-pinned-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 10px; /* Aumentado gap para mais espaço */
+  padding: 10px 18px; /* Aumentado padding para botão maior */
   background: rgba(255, 107, 107, 0.2);
   border: 1px solid rgba(255, 107, 107, 0.5);
   border-radius: 8px;
@@ -3138,35 +3423,42 @@ export default {
   &:hover {
     background: rgba(255, 107, 107, 0.3);
     border-color: #ff6b6b;
-    transform: translateY(-1px);
+    transform: translateY(-2px); /* Aumentado efeito hover */
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3); /* Adicionado sombra no hover */
   }
   
   .clear-icon {
     font-size: 16px;
+    flex-shrink: 0; /* Previne que o ícone seja comprimido */
   }
 }
 
 .pinned-cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px; /* Aumentado o gap para melhor espaçamento */
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
   overflow: hidden; /* Previne overflow */
+  padding: 8px 16px; /* Adiciona padding vertical e horizontal para evitar corte dos efeitos hover e informações */
 }
 
 /* Responsividade para diferentes tamanhos de tela */
 @media (max-width: 1400px) {
-  .surebets-grid,
-  .pinned-cards-grid {
+  .surebets-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+  .pinned-cards-grid {
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos */
   }
 }
 
 @media (max-width: 1100px) {
-  .surebets-grid,
-  .pinned-cards-grid {
+  .surebets-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .pinned-cards-grid {
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos */
   }
 }
 
@@ -3188,19 +3480,54 @@ export default {
     display: flex;
   }
   
-  .surebets-grid,
-  .pinned-cards-grid {
+  .surebets-grid {
     grid-template-columns: 1fr;
+    gap: 16px; /* Reduzido gap em mobile */
+  }
+  .pinned-cards-grid {
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos mesmo em mobile */
+    gap: 12px; /* Reduzido gap em mobile para acomodar 3 colunas */
   }
   
   .pinned-cards-section {
     padding: 16px 20px;
+    padding-top: 24px; /* Reduzido padding-top em mobile */
+    padding-bottom: 24px; /* Reduzido padding-bottom em mobile */
+  }
+  
+  .pinned-cards-grid {
+    padding: 8px 12px; /* Reduzido padding horizontal em mobile */
   }
   
   .pinned-header {
     flex-direction: column;
-    gap: 12px;
+    gap: 16px; /* Aumentado gap em mobile */
     align-items: flex-start;
+    padding: 16px 20px; /* Reduzido padding em mobile */
+  }
+  
+  .pinned-title {
+    font-size: 20px; /* Reduzido tamanho da fonte em mobile */
+    gap: 12px; /* Reduzido gap em mobile */
+    
+    .limit-indicator {
+      font-size: 14px; /* Reduzido tamanho em mobile */
+      margin-left: 6px; /* Reduzido margin em mobile */
+    }
+  }
+  
+  .pinned-controls {
+    gap: 12px; /* Reduzido gap em mobile */
+  }
+  
+  .clear-pinned-btn {
+    padding: 8px 14px; /* Reduzido padding em mobile */
+    font-size: 13px; /* Reduzido tamanho da fonte em mobile */
+  }
+  
+  .drag-mode-btn {
+    padding: 8px 12px; /* Reduzido padding em mobile */
+    font-size: 13px; /* Reduzido tamanho da fonte em mobile */
   }
   
   .content-header {
@@ -3408,6 +3735,67 @@ export default {
 .profit-separator {
   color: #808080;
   font-size: 14px;
+}
+
+/* Campo de pesquisa para casas de apostas */
+.search-field-container {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.house-search-input {
+  width: 100%;
+  padding: 10px 40px 10px 12px;
+  border: 1px solid #404040;
+  border-radius: 6px;
+  background: #2a2a2a;
+  color: #ffffff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  
+  &::placeholder {
+    color: #808080;
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: #00ff88;
+    background: #333333;
+  }
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #808080;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.search-results-info {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(0, 255, 136, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #00ff88;
+}
+
+.search-results-text {
+  font-size: 12px;
+  color: #00ff88;
+  font-weight: 500;
 }
 
 /* Grids de Checkboxes */
@@ -3935,11 +4323,11 @@ export default {
 .pinned-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px; /* Aumentado gap entre os controles */
 }
 
 .drag-mode-btn {
-  padding: 8px 12px;
+  padding: 10px 14px; /* Aumentado padding para botão maior */
   border: 2px solid var(--accent-primary);
   background: transparent;
   color: var(--accent-primary);
@@ -3952,13 +4340,14 @@ export default {
   &:hover {
     background: var(--accent-primary);
     color: var(--bg-primary);
-    transform: translateY(-1px);
+    transform: translateY(-2px); /* Aumentado efeito hover */
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3); /* Adicionado sombra no hover */
   }
   
   &.active {
     background: var(--accent-primary);
     color: var(--bg-primary);
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); /* Aumentado sombra quando ativo */
   }
   
   &:active {
@@ -3977,6 +4366,8 @@ export default {
 .pinned-card-wrapper {
   transition: all 0.3s ease;
   cursor: default;
+  margin: 8px 0; /* Adiciona margin vertical para evitar corte dos efeitos */
+  padding: 4px; /* Adiciona padding interno para dar espaço aos efeitos hover */
   
   &.dragging {
     opacity: 0.5;

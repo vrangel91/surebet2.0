@@ -284,7 +284,7 @@
     </main>
 
     <!-- Create/Edit User Modal -->
-    <div v-if="showCreateModal || showEditModal" class="modal-overlay" @click="closeModal">
+    <div v-if="showCreateModal || showEditModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>{{ showEditModal ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
@@ -354,7 +354,7 @@
     </div>
 
     <!-- Change Password Modal -->
-    <div v-if="showPasswordModal" class="modal-overlay" @click="showPasswordModal = false">
+    <div v-if="showPasswordModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>Alterar Senha</h2>
@@ -444,7 +444,7 @@
     </div>
 
     <!-- Add Credits Modal -->
-    <div v-if="showCreditsModal" class="modal-overlay" @click="showCreditsModal = false">
+    <div v-if="showCreditsModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>Adicionar Créditos</h2>
@@ -499,7 +499,7 @@
     </div>
 
     <!-- Change Account Type Modal -->
-    <div v-if="showAccountTypeModal" class="modal-overlay" @click="showAccountTypeModal = false">
+    <div v-if="showAccountTypeModal" class="modal-overlay">
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>Alterar Tipo de Conta</h2>
@@ -551,7 +551,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
+    <div v-if="showDeleteModal" class="modal-overlay">
       <div class="modal-content delete-modal" @click.stop>
         <div class="modal-header">
           <h2>Confirmar Exclusão</h2>
@@ -575,7 +575,7 @@
     </div>
 
     <!-- Ticket Detail Modal -->
-    <div v-if="showTicketDetailModal" class="modal-overlay" @click="closeTicketDetailModal">
+    <div v-if="showTicketDetailModal" class="modal-overlay">
       <div class="ticket-detail-modal" @click.stop>
         <div class="modal-header">
           <h3>Ticket #{{ selectedTicket?.id }}</h3>

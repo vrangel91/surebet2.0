@@ -372,13 +372,13 @@ export default {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px; /* Aumentado padding para mais espaço interno */
   transition: all 0.3s ease;
   animation: fadeIn 0.5s ease-in-out;
   width: 100%; /* Garante que o card ocupe toda a largura disponível */
   max-width: 100%; /* Previne que o card seja maior que o container */
   box-sizing: border-box; /* Inclui padding e border no cálculo da largura */
-  overflow: hidden; /* Previne overflow interno */
+  overflow: visible; /* Mudado para visible para permitir efeitos hover */
   
   &:hover {
     transform: translateY(-2px);
@@ -485,6 +485,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 12px; /* Adicionado gap para garantir espaço entre elementos */
 }
 
 .profit-info {
@@ -498,31 +499,35 @@ export default {
 .card-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px; /* Aumentado gap para mais espaço */
+  flex-shrink: 0; /* Previne que os controles sejam comprimidos */
 }
 
 .date-time {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px; /* Aumentado gap para mais espaço */
   font-size: 12px;
   color: var(--text-secondary);
+  flex-shrink: 0; /* Previne que o elemento seja comprimido */
 }
 
 .time-icon {
   color: var(--text-secondary);
-  font-size: 10px;
+  font-size: 11px; /* Aumentado tamanho do ícone */
+  flex-shrink: 0; /* Previne que o ícone seja comprimido */
 }
 
 .action-icons {
   display: flex;
-  gap: 6px;
+  gap: 8px; /* Aumentado gap entre os ícones */
   align-items: center;
+  flex-shrink: 0; /* Previne que os ícones sejam comprimidos */
 }
 
 .action-btn {
-  width: 22px;
-  height: 22px;
+  width: 24px; /* Aumentado tamanho do botão */
+  height: 24px; /* Aumentado tamanho do botão */
   background: var(--bg-overlay);
   border: none;
   border-radius: 4px;
@@ -531,10 +536,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0; /* Previne que o botão seja comprimido */
   
   &:hover {
     background: var(--accent-primary);
     color: var(--bg-primary);
+    transform: translateY(-1px); /* Adicionado efeito hover */
   }
   
   &.pin-btn {
@@ -578,13 +585,14 @@ export default {
 
 
 .icon-text {
-  font-size: 11px;
+  font-size: 12px; /* Aumentado tamanho do ícone */
   display: block;
   line-height: 1;
   color: var(--text-secondary, #888888);
   transition: all 0.3s ease;
-  width: 11px;
-  height: 11px;
+  width: 12px; /* Aumentado largura */
+  height: 12px; /* Aumentado altura */
+  flex-shrink: 0; /* Previne que o ícone seja comprimido */
 }
 
 .match-info {
@@ -830,13 +838,28 @@ export default {
 
 @media (max-width: 768px) {
   .surebet-card {
-    padding: 16px;
+    padding: 20px; /* Aumentado padding em mobile */
   }
   
   .card-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+  
+  .card-actions {
+    gap: 10px; /* Reduzido gap em mobile */
+  }
+  
+  .action-btn {
+    width: 22px; /* Reduzido tamanho em mobile */
+    height: 22px; /* Reduzido tamanho em mobile */
+  }
+  
+  .icon-text {
+    font-size: 11px; /* Reduzido tamanho em mobile */
+    width: 11px; /* Reduzido tamanho em mobile */
+    height: 11px; /* Reduzido tamanho em mobile */
   }
   
   .bet-details {
