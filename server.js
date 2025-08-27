@@ -20,9 +20,57 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'client/dist')));
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Servir arquivos estáticos com tratamento de erros
+app.use(express.static(path.join(__dirname, 'client/dist'), {
+  setHeaders: (res, path, stat) => {
+    // Definir headers corretos para diferentes tipos de arquivo
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    }
+  }
+}));
+
+// Configurar headers para UTF-8 (apenas para rotas da API)
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
+});
+
+// Middleware para interceptar requisições problemáticas
+app.use((req, res, next) => {
+  // Log de todas as requisições para debug
+  console.log(`📡 ${req.method} ${req.path} - ${req.get('User-Agent') || 'Sem User-Agent'}`);
+  
+  // Verificar se é um refresh forçado (Ctrl+F5) tentando acessar rotas da API
+  const isForceRefresh = req.get('Cache-Control') === 'no-cache' || req.get('Pragma') === 'no-cache';
+  
+  // Se for uma requisição para uma rota da API que não existe, tratar como 404
+  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
+    console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}${isForceRefresh ? ' (Refresh forçado detectado)' : ''}`);
+    return res.status(404).json({
+      error: 'Endpoint não encontrado',
+      message: `A rota ${req.method} ${req.path} não existe`,
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
+      isForceRefresh: isForceRefresh
+    });
+  }
+  
+  next();
+});
 
 // Configurar rotas da API
 app.use('/api/auth', authRoutes);
@@ -161,8 +209,30 @@ app.post('/api/toggle-sound', (req, res) => {
   res.json({ soundEnabled });
 });
 
-// Rota para servir o SPA (sempre)
+// Este middleware foi movido para cima para interceptar requisições antes das rotas específicas
+
+// Middleware para tratar erros de parsing JSON
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('❌ Erro de parsing JSON:', err.message);
+    return res.status(400).json({
+      error: 'JSON inválido',
+      message: 'O corpo da requisição contém JSON malformado',
+      timestamp: new Date().toISOString()
+    });
+  }
+  next(err);
+});
+
+// Rota específica para favicon
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client/dist/favicon.ico'));
+});
+
+// Rota para servir o SPA (deve vir DEPOIS de todas as rotas da API)
 app.get('*', (req, res) => {
+  // Para todas as outras rotas, servir o SPA
+  console.log(`🌐 Servindo SPA para: ${req.path}`);
   res.sendFile(path.join(__dirname, 'client/dist/index.html'));
 });
 

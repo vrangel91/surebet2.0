@@ -29,7 +29,7 @@
       <div class="credit-details">
         <div class="credit-item">
           <div class="credit-label">
-            <span class="icon">💎</span>
+            <Diamond class="icon" size="16" />
             Créditos Disponíveis
           </div>
           <div class="credit-value" :class="{ 'low': userCredits <= 5 }">
@@ -39,7 +39,7 @@
         
         <div class="credit-item">
           <div class="credit-label">
-            <span class="icon">📅</span>
+            <Calendar class="icon" size="16" />
             Último Uso
           </div>
           <div class="credit-value">
@@ -49,7 +49,7 @@
         
         <div class="credit-item">
           <div class="credit-label">
-            <span class="icon">⚡</span>
+            <Zap class="icon" size="16" />
             Status
           </div>
           <div class="credit-value status" :class="{ 'active': canUseSystem, 'inactive': !canUseSystem }">
@@ -60,24 +60,24 @@
       
       <!-- Aviso de créditos baixos -->
       <div v-if="userCredits <= 5 && userCredits > 0" class="credit-warning">
-        <span class="warning-icon">⚠️</span>
+        <AlertTriangle class="warning-icon" size="16" />
         Créditos baixos! Compre mais créditos para continuar usando o sistema.
       </div>
       
       <!-- Sem créditos -->
       <div v-if="userCredits === 0" class="credit-error">
-        <span class="error-icon">❌</span>
+        <XCircle class="error-icon" size="16" />
         Sem créditos disponíveis! Compre créditos para continuar usando o sistema.
       </div>
       
       <!-- Ações -->
       <div class="credit-actions">
         <button @click="buyCredits" class="action-btn buy-btn">
-          <span class="btn-icon">💳</span>
+          <CreditCard class="btn-icon" size="16" />
           Comprar Créditos
         </button>
         <button @click="upgradeAccount" class="action-btn upgrade-btn">
-          <span class="btn-icon">⭐</span>
+          <Star class="btn-icon" size="16" />
           Upgrade Conta
         </button>
       </div>
@@ -105,7 +105,7 @@
               </div>
               <div class="package-description">{{ creditPackage.description }}</div>
               <div class="package-bonus" v-if="creditPackage.bonus">
-                <span class="bonus-icon">🎁</span>
+                <Gift class="bonus-icon" size="16" />
                 {{ creditPackage.bonus }}
               </div>
             </div>
@@ -143,12 +143,12 @@
               <div class="account-type-description">{{ info.description }}</div>
               <div class="account-type-features">
                 <div v-for="feature in info.features" :key="feature" class="feature">
-                  <span class="feature-icon">✓</span>
+                  <Check class="feature-icon" size="16" />
                   {{ feature }}
                 </div>
               </div>
               <div class="account-type-credits">
-                <span class="credits-icon">💰</span>
+                <Coins class="credits-icon" size="16" />
                 {{ info.creditsPerDay }} créditos/dia
               </div>
               <div v-if="userAccountType === type" class="current-badge">Atual</div>
@@ -168,6 +168,7 @@
 
 <script>
 import { mapGetters, mapActions } from 'vuex'
+import { AlertTriangle, XCircle, CreditCard, Star, Gift, Check, Coins, Diamond, Calendar, Zap } from 'lucide-vue-next'
 
 export default {
   name: 'CreditStatus',

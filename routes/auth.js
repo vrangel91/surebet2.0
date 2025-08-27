@@ -50,13 +50,13 @@ router.post('/login', async (req, res) => {
 
     console.log('✅ Senha válida para:', email);
 
-    // Verificar privilégios
-    if (!user.is_admin && !user.is_vip) {
-      console.log('❌ Usuário sem privilégios:', email);
-      return res.status(401).json({
-        error: 'Conta sem privilégios. Entre em contato com o suporte.'
-      });
-    }
+    // Verificar privilégios - permitir todos os usuários logarem
+    // if (!user.is_admin && !user.is_vip) {
+    //   console.log('❌ Usuário sem privilégios:', email);
+    //   return res.status(401).json({
+    //     error: 'Conta sem privilégios. Entre em contato com o suporte.'
+    //   });
+    // }
 
     // Gerar token simples
     const token = generateToken(user);
@@ -74,10 +74,11 @@ router.post('/login', async (req, res) => {
       email: user.email,
       is_admin: user.is_admin,
       is_vip: user.is_vip,
-      can_use_system: user.is_admin || user.is_vip,
+      account_type: user.account_type || 'basic',
+      can_use_system: true, // Todos os usuários podem usar o sistema
       // Mapeamento para propriedades esperadas pelo frontend
       role: user.is_admin ? 'admin' : 'user',
-      accountType: user.is_vip ? 'vip' : (user.is_admin ? 'admin' : 'basic'),
+      accountType: user.account_type || (user.is_vip ? 'vip' : (user.is_admin ? 'admin' : 'basic')),
       credits: 999, // Admins/VIPs têm créditos ilimitados
       status: 'active'
     };
@@ -120,7 +121,8 @@ router.post('/register', async (req, res) => {
 
     // Verificar se e-mail já existe
     const existingUser = await User.findOne({
-      where: { email: email.toLowerCase() }
+      where: { email: email.toLowerCase() },
+      attributes: ['id', 'email', 'account_type']
     });
 
     if (existingUser) {
@@ -131,10 +133,12 @@ router.post('/register', async (req, res) => {
 
     // Criar usuário
     const user = await User.create({
-      name,
+      username: name, // Usar o nome como username para evitar constraint NOT NULL
+      first_name: name.split(' ')[0] || name, // Primeiro nome
+      last_name: name.split(' ').slice(1).join(' ') || '', // Sobrenome
       email: email.toLowerCase(),
       password_hash: password, // Será hasheada automaticamente
-              // role removido - não existe no banco surestake
+      account_type: 'basic', // Usuário ganha privilégio BÁSICO automaticamente
       is_admin: false,
       is_vip: false
     });
@@ -149,10 +153,12 @@ router.post('/register', async (req, res) => {
     const userData = {
       id: user.id,
       username: user.username,
+      name: user.username, // Usar username como name para compatibilidade
       email: user.email,
       is_admin: user.is_admin,
       is_vip: user.is_vip,
-      can_use_system: user.is_admin || user.is_vip
+      account_type: user.account_type,
+      can_use_system: true // Usuários básicos também podem usar o sistema
     };
 
     res.status(201).json({
@@ -200,7 +206,8 @@ router.get('/verify', authenticateToken, async (req, res) => {
       email: req.user.email,
       is_admin: req.user.is_admin,
       is_vip: req.user.is_vip,
-      can_use_system: req.user.is_admin || req.user.is_vip
+      account_type: req.user.account_type || 'basic',
+      can_use_system: true
     };
 
     res.json({

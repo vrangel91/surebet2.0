@@ -528,9 +528,19 @@ router.get('/', async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    // Mapear os dados para incluir o campo 'name' esperado pelo frontend
+    const mappedUsers = users.map(user => ({
+      ...user.toJSON(),
+      name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Nome não informado',
+      role: user.is_admin ? 'admin' : 'user',
+      account_type: user.account_type || 'basic',
+      status: 'active',
+      credits: 0
+    }));
+
     res.json({
       success: true,
-      users
+      users: mappedUsers
     });
 
   } catch (error) {
@@ -557,9 +567,19 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Mapear os dados para incluir o campo 'name' esperado pelo frontend
+    const mappedUser = {
+      ...user.toJSON(),
+      name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Nome não informado',
+      role: user.is_admin ? 'admin' : 'user',
+      account_type: user.account_type || 'basic',
+      status: 'active',
+      credits: 0
+    };
+
     res.json({
       success: true,
-      user
+      user: mappedUser
     });
 
   } catch (error) {
@@ -571,7 +591,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Criar novo usuário
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { username, first_name, last_name, email, password, is_admin, is_vip } = req.body;
 
@@ -628,12 +648,12 @@ router.post('/', async (req, res) => {
     // Retornar dados sem senha
     const userData = {
       id: user.id,
-      name: user.name,
+      name: user.username, // Usar username como name
       email: user.email,
-      role: user.role,
-      account_type: user.account_type,
-      credits: user.credits,
-      status: user.status,
+      role: user.is_admin ? 'admin' : 'user',
+      account_type: user.account_type || 'basic',
+      credits: 0, // Usuários novos começam com 0 créditos
+      status: 'active',
       created_at: user.created_at
     };
 

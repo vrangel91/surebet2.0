@@ -44,6 +44,16 @@
                <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
              </button>
              
+             <button 
+               v-if="pinnedCards.length > 0"
+               class="control-btn pinned-indicator"
+               @click="scrollToPinnedCards"
+               title="Ir para cards fixos"
+             >
+               <MapPin class="control-icon" size="16" />
+               <span class="control-text">{{ pinnedCards.length }}</span>
+             </button>
+             
 
            </div>
                   </div>
@@ -106,7 +116,66 @@
           </div>
         </div>
 
-              <!-- Lista de Surebets -->
+              <!-- Cards Fixos -->
+    <div v-if="pinnedCards.length > 0" class="pinned-cards-section">
+      <div class="pinned-header">
+        <h3 class="pinned-title">
+          <MapPin class="pin-icon" size="18" />
+          Cards Fixos ({{ pinnedCards.length }})
+        </h3>
+        <div class="pinned-controls">
+          <button 
+            class="control-btn drag-mode-btn"
+            :class="{ active: dragMode }"
+            @click="toggleDragMode"
+            title="Modo de arrastar"
+          >
+            <span class="control-text">{{ dragMode ? '🔒' : '✋' }}</span>
+          </button>
+          <button 
+            class="clear-pinned-btn" 
+            @click="clearAllPinnedCards"
+            title="Limpar todos os cards fixos"
+          >
+            <Trash2 class="clear-icon" size="16" />
+            Limpar Todos
+          </button>
+        </div>
+      </div>
+      <div 
+        class="pinned-cards-grid"
+        :class="{ 'drag-mode': dragMode }"
+        @dragover.prevent
+        @drop="onDrop"
+      >
+        <div
+          v-for="(surebet, index) in pinnedCards" 
+          :key="`pinned-${index}`"
+          class="pinned-card-wrapper"
+          :class="{ 
+            'dragging': draggedIndex === index,
+            'drag-over': dragOverIndex === index && draggedIndex !== index
+          }"
+          :draggable="dragMode"
+          :data-index="index"
+          @dragstart="onDragStart"
+          @dragend="onDragEnd"
+          @dragenter="onDragEnter"
+          @dragover.prevent
+          @drop="onDrop"
+        >
+          <SurebetCard 
+            :surebet="surebet"
+            :isPinned="true"
+            :isDragging="dragMode"
+            @add-to-reports="addSurebetToReports"
+            @toggle-pin="togglePinCard"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista de Surebets -->
         <div class="surebets-list">
         <div v-if="loading" class="loading">
           <div class="loading-spinner"></div>
@@ -143,7 +212,9 @@
             v-for="(surebet, index) in filteredSurebets" 
             :key="index"
             :surebet="surebet"
+            :isPinned="isPinned(surebet)"
             @add-to-reports="addSurebetToReports"
+            @toggle-pin="togglePinCard"
           />
         </div>
       </div>
@@ -427,6 +498,7 @@ import GlossaryModal from '../components/GlossaryModal.vue'
 import CreditStatus from '../components/CreditStatus.vue'
 import { filterOptions } from '../config/filters.js'
 import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
+import { MapPin, Trash2 } from 'lucide-vue-next'
 
 
 export default {
@@ -435,7 +507,9 @@ export default {
      SurebetCard,
      Sidebar,
      GlossaryModal,
-     CreditStatus
+     CreditStatus,
+     MapPin,
+     Trash2
    },
   data() {
     return {
@@ -589,6 +663,12 @@ export default {
        },
        selectedMarketCategories: [],
        selectedMarketSubcategories: [],
+       pinnedCards: [], // Array de cards fixos
+       pinnedCardKeys: new Set(), // Set para verificar se um card está fixo
+       // Propriedades para drag and drop
+       dragMode: false, // Modo de arrastar ativo/inativo
+       draggedIndex: null, // Índice do card sendo arrastado
+       dragOverIndex: null, // Índice onde o card está sendo arrastado sobre
 
     }
   },
@@ -943,6 +1023,9 @@ export default {
         
         // Carregar filtros salvos do usuário
         this.loadSavedFilters()
+        
+        // Carregar cards fixos
+        this.loadPinnedCards()
         
         // DEBUG: Verificar estado após carregar filtros
         console.log('🔍 MOUNTED: showSaveFilterModal após carregar filtros =', this.showSaveFilterModal)
@@ -1384,6 +1467,9 @@ export default {
         
         // Atualiza as casas de apostas disponíveis baseado nos dados da API
         this.updateAvailableBookmakers(data)
+        
+        // Atualiza cards fixos com dados mais recentes
+        this.updatePinnedCards(data)
         
         // Toca som apenas se há novos dados e o som está habilitado
         if (this.soundEnabled && hasNewData) {
@@ -1972,6 +2058,179 @@ export default {
              )
            }
            this.saveFiltersToSettings()
+         },
+         
+         // Métodos para gerenciar cards fixos
+         togglePinCard(surebet) {
+           const cardKey = this.createSurebetKey(surebet)
+           
+           if (this.pinnedCardKeys.has(cardKey)) {
+             // Remove o card fixo
+             this.pinnedCardKeys.delete(cardKey)
+             this.pinnedCards = this.pinnedCards.filter(card => 
+               this.createSurebetKey(card) !== cardKey
+             )
+             this.showNotification('Card desafixado!')
+           } else {
+             // Adiciona o card fixo
+             this.pinnedCardKeys.add(cardKey)
+             this.pinnedCards.push(surebet)
+             this.showNotification('Card fixado!')
+           }
+           
+           this.savePinnedCards()
+         },
+         
+         isPinned(surebet) {
+           const cardKey = this.createSurebetKey(surebet)
+           return this.pinnedCardKeys.has(cardKey)
+         },
+         
+         clearAllPinnedCards() {
+           this.pinnedCards = []
+           this.pinnedCardKeys.clear()
+           this.savePinnedCards()
+           this.showNotification('Todos os cards fixos foram removidos!')
+         },
+         
+         savePinnedCards() {
+           try {
+             const userId = this.currentUser?.id || 'anonymous'
+             const key = `pinned_cards_${userId}`
+             const pinnedData = {
+               cardKeys: Array.from(this.pinnedCardKeys),
+               cards: this.pinnedCards
+             }
+             localStorage.setItem(key, JSON.stringify(pinnedData))
+           } catch (error) {
+             console.error('Erro ao salvar cards fixos:', error)
+           }
+         },
+         
+         loadPinnedCards() {
+           try {
+             const userId = this.currentUser?.id || 'anonymous'
+             const key = `pinned_cards_${userId}`
+             const saved = localStorage.getItem(key)
+             
+             if (saved) {
+               const pinnedData = JSON.parse(saved)
+               this.pinnedCardKeys = new Set(pinnedData.cardKeys || [])
+               this.pinnedCards = pinnedData.cards || []
+             }
+           } catch (error) {
+             console.warn('Erro ao carregar cards fixos:', error)
+             this.pinnedCards = []
+             this.pinnedCardKeys = new Set()
+           }
+         },
+         
+         updatePinnedCards(newData) {
+           // Atualiza os cards fixos com dados mais recentes da API
+           const updatedPinnedCards = []
+           
+           this.pinnedCards.forEach(pinnedCard => {
+             const pinnedKey = this.createSurebetKey(pinnedCard)
+             
+             // Procura por dados atualizados na nova resposta da API
+             const updatedCard = Object.values(newData).find(surebet => {
+               const surebetKey = this.createSurebetKey(surebet)
+               return surebetKey === pinnedKey
+             })
+             
+             if (updatedCard) {
+               updatedPinnedCards.push(updatedCard)
+             } else {
+               // Se não encontrou dados atualizados, mantém o card antigo
+               updatedPinnedCards.push(pinnedCard)
+             }
+           })
+           
+           this.pinnedCards = updatedPinnedCards
+         },
+         
+         scrollToPinnedCards() {
+           const pinnedSection = document.querySelector('.pinned-cards-section')
+           if (pinnedSection) {
+             pinnedSection.scrollIntoView({ 
+               behavior: 'smooth', 
+               block: 'start' 
+             })
+           }
+         },
+         
+         // Métodos para drag and drop
+         toggleDragMode() {
+           this.dragMode = !this.dragMode
+           if (!this.dragMode) {
+             // Limpa estados de drag quando desativa o modo
+             this.draggedIndex = null
+             this.dragOverIndex = null
+           }
+           this.showNotification(this.dragMode ? 'Modo de arrastar ativado!' : 'Modo de arrastar desativado!')
+         },
+         
+         onDragStart(event) {
+           if (!this.dragMode) return
+           
+           const index = parseInt(event.target.dataset.index)
+           this.draggedIndex = index
+           event.dataTransfer.effectAllowed = 'move'
+           event.dataTransfer.setData('text/html', event.target.outerHTML)
+           
+           // Adiciona classe visual ao card sendo arrastado
+           event.target.style.opacity = '0.5'
+         },
+         
+         onDragEnd(event) {
+           if (!this.dragMode) return
+           
+           // Remove classe visual
+           event.target.style.opacity = '1'
+           this.draggedIndex = null
+           this.dragOverIndex = null
+         },
+         
+         onDragEnter(event) {
+           if (!this.dragMode || this.draggedIndex === null) return
+           
+           const dragTarget = event.target.closest('.pinned-card-wrapper')
+           if (!dragTarget) return
+           
+           const index = parseInt(dragTarget.dataset.index)
+           if (index !== this.draggedIndex && !isNaN(index)) {
+             this.dragOverIndex = index
+           }
+         },
+         
+         onDrop(event) {
+           if (!this.dragMode || this.draggedIndex === null) return
+           
+           event.preventDefault()
+           
+           const dropTarget = event.target.closest('.pinned-card-wrapper')
+           if (!dropTarget) return
+           
+           const dropIndex = parseInt(dropTarget.dataset.index)
+           
+           if (dropIndex !== this.draggedIndex && dropIndex !== undefined && !isNaN(dropIndex)) {
+             // Reorganiza os cards
+             const draggedCard = this.pinnedCards[this.draggedIndex]
+             
+             // Remove o card da posição original
+             this.pinnedCards.splice(this.draggedIndex, 1)
+             
+             // Insere o card na nova posição
+             this.pinnedCards.splice(dropIndex, 0, draggedCard)
+             
+             // Salva a nova ordem
+             this.savePinnedCards()
+             
+             this.showNotification('Card reorganizado!')
+           }
+           
+           this.draggedIndex = null
+           this.dragOverIndex = null
          }
   }
 }
@@ -1982,12 +2241,37 @@ export default {
 
 .surebets-container {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
+  height: 100vh; /* Altura fixa para garantir scroll */
+  overflow-y: auto; /* Habilita scroll vertical na página */
+  overflow-x: hidden; /* Previne overflow horizontal */
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  width: 100%; /* Garante que o container ocupe toda a largura disponível */
+  max-width: 100%; /* Previne overflow horizontal */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
+
+/* Scrollbar personalizada para o container principal */
+.surebets-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.surebets-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.surebets-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.surebets-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Removido estilos globais que causavam conflito */
 
 .sidebar {
   width: 280px;
@@ -1997,6 +2281,7 @@ export default {
   border-right: 1px solid var(--border-primary);
   flex-shrink: 0;
   transition: width 0.3s ease;
+  overflow: visible; /* Permite overflow para o scroll funcionar */
   
   &.collapsed {
     width: 80px;
@@ -2198,8 +2483,10 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Scroll na página inteira */
-  overflow-x: hidden;
+  overflow-x: hidden; /* Previne apenas overflow horizontal */
+  width: 100%; /* Garante que o conteúdo ocupe toda a largura disponível */
+  max-width: 100%; /* Previne overflow horizontal */
+  min-height: 0; /* Permite que o conteúdo cresça além da altura do container */
 }
 
 .content-header {
@@ -2208,6 +2495,9 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  width: 100%; /* Garante que o header ocupe toda a largura disponível */
+  max-width: 100%; /* Previne overflow horizontal */
+  overflow: visible; /* Permite overflow para o scroll funcionar */
 }
 
 .header-left {
@@ -2294,6 +2584,28 @@ export default {
       box-shadow: 0 12px 25px rgba(0, 255, 136, 0.4);
     }
   }
+  
+  &.pinned-indicator {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+    color: #ffffff;
+    border-color: #ff6b6b;
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+    animation: pinGlow 2s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    &:hover {
+      background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 25px rgba(255, 107, 107, 0.4);
+    }
+    
+    .control-icon {
+      color: #ffffff;
+      stroke-width: 2;
+    }
+  }
 }
 
 
@@ -2351,6 +2663,9 @@ export default {
 .filters {
   padding: 20px 32px;
   border-bottom: 1px solid #404040;
+  width: 100%; /* Garante que os filtros ocupem toda a largura disponível */
+  max-width: 100%; /* Previne overflow horizontal */
+  overflow: hidden; /* Previne overflow */
 }
 
  .filter-tabs {
@@ -2504,7 +2819,9 @@ export default {
 .surebets-list {
   flex: 1;
   padding: 24px 32px;
-  /* Removido overflow-y: auto - scroll será na página inteira */
+  overflow: visible; /* Permite que o conteúdo cresça */
+  width: 100%; /* Garante que o container ocupe toda a largura disponível */
+  min-height: 0; /* Permite que o conteúdo cresça além da altura do container */
 }
 
 .loading {
@@ -2728,8 +3045,129 @@ export default {
 
 .surebets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
+  max-width: 100%;
+  width: 100%; /* Garante que o grid ocupe toda a largura disponível */
+  overflow: hidden; /* Previne overflow */
+}
+
+/* Seção de Cards Fixos */
+.pinned-cards-section {
+  padding: 24px 32px;
+  border-bottom: 2px solid #ff6b6b;
+  background: linear-gradient(135deg, rgba(255, 107, 107, 0.05) 0%, rgba(255, 107, 107, 0.02) 100%);
+  position: relative;
+  width: 100%; /* Garante que a seção ocupe toda a largura disponível */
+  max-width: 100%; /* Previne overflow horizontal */
+  overflow: hidden; /* Previne overflow */
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #ff6b6b, #ff4757, #ff6b6b);
+    animation: shimmer 2s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.pinned-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: rgba(255, 107, 107, 0.1);
+  border: 1px solid rgba(255, 107, 107, 0.3);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.pinned-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  
+  .pin-icon {
+    color: #ff6b6b;
+    stroke-width: 2;
+    animation: pinFloat 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pinFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes pinGlow {
+  0%, 100% { 
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+  }
+  50% { 
+    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.6);
+  }
+}
+
+.clear-pinned-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 107, 107, 0.2);
+  border: 1px solid rgba(255, 107, 107, 0.5);
+  border-radius: 8px;
+  color: #ff6b6b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &:hover {
+    background: rgba(255, 107, 107, 0.3);
+    border-color: #ff6b6b;
+    transform: translateY(-1px);
+  }
+  
+  .clear-icon {
+    font-size: 16px;
+  }
+}
+
+.pinned-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  max-width: 100%;
+  width: 100%; /* Garante que o grid ocupe toda a largura disponível */
+  overflow: hidden; /* Previne overflow */
+}
+
+/* Responsividade para diferentes tamanhos de tela */
+@media (max-width: 1400px) {
+  .surebets-grid,
+  .pinned-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1100px) {
+  .surebets-grid,
+  .pinned-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
@@ -2750,8 +3188,19 @@ export default {
     display: flex;
   }
   
-  .surebets-grid {
+  .surebets-grid,
+  .pinned-cards-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .pinned-cards-section {
+    padding: 16px 20px;
+  }
+  
+  .pinned-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
   }
   
   .content-header {
@@ -2827,7 +3276,7 @@ export default {
 .filter-content {
   flex: 1;
   padding: 20px;
-  overflow-y: auto; /* Mantém apenas uma barra vertical aqui */
+  overflow: visible; /* Remove scroll interno para evitar conflito */
   overflow-x: hidden; /* Remove scroll horizontal */
   position: relative;
   z-index: 1;
@@ -2969,7 +3418,7 @@ export default {
   grid-template-columns: 1fr 1fr;
   gap: 8px;
   max-height: 200px; /* Reduzido para evitar sobreposição */
-  overflow-y: auto; /* Adiciona scroll vertical se necessário */
+  overflow: visible; /* Remove scroll interno para evitar conflito */
   overflow-x: hidden; /* Remove scroll horizontal */
   padding-right: 8px;
   position: relative;
@@ -3091,10 +3540,10 @@ export default {
  }
  
  .modal-body {
-   padding: 20px;
-   max-height: 400px;
-   overflow-y: auto;
- }
+  padding: 20px;
+  max-height: 400px;
+  overflow: visible; /* Remove scroll interno para evitar conflito */
+}
  
  .modal-footer {
    display: flex;
@@ -3364,7 +3813,7 @@ export default {
   flex-direction: column;
   gap: 16px;
   max-height: 300px;
-  overflow-y: auto;
+  overflow: visible; /* Remove scroll interno para evitar conflito */
   overflow-x: hidden;
   padding-right: 8px;
   position: relative;
@@ -3479,6 +3928,112 @@ export default {
 
   &:active {
     transform: translateY(0);
+  }
+}
+
+/* Estilos para Drag and Drop */
+.pinned-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.drag-mode-btn {
+  padding: 8px 12px;
+  border: 2px solid var(--accent-primary);
+  background: transparent;
+  color: var(--accent-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 500;
+  
+  &:hover {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    transform: translateY(-1px);
+  }
+  
+  &.active {
+    background: var(--accent-primary);
+    color: var(--bg-primary);
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.pinned-cards-grid.drag-mode {
+  cursor: grab;
+  
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.pinned-card-wrapper {
+  transition: all 0.3s ease;
+  cursor: default;
+  
+  &.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+    z-index: 1000;
+  }
+  
+  &.drag-over {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+  }
+}
+
+.pinned-card-wrapper[draggable="true"] {
+  cursor: grab;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+/* Animação para indicar área de drop */
+@keyframes dropZone {
+  0%, 100% {
+    border-color: transparent;
+    background: transparent;
+  }
+  50% {
+    border-color: var(--accent-primary);
+    background: rgba(0, 255, 136, 0.1);
+  }
+}
+
+.pinned-cards-grid.drag-mode .pinned-card-wrapper {
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border: 2px dashed transparent;
+    border-radius: 12px;
+    pointer-events: none;
+    transition: all 0.3s ease;
+  }
+  
+  &:hover::before {
+    border-color: var(--accent-primary);
+    animation: dropZone 1s infinite;
   }
 }
 </style>

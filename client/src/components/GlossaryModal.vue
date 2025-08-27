@@ -269,14 +269,14 @@ export default {
     },
     getCategoryDisplayName(category) {
       const names = {
-        'Handicap Asiático (AH)': '📊 Handicap Asiático (AH)',
-        'Escanteios (EH)': '⚽ Escanteios (EH)',
-        'Gols': '🎯 Gols',
-        'Cartões': '🟨 Cartões',
-        'Resultado Final': '🏆 Resultado Final',
-        'Dupla Chance': '🔄 Dupla Chance',
-        'Resultado Exato': '📝 Resultado Exato',
-        'Outros Mercados': '⭐ Outros Mercados'
+        'Handicap Asiático (AH)': 'Handicap Asiático (AH)',
+        'Escanteios (EH)': 'Escanteios (EH)',
+        'Gols': 'Gols',
+        'Cartões': 'Cartões',
+        'Resultado Final': 'Resultado Final',
+        'Dupla Chance': 'Dupla Chance',
+        'Resultado Exato': 'Resultado Exato',
+        'Outros Mercados': 'Outros Mercados'
       }
       return names[category] || category
     },

@@ -123,8 +123,8 @@
                   </span>
                 </td>
                 <td class="bookmaker-name">
-                  <span class="bookmaker-logo">{{ bookmaker.name.charAt(0) }}</span>
-                  {{ bookmaker.name }}
+                  <span class="bookmaker-logo">{{ bookmaker.name ? bookmaker.name.charAt(0) : '?' }}</span>
+                  {{ bookmaker.name || 'Nome não informado' }}
                 </td>
                 <td class="frequency">{{ bookmaker.count }}</td>
                 <td class="percentage">{{ formatPercentage(bookmaker.percentage) }}%</td>

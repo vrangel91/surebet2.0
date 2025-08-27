@@ -7,7 +7,10 @@ module.exports = defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
-        changeOrigin: true
+        changeOrigin: true,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8'
+        }
       },
       '/ws': {
         target: 'ws://localhost:8080',
@@ -29,10 +32,25 @@ module.exports = defineConfig({
         },
       },
     },
+    output: {
+      charset: true
+    }
   },
   chainWebpack: config => {
     config.performance
       .maxEntrypointSize(512000)
       .maxAssetSize(512000)
+    
+    // Configurar codificação UTF-8
+    config.module
+      .rule('vue')
+      .use('vue-loader')
+      .tap(options => ({
+        ...options,
+        compilerOptions: {
+          ...options.compilerOptions,
+          whitespace: 'preserve'
+        }
+      }))
   }
 })

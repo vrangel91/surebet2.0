@@ -7,6 +7,19 @@
 
 import { API_CONFIG, buildApiUrl } from './apiConfig.js'
 
+// Função para verificar se a resposta é JSON de forma segura
+async function safeJsonResponse(response) {
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json()
+  } else {
+    // Se não for JSON, retornar o texto da resposta
+    const text = await response.text()
+    console.error('Resposta não-JSON recebida:', text.substring(0, 200) + '...')
+    return { error: 'Resposta inválida do servidor', details: text.substring(0, 200) }
+  }
+}
+
 // Estrutura de uma surebet com ID único
 const surebetExample = {
   id: 'surebet_2024_001', // ID único para evitar duplicatas
@@ -50,7 +63,7 @@ async function fetchSurebets(filters = {}) {
       throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
     }
     
-    const apiData = await response.json()
+    const apiData = await safeJsonResponse(response)
     console.log('📡 Dados recebidos da API:', apiData)
     
     // Verificar se os dados têm a estrutura esperada
@@ -112,7 +125,7 @@ async function fetchBookmakerStats(filters = {}) {
       throw new Error('Erro ao buscar estatísticas')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.stats
   } catch (error) {
     console.error('Erro na API de estatísticas:', error)
@@ -140,7 +153,7 @@ async function fetchBookmakerRanking(filters = {}) {
       throw new Error('Erro ao buscar ranking')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.ranking
   } catch (error) {
     console.error('Erro na API de ranking:', error)
@@ -168,7 +181,7 @@ async function fetchTemporalData(filters = {}) {
       throw new Error('Erro ao buscar dados temporais')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.temporal
   } catch (error) {
     console.error('Erro na API de dados temporais:', error)
@@ -196,7 +209,7 @@ async function checkSurebetExists(surebetData) {
       throw new Error('Erro ao verificar duplicata')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.exists
   } catch (error) {
     console.error('Erro ao verificar duplicata:', error)
@@ -233,7 +246,7 @@ async function createSurebet(surebetData) {
       throw new Error('Erro ao criar surebet')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.surebet
   } catch (error) {
     console.error('Erro ao criar surebet:', error)
@@ -262,7 +275,7 @@ async function updateSurebet(id, updateData) {
       throw new Error('Erro ao atualizar surebet')
     }
 
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     return data.surebet
   } catch (error) {
     console.error('Erro ao atualizar surebet:', error)

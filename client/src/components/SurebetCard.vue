@@ -1,5 +1,5 @@
 <template>
-  <div class="surebet-card fade-in">
+  <div class="surebet-card fade-in" :class="{ 'pinned': isPinned, 'dragging': isDragging }">
     <!-- Header do Card -->
     <div class="card-header">
       <div class="profit-info">
@@ -7,12 +7,21 @@
       </div>
       <div class="card-actions">
         <span class="date-time">
-          <span class="time-icon">🕐</span>
+          <i class="bi bi-clock time-icon"></i>
           {{ formatDateTime(surebet[0]?.timestamp) }}
         </span>
         <div class="action-icons">          
-          <button class="action-btn" @click="addToReports" title="Adicionar aos Relatórios">
-            <span class="action-icon">✚</span>
+          <button 
+            class="action-btn pin-btn" 
+            :class="{ 'pinned': isPinned }"
+            @click="togglePin" 
+            :title="isPinned ? 'Desafixar Card' : 'Fixar Card'"
+          >
+            <i v-if="!isPinned" class="bi bi-geo-alt icon-text"></i>
+            <i v-else class="bi bi-geo-alt-fill icon-text"></i>
+          </button>
+          <button class="action-btn add-report-btn" @click="addToReports" title="Adicionar aos Relatórios">
+            <i class="bi bi-file-text icon-text"></i>
           </button>
         </div>
       </div>
@@ -21,7 +30,7 @@
     <!-- Informações do Jogo -->
     <div class="match-info">
       <div class="match-header">
-        <span class="sport-icon">⚽</span>
+        <i class="bi bi-trophy sport-icon"></i>
         <span class="sport-name">{{ surebet[0]?.sport || 'Futebol' }}</span>
         <span class="tournament">{{ surebet[0]?.tournament || 'Liga' }}</span>
       </div>
@@ -30,10 +39,11 @@
       
       <div class="match-details">
         <span class="match-time">
-          <span class="time-icon">📅</span>
+          <i class="bi bi-calendar3 time-icon"></i>
           {{ surebet[0]?.date || '2025-08-18' }} às {{ surebet[0]?.hour || '23:00' }}
         </span>
         <span class="match-status" :class="{ 'live': surebet[0]?.isLive }">
+          <i v-if="surebet[0]?.isLive" class="bi bi-broadcast live-icon"></i>
           {{ surebet[0]?.isLive ? `Live - ${surebet[0]?.minutes || '1'}'` : `Pré-live${surebet[0]?.minutes ? ` - ${surebet[0]?.minutes}'` : ''}` }}
         </span>
       </div>
@@ -76,7 +86,7 @@
             @click="placeBet(bet)"
             :title="getButtonTooltip(bet)"
           >
-            <span class="bet-icon">💰</span>
+            <i class="bi bi-currency-dollar bet-icon"></i>
             <span class="bet-text">Apostar</span>
           </button>
         </div>
@@ -94,6 +104,14 @@ export default {
     surebet: {
       type: Array,
       required: true
+    },
+    isPinned: {
+      type: Boolean,
+      default: false
+    },
+    isDragging: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -228,31 +246,31 @@ export default {
         // Tenta extrair do anchorh1 primeiro (casa principal)
         if (bet.anchorh1) {
           const domain = extractDomainFromAnchorh(bet.anchorh1)
-          if (domain) {
-            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
-            console.log(`🔗 URL extraída de anchorh1 para ${bet.house}:`, targetUrl)
-          }
+                      if (domain) {
+              targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+              console.log(`[LINK] URL extraída de anchorh1 para ${bet.house}:`, targetUrl)
+            }
         }
         
         // Se não encontrou no anchorh1, tenta no anchorh2
         if (!targetUrl && bet.anchorh2) {
           const domain = extractDomainFromAnchorh(bet.anchorh2)
-          if (domain) {
-            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
-            console.log(`🔗 URL extraída de anchorh2 para ${bet.house}:`, targetUrl)
-          }
+                      if (domain) {
+              targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+              console.log(`[LINK] URL extraída de anchorh2 para ${bet.house}:`, targetUrl)
+            }
         }
         
         // Se conseguiu extrair URL dos anchorh, usa ela
         if (targetUrl) {
-          console.log(`🚀 Redirecionando para ${bet.house} usando domínio extraído:`, targetUrl)
+          console.log(`[REDIRECT] Redirecionando para ${bet.house} usando domínio extraído:`, targetUrl)
           window.open(targetUrl, '_blank')
           return
         }
         
         // Fallback: tenta usar a URL de redirecionamento da API
         if (bet.url_redirect && bet.url_redirect.includes('http')) {
-          console.log(`🔗 Usando URL da API para ${bet.house}:`, bet.url_redirect)
+          console.log(`[API] Usando URL da API para ${bet.house}:`, bet.url_redirect)
           window.open(bet.url_redirect, '_blank')
           return
         }
@@ -263,14 +281,14 @@ export default {
           const bookmakerUrl = getBookmakerUrl(bet.house, isLive)
           
           if (bookmakerUrl && !bookmakerUrl.includes('google.com/search')) {
-            console.log(`🏠 Redirecionando para ${bet.house} (${isLive ? 'Live' : 'Pre-match'}):`, bookmakerUrl)
+            console.log(`[BOOKMAKER] Redirecionando para ${bet.house} (${isLive ? 'Live' : 'Pre-match'}):`, bookmakerUrl)
             window.open(bookmakerUrl, '_blank')
           } else {
-            console.warn(`⚠️ URL não encontrada para ${bet.house}. Usando busca no Google.`)
+            console.warn(`[WARNING] URL não encontrada para ${bet.house}. Usando busca no Google.`)
             window.open(bookmakerUrl, '_blank')
           }
         } else {
-          console.error('❌ Casa de apostas não informada')
+          console.error('[ERROR] Casa de apostas não informada')
           this.showNotification('Casa de apostas não identificada!', 'error')
         }
       } catch (error) {
@@ -285,6 +303,10 @@ export default {
       
       // Mostra notificação
       this.showNotification('Surebet adicionado aos relatórios!')
+    },
+    
+    togglePin() {
+      this.$emit('toggle-pin', this.surebet)
     },
     
     showNotification(message) {
@@ -353,11 +375,51 @@ export default {
   padding: 20px;
   transition: all 0.3s ease;
   animation: fadeIn 0.5s ease-in-out;
+  width: 100%; /* Garante que o card ocupe toda a largura disponível */
+  max-width: 100%; /* Previne que o card seja maior que o container */
+  box-sizing: border-box; /* Inclui padding e border no cálculo da largura */
+  overflow: hidden; /* Previne overflow interno */
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
     border-color: var(--accent-primary);
+  }
+  
+  &.pinned {
+    border-color: #ff6b6b;
+    box-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+    position: relative;
+    
+    &::before {
+      content: '';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ff6b6b;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pinBounce 0.6s ease-in-out;
+    }
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+                           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z'/%3E%3Ccircle cx='12' cy='10' r='3'/%3E%3C/svg%3E");
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      z-index: 10;
+    }
   }
 }
 
@@ -369,6 +431,30 @@ export default {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes pinPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes pinBounce {
+  0% {
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(0deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
   }
 }
 
@@ -424,31 +510,81 @@ export default {
 }
 
 .time-icon {
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: 10px;
 }
 
 .action-icons {
   display: flex;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
 }
 
 .action-btn {
-  width: 32px;
-  height: 32px;
+  width: 22px;
+  height: 22px;
   background: var(--bg-overlay);
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
   &:hover {
     background: var(--accent-primary);
     color: var(--bg-primary);
   }
+  
+  &.pin-btn {
+    position: relative;
+    
+    &:hover {
+      background: #ff6b6b;
+      color: white;
+      
+      .icon-text {
+        color: white;
+      }
+    }
+    
+    &.pinned {
+      background: #ff6b6b;
+      color: white;
+      animation: pinPulse 0.6s ease-in-out;
+      
+      .icon-text {
+        color: white;
+      }
+      
+      &:hover {
+        background: #ff4757;
+      }
+    }
+  }
+  
+  &.add-report-btn {
+    &:hover {
+      background: var(--accent-primary);
+      
+      .icon-text {
+        color: var(--bg-primary);
+      }
+    }
+  }
 }
 
-.action-icon {
-  font-size: 14px;
+
+
+.icon-text {
+  font-size: 11px;
+  display: block;
+  line-height: 1;
+  color: var(--text-secondary, #888888);
+  transition: all 0.3s ease;
+  width: 11px;
+  height: 11px;
 }
 
 .match-info {
@@ -463,7 +599,8 @@ export default {
 }
 
 .sport-icon {
-  font-size: 16px;
+  color: var(--accent-primary);
+  font-size: 11px;
 }
 
 .sport-name {
@@ -509,10 +646,18 @@ export default {
   background: var(--bg-overlay);
   padding: 4px 8px;
   border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   
   &.live {
     color: #ff6b6b;
     background: rgba(255, 107, 107, 0.1);
+  }
+  
+  .live-icon {
+    color: #ff6b6b;
+    font-size: 8px;
   }
 }
 
@@ -662,7 +807,8 @@ export default {
 }
 
 .bet-icon {
-  font-size: 14px;
+  color: var(--bg-primary);
+  font-size: 10px;
 }
 
 .bet-text {
@@ -705,6 +851,71 @@ export default {
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* Estilos para modo de arrastar */
+.surebet-card.dragging {
+  cursor: grabbing;
+  user-select: none;
+  
+  .card-header,
+  .match-info,
+  .bankroll-config,
+  .bet-options {
+    pointer-events: none;
+  }
+  
+  .action-btn {
+    pointer-events: none;
+  }
+  
+  .bet-btn {
+    pointer-events: none;
+  }
+}
+
+.surebet-card.dragging::after {
+  content: 'Arrastando...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 1000;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 20px;
+}
+
+.surebet-card.dragging::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 11px;
+  height: 11px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3Cpath d='M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16'/%3E%3Cpath d='M3 21v-5h5'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1001;
+  pointer-events: none;
+  margin-left: -20px;
+}
+
+/* Efeito visual quando o card está sendo arrastado */
+.surebet-card.dragging {
+  transform: rotate(2deg) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
 }
 </style>
 

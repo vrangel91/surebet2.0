@@ -137,8 +137,8 @@
                <tr v-for="(house, index) in topHouses" :key="house.name" class="ranking-row">
                  <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
                  <td class="house-name">
-                   <span class="house-logo">{{ house.name.charAt(0) }}</span>
-                   {{ house.name }}
+                   <span class="house-logo">{{ house.name ? house.name.charAt(0) : '?' }}</span>
+                   {{ house.name || 'Nome não informado' }}
                  </td>
                  <td>{{ house.count }}</td>
                  <td>{{ formatPercentage(house.percentage) }}%</td>

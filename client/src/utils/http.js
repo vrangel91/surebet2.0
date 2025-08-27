@@ -49,6 +49,19 @@ export async function validateToken() {
   }
 }
 
+// Função para verificar se a resposta é JSON
+async function checkJsonResponse(response) {
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json()
+  } else {
+    // Se não for JSON, retornar o texto da resposta
+    const text = await response.text()
+    console.error('Resposta não-JSON recebida:', text.substring(0, 200) + '...')
+    return { error: 'Resposta inválida do servidor', details: text.substring(0, 200) }
+  }
+}
+
 // Objeto HTTP com métodos para requisições
 export const http = {
   async get(url, config = {}) {
@@ -58,7 +71,7 @@ export const http = {
     })
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
+      const errorData = await checkJsonResponse(response)
       throw {
         response: {
           data: errorData,
@@ -68,7 +81,7 @@ export const http = {
     }
     
     return {
-      data: await response.json()
+      data: await checkJsonResponse(response)
     }
   },
   
@@ -80,7 +93,7 @@ export const http = {
     })
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
+      const errorData = await checkJsonResponse(response)
       throw {
         response: {
           data: errorData,
@@ -90,7 +103,7 @@ export const http = {
     }
     
     return {
-      data: await response.json()
+      data: await checkJsonResponse(response)
     }
   },
   
@@ -102,7 +115,7 @@ export const http = {
     })
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
+      const errorData = await checkJsonResponse(response)
       throw {
         response: {
           data: errorData,
@@ -112,7 +125,7 @@ export const http = {
     }
     
     return {
-      data: await response.json()
+      data: await checkJsonResponse(response)
     }
   },
   
@@ -123,7 +136,7 @@ export const http = {
     })
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
+      const errorData = await checkJsonResponse(response)
       throw {
         response: {
           data: errorData,
@@ -133,7 +146,7 @@ export const http = {
     }
     
     return {
-      data: await response.json()
+      data: await checkJsonResponse(response)
     }
   }
 }

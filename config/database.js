@@ -17,7 +17,13 @@ const sequelize = new Sequelize({
     idle: 10000
   },
   dialectOptions: {
-    ssl: false
+    ssl: false,
+    charset: 'utf8',
+    collate: 'utf8_unicode_ci'
+  },
+  define: {
+    charset: 'utf8',
+    collate: 'utf8_unicode_ci'
   }
 });
 

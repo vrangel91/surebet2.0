@@ -4,6 +4,19 @@
 
 import { API_CONFIG, buildApiUrl, checkApiHealth } from './apiConfig.js'
 
+// Função para verificar se a resposta é JSON de forma segura
+async function safeJsonResponse(response) {
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json()
+  } else {
+    // Se não for JSON, retornar o texto da resposta
+    const text = await response.text()
+    console.error('Resposta não-JSON recebida:', text.substring(0, 200) + '...')
+    return { error: 'Resposta inválida do servidor', details: text.substring(0, 200) }
+  }
+}
+
 /**
  * Testar conectividade com a API
  */
@@ -53,7 +66,7 @@ export async function testSurebetsEndpoint() {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
     
-    const data = await response.json()
+    const data = await safeJsonResponse(response)
     console.log('📊 Dados recebidos:', data)
     
     // Validar estrutura dos dados

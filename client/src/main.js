@@ -4,6 +4,7 @@ import router from './router'
 import store from './store'
 import { initializeApp } from './utils/initApp'
 import './assets/styles/main.scss'
+import 'bootstrap-icons/font/bootstrap-icons.css'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
 
 // Inicializar aplicação e limpar dados mocados

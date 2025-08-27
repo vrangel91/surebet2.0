@@ -95,8 +95,8 @@
         <tbody>
           <tr v-for="user in filteredUsers" :key="user.id" class="user-row">
             <td class="user-name">
-              <span class="user-avatar">{{ user.name.charAt(0) }}</span>
-              {{ user.name }}
+              <span class="user-avatar">{{ user.name ? user.name.charAt(0) : '?' }}</span>
+              {{ user.name || 'Nome não informado' }}
             </td>
             <td>{{ user.email }}</td>
             <td>
@@ -173,19 +173,19 @@
       <!-- Tickets Stats -->
       <div class="tickets-stats">
         <div class="stat-card">
-          <span class="stat-number">{{ allTickets.length }}</span>
+          <span class="stat-number">{{ allTickets && Array.isArray(allTickets) ? allTickets.length : 0 }}</span>
           <span class="stat-label">Total de Tickets</span>
         </div>
         <div class="stat-card">
-          <span class="stat-number">{{ openTickets.length }}</span>
+          <span class="stat-number">{{ openTickets && Array.isArray(openTickets) ? openTickets.length : 0 }}</span>
           <span class="stat-label">Tickets Abertos</span>
         </div>
         <div class="stat-card">
-          <span class="stat-number">{{ pendingTickets.length }}</span>
+          <span class="stat-number">{{ pendingTickets && Array.isArray(pendingTickets) ? pendingTickets.length : 0 }}</span>
           <span class="stat-label">Em Andamento</span>
         </div>
         <div class="stat-card">
-          <span class="stat-number">{{ closedTickets.length }}</span>
+          <span class="stat-number">{{ closedTickets && Array.isArray(closedTickets) ? closedTickets.length : 0 }}</span>
           <span class="stat-label">Fechados</span>
         </div>
       </div>
@@ -237,8 +237,8 @@
             <tr v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-row">
               <td class="ticket-id">#{{ ticket.id }}</td>
               <td class="ticket-user">
-                <span class="user-avatar">{{ getUserName(ticket.userEmail).charAt(0) }}</span>
-                {{ getUserName(ticket.userEmail) }}
+                <span class="user-avatar">{{ getUserName(ticket.userEmail) ? getUserName(ticket.userEmail).charAt(0) : '?' }}</span>
+                {{ getUserName(ticket.userEmail) || 'Usuário não encontrado' }}
               </td>
               <td class="ticket-title">{{ ticket.title }}</td>
               <td>
@@ -757,44 +757,48 @@ export default {
     },
     
     totalUsers() {
-      return this.allUsers.length
+      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.length : 0
     },
     
     activeUsers() {
-      return this.allUsers.filter(user => user.status === 'active').length
+      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.filter(user => user && user.status === 'active').length : 0
     },
     
     adminUsers() {
-      return this.allUsers.filter(user => user.role === 'admin').length
+      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.filter(user => user && user.role === 'admin').length : 0
     },
     
     filteredUsers() {
+      if (!this.allUsers || !Array.isArray(this.allUsers)) return []
+      
       if (!this.searchTerm) return this.allUsers
       
       const term = this.searchTerm.toLowerCase()
       return this.allUsers.filter(user => 
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
+        user && user.name && user.name.toLowerCase().includes(term) ||
+        user && user.email && user.email.toLowerCase().includes(term)
       )
     },
     
     filteredTickets() {
+      if (!this.allTickets || !Array.isArray(this.allTickets)) return []
+      
       let tickets = this.allTickets
       
       if (this.ticketStatusFilter) {
-        tickets = tickets.filter(ticket => ticket.status === this.ticketStatusFilter)
+        tickets = tickets.filter(ticket => ticket && ticket.status === this.ticketStatusFilter)
       }
       
       if (this.ticketPriorityFilter) {
-        tickets = tickets.filter(ticket => ticket.priority === this.ticketPriorityFilter)
+        tickets = tickets.filter(ticket => ticket && ticket.priority === this.ticketPriorityFilter)
       }
       
       if (this.ticketSearchTerm) {
         const term = this.ticketSearchTerm.toLowerCase()
         tickets = tickets.filter(ticket => 
-          ticket.title.toLowerCase().includes(term) ||
-          ticket.description.toLowerCase().includes(term) ||
-          ticket.userEmail.toLowerCase().includes(term)
+          ticket && ticket.title && ticket.title.toLowerCase().includes(term) ||
+          ticket && ticket.description && ticket.description.toLowerCase().includes(term) ||
+          ticket && ticket.userEmail && ticket.userEmail.toLowerCase().includes(term)
         )
       }
       
@@ -1384,8 +1388,9 @@ export default {
 <style scoped>
 .admin-container {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background: var(--bg-primary);
+  overflow: hidden;
 }
 
 /* Sidebar Styles */
@@ -1402,6 +1407,8 @@ export default {
   z-index: 100;
   flex-shrink: 0;
   transition: width 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar.collapsed {
@@ -1604,11 +1611,98 @@ export default {
   flex: 1;
   margin-left: 280px;
   transition: margin-left 0.3s ease;
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar.collapsed ~ .main-content {
   margin-left: 80px;
+}
+
+/* Estilizar scrollbar */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilizar scrollbar do sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* Estilizar scrollbar das tabelas */
+.users-table-container::-webkit-scrollbar,
+.tickets-table-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.users-table-container::-webkit-scrollbar-track,
+.tickets-table-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.users-table-container::-webkit-scrollbar-thumb,
+.tickets-table-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.users-table-container::-webkit-scrollbar-thumb:hover,
+.tickets-table-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Estilizar scrollbar do modal */
+.ticket-detail-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ticket-detail-modal::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.ticket-detail-modal::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.ticket-detail-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 /* Admin Tabs */
@@ -1652,6 +1746,7 @@ export default {
 
 .tab-content {
   padding: 24px 32px;
+  min-height: calc(100vh - 200px);
 }
 
 .admin-header {
@@ -1768,8 +1863,9 @@ export default {
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto;
   margin: 0 24px;
+  max-height: calc(100vh - 300px);
 }
 
 .users-table {
@@ -2181,7 +2277,8 @@ export default {
   background: var(--bg-secondary, #2a2a2a);
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto;
+  max-height: calc(100vh - 300px);
 }
 
 .tickets-table {
@@ -2286,6 +2383,7 @@ export default {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
@@ -2688,7 +2786,22 @@ export default {
 /* Responsividade */
 @media (max-width: 768px) {
   .admin-container {
-    padding: 16px;
+    padding: 0;
+    height: 100vh;
+  }
+  
+  .main-content {
+    margin-left: 0;
+    height: 100vh;
+  }
+  
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  
+  .sidebar.show {
+    transform: translateX(0);
   }
   
   .actions-bar {
@@ -2707,6 +2820,12 @@ export default {
   .users-table th,
   .users-table td {
     padding: 8px;
+  }
+  
+  .users-table-container,
+  .tickets-table-container {
+    max-height: calc(100vh - 200px);
+    margin: 0 12px;
   }
   
   .admin-stats {

@@ -1,5 +1,18 @@
 import { createStore } from 'vuex'
 
+// Função para verificar se a resposta é JSON de forma segura
+async function safeJsonResponse(response) {
+  const contentType = response.headers.get('content-type')
+  if (contentType && contentType.includes('application/json')) {
+    return await response.json()
+  } else {
+    // Se não for JSON, retornar o texto da resposta
+    const text = await response.text()
+    console.error('Resposta não-JSON recebida:', text.substring(0, 200) + '...')
+    return { error: 'Resposta inválida do servidor', details: text.substring(0, 200) }
+  }
+}
+
 export default createStore({
   state: {
     authToken: localStorage.getItem('authToken') || null,
@@ -206,20 +219,20 @@ export default createStore({
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            name: userData.name,
+            username: userData.name, // Usar name como username
             email: userData.email,
             password: userData.password,
-            role: userData.role || 'user',
-            account_type: userData.accountType || 'basic'
+            is_admin: userData.role === 'admin',
+            is_vip: userData.accountType === 'vip'
           })
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao criar usuário')
         }
 
-        const result = await response.json()
+        const result = await safeJsonResponse(response)
         
         // Converter dados do backend (snake_case) para frontend (camelCase)
         const newUser = {
@@ -270,11 +283,11 @@ export default createStore({
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao atualizar usuário')
         }
 
-        const result = await response.json()
+        const result = await safeJsonResponse(response)
         
         // Converter dados do backend (snake_case) para frontend (camelCase)
         const updatedUser = {
@@ -317,7 +330,7 @@ export default createStore({
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao alterar senha')
         }
 
@@ -346,11 +359,11 @@ export default createStore({
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao alterar tipo de conta')
         }
 
-        const result = await response.json()
+        const result = await safeJsonResponse(response)
         
         // Atualizar usuário local
         commit('updateUser', { 
@@ -382,7 +395,7 @@ export default createStore({
         })
 
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao excluir usuário')
         }
 
@@ -494,7 +507,7 @@ export default createStore({
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        const data = await response.json()
+        const data = await safeJsonResponse(response)
         
         if (data.success && data.users) {
           // Mapear os campos do backend para o formato do frontend
@@ -546,7 +559,7 @@ export default createStore({
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        const data = await response.json()
+        const data = await safeJsonResponse(response)
         return data.success ? data.data : []
         
       } catch (error) {
@@ -572,11 +585,11 @@ export default createStore({
         })
         
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao salvar estatísticas')
         }
         
-        const result = await response.json()
+        const result = await safeJsonResponse(response)
         return result
         
       } catch (error) {
@@ -602,11 +615,11 @@ export default createStore({
         })
         
         if (!response.ok) {
-          const errorData = await response.json()
+          const errorData = await safeJsonResponse(response)
           throw new Error(errorData.error || 'Erro ao salvar análise')
         }
         
-        const result = await response.json()
+        const result = await safeJsonResponse(response)
         return result
         
       } catch (error) {
@@ -639,7 +652,7 @@ export default createStore({
           throw new Error(`HTTP error! status: ${response.status}`)
         }
         
-        const data = await response.json()
+        const data = await safeJsonResponse(response)
         return data.success ? data.data : []
         
       } catch (error) {

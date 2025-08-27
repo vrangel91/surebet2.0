@@ -10,12 +10,8 @@
         </h1>
       </div>
       <button class="sidebar-toggle" @click="toggleSidebar" :title="shouldBeCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'">
-        <svg v-if="!shouldBeCollapsed" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-        </svg>
-        <svg v-else width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
-        </svg>
+        <Menu v-if="!shouldBeCollapsed" size="16" />
+        <ChevronRight v-else size="16" />
       </button>
     </div>
 
@@ -23,9 +19,7 @@
     <div class="user-profile">
       <div class="user-info">
         <div class="user-avatar">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-          </svg>
+          <User size="20" />
         </div>
         <div class="user-details" v-show="!shouldBeCollapsed">
           <p class="user-greeting">Olá, {{ currentUser?.name || 'Usuário' }}</p>
@@ -43,17 +37,13 @@
       <div class="admin-icons" v-show="!shouldBeCollapsed">
         <!-- Configurações (só para admins) -->
         <router-link v-if="isAdmin" to="/settings" class="admin-icon-link" title="Configurações">
-          <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-          </svg>
+          <Settings size="18" />
         </router-link>
         
-                                  <!-- Administração (só para admins) -->
-                          <router-link v-if="isAdmin" to="/admin" class="admin-icon-link" title="Administração">
-                            <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-                              <path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4.414a1 1 0 0 0-.707.293L.854 15.146A.5.5 0 0 1 0 14.793V2zm5 4a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm4 0a1 1 0 1 0-2 0 1 1 0 0 0 2 0zm3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
-                            </svg>
-                          </router-link>
+        <!-- Administração (só para admins) -->
+        <router-link v-if="isAdmin" to="/admin" class="admin-icon-link" title="Administração">
+          <Shield size="18" />
+        </router-link>
       </div>
     </div>
 
@@ -63,17 +53,10 @@
         <!-- Dashboard/Surebets sempre em primeiro -->
         <li class="nav-item" :class="{ active: $route.path === '/' }">
           <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M11 2a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1h2zM9 3v1h2V3H9z"/>
-              <path d="M1 13.5A1.5 1.5 0 0 0 2.5 15h11a1.5 1.5 0 0 0 1.5-1.5v-6a.5.5 0 0 0-.5-.5h-1v.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 7.5v6z"/>
-              <path d="M1.5 2A1.5 1.5 0 0 0 0 3.5v4A1.5 1.5 0 0 0 1.5 9h11A1.5 1.5 0 0 0 14 7.5v-4A1.5 1.5 0 0 0 12.5 2h-11zm0 1h11a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5z"/>
-              <path d="M8.5 5a.5.5 0 0 0-1 0v1H6a.5.5 0 0 0 0 1h1.5v1a.5.5 0 0 0 1 0V7H10a.5.5 0 0 0 0-1H8.5V5z"/>
-            </svg>
+            <Target class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Surebets</span>
             <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-              </svg>
+              <Lock class="vip-icon" size="14" />
               <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
             </div>
           </div>
@@ -82,34 +65,10 @@
         <!-- Juros Compostos -->
         <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
           <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M3.5 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
-              <path d="M3.5 5a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
-              <path d="M3.5 8a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
-              <path d="M3.5 11a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
-              <path d="M3.5 14a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h1z"/>
-            </svg>
+            <Calculator class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
             <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-              </svg>
-              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
-            </div>
-          </div>
-        </li>
-
-        <!-- Perfis de Aposta -->
-        <li class="nav-item" :class="{ active: $route.path === '/betting-profiles' }">
-          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBettingProfilesClick" :title="shouldBeCollapsed ? 'Perfis de Aposta' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0zm4.879-2.773 4.264 2.559a.25.25 0 0 1 0 .428l-4.264 2.559A.25.25 0 0 1 6 10.559V5.442a.25.25 0 0 1 .379-.215z"/>
-            </svg>
-            <span class="nav-text" v-show="!shouldBeCollapsed">Perfis de Aposta</span>
-            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-              </svg>
+              <Lock class="vip-icon" size="14" />
               <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
             </div>
           </div>
@@ -118,9 +77,7 @@
         <!-- Indicações -->
         <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
           <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M7 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H7zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM7 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-            </svg>
+            <Users class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Indicações</span>
           </router-link>
         </li>
@@ -128,10 +85,7 @@
         <!-- Planos -->
         <li class="nav-item" :class="{ active: $route.path === '/plans' }">
           <router-link to="/plans" class="nav-link" :title="shouldBeCollapsed ? 'Planos' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M3.75 0a.75.75 0 0 0-.75.75V4c0 .414.336.75.75.75h.75v4a.75.75 0 0 0 1.5 0V4.75h1.5v4a.75.75 0 0 0 1.5 0V4.75H9V4a.75.75 0 0 0-.75-.75h-4.5ZM9 3V1.5a.75.75 0 0 0-1.5 0V3h1.5Z"/>
-              <path d="M2.5 6a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h11a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5h-11Zm0 1h11v6h-11v-6Z"/>
-            </svg>
+            <CreditCard class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Planos</span>
           </router-link>
         </li>
@@ -139,14 +93,10 @@
         <!-- Relatórios -->
         <li class="nav-item" :class="{ active: $route.path === '/reports' }">
           <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3A1.5 1.5 0 0 1 15 10.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
-            </svg>
+            <BarChart3 class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
             <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-              </svg>
+              <Lock class="vip-icon" size="14" />
               <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
             </div>
           </div>
@@ -155,28 +105,18 @@
         <!-- Ranking -->
         <li class="nav-item" :class="{ active: $route.path === '/ranking' }">
           <router-link to="/ranking" class="nav-link" :title="shouldBeCollapsed ? 'Ranking' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M7.5 1.018a7 7 0 0 0-4.79 11.566L7.5 7.792l4.79 4.792A7 7 0 0 0 7.5 1.018zm0 1.96l3.976 3.976a5.5 5.5 0 1 1-7.952 0L7.5 2.978z"/>
-              <path d="M6.94 7.146a.5.5 0 0 1 .12-.223l2.5-2.5a.5.5 0 0 1 .707.707L8.061 7.39l-.353.353-.354-.354L5.147 5.183a.5.5 0 0 1 .708-.707l2.206 2.207-1.06 1.06z"/>
-              <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-            </svg>
+            <Trophy class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Ranking</span>
           </router-link>
         </li>
 
-
-
         <!-- Contas de Casas de Apostas -->
         <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
           <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBookmakerAccountsClick" :title="shouldBeCollapsed ? 'Contas' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383l-4.708 2.825L15 11.105V5.383zm-.034 6.876l-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
-            </svg>
+            <Building2 class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Contas</span>
             <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <svg class="vip-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-              </svg>
+              <Lock class="vip-icon" size="14" />
               <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
             </div>
           </div>
@@ -185,11 +125,7 @@
         <!-- Suporte -->
         <li class="nav-item" :class="{ active: $route.path === '/support' }">
           <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM8 1.5a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13z"/>
-              <path d="M8 4.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1-.5-.5z"/>
-              <path d="M8 12a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
-            </svg>
+            <HelpCircle class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Suporte</span>
           </router-link>
         </li>
@@ -197,9 +133,7 @@
         <!-- Glosário -->
         <li class="nav-item">
           <button class="nav-link glossary-btn" @click="openGlossary" :title="shouldBeCollapsed ? 'Glosário' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M1 2.828c.885-.37 2.154-.769 3.388-.893 1.33-.134 2.458.063 3.112.752v9.746c-.935-.53-2.12-.603-3.213-.493-1.18.12-2.37.461-3.287.811V2.828zm7.5-.141c.654-.689 1.782-.886 3.112-.752 1.234.124 2.503.523 3.388.893v9.923c-.918-.35-2.107-.692-3.287-.81-1.094-.111-2.278-.039-3.213.492V2.687zM8 1.783C7.015.936 5.587.81 4.287.94c-1.514.153-3.042.672-3.994 1.105A.5.5 0 0 0 0 2.5v11a.5.5 0 0 0 .707.455c.882-.4 2.303-.881 3.68-1.02 1.409-.142 2.59.087 3.223.877a.5.5 0 0 0 .78 0c.633-.79 1.814-1.019 3.222-.877 1.378.139 2.8.62 3.681 1.02A.5.5 0 0 0 16 13.5v-11a.5.5 0 0 0-.293-.455c-.952-.433-2.48-.952-3.994-1.105C10.413.809 8.985.936 8 1.783z"/>
-            </svg>
+            <BookOpen class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Glosário</span>
           </button>
         </li>
@@ -207,10 +141,7 @@
         <!-- Sair -->
         <li class="nav-item">
           <button class="nav-link logout-btn" @click="logout" :title="shouldBeCollapsed ? 'Sair' : ''">
-            <svg class="nav-icon" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-              <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
-              <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z"/>
-            </svg>
+            <LogOut class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Sair</span>
           </button>
         </li>
@@ -221,11 +152,45 @@
 
 <script>
 import CreditStatus from './CreditStatus.vue'
+import { 
+  Menu, 
+  ChevronRight, 
+  User, 
+  Settings, 
+  Shield, 
+  Target, 
+  Lock, 
+  Calculator, 
+  Users, 
+  CreditCard, 
+  BarChart3, 
+  Trophy, 
+  Building2, 
+  HelpCircle, 
+  BookOpen, 
+  LogOut 
+} from 'lucide-vue-next'
 
 export default {
   name: 'Sidebar',
   components: {
-    CreditStatus
+    CreditStatus,
+    Menu,
+    ChevronRight,
+    User,
+    Settings,
+    Shield,
+    Target,
+    Lock,
+    Calculator,
+    Users,
+    CreditCard,
+    BarChart3,
+    Trophy,
+    Building2,
+    HelpCircle,
+    BookOpen,
+    LogOut
   },
   props: {
     sidebarCollapsed: {
@@ -319,14 +284,7 @@ export default {
       }
     },
     
-    handleBettingProfilesClick() {
-      if (this.isVIP) {
-        this.$router.push('/betting-profiles')
-      } else {
-        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
-        this.$router.push('/plans')
-      }
-    },
+
     
     handleBookmakerAccountsClick() {
       if (this.isVIP) {
@@ -669,6 +627,11 @@ export default {
   color: var(--bg-primary, #1a1a1a);
 }
 
+.user-avatar svg {
+  color: var(--bg-primary, #1a1a1a);
+  stroke-width: 1.5;
+}
+
 .user-details {
   display: flex;
   flex-direction: column;
@@ -733,6 +696,8 @@ export default {
 .admin-icon-link svg {
   width: 16px;
   height: 16px;
+  color: currentColor;
+  stroke-width: 1.5;
 }
 
 .sidebar-nav {
@@ -805,6 +770,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: currentColor;
+  stroke-width: 1.5;
 }
 
 .lock-icon {
@@ -871,6 +838,7 @@ export default {
   width: 12px;
   height: 12px;
   color: #1a1a1a;
+  stroke-width: 1.5;
 }
 
 .vip-text {

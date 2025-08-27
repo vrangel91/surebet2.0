@@ -53,6 +53,11 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    account_type: {
+      type: DataTypes.STRING,
+      defaultValue: 'basic',
+      allowNull: false
+    },
     // Colunas removidas pois não existem no banco surestake
     // role, account_type, credits, status, last_login, login_attempts, locked_until, last_credit_consumption
   }, {
