@@ -54,11 +54,11 @@ export default {
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  height: 100vh;
+  min-height: 100vh; /* Mudar de height: 100vh para min-height: 100vh */
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: auto; /* Permite scroll na aplicação */
+  overflow: auto; /* Permitir scroll na aplicação */
 }
 
 * {
@@ -69,16 +69,19 @@ export default {
 
 html, body {
   height: 100%;
-  overflow: auto;
+  overflow: auto; /* Permitir scroll vertical */
+  min-height: 100vh; /* Garantir altura mínima */
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh; /* Garantir altura mínima */
 }
 
 html {
   transition: background-color 0.3s ease;
+  min-height: 100vh; /* Garantir altura mínima */
 }
 </style>

@@ -171,12 +171,12 @@ $border-color: #404040;
 
 html, body {
   height: 100%;
-  overflow: hidden;
+  overflow: auto; /* Permitir scroll vertical */
 }
 
 #app {
   height: 100vh;
-  overflow: hidden;
+  overflow: auto; /* Permitir scroll vertical */
 }
 
 body {
@@ -184,11 +184,6 @@ body {
   background-color: $background-dark;
   color: $text-primary;
   line-height: 1.6;
-}
-
-#app {
-  height: 100vh;
-  overflow: hidden;
 }
 
 // Utilitários para layout

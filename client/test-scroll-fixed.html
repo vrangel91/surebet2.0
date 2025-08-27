@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Scroll - CORRIGIDO</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: auto; /* ✅ CORREÇÃO: Permitir scroll vertical */
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .test-container {
+            display: flex;
+            min-height: 100vh;
+            background: #1a1a1a;
+            overflow: visible; /* ✅ CORREÇÃO: Permitir scroll */
+            position: relative;
+            width: 100%;
+            align-items: stretch;
+            /* ✅ CORREÇÃO: Remover height: 100vh fixo */
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #2a2a2a;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+            padding: 20px;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-left: 0;
+            padding: 24px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            width: 100%;
+            box-sizing: border-box;
+            position: relative;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+            display: flex;
+            flex-direction: column;
+            /* ✅ CORREÇÃO: Remover height: 100vh fixo para permitir crescimento natural */
+        }
+
+        .main-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .main-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+        }
+
+        .main-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .test-section {
+            background: rgba(42, 42, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+          flex: 1;
+          min-height: 0;
+          overflow: visible; /* ✅ CORREÇÃO: Permitir que o conteúdo cresça naturalmente */
+        }
+
+        .test-item {
+            padding: 20px;
+            margin-bottom: 16px;
+            background: rgba(26, 26, 26, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #ffffff;
+        }
+
+        .test-button {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+        }
+
+        .status-indicator {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 255, 136, 0.9);
+            color: #1a1a1a;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+        }
+
+        .scroll-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-indicator">
+        ✅ SCROLL CORRIGIDO
+    </div>
+
+    <div class="test-container">
+        <div class="sidebar">
+            <h3>Sidebar</h3>
+            <p>Esta é uma sidebar simulada para testar o layout</p>
+        </div>
+        
+        <main class="main-content">
+            <h1>Teste de Scroll - CORRIGIDO</h1>
+            
+            <div class="scroll-info">
+                <h3>🔧 Correções Aplicadas:</h3>
+                <ul>
+                    <li>✅ Container: overflow: visible e sem height fixo</li>
+                    <li>✅ Main-content: sem height: 100vh fixo</li>
+                    <li>✅ Seção: overflow: visible para crescimento natural</li>
+                    <li>✅ HTML/Body: overflow: auto para permitir scroll</li>
+                </ul>
+            </div>
+            
+            <p>Esta página testa se a barra de scroll vertical está funcionando corretamente após as correções.</p>
+            
+            <button class="test-button" onclick="addTestContent()">
+                Adicionar Conteúdo para Testar Scroll
+            </button>
+            
+            <div class="test-section">
+                <h3>Conteúdo de Teste</h3>
+                <p>Este conteúdo é adicionado para testar se a barra de scroll vertical está funcionando corretamente.</p>
+                
+                <div id="test-content">
+                    <!-- Conteúdo será adicionado dinamicamente aqui -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function addTestContent() {
+            const container = document.getElementById('test-content');
+            const itemCount = container.children.length;
+            
+            for (let i = 0; i < 10; i++) {
+                const item = document.createElement('div');
+                item.className = 'test-item';
+                item.innerHTML = `
+                    <h4>Item de Teste ${itemCount + i + 1}</h4>
+                    <p>Este é um item de teste para verificar se o scroll vertical está funcionando corretamente.</p>
+                    <p>Data: ${new Date().toLocaleString('pt-BR')}</p>
+                    <p>Status: ✅ Scroll deve aparecer automaticamente quando o conteúdo exceder a altura da tela</p>
+                `;
+                container.appendChild(item);
+            }
+            
+            // Rolar para o final para mostrar que o conteúdo foi adicionado
+            container.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            
+            // Verificar se o scroll está funcionando
+            setTimeout(() => {
+                const mainContent = document.querySelector('.main-content');
+                const hasScroll = mainContent.scrollHeight > mainContent.clientHeight;
+                console.log('Scroll detectado:', hasScroll);
+                console.log('ScrollHeight:', mainContent.scrollHeight);
+                console.log('ClientHeight:', mainContent.clientHeight);
+            }, 100);
+        }
+        
+        // Adicionar alguns itens iniciais
+        addTestContent();
+        
+        // Verificar scroll inicial
+        window.addEventListener('load', () => {
+            const mainContent = document.querySelector('.main-content');
+            const hasScroll = mainContent.scrollHeight > mainContent.clientHeight;
+            console.log('Scroll inicial detectado:', hasScroll);
+        });
+    </script>
+</body>
+</html>

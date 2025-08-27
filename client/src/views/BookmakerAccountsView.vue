@@ -94,15 +94,12 @@
               </div>
             </div>
             
-            <div class="account-balance">
-              <span class="balance-label">Saldo:</span>
-              <span class="balance-amount" :class="{ 'has-balance': parseFloat(account.balance) > 0 }">
-                {{ formatCurrency(account.balance) }}
-              </span>
-              <span v-if="parseFloat(account.balance) > 0" class="balance-warning">
-                ⚠️ Saldo disponível
-              </span>
-            </div>
+                         <div class="account-balance">
+               <span class="balance-label">Saldo:</span>
+               <span class="balance-amount" :class="{ 'has-balance': parseFloat(account.balance) > 0 }">
+                 {{ formatCurrency(account.balance) }}
+               </span>
+             </div>
             
             <div class="account-details">
               <div class="detail-item">
@@ -146,13 +143,21 @@
           
           <form class="modal-form">
             <div class="form-group">
-              <label for="bookmaker_name">Nome da Casa de Apostas *</label>
-              <input 
+              <label for="bookmaker_name">Casa de Apostas *</label>
+              <select 
                 id="bookmaker_name"
                 v-model="formData.bookmaker_name"
-                type="text"
-                placeholder="Ex: Bet365, William Hill..."
+                required
               >
+                <option value="">Selecione uma casa de apostas</option>
+                <option 
+                  v-for="bookmaker in availableBookmakers" 
+                  :key="bookmaker" 
+                  :value="bookmaker"
+                >
+                  {{ bookmaker }}
+                </option>
+              </select>
             </div>
             
             <div class="form-group">
@@ -216,20 +221,20 @@
           </div>
           
           <form @submit.prevent="processWithdraw" class="modal-form">
-                         <div class="form-group">
-               <label for="withdraw_amount">Valor do Saque *</label>
-               <input 
-                 id="withdraw_amount"
-                 v-model="withdrawData.amount"
-                 type="number"
-                 step="0.01"
-                 min="0.01"
-                 required
-                 placeholder="0.00"
-                 @input="handleWithdrawAmountInput"
-               >
-               <small class="form-help">Saldo disponível: {{ formatCurrency(selectedAccount?.balance || 0) }}</small>
-             </div>
+            <div class="form-group">
+              <label for="withdraw_amount">Valor do Saque *</label>
+              <input 
+                id="withdraw_amount"
+                v-model="withdrawData.amount"
+                type="number"
+                step="0.01"
+                min="0.01"
+                required
+                placeholder="0.00"
+                @input="handleWithdrawAmountInput"
+              >
+              <small class="form-help">Saldo disponível: {{ formatCurrency(selectedAccount?.balance || 0) }}</small>
+            </div>
             
             <div class="form-group">
               <label for="withdraw_description">Descrição (opcional)</label>
@@ -251,109 +256,110 @@
         </div>
       </div>
 
-             <!-- Modal de Transações -->
-       <div v-if="showTransactionsModal" class="modal-overlay" @click="closeTransactionsModal">
-         <div class="modal-content large" @click.stop>
-           <div class="modal-header">
-             <h3>Histórico de Transações - {{ selectedAccount?.bookmaker_name }}</h3>
-             <button @click="closeTransactionsModal" class="close-btn">×</button>
-           </div>
-           
-           <div class="transactions-content">
-             <div v-if="transactions.length === 0" class="no-transactions">
-               <p>Nenhuma transação encontrada para esta conta.</p>
-             </div>
-             
-             <div v-else class="transactions-list">
-               <div 
-                 v-for="transaction in transactions" 
-                 :key="transaction.id"
-                 class="transaction-item"
-                 :class="transaction.transaction_type"
-               >
-                 <div class="transaction-info">
-                   <div class="transaction-type">
-                     <span class="type-badge" :class="transaction.transaction_type">
-                       {{ getTransactionTypeText(transaction.transaction_type) }}
-                     </span>
-                   </div>
-                   <div class="transaction-amount">
-                     <span class="amount" :class="transaction.transaction_type">
-                       {{ transaction.transaction_type === 'withdrawal' ? '-' : '+' }}{{ formatCurrency(transaction.amount) }}
-                     </span>
-                   </div>
-                 </div>
-                 
-                 <div class="transaction-details">
-                   <div class="transaction-description">
-                     {{ transaction.description }}
-                   </div>
-                   <div class="transaction-date">
-                     {{ formatDateTime(transaction.created_at) }}
-                   </div>
-                   <div class="transaction-balance">
-                     Saldo após: {{ formatCurrency(transaction.balance_after) }}
-                   </div>
-                 </div>
-               </div>
-             </div>
-           </div>
-         </div>
-       </div>
+      <!-- Modal de Transações -->
+      <div v-if="showTransactionsModal" class="modal-overlay" @click="closeTransactionsModal">
+        <div class="modal-content large" @click.stop>
+          <div class="modal-header">
+            <h3>Histórico de Transações - {{ selectedAccount?.bookmaker_name }}</h3>
+            <button @click="closeTransactionsModal" class="close-btn">×</button>
+          </div>
+          
+          <div class="transactions-content">
+            <div v-if="transactions.length === 0" class="no-transactions">
+              <p>Nenhuma transação encontrada para esta conta.</p>
+            </div>
+            
+            <div v-else class="transactions-list">
+              <div 
+                v-for="transaction in transactions" 
+                :key="transaction.id"
+                class="transaction-item"
+                :class="transaction.transaction_type"
+              >
+                <div class="transaction-info">
+                  <div class="transaction-type">
+                    <span class="type-badge" :class="transaction.transaction_type">
+                      {{ getTransactionTypeText(transaction.transaction_type) }}
+                    </span>
+                  </div>
+                  <div class="transaction-amount">
+                    <span class="amount" :class="transaction.transaction_type">
+                      {{ transaction.transaction_type === 'withdrawal' ? '-' : '+' }}{{ formatCurrency(transaction.amount) }}
+                    </span>
+                  </div>
+                </div>
+                
+                <div class="transaction-details">
+                  <div class="transaction-description">
+                    {{ transaction.description }}
+                  </div>
+                  <div class="transaction-date">
+                    {{ formatDateTime(transaction.created_at) }}
+                  </div>
+                  <div class="transaction-balance">
+                    Saldo após: {{ formatCurrency(transaction.balance_after) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-       <!-- Modal de Confirmação de Exclusão -->
-       <div v-if="showDeleteConfirmModal" class="modal-overlay" @click="closeDeleteConfirmModal">
-         <div class="modal-content delete-confirm" @click.stop>
-           <div class="modal-header delete-header">
-             <div class="delete-icon">
-               <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
-                 <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-               </svg>
-             </div>
-             <h3>Confirmar Exclusão de Conta</h3>
-             <button @click="closeDeleteConfirmModal" class="close-btn">×</button>
-           </div>
-           
-           <div class="delete-content">
-             <div class="account-summary">
-               <div class="account-info-row">
-                 <span class="info-label">Nome da Conta:</span>
-                 <span class="info-value">{{ accountToDelete?.bookmaker_name }}</span>
-               </div>
-               <div class="account-info-row">
-                 <span class="info-label">Saldo Atual:</span>
-                 <span class="info-value balance-value">{{ formatCurrency(accountToDelete?.balance) }}</span>
-               </div>
-               <div class="account-info-row">
-                 <span class="info-label">Status:</span>
-                 <span class="info-value status-value" :class="accountToDelete?.status">
-                   {{ getStatusText(accountToDelete?.status) }}
-                 </span>
-               </div>
-               <div class="account-info-row">
-                 <span class="info-label">Criada em:</span>
-                 <span class="info-value">{{ formatDate(accountToDelete?.created_at) }}</span>
-               </div>
-             </div>
+      <!-- Modal de Confirmação de Exclusão -->
+      <div v-if="showDeleteConfirmModal" class="modal-overlay" @click="closeDeleteConfirmModal">
+        <div class="modal-content delete-confirm" @click.stop>
+          <div class="modal-header delete-header">
+            <div class="delete-icon">
+              <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+              </svg>
+            </div>
+            <h3>Confirmar Exclusão de Conta</h3>
+            <button @click="closeDeleteConfirmModal" class="close-btn">×</button>
+          </div>
+          
+          <div class="delete-content">
+            <div class="account-summary">
+              <div class="account-info-row">
+                <span class="info-label">Nome da Conta:</span>
+                <span class="info-value">{{ accountToDelete?.bookmaker_name }}</span>
+              </div>
+              <div class="account-info-row">
+                <span class="info-label">Saldo Atual:</span>
+                <span class="info-value balance-value">{{ formatCurrency(accountToDelete?.balance) }}</span>
+              </div>
+              <div class="account-info-row">
+                <span class="info-label">Status:</span>
+                <span class="info-value status-value" :class="accountToDelete?.status">
+                  {{ getStatusText(accountToDelete?.status) }}
+                </span>
+              </div>
+              <div class="account-info-row">
+                <span class="info-label">Criada em:</span>
+                <span class="info-value">{{ formatDate(accountToDelete?.created_at) }}</span>
+              </div>
+            </div>
 
-             <div v-if="deleteValidation.warnings.length > 0" class="delete-warnings">
-               <h4>⚠️ Avisos Importantes:</h4>
-               <ul class="warnings-list">
-                 <li v-for="warning in deleteValidation.warnings" :key="warning" class="warning-item">
-                   {{ warning }}
-                 </li>
-               </ul>
-             </div>
+            <div v-if="deleteValidation.warnings.length > 0" class="delete-warnings">
+              <h4>⚠️ Avisos Importantes:</h4>
+              <ul class="warnings-list">
+                <li v-for="warning in deleteValidation.warnings" :key="warning" class="warning-item">
+                  {{ warning }}
+                </li>
+              </ul>
+            </div>
 
-             <div class="delete-consequences">
+                         <div class="delete-consequences">
                <h4>🔒 Esta ação irá:</h4>
-               <ul class="consequences-list">
-                 <li>Marcar a conta como inativa (soft delete)</li>
-                 <li>Preservar histórico de transações</li>
-                 <li>Atualizar totalizadores da dashboard</li>
-                 <li>Registrar log de auditoria</li>
-               </ul>
-             </div>
+                <ul class="consequences-list">
+                  <li>Marcar a conta como inativa (soft delete)</li>
+                  <li>Preservar histórico de transações (não será perdido)</li>
+                  <li>Preservar saldo da conta (não será perdido)</li>
+                  <li>Atualizar totalizadores da dashboard</li>
+                  <li>Registrar log de auditoria</li>
+                </ul>
+              </div>
 
              <div class="delete-actions">
                <button @click="closeDeleteConfirmModal" class="cancel-delete-btn">
@@ -378,13 +384,13 @@
 
     <!-- Sistema de Notificações Toast -->
     <div class="toast-container">
-             <div 
-         v-for="toast in toasts" 
-         :key="toast.id"
-         :data-toast-id="toast.id"
-         class="toast-notification"
-         :class="toast.type"
-       >
+      <div 
+        v-for="toast in toasts" 
+        :key="toast.id"
+        :data-toast-id="toast.id"
+        class="toast-notification"
+        :class="toast.type"
+      >
         <div class="toast-icon">
           <svg v-if="toast.type === 'success'" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
             <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.97a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
@@ -419,6 +425,7 @@
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import { http } from '../utils/http'
+import { filterOptions } from '../config/filters.js'
 
 export default {
   name: 'BookmakerAccountsView',
@@ -433,17 +440,17 @@ export default {
       isLoading: false,
       showAddModal: false,
       showEditModal: false,
-             showWithdrawModal: false,
-       showTransactionsModal: false,
-       showDeleteConfirmModal: false,
-       selectedAccount: null,
-       accountToDelete: null,
-       deleteValidation: {
-         canDelete: true,
-         reason: '',
-         warnings: []
-       },
-       transactions: [],
+      showWithdrawModal: false,
+      showTransactionsModal: false,
+      showDeleteConfirmModal: false,
+      selectedAccount: null,
+      accountToDelete: null,
+      deleteValidation: {
+        canDelete: true,
+        reason: '',
+        warnings: []
+      },
+      transactions: [],
       formData: {
         bookmaker_name: '',
         balance: '',
@@ -455,7 +462,9 @@ export default {
         amount: '',
         description: ''
       },
-      toasts: [] // Array para armazenar as notificações
+      toasts: [], // Array para armazenar as notificações
+      // Lista de casas de apostas disponíveis
+      availableBookmakers: filterOptions.houses
     }
   },
   
@@ -572,74 +581,70 @@ export default {
        console.log('📊 Estado do modal - showEditModal:', this.showEditModal)
      },
     
-              async deleteAccount(account) {
+         async deleteAccount(account) {
        console.log('🗑️ Tentando excluir conta:', account)
        console.log('🖱️ Clique detectado no botão excluir')
        
-       // Validações pré-exclusão
+       // Validações pré-exclusão (apenas para mostrar avisos)
        const validationResult = await this.validateAccountForDeletion(account)
        this.deleteValidation = validationResult
        
-       if (!validationResult.canDelete) {
-         this.showToast('Erro', `Não é possível excluir esta conta:\n\n${validationResult.reason}`, 'error')
-         return
-       }
-       
+       // Todas as contas podem ser excluídas (apenas avisos)
        // Abrir modal de confirmação
        this.accountToDelete = account
        this.showDeleteConfirmModal = true
        console.log('📋 Modal de confirmação aberto')
      },
 
-     async confirmDeleteAccount() {
-       if (!this.accountToDelete) return
-       
-       try {
-         console.log('🔄 Iniciando exclusão...')
-         this.isLoading = true
-         
-         const response = await http.delete(`/api/bookmaker-accounts/${this.accountToDelete.id}`)
-         console.log('✅ Resposta da exclusão:', response)
-         
-         console.log('✅ Conta excluída com sucesso')
-         this.showToast('Sucesso', 'Conta excluída com sucesso', 'success')
-         
-         // Registrar log de auditoria
-         await this.logAuditAction('DELETE_ACCOUNT', this.accountToDelete.id, {
-           account_name: this.accountToDelete.bookmaker_name,
-           balance: this.accountToDelete.balance,
-           status: this.accountToDelete.status
-         })
-         
-         // Fechar modal
-         this.closeDeleteConfirmModal()
-         
-         // Recarregar contas e atualizar dashboard
-         console.log('🔄 Recarregando lista após exclusão...')
-         await this.loadAccounts()
-         this.updateDashboardTotals()
-         console.log('✅ Lista e dashboard atualizados após exclusão')
-         
-         // Forçar atualização do Vue
-         this.$forceUpdate()
-         console.log('🔄 Forçando atualização do Vue')
-         
-         // Aguardar um pouco e forçar nova atualização
-         setTimeout(async () => {
-           console.log('🔄 Recarregando lista novamente...')
-           await this.loadAccounts()
-           this.updateDashboardTotals()
-           this.$forceUpdate()
-           console.log('🔄 Segunda atualização forçada do Vue')
-         }, 200)
-         
-       } catch (error) {
-         console.error('❌ Erro ao excluir conta:', error)
-         this.showToast('Erro', error.response?.data?.message || 'Erro ao excluir conta', 'error')
-       } finally {
-         this.isLoading = false
-       }
-     },
+    async confirmDeleteAccount() {
+      if (!this.accountToDelete) return
+      
+      try {
+        console.log('🔄 Iniciando exclusão...')
+        this.isLoading = true
+        
+        const response = await http.delete(`/api/bookmaker-accounts/${this.accountToDelete.id}`)
+        console.log('✅ Resposta da exclusão:', response)
+        
+        console.log('✅ Conta excluída com sucesso')
+        this.showToast('Sucesso', 'Conta excluída com sucesso', 'success')
+        
+        // Registrar log de auditoria
+        await this.logAuditAction('DELETE_ACCOUNT', this.accountToDelete.id, {
+          account_name: this.accountToDelete.bookmaker_name,
+          balance: this.accountToDelete.balance,
+          status: this.accountToDelete.status
+        })
+        
+        // Fechar modal
+        this.closeDeleteConfirmModal()
+        
+        // Recarregar contas e atualizar dashboard
+        console.log('🔄 Recarregando lista após exclusão...')
+        await this.loadAccounts()
+        this.updateDashboardTotals()
+        console.log('✅ Lista e dashboard atualizados após exclusão')
+        
+        // Forçar atualização do Vue
+        this.$forceUpdate()
+        console.log('🔄 Forçando atualização do Vue')
+        
+        // Aguardar um pouco e forçar nova atualização
+        setTimeout(async () => {
+          console.log('🔄 Recarregando lista novamente...')
+          await this.loadAccounts()
+          this.updateDashboardTotals()
+          this.$forceUpdate()
+          console.log('🔄 Segunda atualização forçada do Vue')
+        }, 200)
+        
+      } catch (error) {
+        console.error('❌ Erro ao excluir conta:', error)
+        this.showToast('Erro', error.response?.data?.message || 'Erro ao excluir conta', 'error')
+      } finally {
+        this.isLoading = false
+      }
+    },
     
     async saveAccount() {
       // Proteção contra cliques duplos
@@ -650,13 +655,13 @@ export default {
       
       console.log('saveAccount chamado', this.formData)
       
-             // Validação avançada
-       const validation = this.validateAccountForEdit(this.formData, this.selectedAccount)
-       if (!validation.isValid) {
-         console.error('❌ Validação falhou:', validation.errors)
-         this.showToast('Erro', `Erro de validação:\n\n${validation.errors.join('\n')}`, 'error')
-         return
-       }
+      // Validação avançada
+      const validation = this.validateAccountForEdit(this.formData, this.selectedAccount)
+      if (!validation.isValid) {
+        console.error('❌ Validação falhou:', validation.errors)
+        this.showToast('Erro', `Erro de validação:\n\n${validation.errors.join('\n')}`, 'error')
+        return
+      }
       
       try {
         this.isLoading = true
@@ -673,29 +678,29 @@ export default {
           console.log('🔄 Atualizando conta ID:', this.selectedAccount.id)
           console.log('📤 Dados para atualização:', dataToSend)
           response = await http.put(`/api/bookmaker-accounts/${this.selectedAccount.id}`, dataToSend)
-                     console.log('✅ Resposta da atualização:', response)
-           console.log('✅ Conta atualizada com sucesso')
-           this.showToast('Sucesso', 'Conta atualizada com sucesso', 'success')
-           
-           // Registrar log de auditoria
-           await this.logAuditAction('UPDATE_ACCOUNT', this.selectedAccount.id, {
-             account_name: this.formData.bookmaker_name,
-             changes: this.getChangesSummary(this.selectedAccount, this.formData)
-           })
+          console.log('✅ Resposta da atualização:', response)
+          console.log('✅ Conta atualizada com sucesso')
+          this.showToast('Sucesso', 'Conta atualizada com sucesso', 'success')
+          
+          // Registrar log de auditoria
+          await this.logAuditAction('UPDATE_ACCOUNT', this.selectedAccount.id, {
+            account_name: this.formData.bookmaker_name,
+            changes: this.getChangesSummary(this.selectedAccount, this.formData)
+          })
         } else {
           console.log('🆕 Criando nova conta')
           console.log('📤 Dados para criação:', dataToSend)
           response = await http.post('/api/bookmaker-accounts', dataToSend)
-                     console.log('✅ Resposta da criação:', response)
-           console.log('✅ Conta criada com sucesso')
-           this.showToast('Sucesso', 'Conta criada com sucesso', 'success')
-           
-           // Registrar log de auditoria
-           await this.logAuditAction('CREATE_ACCOUNT', response.data?.id, {
-             account_name: this.formData.bookmaker_name,
-             initial_balance: this.formData.balance,
-             currency: this.formData.currency
-           })
+          console.log('✅ Resposta da criação:', response)
+          console.log('✅ Conta criada com sucesso')
+          this.showToast('Sucesso', 'Conta criada com sucesso', 'success')
+          
+          // Registrar log de auditoria
+          await this.logAuditAction('CREATE_ACCOUNT', response.data?.id, {
+            account_name: this.formData.bookmaker_name,
+            initial_balance: this.formData.balance,
+            currency: this.formData.currency
+          })
         }
         
         // Definir loading como false antes de fechar modal
@@ -710,47 +715,47 @@ export default {
         await this.loadAccounts()
         console.log('✅ Processo concluído')
         
-             } catch (error) {
-         console.error('❌ Erro ao salvar conta:', error)
-         this.showToast('Erro', error.response?.data?.message || 'Erro ao salvar conta', 'error')
-         
-         // Não reabrir modal automaticamente em caso de erro
-         // O usuário pode tentar novamente se quiser
-         console.log('⚠️ Modal não será reaberto automaticamente')
-       } finally {
-         this.isLoading = false
-       }
+      } catch (error) {
+        console.error('❌ Erro ao salvar conta:', error)
+        this.showToast('Erro', error.response?.data?.message || 'Erro ao salvar conta', 'error')
+        
+        // Não reabrir modal automaticamente em caso de erro
+        // O usuário pode tentar novamente se quiser
+        console.log('⚠️ Modal não será reaberto automaticamente')
+      } finally {
+        this.isLoading = false
+      }
     },
     
-         async processWithdraw() {
-       // Validação do valor do saque
-       const withdrawAmount = parseFloat(this.withdrawData.amount)
-       const availableBalance = parseFloat(this.selectedAccount?.balance || 0)
-       
-       if (!withdrawAmount || withdrawAmount <= 0) {
-         this.showToast('Erro', 'Por favor, insira um valor válido para o saque', 'error')
-         return
-       }
-       
-       if (withdrawAmount > availableBalance) {
-         this.showToast('Erro', `Valor do saque (${this.formatCurrency(withdrawAmount)}) excede o saldo disponível (${this.formatCurrency(availableBalance)})`, 'error')
-         return
-       }
-       
-       try {
-         this.isLoading = true
-         await http.post(`/api/bookmaker-accounts/${this.selectedAccount.id}/withdraw`, this.withdrawData)
-                  console.log('✅ Saque realizado com sucesso')
-          this.showToast('Sucesso', `Saque de ${this.formatCurrency(withdrawAmount)} realizado com sucesso`, 'success')
-         this.closeWithdrawModal()
-         this.loadAccounts()
-       } catch (error) {
-         console.error('❌ Erro ao realizar saque:', error)
-          this.showToast('Erro', error.response?.data?.message || 'Erro ao realizar saque', 'error')
-       } finally {
-         this.isLoading = false
-       }
-     },
+    async processWithdraw() {
+      // Validação do valor do saque
+      const withdrawAmount = parseFloat(this.withdrawData.amount)
+      const availableBalance = parseFloat(this.selectedAccount?.balance || 0)
+      
+      if (!withdrawAmount || withdrawAmount <= 0) {
+        this.showToast('Erro', 'Por favor, insira um valor válido para o saque', 'error')
+        return
+      }
+      
+      if (withdrawAmount > availableBalance) {
+        this.showToast('Erro', `Valor do saque (${this.formatCurrency(withdrawAmount)}) excede o saldo disponível (${this.formatCurrency(availableBalance)})`, 'error')
+        return
+      }
+      
+      try {
+        this.isLoading = true
+        await http.post(`/api/bookmaker-accounts/${this.selectedAccount.id}/withdraw`, this.withdrawData)
+        console.log('✅ Saque realizado com sucesso')
+        this.showToast('Sucesso', `Saque de ${this.formatCurrency(withdrawAmount)} realizado com sucesso`, 'success')
+        this.closeWithdrawModal()
+        this.loadAccounts()
+      } catch (error) {
+        console.error('❌ Erro ao realizar saque:', error)
+        this.showToast('Erro', error.response?.data?.message || 'Erro ao realizar saque', 'error')
+      } finally {
+        this.isLoading = false
+      }
+    },
     
     async viewTransactions(account) {
       try {
@@ -760,7 +765,7 @@ export default {
         this.showTransactionsModal = true
       } catch (error) {
         console.error('❌ Erro ao carregar transações:', error)
-         this.showToast('Erro', 'Erro ao carregar transações', 'error')
+        this.showToast('Erro', 'Erro ao carregar transações', 'error')
       }
     },
     
@@ -773,36 +778,36 @@ export default {
       this.showWithdrawModal = true
     },
     
-         handleBalanceInput(event) {
-       // Garantir que o valor seja um número válido
-       const value = event.target.value
-       if (value === '' || value === null || value === undefined) {
-         this.formData.balance = ''
-       } else {
-         const numValue = parseFloat(value)
-         if (!isNaN(numValue) && numValue >= 0) {
-           this.formData.balance = numValue
-         }
-       }
-     },
+    handleBalanceInput(event) {
+      // Garantir que o valor seja um número válido
+      const value = event.target.value
+      if (value === '' || value === null || value === undefined) {
+        this.formData.balance = ''
+      } else {
+        const numValue = parseFloat(value)
+        if (!isNaN(numValue) && numValue >= 0) {
+          this.formData.balance = numValue
+        }
+      }
+    },
 
-     handleWithdrawAmountInput(event) {
-       // Permitir digitação livre, apenas validar se é um número válido
-       const value = event.target.value
-       
-       // Permitir campo vazio
-       if (value === '' || value === null || value === undefined) {
-         this.withdrawData.amount = ''
-         return
-       }
-       
-       // Verificar se é um número válido
-       const numValue = parseFloat(value)
-       if (!isNaN(numValue) && numValue >= 0) {
-         this.withdrawData.amount = value // Manter o valor original para permitir decimais
-       }
-       // Se não for um número válido, não fazer nada (permitir que o usuário continue digitando)
-     },
+    handleWithdrawAmountInput(event) {
+      // Permitir digitação livre, apenas validar se é um número válido
+      const value = event.target.value
+      
+      // Permitir campo vazio
+      if (value === '' || value === null || value === undefined) {
+        this.withdrawData.amount = ''
+        return
+      }
+      
+      // Verificar se é um número válido
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue) && numValue >= 0) {
+        this.withdrawData.amount = value // Manter o valor original para permitir decimais
+      }
+      // Se não for um número válido, não fazer nada (permitir que o usuário continue digitando)
+    },
     
     closeModal() {
       console.log('🔒 Fechando modal...')
@@ -830,21 +835,21 @@ export default {
       }
     },
     
-         closeTransactionsModal() {
-       this.showTransactionsModal = false
-       this.selectedAccount = null
-       this.transactions = []
-     },
+    closeTransactionsModal() {
+      this.showTransactionsModal = false
+      this.selectedAccount = null
+      this.transactions = []
+    },
 
-     closeDeleteConfirmModal() {
-       this.showDeleteConfirmModal = false
-       this.accountToDelete = null
-       this.deleteValidation = {
-         canDelete: true,
-         reason: '',
-         warnings: []
-       }
-     },
+    closeDeleteConfirmModal() {
+      this.showDeleteConfirmModal = false
+      this.accountToDelete = null
+      this.deleteValidation = {
+        canDelete: true,
+        reason: '',
+        warnings: []
+      }
+    },
     
     getStatusText(status) {
       const statusMap = {
@@ -877,12 +882,12 @@ export default {
       return new Date(dateString).toLocaleDateString('pt-BR')
     },
     
-         formatDateTime(dateString) {
-       if (!dateString) return 'Nunca'
-       return new Date(dateString).toLocaleString('pt-BR')
-     },
-     
-     // Validação pré-exclusão de conta
+    formatDateTime(dateString) {
+      if (!dateString) return 'Nunca'
+      return new Date(dateString).toLocaleString('pt-BR')
+    },
+    
+         // Validação pré-exclusão de conta
      async validateAccountForDeletion(account) {
        console.log('🔍 Validando conta para exclusão:', account)
        
@@ -892,45 +897,37 @@ export default {
          warnings: []
        }
        
-       // Verificar se conta possui saldo > 0
+       // Verificar se conta possui saldo > 0 (apenas aviso, não bloqueia)
        if (parseFloat(account.balance) > 0) {
          validations.warnings.push(`💰 Saldo disponível: ${this.formatCurrency(account.balance)}`)
-         validations.reason = `Esta conta possui saldo disponível. Recomendamos sacar o valor antes da exclusão.`
+         // Não bloqueia a exclusão, apenas avisa
        }
        
-       // Verificar se conta está ativa
+       // Verificar se conta está ativa (apenas aviso, não bloqueia)
        if (account.status === 'active') {
          validations.warnings.push('⚠️ Conta está ativa')
        }
        
-       // Verificar se há transações recentes (últimos 30 dias)
+       // Verificar se há transações (apenas aviso, não bloqueia)
        try {
          const response = await http.get(`/api/bookmaker-accounts/${account.id}/transactions`)
          const transactions = response.data.data.transactions || []
-         const recentTransactions = transactions.filter(t => {
-           const transactionDate = new Date(t.created_at)
-           const thirtyDaysAgo = new Date()
-           thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-           return transactionDate > thirtyDaysAgo
-         })
          
-         if (recentTransactions.length > 0) {
-           validations.warnings.push(`📊 ${recentTransactions.length} transação(ões) nos últimos 30 dias`)
+         if (transactions.length > 0) {
+           validations.warnings.push(`📊 ${transactions.length} transação(ões) encontrada(s)`)
          }
        } catch (error) {
          console.warn('⚠️ Não foi possível verificar transações:', error)
        }
        
-       // Se há avisos, mas não é bloqueante
-       if (validations.warnings.length > 0 && parseFloat(account.balance) > 0) {
-         validations.canDelete = false
-       }
+       // TODAS as contas podem ser excluídas (apenas avisos informativos)
+       validations.canDelete = true
        
        console.log('✅ Validação concluída:', validations)
        return validations
      },
-     
-     // Construir mensagem de confirmação de exclusão
+    
+         // Construir mensagem de confirmação de exclusão
      buildDeletionConfirmationMessage(account) {
        const balance = this.formatCurrency(account.balance)
        const status = this.getStatusText(account.status)
@@ -942,223 +939,240 @@ export default {
        message += `📅 Criada em: ${this.formatDate(account.created_at)}\n\n`
        
        if (parseFloat(account.balance) > 0) {
-         message += `⚠️ ATENÇÃO: Esta conta possui saldo disponível!\n`
-         message += `Recomendamos sacar o valor antes da exclusão.\n\n`
+         message += `ℹ️ INFORMAÇÃO: Esta conta possui saldo disponível.\n`
+         message += `O saldo será preservado e não será perdido.\n\n`
        }
        
        message += `🔒 Esta ação irá:\n`
        message += `• Marcar a conta como inativa\n`
-       message += `• Preservar histórico de transações\n`
-       message += `• Atualizar totalizadores\n\n`
-       
-       message += `Tem certeza que deseja continuar?`
-       
-       return message
-     },
+        message += `• Preservar histórico de transações (não será perdido)\n`
+        message += `• Preservar saldo da conta (não será perdido)\n`
+        message += `• Atualizar totalizadores\n\n`
+        
+        message += `Tem certeza que deseja continuar?`
+        
+        return message
+      },
      
-     // Validação para edição de conta
-     validateAccountForEdit(formData, originalAccount) {
-       console.log('🔍 Validando dados para edição:', formData)
-       
-       const errors = []
-       
-       // Validação do nome
-       if (!formData.bookmaker_name || formData.bookmaker_name.trim().length < 3) {
-         errors.push('Nome deve ter pelo menos 3 caracteres')
-       }
-       
-       if (formData.bookmaker_name && formData.bookmaker_name.trim().length > 50) {
-         errors.push('Nome deve ter no máximo 50 caracteres')
-       }
-       
-       // Validação de moeda
-       const validCurrencies = ['BRL', 'USD', 'EUR']
-       if (!validCurrencies.includes(formData.currency)) {
-         errors.push('Moeda inválida')
-       }
-       
-       // Validação de mudança de moeda
-       if (originalAccount && formData.currency !== originalAccount.currency) {
-         if (parseFloat(originalAccount.balance) > 0) {
-           errors.push('Não é possível alterar a moeda de uma conta com saldo')
-         }
-       }
-       
-       // Validação de status
-       const validStatuses = ['active', 'inactive', 'suspended']
-       if (!validStatuses.includes(formData.status)) {
-         errors.push('Status inválido')
-       }
-       
-       // Validação de mudança de status
-       if (originalAccount && formData.status !== originalAccount.status) {
-         if (originalAccount.status === 'inactive' && formData.status === 'active') {
-           // Verificar limite de contas ativas (exemplo: máximo 5)
-           const activeAccounts = this.accounts.filter(a => a.status === 'active').length
-           if (activeAccounts >= 5) {
-             errors.push('Limite máximo de 5 contas ativas atingido')
-           }
-         }
-       }
-       
-                console.log('✅ Validação de edição concluída:', errors)
-         return {
-           isValid: errors.length === 0,
-           errors: errors
-         }
-       },
-       
-       // Registrar log de auditoria
-       async logAuditAction(action, accountId, details) {
-         try {
-           const auditData = {
-             action: action,
-             account_id: accountId,
-             details: details,
-             timestamp: new Date().toISOString(),
-             user_id: this.currentUser?.id
-           }
-           
-           console.log('📝 Log de auditoria:', auditData)
-           
-           // Aqui você pode implementar o envio para o backend
-           // await http.post('/api/audit-logs', auditData)
-           
-         } catch (error) {
-           console.warn('⚠️ Erro ao registrar log de auditoria:', error)
-         }
-       },
-       
-       // Atualizar totalizadores da dashboard
-       updateDashboardTotals() {
-         console.log('🔄 Atualizando totalizadores da dashboard...')
-         
-         // Forçar recálculo dos computed properties
-         this.$forceUpdate()
-         
-         // Atualizar estatísticas
-         const stats = {
-           totalAccounts: this.accounts.length,
-           activeAccounts: this.activeAccounts,
-           totalBalance: this.totalBalance,
-           totalTransactions: this.totalTransactions
-         }
-         
-         console.log('📊 Novas estatísticas:', stats)
-       },
-       
-       // Obter resumo de mudanças para auditoria
-       getChangesSummary(originalAccount, newData) {
-         const changes = []
-         
-         if (originalAccount.bookmaker_name !== newData.bookmaker_name) {
-           changes.push(`Nome: "${originalAccount.bookmaker_name}" → "${newData.bookmaker_name}"`)
-         }
-         
-         if (originalAccount.currency !== newData.currency) {
-           changes.push(`Moeda: ${originalAccount.currency} → ${newData.currency}`)
-         }
-         
-         if (originalAccount.status !== newData.status) {
-           changes.push(`Status: ${this.getStatusText(originalAccount.status)} → ${this.getStatusText(newData.status)}`)
-         }
-         
-         if (originalAccount.notes !== newData.notes) {
-           changes.push('Observações alteradas')
-         }
-         
-         return changes.length > 0 ? changes : ['Nenhuma mudança detectada']
-       },
-
-               // Sistema de Notificações Toast
-        showToast(title, message, type = 'info') {
-          const id = Date.now()
-          const toast = {
-            id,
-            title,
-            message,
-            type,
-            visible: true,
-            progress: 0
-          }
-          
-          this.toasts.push(toast)
-
-          // Aguardar um frame para garantir que o DOM foi atualizado
-          this.$nextTick(() => {
-            // Forçar a animação de entrada
-            const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
-            if (toastElement) {
-              toastElement.style.transform = 'translateX(0)'
-              toastElement.style.opacity = '1'
-            }
-          })
-
-          this.startToastProgress(id)
-        },
-
-       startToastProgress(id) {
-         const toast = this.toasts.find(t => t.id === id)
-         if (!toast) return
-
-         const duration = 3000 // 3 segundos
-         const interval = 10 // 10ms interval
-         const steps = duration / interval
-
-         let currentStep = 0
-         const progressInterval = setInterval(() => {
-           currentStep++
-           toast.progress = (currentStep / steps) * 100
-           if (currentStep >= steps) {
-             clearInterval(progressInterval)
-             this.removeToast(id)
-           }
-         }, interval)
-       },
-
-               removeToast(id) {
-          const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
-          if (toastElement) {
-            // Animar a saída
-            toastElement.style.transform = 'translateX(100%)'
-            toastElement.style.opacity = '0'
-            
-            // Remover após a animação
-            setTimeout(() => {
-              const index = this.toasts.findIndex(t => t.id === id)
-              if (index !== -1) {
-                this.toasts.splice(index, 1)
-              }
-            }, 400)
-          } else {
-            // Fallback se o elemento não for encontrado
-            const index = this.toasts.findIndex(t => t.id === id)
-            if (index !== -1) {
-              this.toasts.splice(index, 1)
-            }
+    // Validação para edição de conta
+    validateAccountForEdit(formData, originalAccount) {
+      console.log('🔍 Validando dados para edição:', formData)
+      
+      const errors = []
+      
+      // Validação do nome
+      if (!formData.bookmaker_name) {
+        errors.push('Casa de apostas é obrigatória')
+      }
+      
+      if (formData.bookmaker_name && !this.availableBookmakers.includes(formData.bookmaker_name)) {
+        errors.push('Casa de apostas inválida')
+      }
+      
+      // Validação de moeda
+      const validCurrencies = ['BRL', 'USD', 'EUR']
+      if (!validCurrencies.includes(formData.currency)) {
+        errors.push('Moeda inválida')
+      }
+      
+      // Validação de mudança de moeda
+      if (originalAccount && formData.currency !== originalAccount.currency) {
+        if (parseFloat(originalAccount.balance) > 0) {
+          errors.push('Não é possível alterar a moeda de uma conta com saldo')
+        }
+      }
+      
+      // Validação de status
+      const validStatuses = ['active', 'inactive', 'suspended']
+      if (!validStatuses.includes(formData.status)) {
+        errors.push('Status inválido')
+      }
+      
+      // Validação de mudança de status
+      if (originalAccount && formData.status !== originalAccount.status) {
+        if (originalAccount.status === 'inactive' && formData.status === 'active') {
+          // Verificar limite de contas ativas (exemplo: máximo 5)
+          const activeAccounts = this.accounts.filter(a => a.status === 'active').length
+          if (activeAccounts >= 5) {
+            errors.push('Limite máximo de 5 contas ativas atingido')
           }
         }
+      }
+      
+      console.log('✅ Validação de edição concluída:', errors)
+      return {
+        isValid: errors.length === 0,
+        errors: errors
+      }
+    },
+       
+    // Registrar log de auditoria
+    async logAuditAction(action, accountId, details) {
+      try {
+        const auditData = {
+          action: action,
+          account_id: accountId,
+          details: details,
+          timestamp: new Date().toISOString(),
+          user_id: this.currentUser?.id
+        }
+        
+        console.log('📝 Log de auditoria:', auditData)
+        
+        // Aqui você pode implementar o envio para o backend
+        // await http.post('/api/audit-logs', auditData)
+        
+      } catch (error) {
+        console.warn('⚠️ Erro ao registrar log de auditoria:', error)
+      }
+    },
+    
+    // Atualizar totalizadores da dashboard
+    updateDashboardTotals() {
+      console.log('🔄 Atualizando totalizadores da dashboard...')
+      
+      // Forçar recálculo dos computed properties
+      this.$forceUpdate()
+      
+      // Atualizar estatísticas
+      const stats = {
+        totalAccounts: this.accounts.length,
+        activeAccounts: this.activeAccounts,
+        totalBalance: this.totalBalance,
+        totalTransactions: this.totalTransactions
+      }
+      
+      console.log('📊 Novas estatísticas:', stats)
+    },
+       
+    // Obter resumo de mudanças para auditoria
+    getChangesSummary(originalAccount, newData) {
+      const changes = []
+      
+      if (originalAccount.bookmaker_name !== newData.bookmaker_name) {
+        changes.push(`Nome: "${originalAccount.bookmaker_name}" → "${newData.bookmaker_name}"`)
+      }
+      
+      if (originalAccount.currency !== newData.currency) {
+        changes.push(`Moeda: ${originalAccount.currency} → ${newData.currency}`)
+      }
+      
+      if (originalAccount.status !== newData.status) {
+        changes.push(`Status: ${this.getStatusText(originalAccount.status)} → ${this.getStatusText(newData.status)}`)
+      }
+      
+      if (originalAccount.notes !== newData.notes) {
+        changes.push('Observações alteradas')
+      }
+      
+      return changes.length > 0 ? changes : ['Nenhuma mudança detectada']
+    },
+
+    // Sistema de Notificações Toast
+    showToast(title, message, type = 'info') {
+      const id = Date.now()
+      const toast = {
+        id,
+        title,
+        message,
+        type,
+        visible: true,
+        progress: 0
+      }
+      
+      this.toasts.push(toast)
+
+      // Aguardar um frame para garantir que o DOM foi atualizado
+      this.$nextTick(() => {
+        // Forçar a animação de entrada
+        const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
+        if (toastElement) {
+          toastElement.style.transform = 'translateX(0)'
+          toastElement.style.opacity = '1'
+        }
+      })
+
+      this.startToastProgress(id)
+    },
+
+    startToastProgress(id) {
+      const toast = this.toasts.find(t => t.id === id)
+      if (!toast) return
+
+      const duration = 3000 // 3 segundos
+      const interval = 10 // 10ms interval
+      const steps = duration / interval
+
+      let currentStep = 0
+      const progressInterval = setInterval(() => {
+        currentStep++
+        toast.progress = (currentStep / steps) * 100
+        if (currentStep >= steps) {
+          clearInterval(progressInterval)
+          this.removeToast(id)
+        }
+      }, interval)
+    },
+
+    removeToast(id) {
+      const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
+      if (toastElement) {
+        // Animar a saída
+        toastElement.style.transform = 'translateX(100%)'
+        toastElement.style.opacity = '0'
+        
+        // Remover após a animação
+        setTimeout(() => {
+          const index = this.toasts.findIndex(t => t.id === id)
+          if (index !== -1) {
+            this.toasts.splice(index, 1)
+          }
+        }, 400)
+      } else {
+        // Fallback se o elemento não for encontrado
+        const index = this.toasts.findIndex(t => t.id === id)
+        if (index !== -1) {
+          this.toasts.splice(index, 1)
+        }
+      }
+    }
   }
 }
 </script>
 
 <style scoped>
+/* 
+ * CORREÇÕES APLICADAS:
+ * 
+ * SCROLL VERTICAL:
+ * 1. .accounts-container: overflow: visible e removido height: 100vh fixo
+ * 2. .main-content: removido height: 100vh fixo para permitir crescimento natural
+ * 3. .accounts-section: overflow: visible para permitir crescimento do conteúdo
+ * 
+ * LAYOUT DOS CARDS:
+ * 4. Grid configurado com align-items: start para alinhar cards no topo
+ * 5. Cards com altura mínima consistente (min-height: 280px)
+ * 6. Layout flexbox interno para distribuir conteúdo uniformemente
+ * 7. Botões de ação sempre no final do card (margin-top: auto)
+ * 8. Responsividade melhorada para diferentes tamanhos de tela
+ */
+
 .accounts-container {
   display: flex;
   min-height: 100vh;
   background: var(--bg-primary);
-  overflow: hidden;
+  overflow: visible; /* Permitir scroll */
   position: relative;
   width: 100%;
   align-items: stretch;
-  height: 100vh;
+  /* Remover height: 100vh fixo para permitir crescimento natural */
 }
 
 .main-content {
   flex: 1;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-  min-height: auto;
+  min-height: 0;
   padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -1169,13 +1183,32 @@ export default {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
-  height: 100vh;
+  /* Remover height: 100vh fixo para permitir crescimento natural */
+}
+
+/* Custom scrollbar para webkit browsers */
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .accounts-header {
   text-align: center;
   margin-bottom: 32px;
+  flex-shrink: 0;
 }
 
 .accounts-title {
@@ -1206,6 +1239,7 @@ export default {
   display: flex;
   justify-content: center;
   margin-bottom: 32px;
+  flex-shrink: 0;
 }
 
 .add-account-btn {
@@ -1221,6 +1255,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .add-account-btn:hover {
@@ -1233,6 +1269,7 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+  flex-shrink: 0;
 }
 
 .stat-card {
@@ -1269,6 +1306,9 @@ export default {
   border-radius: 12px;
   padding: 24px;
   margin-bottom: 32px;
+  flex: 1;
+  min-height: 0;
+  overflow: visible;
 }
 
 .accounts-section h3 {
@@ -1286,11 +1326,17 @@ export default {
   padding: 40px;
   color: #cccccc;
   font-size: 16px;
+  min-height: 200px;
 }
 
 .loading-indicator .loading-spinner {
   font-size: 20px;
   animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .no-accounts {
@@ -1306,8 +1352,41 @@ export default {
 
 .accounts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 20px;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Corrigir alinhamento dos cards */
+  align-items: start;
+  grid-auto-rows: min-content;
+}
+
+/* Ajuste específico para quando a sidebar está expandida */
+.sidebar:not(.collapsed) ~ .main-content .accounts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Reduz o tamanho mínimo quando sidebar está expandida */
+}
+
+@media (max-width: 1200px) {
+  .sidebar:not(.collapsed) ~ .main-content .accounts-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); /* Reduz ainda mais em telas menores com sidebar expandida */
+  }
+}
+
+/* Ajuste específico para quando a sidebar está colapsada - permite cards maiores */
+.sidebar.collapsed ~ .main-content .accounts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Mantém o tamanho otimizado quando sidebar está colapsada */
+}
+
+/* Melhorar alinhamento responsivo */
+@media (max-width: 768px) {
+  .accounts-grid {
+    grid-template-columns: 1fr; /* Uma coluna em telas pequenas */
+    gap: 16px;
+  }
+  
+  .account-card {
+    min-height: auto; /* Altura automática em mobile */
+  }
 }
 
 .account-card {
@@ -1316,6 +1395,11 @@ export default {
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s ease;
+  /* Corrigir alinhamento e altura dos cards */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 280px; /* Altura mínima consistente */
 }
 
 .account-card:hover {
@@ -1332,10 +1416,12 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .account-info {
   flex: 1;
+  min-width: 0;
 }
 
 .account-name {
@@ -1343,6 +1429,8 @@ export default {
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 4px 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .account-status {
@@ -1352,6 +1440,8 @@ export default {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .account-status.active {
@@ -1372,6 +1462,7 @@ export default {
 .account-actions {
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .action-btn {
@@ -1386,6 +1477,9 @@ export default {
   justify-content: center;
   z-index: 10;
   position: relative;
+  flex-shrink: 0;
+  min-width: 32px;
+  min-height: 32px;
 }
 
 .action-btn.edit {
@@ -1406,37 +1500,44 @@ export default {
 
 .account-balance {
   margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .balance-label {
   color: #cccccc;
   font-size: 14px;
-  margin-right: 8px;
+  flex-shrink: 0;
 }
 
  .balance-amount {
-   color: #00ff88;
-   font-size: 24px;
-   font-weight: 700;
- }
- 
- .balance-amount.has-balance {
-   color: #ffc107;
-   text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
- }
+  color: #00ff88;
+  font-size: 24px;
+  font-weight: 700;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.balance-amount.has-balance {
+  color: #ffc107;
+  text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
  
  .balance-warning {
-   display: block;
-   color: #ffc107;
-   font-size: 12px;
-   font-weight: 600;
-   margin-top: 4px;
-   text-align: center;
-   background: rgba(255, 193, 7, 0.1);
-   padding: 4px 8px;
-   border-radius: 4px;
-   border: 1px solid rgba(255, 193, 7, 0.3);
- }
+  display: block;
+  color: #ffc107;
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 4px;
+  text-align: center;
+  background: rgba(255, 193, 7, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 
 .account-details {
   margin-bottom: 16px;
@@ -1446,17 +1547,23 @@ export default {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .detail-label {
   color: #cccccc;
   font-size: 14px;
+  flex-shrink: 0;
 }
 
 .detail-value {
   color: #ffffff;
   font-size: 14px;
   font-weight: 500;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-align: right;
 }
 
 .account-notes {
@@ -1468,6 +1575,7 @@ export default {
   font-size: 14px;
   display: block;
   margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
 .notes-text {
@@ -1475,11 +1583,15 @@ export default {
   font-size: 14px;
   margin: 0;
   line-height: 1.4;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .account-transactions {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto; /* Empurrar para o final do card */
 }
 
 .transactions-btn,
@@ -1492,6 +1604,8 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .transactions-btn {
@@ -1531,6 +1645,7 @@ export default {
   justify-content: center;
   z-index: 9999;
   padding: 20px;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -1542,6 +1657,26 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .modal-content.large {
@@ -1554,6 +1689,7 @@ export default {
   align-items: center;
   padding: 24px 24px 0 24px;
   margin-bottom: 24px;
+  gap: 16px;
 }
 
 .modal-header h3 {
@@ -1561,6 +1697,10 @@ export default {
   margin: 0;
   font-size: 20px;
   font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .close-btn {
@@ -1577,6 +1717,7 @@ export default {
   justify-content: center;
   border-radius: 50%;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .close-btn:hover {
@@ -1632,6 +1773,7 @@ export default {
   gap: 12px;
   justify-content: flex-end;
   margin-top: 24px;
+  flex-wrap: wrap;
 }
 
 .cancel-btn,
@@ -1644,6 +1786,8 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .cancel-btn {
@@ -1706,6 +1850,26 @@ export default {
 .transactions-list {
   max-height: 400px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.transactions-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.transactions-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.transactions-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.transactions-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .transaction-item {
@@ -1812,25 +1976,29 @@ export default {
  }
 
  .delete-header {
-   background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.05));
-   border-bottom: 1px solid rgba(255, 71, 87, 0.2);
-   padding: 24px 24px 20px 24px;
-   margin-bottom: 0;
-   display: flex;
-   align-items: center;
-   gap: 16px;
- }
+  background: linear-gradient(135deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.05));
+  border-bottom: 1px solid rgba(255, 71, 87, 0.2);
+  padding: 24px 24px 20px 24px;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
 
- .delete-icon {
-   color: #ff4757;
-   filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.5));
- }
+.delete-icon {
+  color: #ff4757;
+  filter: drop-shadow(0 0 8px rgba(255, 71, 87, 0.5));
+  flex-shrink: 0;
+}
 
- .delete-header h3 {
-   color: #ff4757;
-   margin: 0;
-   flex: 1;
- }
+.delete-header h3 {
+  color: #ff4757;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 
  .delete-content {
    padding: 24px;
@@ -1859,29 +2027,37 @@ export default {
  }
 
  .info-label {
-   color: #cccccc;
-   font-size: 14px;
-   font-weight: 500;
- }
+  color: #cccccc;
+  font-size: 14px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
 
  .info-value {
-   color: #ffffff;
-   font-size: 14px;
-   font-weight: 600;
- }
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-align: right;
+}
 
  .balance-value {
-   color: #ffc107;
-   text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
- }
+  color: #ffc107;
+  text-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
 
  .status-value {
-   padding: 4px 8px;
-   border-radius: 12px;
-   font-size: 12px;
-   font-weight: 600;
-   text-transform: uppercase;
- }
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
  .status-value.active {
    background: rgba(0, 255, 136, 0.2);
@@ -1974,18 +2150,20 @@ export default {
  }
 
  .cancel-delete-btn,
- .confirm-delete-btn {
-   padding: 12px 24px;
-   border: none;
-   border-radius: 8px;
-   font-size: 14px;
-   font-weight: 600;
-   cursor: pointer;
-   transition: all 0.3s ease;
-   display: flex;
-   align-items: center;
-   gap: 8px;
- }
+.confirm-delete-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  white-space: nowrap;
+}
 
  .cancel-delete-btn {
    background: rgba(255, 255, 255, 0.1);
@@ -2026,6 +2204,11 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  pointer-events: none;
+}
+
+.toast-notification {
+  pointer-events: auto;
 }
 
  .toast-notification {
@@ -2123,6 +2306,7 @@ export default {
   justify-content: center;
   border-radius: 50%;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 .toast-close:hover {
@@ -2157,19 +2341,30 @@ export default {
    background: linear-gradient(90deg, #007bff, rgba(0, 123, 255, 0.3));
  }
 
- /* Responsividade */
- @media (max-width: 768px) {
-   .main-content {
-     padding: 16px;
-   }
-   
-   .accounts-grid {
-     grid-template-columns: 1fr;
-   }
-   
-   .stats-section {
-     grid-template-columns: repeat(2, 1fr);
-   }
+   /* Responsividade */
+  @media (max-width: 1200px) {
+    .accounts-grid {
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    }
+    
+    .stats-section {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+   @media (max-width: 768px) {
+    .main-content {
+      padding: 16px;
+    }
+    
+    .accounts-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .stats-section {
+      grid-template-columns: repeat(2, 1fr);
+    }
    
    .modal-content {
      margin: 10px;
@@ -2186,36 +2381,56 @@ export default {
      left: 10px;
    }
 
-       .toast-notification {
-      width: 100%;
-      max-width: none;
-    }
+   .toast-notification {
+     width: 100%;
+     max-width: none;
+   }
 
-    /* Modal de confirmação responsivo */
-    .modal-content.delete-confirm {
-      margin: 10px;
-      max-width: none;
-    }
+   /* Modal de confirmação responsivo */
+   .modal-content.delete-confirm {
+     margin: 10px;
+     max-width: none;
+   }
 
-    .delete-actions {
-      flex-direction: column;
-      gap: 12px;
-    }
+   .delete-actions {
+     flex-direction: column;
+     gap: 12px;
+   }
 
-    .cancel-delete-btn,
-    .confirm-delete-btn {
-      width: 100%;
-      justify-content: center;
-    }
+   .cancel-delete-btn,
+   .confirm-delete-btn {
+     width: 100%;
+     justify-content: center;
+   }
 
-    .account-info-row {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 4px;
-    }
+   .account-info-row {
+     flex-direction: column;
+     align-items: flex-start;
+     gap: 4px;
+   }
 
-    .info-value {
-      margin-left: 16px;
-    }
-  }
+   .info-value {
+     margin-left: 16px;
+   }
+   
+   /* Ajustes para telas muito pequenas */
+   .accounts-title {
+     font-size: 24px;
+     flex-direction: column;
+     gap: 8px;
+   }
+   
+   .accounts-icon {
+     width: 28px;
+     height: 28px;
+   }
+   
+   .stat-card {
+     padding: 16px;
+   }
+   
+   .stat-number {
+     font-size: 24px;
+   }
+ }
 </style>

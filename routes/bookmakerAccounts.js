@@ -33,11 +33,10 @@ router.post('/', async (req, res) => {
     const { bookmaker_name, balance, currency, notes } = req.body;
 
     // Validações
-    if (!bookmaker_name || bookmaker_name.trim().length < 2) {
-      return res.status(400)
-      ({
+    if (!bookmaker_name) {
+      return res.status(400).json({
         success: false,
-        message: 'Nome da casa de apostas é obrigatório e deve ter pelo menos 2 caracteres'
+        message: 'Casa de apostas é obrigatória'
       });
     }
 
@@ -147,7 +146,7 @@ router.put('/:id', async (req, res) => {
     if (bookmaker_name && bookmaker_name.trim().length < 2) {
       return res.status(400).json({
         success: false,
-        message: 'Nome da casa de apostas deve ter pelo menos 2 caracteres'
+        message: 'Casa de apostas deve ter pelo menos 2 caracteres'
       });
     }
 
