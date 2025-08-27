@@ -132,6 +132,7 @@
             title="Modo de arrastar"
           >
             <span class="control-text">{{ dragMode ? '🔒' : '✋' }}</span>
+            <span v-if="dragMode" class="drag-hint">Arraste para reorganizar</span>
           </button>
           <button 
             class="clear-pinned-btn" 
@@ -165,6 +166,9 @@
           @dragover.prevent
           @drop="onDrop"
         >
+          <div v-if="dragMode" class="drag-indicator">
+            <span class="drag-icon">↕️</span>
+          </div>
           <SurebetCard 
             :surebet="surebet"
             :isPinned="true"
@@ -3154,15 +3158,9 @@ export default {
   background: linear-gradient(45deg, #00ff88, #00cc6a, #00ff88);
   background-size: 200% 200%;
   -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  animation: gradientShift 3s ease-in-out infinite;
-}
-
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
+      -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
 .pulse-dot {
   position: absolute;
@@ -3294,7 +3292,7 @@ export default {
 .surebets-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  gap: 16px; /* Aumentado gap para melhor espaçamento entre os cards */
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
   overflow: hidden; /* Previne overflow */
@@ -3307,6 +3305,7 @@ export default {
 
 /* Seção de Cards Fixos */
 .pinned-cards-section {
+  margin-top: 24px; /* Adiciona margin-top para evitar sobreposição com outras informações */
   padding: 24px 32px;
   padding-top: 40px; /* Aumentado padding-top para dar mais espaço */
   padding-bottom: 32px; /* Adicionado padding-bottom para melhor espaçamento */
@@ -3323,16 +3322,10 @@ export default {
     top: 0;
     left: 0;
     right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #ff6b6b, #ff4757, #ff6b6b);
-    animation: shimmer 2s ease-in-out infinite;
+          height: 2px;
+      background: linear-gradient(90deg, #ff6b6b, #ff4757, #ff6b6b);
+    }
   }
-}
-
-@keyframes shimmer {
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-}
 
 .pinned-header {
   display: flex;
@@ -3436,7 +3429,7 @@ export default {
 .pinned-cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px; /* Aumentado o gap para melhor espaçamento */
+  gap: 20px; /* Reduzido gap para dar mais espaço ao conteúdo dos cards */
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
   overflow: hidden; /* Previne overflow */
@@ -3458,7 +3451,31 @@ export default {
     grid-template-columns: repeat(2, 1fr);
   }
   .pinned-cards-grid {
-    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos */
+    grid-template-columns: repeat(2, 1fr); /* Reduz para 2 colunas para evitar corte de informações */
+    gap: 16px; /* Reduzido gap para dar mais espaço ao conteúdo */
+  }
+}
+
+/* Ajuste específico para quando a sidebar está expandida */
+.sidebar:not(.collapsed) ~ .main-content .surebets-grid {
+  grid-template-columns: repeat(3, 1fr); /* Reduz para 3 colunas quando sidebar está expandida */
+}
+
+@media (max-width: 1200px) {
+  .sidebar:not(.collapsed) ~ .main-content .surebets-grid {
+    grid-template-columns: repeat(2, 1fr); /* Reduz para 2 colunas em telas menores com sidebar expandida */
+  }
+}
+
+/* Ajuste específico para quando a sidebar está colapsada - permite 4 colunas */
+.sidebar.collapsed ~ .main-content .surebets-grid {
+  grid-template-columns: repeat(4, 1fr); /* Mantém 4 colunas quando sidebar está colapsada */
+}
+
+@media (max-width: 900px) {
+  .pinned-cards-grid {
+    grid-template-columns: repeat(2, 1fr); /* Mantém 2 colunas em telas médias */
+    gap: 14px; /* Reduzido gap para dar mais espaço ao conteúdo */
   }
 }
 
@@ -3485,11 +3502,12 @@ export default {
     gap: 16px; /* Reduzido gap em mobile */
   }
   .pinned-cards-grid {
-    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos mesmo em mobile */
-    gap: 12px; /* Reduzido gap em mobile para acomodar 3 colunas */
+    grid-template-columns: 1fr; /* Reduz para 1 coluna em mobile para evitar corte de informações */
+    gap: 16px; /* Aumentado gap em mobile para melhor espaçamento */
   }
   
   .pinned-cards-section {
+    margin-top: 16px; /* Adiciona margin-top para mobile */
     padding: 16px 20px;
     padding-top: 24px; /* Reduzido padding-top em mobile */
     padding-bottom: 24px; /* Reduzido padding-bottom em mobile */
@@ -4326,34 +4344,61 @@ export default {
   gap: 16px; /* Aumentado gap entre os controles */
 }
 
-.drag-mode-btn {
-  padding: 10px 14px; /* Aumentado padding para botão maior */
-  border: 2px solid var(--accent-primary);
-  background: transparent;
-  color: var(--accent-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 14px;
-  font-weight: 500;
-  
-  &:hover {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    transform: translateY(-2px); /* Aumentado efeito hover */
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3); /* Adicionado sombra no hover */
+  .drag-mode-btn {
+    padding: 10px 14px; /* Aumentado padding para botão maior */
+    border: 2px solid var(--accent-primary);
+    background: transparent;
+    color: var(--accent-primary);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+    position: relative;
+    
+    &:hover {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    }
+    
+    &.active {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+    
+    .drag-hint {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      animation: fadeInHint 0.5s ease forwards;
+      pointer-events: none;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 5px solid transparent;
+        border-top-color: rgba(0, 0, 0, 0.8);
+      }
+    }
   }
-  
-  &.active {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    box-shadow: 0 0 20px rgba(0, 255, 136, 0.5); /* Aumentado sombra quando ativo */
-  }
-  
-  &:active {
-    transform: translateY(0);
-  }
-}
 
 .pinned-cards-grid.drag-mode {
   cursor: grab;
@@ -4381,51 +4426,60 @@ export default {
   }
 }
 
-.pinned-card-wrapper[draggable="true"] {
-  cursor: grab;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  .pinned-card-wrapper[draggable="true"] {
+    cursor: grab;
+    position: relative;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    &:active {
+      cursor: grabbing;
+    }
+    
+    .drag-indicator {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      z-index: 10;
+      animation: pulseDrag 2s ease-in-out infinite;
+      box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+    }
   }
-  
-  &:active {
-    cursor: grabbing;
+
+/* Animações para indicadores de drag */
+@keyframes fadeInHint {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
   }
 }
 
-/* Animação para indicar área de drop */
-@keyframes dropZone {
+@keyframes pulseDrag {
   0%, 100% {
-    border-color: transparent;
-    background: transparent;
+    transform: scale(1);
+    opacity: 1;
   }
   50% {
-    border-color: var(--accent-primary);
-    background: rgba(0, 255, 136, 0.1);
+    transform: scale(1.1);
+    opacity: 0.8;
   }
 }
 
-.pinned-cards-grid.drag-mode .pinned-card-wrapper {
-  position: relative;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: -5px;
-    left: -5px;
-    right: -5px;
-    bottom: -5px;
-    border: 2px dashed transparent;
-    border-radius: 12px;
-    pointer-events: none;
-    transition: all 0.3s ease;
-  }
-  
-  &:hover::before {
-    border-color: var(--accent-primary);
-    animation: dropZone 1s infinite;
-  }
-}
 </style>
 

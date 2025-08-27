@@ -372,10 +372,10 @@ export default {
   background: var(--bg-tertiary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
-  padding: 24px; /* Aumentado padding para mais espaço interno */
+  padding: 20px; /* Reduzido padding para dar mais espaço ao conteúdo */
   transition: all 0.3s ease;
   animation: fadeIn 0.5s ease-in-out;
-  width: 100%; /* Garante que o card ocupe toda a largura disponível */
+  width: 100%; /* Volta para 100% para ocupar todo o espaço do grid */
   max-width: 100%; /* Previne que o card seja maior que o container */
   box-sizing: border-box; /* Inclui padding e border no cálculo da largura */
   overflow: visible; /* Mudado para visible para permitir efeitos hover */
@@ -838,7 +838,7 @@ export default {
 
 @media (max-width: 768px) {
   .surebet-card {
-    padding: 20px; /* Aumentado padding em mobile */
+    padding: 16px; /* Reduzido padding em mobile para dar mais espaço ao conteúdo */
   }
   
   .card-header {
