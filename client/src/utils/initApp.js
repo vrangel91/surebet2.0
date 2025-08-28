@@ -9,8 +9,7 @@ export function initializeApp() {
   // Não limpar dados de usuários automaticamente - agora usamos API real
   // store.dispatch('clearMockDataOnInit')
   
-  // Garantir que todos os usuários tenham a propriedade credits
-  store.dispatch('ensureAllUsersHaveCredits')
+
   
   console.log('✅ Aplicação inicializada com sucesso')
 }

@@ -516,7 +516,7 @@
 import SurebetCard from '../components/SurebetCard.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
-import CreditStatus from '../components/CreditStatus.vue'
+
 import { filterOptions } from '../config/filters.js'
 import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
 import { MapPin, Trash2 } from 'lucide-vue-next'
@@ -529,7 +529,7 @@ export default {
      SurebetCard,
      Sidebar,
      GlossaryModal,
-     CreditStatus,
+ 
      MapPin,
      Trash2
    },

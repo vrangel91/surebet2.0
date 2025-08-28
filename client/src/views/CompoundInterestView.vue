@@ -205,16 +205,7 @@ export default {
     }
   },
   computed: {
-    // Verificação de créditos
-    userCredits() {
-      return this.$store.getters.userCredits
-    },
-    canUseSystem() {
-      return this.$store.getters.canUseSystem
-    },
-    hasCredits() {
-      return this.userCredits > 0 && this.canUseSystem
-    }
+
   },
   watch: {
     formData: {
@@ -226,12 +217,7 @@ export default {
     }
   },
   methods: {
-    checkCreditsAndRedirect() {
-      if (!this.hasCredits) {
-        this.showNotification('Você precisa de créditos para acessar a Calculadora de Juros Compostos. Compre créditos para continuar.', 'error')
-        this.$router.push('/plans')
-      }
-    },
+
     showNotification(message, type = 'info') {
       const notification = document.createElement('div')
       notification.className = 'notification'
@@ -516,8 +502,7 @@ export default {
   },
 
   mounted() {
-    // Verificar créditos antes de permitir acesso
-    this.checkCreditsAndRedirect()
+
     
     // Calcular automaticamente com valores padrão
     this.calculateInterest()

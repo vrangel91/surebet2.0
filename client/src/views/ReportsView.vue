@@ -351,7 +351,7 @@ import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
-import { formatMarketForDisplay } from '../utils/market-translations.js'
+
 
 export default {
   name: 'ReportsView',
@@ -552,6 +552,61 @@ export default {
         currency: 'BRL'
       }).format(value)
     },
+    
+    // Formatar campo market para exibição
+    formatMarketForDisplay(marketText) {
+      if (!marketText) return 'N/A'
+      
+      // Aplicar traduções se disponível
+      if (typeof this.translateMarketField === 'function') {
+        return this.translateMarketField(marketText)
+      }
+      
+      // Fallback: retornar o texto original
+      return marketText
+    },
+    
+    // Traduzir campo market (fallback se a importação falhar)
+    translateMarketField(marketText) {
+      if (!marketText) return marketText
+      
+      const translations = {
+        'AH1': 'Handicap Asiático - Casa',
+        'AH2': 'Handicap Asiático - Visitante',
+        'EH1': 'Handicap Europeu - Casa',
+        'EH2': 'Handicap Europeu - Visitante',
+        'TO': 'Over',
+        'TU': 'Under',
+        '1X2': 'Resultado Final',
+        'DC': 'Dupla Chance',
+        'BTS': 'Ambas Marcam',
+        'CS': 'Placar Exato',
+        'HT': 'Primeiro Tempo',
+        'FT': 'Tempo Completo',
+        'Even': 'Total de Gols – Par',
+        'Odd': 'Total de Gols – Ímpar',
+        'for Team1': 'Casa',
+        'for Team2': 'Visitante',
+        'Corners': 'Escanteios',
+        'YC': 'Cartão Amarelo',
+        'RC': 'Cartão Vermelho',
+        'FOULS': 'Faltas',
+        'OFFSIDES': 'Impedimentos',
+        'SHOTS': 'Chutes',
+        'POSSESSION': 'Posse de Bola'
+      }
+      
+      let translatedText = marketText
+      
+      // Aplicar todas as substituições do dicionário
+      Object.entries(translations).forEach(([original, translation]) => {
+        // Usar regex para substituir apenas quando for uma palavra completa
+        const regex = new RegExp(`\\b${original}\\b`, 'g')
+        translatedText = translatedText.replace(regex, translation)
+      })
+      
+      return translatedText
+    },
     // Busca surebets da API
     async fetchSurebets() {
       try {
@@ -735,18 +790,7 @@ export default {
         // Recarregar apostas armazenadas
         this.loadStoredBets()
         
-        // Verificar se o usuário tem créditos para usar o sistema
-        if (this.$store.getters.userCredits <= 0) {
-          const today = new Date().toDateString()
-          const lastConsumption = this.$store.state.user?.lastCreditConsumption 
-            ? new Date(this.$store.state.user.lastCreditConsumption).toDateString() 
-            : null
-          
-          if (lastConsumption !== today) {
-            // Consumir crédito se for um novo dia
-            this.$store.dispatch('checkAndConsumeCredit')
-          }
-        }
+
         
         // Resetar paginação
         this.currentPage = 1

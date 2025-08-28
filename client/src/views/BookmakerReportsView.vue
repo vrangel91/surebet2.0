@@ -212,7 +212,6 @@ export default {
   computed: {
     ...mapGetters([
       'isAdmin',
-      'userCredits',
       'canUseSystem'
     ]),
     

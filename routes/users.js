@@ -31,7 +31,11 @@ const router = express.Router();
 
 // Configuração do banco de dados
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/surestake'
+  host: 'localhost',
+  port: 5432,
+  database: 'surestake',
+  user: 'postgres',
+  password: 'SureStake2024!'
 });
 
 // Aplicar middleware de autenticação em todas as rotas
@@ -461,57 +465,94 @@ router.post('/process-expiration', async (req, res) => {
 // 8. Estatísticas VIP (admin only)
 router.get('/vip-statistics', requireAdmin, async (req, res) => {
   try {
+    console.log('📊 Buscando estatísticas VIP...');
+    
     // Total de usuários VIP ativos
     const activeVIPsQuery = `
-      SELECT COUNT(*) FROM user_vip_status WHERE status = 'active'
+      SELECT COUNT(*) as count FROM user_vip 
+      WHERE status = 'ativo' AND data_fim > NOW()
     `;
 
     const activeVIPsResult = await pool.query(activeVIPsQuery);
     const activeVIPs = parseInt(activeVIPsResult.rows[0].count);
+    console.log('👑 VIPs ativos:', activeVIPs);
 
     // VIPs que expiram nos próximos 7 dias
     const expiringSoonQuery = `
-      SELECT COUNT(*) FROM user_vip_status 
-      WHERE status = 'active' 
-      AND expires_at BETWEEN NOW() AND NOW() + INTERVAL '7 days'
+      SELECT COUNT(*) as count FROM user_vip 
+      WHERE status = 'ativo' 
+      AND data_fim BETWEEN NOW() AND NOW() + INTERVAL '7 days'
     `;
 
     const expiringSoonResult = await pool.query(expiringSoonQuery);
     const expiringSoon = parseInt(expiringSoonResult.rows[0].count);
+    console.log('⏰ Expirando em 7 dias:', expiringSoon);
 
     // VIPs expirados hoje
     const expiredTodayQuery = `
-      SELECT COUNT(*) FROM user_vip_status 
-      WHERE status = 'active' 
-      AND DATE(expires_at) = CURRENT_DATE
+      SELECT COUNT(*) as count FROM user_vip 
+      WHERE status = 'ativo' 
+      AND DATE(data_fim) = CURRENT_DATE
     `;
 
     const expiredTodayResult = await pool.query(expiredTodayQuery);
     const expiredToday = parseInt(expiredTodayResult.rows[0].count);
+    console.log('❌ Expirados hoje:', expiredToday);
+
+    // Receita total (soma de todos os valores pagos)
+    const totalRevenueQuery = `
+      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(10,2))), 0) as total FROM user_vip 
+      WHERE amount IS NOT NULL AND amount > 0
+    `;
+
+    const totalRevenueResult = await pool.query(totalRevenueQuery);
+    const totalRevenue = parseFloat(totalRevenueResult.rows[0].total) || 0;
+    console.log('💰 Receita total:', totalRevenue);
+
+    // Receita deste mês
+    const thisMonthRevenueQuery = `
+      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(10,2))), 0) as total FROM user_vip 
+      WHERE amount IS NOT NULL AND amount > 0
+      AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
+    `;
+
+    const thisMonthRevenueResult = await pool.query(thisMonthRevenueQuery);
+    const thisMonthRevenue = parseFloat(thisMonthRevenueResult.rows[0].total) || 0;
+    console.log('📅 Receita deste mês:', thisMonthRevenue);
 
     // Total de VIPs criados este mês
     const thisMonthQuery = `
-      SELECT COUNT(*) FROM user_vip_status 
+      SELECT COUNT(*) as count FROM user_vip 
       WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
     `;
 
     const thisMonthResult = await pool.query(thisMonthQuery);
     const thisMonth = parseInt(thisMonthResult.rows[0].count);
+    console.log('📊 VIPs criados este mês:', thisMonth);
+
+    const statistics = {
+      activeVIPs,
+      expiringSoon,
+      expiredToday,
+      thisMonth,
+      totalRevenue,
+      thisMonthRevenue,
+      totalVIPs: activeVIPs + expiringSoon + expiredToday
+    };
+
+    console.log('✅ Estatísticas calculadas:', statistics);
 
     res.json({
       success: true,
-      statistics: {
-        activeVIPs,
-        expiringSoon,
-        expiredToday,
-        thisMonth,
-        totalVIPs: activeVIPs + expiringSoon + expiredToday
-      }
+      statistics
     });
 
   } catch (error) {
-    console.error('Erro ao buscar estatísticas:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro ao buscar estatísticas VIP:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message 
+    });
   }
 });
 
@@ -523,7 +564,7 @@ router.get('/', async (req, res) => {
     const users = await User.findAll({
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'created_at', 'last_login'
+        'vip_expires_at', 'account_type', 'created_at', 'last_login'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -535,7 +576,6 @@ router.get('/', async (req, res) => {
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'basic',
       status: 'active',
-      credits: 0,
       lastLogin: user.last_login // Mapear para o formato esperado pelo frontend
     }));
 
@@ -558,7 +598,7 @@ router.get('/:id', async (req, res) => {
     const user = await User.findByPk(req.params.id, {
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'cpf', 'phone', 'created_at', 'last_login'
+        'vip_expires_at', 'account_type', 'cpf', 'phone', 'created_at', 'last_login'
       ]
     });
 
@@ -575,7 +615,7 @@ router.get('/:id', async (req, res) => {
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'basic',
       status: 'active',
-      credits: 0
+
     };
 
     res.json({
@@ -653,7 +693,7 @@ router.post('/', requireAdmin, async (req, res) => {
       email: user.email,
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'basic',
-      credits: 0, // Usuários novos começam com 0 créditos
+
       status: 'active',
       created_at: user.created_at
     };
@@ -675,28 +715,43 @@ router.post('/', requireAdmin, async (req, res) => {
 // Atualizar usuário
 router.put('/:id', async (req, res) => {
   try {
+    console.log('🔄 PUT /api/users/:id - Iniciando atualização...')
     const { id } = req.params;
-    const { name, email, role, account_type, credits, status } = req.body;
+    const { name, email, role, account_type, status } = req.body;
+    
+    console.log('Backend: Dados recebidos:', { id, name, email, role, account_type, status })
 
     const user = await User.findByPk(id);
 
     if (!user) {
+      console.log('Backend: Usuário não encontrado')
       return res.status(404).json({
         error: 'Usuário não encontrado'
       });
     }
 
+    console.log('Backend: Usuário encontrado:', { 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      account_type: user.account_type 
+    })
+
     // Atualizar campos
     if (name) user.name = name;
     if (email) user.email = email.toLowerCase();
     if (role) user.role = role;
-    if (account_type) user.account_type = account_type;
-    if (credits !== undefined) user.credits = credits;
+    if (account_type) {
+      console.log('Backend: Atualizando account_type de', user.account_type, 'para', account_type)
+      user.account_type = account_type;
+    }
+
     if (status) user.status = status;
 
     await user.save();
+    console.log('Backend: Usuário salvo no banco')
 
-    res.json({
+    const responseData = {
       success: true,
       message: 'Usuário atualizado com sucesso',
       user: {
@@ -705,14 +760,16 @@ router.put('/:id', async (req, res) => {
         email: user.email,
         role: user.role,
         account_type: user.account_type,
-        credits: user.credits,
         status: user.status,
         updated_at: user.updated_at
       }
-    });
+    };
+    
+    console.log('Backend: Resposta sendo enviada:', responseData)
+    res.json(responseData);
 
   } catch (error) {
-    console.error('Erro ao atualizar usuário:', error);
+    console.error('Backend: Erro ao atualizar usuário:', error);
     res.status(500).json({
       error: 'Erro interno do servidor'
     });

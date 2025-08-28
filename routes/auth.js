@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
       // Mapeamento para propriedades esperadas pelo frontend
       role: user.is_admin ? 'admin' : 'user',
       accountType: user.account_type || (user.is_vip ? 'vip' : (user.is_admin ? 'admin' : 'basic')),
-      credits: 999, // Admins/VIPs têm créditos ilimitados
+      
       status: 'active',
       lastLogin: user.last_login // Incluir último login
     };
@@ -227,38 +227,6 @@ router.get('/verify', authenticateToken, async (req, res) => {
   }
 });
 
-// Rota para consumir crédito
-router.post('/consume-credit', authenticateToken, async (req, res) => {
-  try {
-    const user = req.user;
 
-    if (user.is_admin) {
-      return res.json({
-        success: true,
-        message: 'Administradores não consomem créditos'
-      });
-    }
-
-    const consumed = await user.consumeCredit();
-
-    if (consumed) {
-      res.json({
-        success: true,
-        message: 'Crédito consumido com sucesso',
-        is_vip: user.is_vip
-      });
-    } else {
-      res.status(403).json({
-        error: 'Créditos insuficientes'
-      });
-    }
-
-  } catch (error) {
-    console.error('Erro ao consumir crédito:', error);
-    res.status(500).json({
-      error: 'Erro interno do servidor'
-    });
-  }
-});
 
 module.exports = router;

@@ -117,16 +117,7 @@ function requireAdmin(req, res, next) {
   }
 }
 
-// Middleware para verificar créditos
-function requireCredits(req, res, next) {
-  if (req.user && req.user.canUseSystem()) {
-    next();
-  } else {
-    res.status(403).json({ 
-      error: 'Créditos insuficientes para acessar esta funcionalidade' 
-    });
-  }
-}
+
 
 module.exports = {
   generateToken,
@@ -136,5 +127,5 @@ module.exports = {
   invalidateSession,
   authenticateToken,
   requireAdmin,
-  requireCredits
+
 };

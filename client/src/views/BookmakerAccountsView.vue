@@ -477,7 +477,6 @@ export default {
   computed: {
     ...mapGetters([
       'isAdmin',
-      'userCredits',
       'canUseSystem'
     ]),
     
@@ -485,9 +484,7 @@ export default {
       return this.$store.getters.currentUser
     },
     
-    hasCredits() {
-      return this.userCredits > 0 && this.canUseSystem
-    },
+
     
     totalBalance() {
       return this.accounts.reduce((total, account) => {

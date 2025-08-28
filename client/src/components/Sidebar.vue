@@ -27,11 +27,22 @@
             <span class="status-dot"></span>
             <span class="status-text">Online</span>
           </div>
+          <div class="user-account-type">
+            <span class="account-type-badge" :class="userAccountTypeClass">
+              {{ userAccountTypeDisplay }}
+            </span>
+          </div>
+        </div>
+        <!-- Tipo de conta no sidebar colapsado -->
+        <div class="user-account-type-collapsed" v-show="shouldBeCollapsed">
+          <span class="account-type-badge-collapsed" :class="userAccountTypeClass" :title="userAccountTypeDisplay">
+            {{ userAccountTypeDisplay.charAt(0) }}
+          </span>
         </div>
       </div>
       
       <!-- Status da Conta Compacto -->
-      <CreditStatus :compact="true" v-show="!shouldBeCollapsed" />
+      
       
       <!-- Ícones de Administração e Configurações -->
       <div class="admin-icons" v-show="!shouldBeCollapsed">
@@ -43,6 +54,11 @@
         <!-- Administração (só para admins) -->
         <router-link v-if="isAdmin" to="/admin" class="admin-icon-link" title="Administração">
           <Shield size="18" />
+        </router-link>
+        
+        <!-- Administração VIP (só para admins) -->
+        <router-link v-if="isAdmin" to="/vip-admin" class="admin-icon-link" title="Administração VIP">
+          <Crown size="18" />
         </router-link>
       </div>
     </div>
@@ -163,13 +179,14 @@
 </template>
 
 <script>
-import CreditStatus from './CreditStatus.vue'
+
 import { 
   Menu, 
   ChevronRight, 
   User, 
   Settings, 
   Shield, 
+  Crown,
   Target, 
   Lock, 
   Calculator, 
@@ -186,12 +203,13 @@ import {
 export default {
   name: 'Sidebar',
   components: {
-    CreditStatus,
+
     Menu,
     ChevronRight,
     User,
     Settings,
     Shield,
+    Crown,
     Target,
     Lock,
     Calculator,
@@ -225,20 +243,25 @@ export default {
     isVIP() {
       return this.$store.getters.isVIP
     },
+    userAccountType() {
+      return this.$store.getters.userAccountType
+    },
+    userAccountTypeDisplay() {
+      const accountTypes = {
+        basic: 'Básico',
+        premium: 'Premium',
+        vip: 'VIP'
+      }
+      return accountTypes[this.userAccountType] || 'Básico'
+    },
+    userAccountTypeClass() {
+      return `account-type-${this.userAccountType}`
+    },
     // Computed para determinar se a sidebar deve estar colapsada
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
     },
-    // Verificação de créditos
-    userCredits() {
-      return this.$store.getters.userCredits
-    },
-    canUseSystem() {
-      return this.$store.getters.canUseSystem
-    },
-    hasCredits() {
-      return this.userCredits > 0 && this.canUseSystem
-    }
+
   },
   watch: {
     // Observar mudanças na prop sidebarCollapsed
@@ -681,6 +704,86 @@ export default {
 .status-text {
   font-size: 12px;
   color: var(--text-secondary, #cccccc);
+}
+
+.user-account-type {
+  margin-top: 6px;
+}
+
+.account-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.account-type-basic {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: #ffffff;
+}
+
+.account-type-premium {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+}
+
+.account-type-vip {
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  animation: vipGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes vipGlow {
+  from {
+    box-shadow: 0 1px 3px rgba(255, 215, 0, 0.3);
+  }
+  to {
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.5);
+  }
+}
+
+/* Badge do tipo de conta no sidebar colapsado */
+.user-account-type-collapsed {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.account-type-badge-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: help;
+}
+
+.account-type-badge-collapsed.account-type-basic {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: #ffffff;
+}
+
+.account-type-badge-collapsed.account-type-premium {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+}
+
+.account-type-badge-collapsed.account-type-vip {
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  color: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  animation: vipGlow 2s ease-in-out infinite alternate;
 }
 
 /* Ícones de Administração */

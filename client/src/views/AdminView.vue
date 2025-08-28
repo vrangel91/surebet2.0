@@ -649,6 +649,45 @@
 
     <!-- Modal do Glossário -->
     <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+
+    <!-- Sistema de Notificações Toast Moderno -->
+    <div class="toast-container">
+      <transition-group name="toast" tag="div">
+        <div 
+          v-for="toast in toasts" 
+          :key="toast.id"
+          :data-toast-id="toast.id"
+          class="toast-notification"
+          :class="[toast.type, { 'toast-enter': toast.visible }]"
+        >
+          <div class="toast-icon">
+            <svg v-if="toast.type === 'success'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.97a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+            </svg>
+            <svg v-else-if="toast.type === 'error'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+            </svg>
+            <svg v-else-if="toast.type === 'warning'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+            </svg>
+            <svg v-else width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+            </svg>
+          </div>
+          <div class="toast-content">
+            <div class="toast-title">{{ toast.title }}</div>
+            <div class="toast-message">{{ toast.message }}</div>
+          </div>
+          <button @click="removeToast(toast.id)" class="toast-close" :title="'Fechar notificação'">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+          <div class="toast-progress" :style="{ width: `${toast.progress}%` }"></div>
+        </div>
+      </transition-group>
+    </div>
   </div>
 </template>
 
@@ -733,7 +772,8 @@ export default {
         userName: '',
         currentType: 'basic',
         newType: 'basic'
-      }
+      },
+      toasts: [] // Array para armazenar as notificações toast
     }
   },
   
@@ -1013,8 +1053,8 @@ export default {
          confirmPassword: ''
        }
        
-       // Usar alert nativo para garantir que apareça visualmente
-       alert(`🔐 Senha atualizada com sucesso para ${userName}`)
+       // Mostrar toast profissional
+       this.showToast('Sucesso', `🔐 Senha atualizada com sucesso para ${userName}`, 'success')
      },
 
          async saveCredits() {
@@ -1067,10 +1107,14 @@ export default {
            newType: 'basic'
          }
          
-         // Usar alert nativo para garantir que apareça visualmente
-         alert(`👑 Tipo de conta atualizado para ${this.getAccountTypeText(newType)} - ${userName}`)
+         // Recarregar usuários da API para garantir que os dados estão atualizados
+         await this.fetchUsersFromAPI()
+         
+         // Mostrar toast profissional
+         this.showToast('Sucesso', `👑 Tipo de conta atualizado para ${this.getAccountTypeText(newType)} - ${userName}`, 'success')
        } catch (error) {
-         alert('❌ Erro ao atualizar tipo de conta. Verifique as permissões e tente novamente.')
+         console.error('❌ Erro ao atualizar tipo de conta:', error)
+         this.showToast('Erro', '❌ Erro ao atualizar tipo de conta. Verifique as permissões e tente novamente.', 'error')
        }
      },
     
@@ -1393,12 +1437,83 @@ export default {
           }
         }, 300)
       }, 5000)
+    },
+
+    // Sistema de Notificações Toast Moderno
+    showToast(title, message, type = 'info') {
+      const id = Date.now()
+      const toast = {
+        id,
+        title,
+        message,
+        type,
+        visible: false,
+        progress: 0
+      }
+      
+      this.toasts.push(toast)
+
+      // Animação de entrada suave
+      this.$nextTick(() => {
+        toast.visible = true
+        const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
+        if (toastElement) {
+          toastElement.classList.add('toast-enter')
+        }
+      })
+
+      this.startToastProgress(id)
+    },
+
+    startToastProgress(id) {
+      const toast = this.toasts.find(t => t.id === id)
+      if (!toast) return
+
+      const duration = 5000 // 5 segundos - aumentado para garantir visibilidade
+      const interval = 10 // 10ms interval
+      const steps = duration / interval
+
+      let currentStep = 0
+      const progressInterval = setInterval(() => {
+        currentStep++
+        toast.progress = (currentStep / steps) * 100
+        if (currentStep >= steps) {
+          clearInterval(progressInterval)
+          this.removeToast(id)
+        }
+      }, interval)
+    },
+
+    removeToast(id) {
+      const toast = this.toasts.find(t => t.id === id)
+      if (toast) {
+        toast.visible = false
+        const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
+        if (toastElement) {
+          toastElement.classList.add('toast-leave')
+          
+          // Remover após a animação
+          setTimeout(() => {
+            const index = this.toasts.findIndex(t => t.id === id)
+            if (index !== -1) {
+              this.toasts.splice(index, 1)
+            }
+          }, 300)
+        } else {
+          // Fallback se o elemento não for encontrado
+          const index = this.toasts.findIndex(t => t.id === id)
+          if (index !== -1) {
+            this.toasts.splice(index, 1)
+          }
+        }
+      }
     }
   }
 }
 </script>
 
-<style scoped>
+<style scoped lang="scss">
+@import '../assets/styles/toast.scss';
 .admin-container {
   display: flex;
   height: 100vh;
@@ -2245,21 +2360,32 @@ export default {
 }
 
 .account-type-badge.basic {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: #ffffff;
   border: 1px solid rgba(108, 117, 125, 0.3);
 }
 
 .account-type-badge.premium {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+  border: 1px solid rgba(0, 123, 255, 0.3);
 }
 
 .account-type-badge.vip {
-  background: rgba(138, 43, 226, 0.2);
-  color: #8a2be2;
-  border: 1px solid rgba(138, 43, 226, 0.3);
+  background: linear-gradient(135deg, #ffd700, #ffb347);
+  color: #1a1a1a;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  animation: vipGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes vipGlow {
+  from {
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  }
+  to {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+  }
 }
 
 /* Tickets Styles */
@@ -2909,5 +3035,7 @@ export default {
     width: 28px;
     height: 28px;
   }
+
+
 }
 </style>

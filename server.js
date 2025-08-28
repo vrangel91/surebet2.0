@@ -12,9 +12,13 @@ const { syncModels } = require('./models');
 // Importar rotas
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
+const vipRoutes = require('./routes/vip');
 const bookmakerAccountsRoutes = require('./routes/bookmakerAccounts');
 const surebetStatsRoutes = require('./routes/surebetStats');
 const ordersRoutes = require('./routes/orders');
+
+// Importar cron jobs VIP
+const vipCronJobs = require('./utils/vipCronJobs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -57,7 +61,7 @@ app.use((req, res, next) => {
   const isForceRefresh = req.get('Cache-Control') === 'no-cache' || req.get('Pragma') === 'no-cache';
   
   // Se for uma requisição para uma rota da API que não existe, tratar como 404
-  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
+  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
     console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}${isForceRefresh ? ' (Refresh forçado detectado)' : ''}`);
     return res.status(404).json({
       error: 'Endpoint não encontrado',
@@ -75,6 +79,7 @@ app.use((req, res, next) => {
 // Configurar rotas da API
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/vip', vipRoutes);
 app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
 app.use('/api/surebet-stats', surebetStatsRoutes);
 app.use('/api/orders', ordersRoutes);
@@ -265,6 +270,13 @@ async function initializeApp() {
     
     // Criar administrador padrão
 
+    // Inicializar cron jobs VIP
+    try {
+      await vipCronJobs.initialize();
+      console.log('✅ Cron jobs VIP inicializados automaticamente');
+    } catch (error) {
+      console.error('⚠️ Erro ao inicializar cron jobs VIP:', error.message);
+    }
     
     // Inicializar busca de surebets
     fetchSurebets();

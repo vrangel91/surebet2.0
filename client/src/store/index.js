@@ -113,45 +113,7 @@ export default createStore({
       }
     },
     
-    // Mutations para sistema de créditos
-    consumeCredit(state, userId) {
-      const user = state.users.find(u => u.id === userId)
-      if (user && user.credits > 0) {
-        user.credits--
-        user.lastCreditConsumption = new Date().toISOString()
-        localStorage.setItem('users', JSON.stringify(state.users))
-        
-        // Atualizar usuário atual se for o mesmo
-        if (state.user && state.user.id === userId) {
-          state.user.credits = user.credits
-          state.user.lastCreditConsumption = user.lastCreditConsumption
-          localStorage.setItem('user', JSON.stringify(state.user))
-        }
-      }
-    },
-    
-    addCredits(state, { userId, amount }) {
-      const user = state.users.find(u => u.id === userId)
-      if (user) {
-        // Garantir que credits seja um número
-        if (typeof user.credits !== 'number') {
-          user.credits = 0
-        }
-        
-        user.credits += amount
-        localStorage.setItem('users', JSON.stringify(state.users))
-        
-        // Atualizar usuário atual se for o mesmo
-        if (state.user && state.user.id === userId) {
-          state.user.credits = user.credits
-          localStorage.setItem('user', JSON.stringify(state.user))
-        }
-        
-        console.log(`Créditos adicionados: ${amount} para usuário ${userId}. Total: ${user.credits}`)
-      } else {
-        console.error(`Usuário não encontrado: ${userId}`)
-      }
-    },
+
     
     updateAccountType(state, { userId, accountType }) {
       const user = state.users.find(u => u.id === userId)
@@ -167,15 +129,7 @@ export default createStore({
       }
     },
     
-    // Garantir que todos os usuários tenham a propriedade credits
-    ensureUserCredits(state) {
-      state.users.forEach(user => {
-        if (typeof user.credits !== 'number') {
-          user.credits = 0
-        }
-      })
-      localStorage.setItem('users', JSON.stringify(state.users))
-    }
+
   },
   
   actions: {
@@ -241,7 +195,7 @@ export default createStore({
           email: result.user.email,
           role: result.user.role,
           accountType: result.user.account_type,
-          credits: result.user.credits || 0,
+  
           status: result.user.status,
           lastLogin: result.user.last_login,
           createdAt: result.user.created_at,
@@ -296,7 +250,7 @@ export default createStore({
           email: result.user.email,
           role: result.user.role,
           accountType: result.user.account_type,
-          credits: result.user.credits || 0,
+  
           status: result.user.status,
           lastLogin: result.user.last_login,
           createdAt: result.user.created_at,
@@ -444,42 +398,55 @@ export default createStore({
       commit('addTicketMessage', { ticketId, message })
     },
     
-    // Actions para sistema de créditos
-    checkAndConsumeCredit({ commit, state, getters }) {
-      const user = state.user
-      if (!user) return false
-      
-      // Verificar se já consumiu crédito hoje
-      const today = new Date().toDateString()
-      const lastConsumption = user.lastCreditConsumption 
-        ? new Date(user.lastCreditConsumption).toDateString() 
-        : null
-      
-      if (lastConsumption === today) {
-        return true // Já consumiu hoje, pode usar
+
+    
+
+    
+    async upgradeAccountType({ commit, state }, { userId, accountType }) {
+      try {
+        console.log('🔄 Store: Iniciando upgradeAccountType...')
+        console.log('Store: userId:', userId, 'accountType:', accountType)
+        
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        console.log('Store: Token encontrado, fazendo requisição para API...')
+        
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ account_type: accountType })
+        })
+
+        console.log('Store: Resposta da API recebida, status:', response.status)
+
+        if (!response.ok) {
+          const errorData = await safeJsonResponse(response)
+          console.error('Store: Erro na API:', errorData)
+          throw new Error(errorData.error || 'Erro ao alterar tipo de conta')
+        }
+
+        const result = await safeJsonResponse(response)
+        console.log('Store: Resposta da API:', result)
+        
+        // Atualizar usuário local
+        commit('updateAccountType', { userId, accountType: result.user.account_type })
+        console.log('Store: Usuário atualizado localmente')
+        
+        return { success: true }
+        
+      } catch (error) {
+        console.error('❌ Erro ao alterar tipo de conta:', error)
+        throw error
       }
-      
-      // Verificar se tem créditos disponíveis
-      if (user.credits > 0) {
-        commit('consumeCredit', user.id)
-        return true
-      }
-      
-      return false // Sem créditos
     },
     
-    addCreditsToUser({ commit }, { userId, amount }) {
-      console.log('Action addCreditsToUser chamada:', { userId, amount })
-      commit('addCredits', { userId, amount })
-    },
-    
-    upgradeAccountType({ commit }, { userId, accountType }) {
-      commit('updateAccountType', { userId, accountType })
-    },
-    
-    ensureAllUsersHaveCredits({ commit }) {
-      commit('ensureUserCredits')
-    },
+
     
     // Limpar dados mocados na inicialização
     clearMockDataOnInit({ commit }) {
@@ -517,7 +484,7 @@ export default createStore({
             email: user.email,
             role: user.role,
             status: user.status,
-            credits: user.credits || 0,
+
             accountType: user.account_type || 'basic',
             lastLogin: user.last_login,
             createdAt: user.created_at,
@@ -683,19 +650,13 @@ export default createStore({
     closedTickets: state => state.tickets.filter(ticket => ticket.status === 'closed'),
     
     // Getters para sistema de créditos
-    userCredits: state => state.user?.credits || 0,
+
     userAccountType: state => state.user?.accountType || 'basic',
     canUseSystem: state => {
       if (!state.user) return false
       if (state.user.is_admin === true) return true
       if (state.user.is_vip === true) return true
-      
-      const today = new Date().toDateString()
-      const lastConsumption = state.user.lastCreditConsumption 
-        ? new Date(state.user.lastCreditConsumption).toDateString() 
-        : null
-      
-      return lastConsumption === today || state.user.credits > 0
+      return true // Todos os usuários podem usar o sistema agora
     },
     accountTypeInfo: () => {
       return {
@@ -703,22 +664,19 @@ export default createStore({
           name: 'Básico',
           description: 'Acesso básico ao sistema',
           features: ['Acesso às surebets', 'Filtros básicos', 'Relatórios simples'],
-          price: 'Grátis',
-          creditsPerDay: 1
+          price: 'Grátis'
         },
         premium: {
           name: 'Premium',
           description: 'Acesso completo com recursos avançados',
           features: ['Todas as funcionalidades básicas', 'Filtros avançados', 'Relatórios detalhados', 'Prioridade no suporte'],
-          price: 'R$ 29,90/mês',
-          creditsPerDay: 1
+          price: 'R$ 29,90/mês'
         },
         vip: {
           name: 'VIP',
           description: 'Acesso exclusivo com recursos premium',
           features: ['Todas as funcionalidades premium', 'Filtros personalizados', 'Relatórios em tempo real', 'Suporte prioritário 24/7', 'Funcionalidades exclusivas'],
-          price: 'R$ 99,90/mês',
-          creditsPerDay: 1
+          price: 'R$ 99,90/mês'
         }
       }
     }
