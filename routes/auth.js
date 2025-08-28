@@ -61,6 +61,9 @@ router.post('/login', async (req, res) => {
     // Gerar token simples
     const token = generateToken(user);
 
+    // Atualizar último login do usuário
+    await user.update({ last_login: new Date() });
+
     // Criar sessão no banco
     await createUserSession(user, token, req);
 
@@ -80,7 +83,8 @@ router.post('/login', async (req, res) => {
       role: user.is_admin ? 'admin' : 'user',
       accountType: user.account_type || (user.is_vip ? 'vip' : (user.is_admin ? 'admin' : 'basic')),
       credits: 999, // Admins/VIPs têm créditos ilimitados
-      status: 'active'
+      status: 'active',
+      lastLogin: user.last_login // Incluir último login
     };
 
     console.log('✅ Login bem-sucedido para:', email);

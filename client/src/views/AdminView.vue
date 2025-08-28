@@ -1075,14 +1075,27 @@ export default {
      },
     
     formatDate(dateString) {
-      if (!dateString) return 'Nunca'
-      return new Date(dateString).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      if (!dateString || dateString === 'null' || dateString === 'undefined') {
+        return 'Nunca'
+      }
+      
+      try {
+        const date = new Date(dateString)
+        if (isNaN(date.getTime())) {
+          return 'Nunca'
+        }
+        
+        return date.toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
+      } catch (error) {
+        console.warn('Erro ao formatar data:', dateString, error)
+        return 'Nunca'
+      }
     },
     
     editUser(user) {

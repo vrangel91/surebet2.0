@@ -128,7 +128,7 @@ export default {
             '+2.0': 'Handicap +2 Gols Time Visitante'
           }
         },
-        'Escanteios (EH)': {
+        'Escanteios': {
           'EH1': {
             '-5': 'Handicap -5 Escanteios Time Casa',
             '-4': 'Handicap -4 Escanteios Time Casa',
@@ -276,7 +276,7 @@ export default {
     getCategoryDisplayName(category) {
       const names = {
         'Handicap Asiático (AH)': 'Handicap Asiático (AH)',
-        'Handicap Europeu (EH)': 'Handicap Europeu (EH)',
+        'Handicap de Gols': 'Handicap de Gols',
         'Gols': 'Gols',
         'Cartões': 'Cartões',
         'Resultado Final': 'Resultado Final',
@@ -290,7 +290,7 @@ export default {
     getCategoryDescription(category) {
       const descriptions = {
         'Handicap Asiático (AH)': 'Sistema de handicap que equilibra as probabilidades entre times, aplicado aos gols',
-        'Handicap Europeu (EH)': 'Mercados relacionados a escanteios com handicap e totais',
+        'Handicap de Gols': 'Mercados relacionados a gols com handicap e totais',
         'Gols': 'Mercados baseados na quantidade e características dos gols marcados',
         'Cartões': 'Mercados relacionados ao total de cartões amarelos e vermelhos',
         'Resultado Final': 'Mercados sobre o resultado da partida, por tempo e final',

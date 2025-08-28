@@ -58,8 +58,12 @@ module.exports = (sequelize) => {
       defaultValue: 'basic',
       allowNull: false
     },
+    last_login: {
+      type: DataTypes.DATE,
+      allowNull: true
+    }
     // Colunas removidas pois não existem no banco surestake
-    // role, account_type, credits, status, last_login, login_attempts, locked_until, last_credit_consumption
+    // role, credits, status, login_attempts, locked_until, last_credit_consumption
   }, {
     tableName: 'users',
     timestamps: true,

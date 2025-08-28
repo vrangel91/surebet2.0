@@ -239,8 +239,6 @@
          </div>
          
          <div class="filter-content">
-
-           
            <!-- Filtro por Faixa de Lucro -->
            <div class="filter-section">
              <div class="filter-section-header">
@@ -266,10 +264,10 @@
            
            <div class="filter-divider"></div>
            
-           <!-- Filtro por Casas de Aposta -->
-           <div class="filter-section">
-             <div class="filter-section-header">
-               <label class="filter-section-label">Casas de Aposta:</label>
+           <!-- Categoria: Casas de Aposta -->
+           <div class="filter-category">
+             <div class="filter-category-header">
+               <h4>Casas de Aposta</h4>
                <div class="filter-actions">
                  <button @click="selectAllHouses" class="action-btn">Marcar Todos</button>
                  <button @click="deselectAllHouses" class="action-btn">Desmarcar Todos</button>
@@ -321,114 +319,105 @@
            
            <div class="filter-divider"></div>
            
-           <!-- Filtro por Esportes -->
-           <div class="filter-section">
-             <div class="filter-section-header">
-               <label class="filter-section-label">Esportes:</label>
+           <!-- Categoria: Futebol -->
+           <div class="filter-category">
+             <div class="filter-category-header">
+               <h4>Futebol</h4>
                <div class="filter-actions">
                  <button @click="selectAllSports" class="action-btn">Marcar Todos</button>
                  <button @click="deselectAllSports" class="action-btn">Desmarcar Todos</button>
                </div>
              </div>
-             <div class="sports-grid">
-               <label 
-                 v-for="sport in filterOptions.sports" 
-                 :key="sport.value" 
-                 class="checkbox-item"
-               >
-                 <input 
-                   type="checkbox" 
-                   :value="sport.value" 
-                   v-model="selectedSports"
-                   class="filter-checkbox"
-                 />
-                 <span class="checkbox-label">{{ sport.label }}</span>
-               </label>
-             </div>
-           </div>
-           
-           <div class="filter-divider"></div>
-           
-           <!-- Filtro por Moedas -->
-           <div class="filter-section">
-             <div class="filter-section-header">
-               <label class="filter-section-label">Moedas:</label>
-               <div class="filter-actions">
-                 <button @click="selectAllCurrencies" class="action-btn">Marcar Todos</button>
-                 <button @click="deselectAllCurrencies" class="action-btn">Desmarcar Todos</button>
+             
+             <!-- Filtro por Esportes -->
+             <div class="filter-section">
+               <div class="filter-section-header">
+                 <label class="filter-section-label">Esportes:</label>
+               </div>
+               <div class="sports-grid">
+                 <label 
+                   v-for="sport in filterOptions.sports" 
+                   :key="sport.value" 
+                   class="checkbox-item"
+                 >
+                   <input 
+                     type="checkbox" 
+                     :value="sport.value" 
+                     v-model="selectedSports"
+                     class="filter-checkbox"
+                   />
+                   <span class="checkbox-label">{{ sport.label }}</span>
+                 </label>
                </div>
              </div>
-             <div class="currencies-grid">
-               <label 
-                 v-for="currency in filterOptions.currencies" 
-                 :key="currency.code" 
-                 class="checkbox-item"
-               >
-                 <input 
-                   type="checkbox" 
-                   :value="currency.code" 
-                   v-model="selectedCurrencies"
-                   class="filter-checkbox"
-                 />
-                 <span class="checkbox-label">{{ currency.label }}</span>
-               </label>
+             
+             <!-- Filtro por Moedas -->
+             <div class="filter-section">
+               <div class="filter-section-header">
+                 <label class="filter-section-label">Moedas:</label>
+                 <div class="filter-actions">
+                   <button @click="selectAllCurrencies" class="action-btn">Marcar Todos</button>
+                   <button @click="deselectAllCurrencies" class="action-btn">Desmarcar Todos</button>
+                 </div>
+               </div>
+               <div class="currencies-grid">
+                 <label 
+                   v-for="currency in filterOptions.currencies" 
+                   :key="currency.code" 
+                   class="checkbox-item"
+                 >
+                   <input 
+                     type="checkbox" 
+                     :value="currency.code" 
+                     v-model="selectedCurrencies"
+                     class="filter-checkbox"
+                   />
+                   <span class="checkbox-label">{{ currency.label }}</span>
+                 </label>
+               </div>
              </div>
            </div>
            
            <div class="filter-divider"></div>
            
-           <!-- Filtro por Tipos de Mercado -->
-           <div class="filter-section">
-             <div class="filter-section-header">
-               <label class="filter-section-label">Tipos de Mercado:</label>
+           <!-- Categoria: Mercado -->
+           <div class="filter-category">
+             <div class="filter-category-header">
+               <h4>Mercado</h4>
                <div class="filter-actions">
                  <button @click="selectAllMarkets" class="action-btn">Marcar Todos</button>
                  <button @click="deselectAllMarkets" class="action-btn">Desmarcar Todos</button>
                </div>
              </div>
-             <div class="markets-grid">
-               <div 
-                 v-for="(marketCategory, categoryKey) in marketOptions" 
-                 :key="categoryKey"
-                 class="market-category"
-               >
-                 <div class="market-category-header">
-                   <label class="market-category-checkbox">
-                     <input 
-                       type="checkbox" 
-                       :value="categoryKey"
-                       v-model="selectedMarketCategories"
-                       @change="handleMarketCategoryChange(categoryKey)"
-                       class="filter-checkbox"
-                     />
-                     <span class="market-category-label">{{ categoryKey }}</span>
-                   </label>
-                 </div>
-                 
-                 <div class="market-subcategories">
-                   <label 
-                     v-for="(subcategory, subKey) in marketCategory" 
-                     :key="subKey"
-                     class="checkbox-item market-subcategory"
-                   >
-                     <input 
-                       type="checkbox" 
-                       :value="`${categoryKey}|${subKey}`"
-                       v-model="selectedMarketSubcategories"
-                       class="filter-checkbox"
-                     />
-                     <span class="checkbox-label">{{ subKey }}</span>
-                   </label>
-                 </div>
+             
+             <!-- Filtro por Tipos de Mercado -->
+             <div class="filter-section">
+               <div class="filter-section-header">
+                 <label class="filter-section-label">Tipos de Mercado:</label>
+               </div>
+               <div class="markets-direct-grid">
+                 <label 
+                   v-for="market in flattenedMarketOptions" 
+                   :key="market.value"
+                   class="checkbox-item market-option"
+                 >
+                   <input 
+                     type="checkbox" 
+                     :value="market.value"
+                     v-model="selectedMarkets"
+                     class="filter-checkbox"
+                   />
+                   <span class="checkbox-label">{{ market.label }}</span>
+                 </label>
                </div>
              </div>
            </div>
          </div>
          
-                                       <div class="filter-footer">
-             <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
-             <button @click="applyFilters" class="apply-btn">Aplicar</button>
-           </div>
+         <div class="filter-footer">
+           <button @click="clearFilters" class="clear-btn">Limpar Filtros</button>
+           <button @click="applyFilters" class="apply-btn">Aplicar</button>
+         </div>
        </div>
      </div>
      
@@ -468,7 +457,7 @@
                 <strong>Moedas:</strong> {{ selectedCurrencies.length }} selecionadas
               </div>
               <div class="preview-item">
-                <strong>Mercados:</strong> {{ selectedMarketSubcategories.length }} selecionados
+                <strong>Mercados:</strong> {{ selectedMarkets.length }} selecionados
               </div>
               <div class="preview-item">
                 <strong>Lucro:</strong> {{ minProfit }}% - {{ maxProfit }}%
@@ -507,7 +496,7 @@
                     <span class="detail-item">🏠 {{ filter.houses.length }} casas</span>
                     <span class="detail-item">⚽ {{ filter.sports.length }} esportes</span>
                     <span class="detail-item">💰 {{ filter.currencies.length }} moedas</span>
-                    <span class="detail-item">🎯 {{ filter.marketSubcategories ? filter.marketSubcategories.length : 0 }} mercados</span>
+                                         <span class="detail-item">🎯 {{ filter.markets ? filter.markets.length : 0 }} mercados</span>
 
                   </div>
                 </div>
@@ -577,11 +566,10 @@ export default {
        currentFilterName: '',
        // Cache para preservar filtros durante atualizações da API
        filtersCache: {
-         selectedHouses: [],
-         selectedSports: [],
-         selectedCurrencies: [],
-         selectedMarketCategories: [],
-         selectedMarketSubcategories: [],
+                   selectedHouses: [],
+          selectedSports: [],
+          selectedCurrencies: [],
+          selectedMarkets: [],
          selectedDate: '',
          activeFilter: 'prelive',
          minProfit: 0,
@@ -618,28 +606,28 @@ export default {
              "+2.0": "Handicap +2 Gols Time Visitante"
            }
          },
-         "Handicap Europeu (EH)": {
+         "Handicap de Gols": {
            "EH1": {
-             "-5": "Handicap -5 Escanteios Time Casa",
-             "-4": "Handicap -4 Escanteios Time Casa",
-             "-3": "Handicap -3 Escanteios Time Casa",
-             "-2": "Handicap -2 Escanteios Time Casa",
-             "-1": "Handicap -1 Escanteio Time Casa"
+             "-5": "Handicap -5 Gols Time Casa",
+             "-4": "Handicap -4 Gols Time Casa",
+             "-3": "Handicap -3 Gols Time Casa",
+             "-2": "Handicap -2 Gols Time Casa",
+             "-1": "Handicap -1 Gol Time Casa"
            },
            "EH2": {
-             "+1": "Handicap +1 Escanteio Time Visitante",
-             "+2": "Handicap +2 Escanteios Time Visitante",
-             "+3": "Handicap +3 Escanteios Time Visitante",
-             "+4": "Handicap +4 Escanteios Time Visitante",
-             "+5": "Handicap +5 Escanteios Time Visitante"
+             "+1": "Handicap +1 Gol Time Visitante",
+             "+2": "Handicap +2 Gols Time Visitante",
+             "+3": "Handicap +3 Gols Time Visitante",
+             "+4": "Handicap +4 Gols Time Visitante",
+             "+5": "Handicap +5 Gols Time Visitante"
            },
            "Totais": {
-             "TO": "Over - Total acima de x Escanteios",
-             "TU": "Under - Total abaixo de x Escanteios",
-             "TO_TimeCasa": "Over - Total acima de x Escanteios Time Casa",
-             "TU_TimeCasa": "Under - Total abaixo de x Escanteios Time Casa",
-             "TO_TimeVisitante": "Over - Total acima de x Escanteios Time Visitante",
-             "TU_TimeVisitante": "Under - Total abaixo de x Escanteios Time Visitante"
+             "TO": "Over - Total acima de x Gols",
+             "TU": "Under - Total abaixo de x Gols",
+             "TO_TimeCasa": "Over - Total acima de x Gols Time Casa",
+             "TU_TimeCasa": "Under - Total abaixo de x Gols Time Casa",
+             "TO_TimeVisitante": "Over - Total acima de x Gols Time Visitante",
+             "TU_TimeVisitante": "Under - Total abaixo de x Gols Time Visitante"
            }
          },
          "Gols": {
@@ -715,8 +703,7 @@ export default {
            "TU(0.5) for Team2": "Under(0.5) for Team2 - Impedimentos"
          }
        },
-       selectedMarketCategories: [],
-       selectedMarketSubcategories: [],
+       selectedMarkets: [],
        pinnedCards: [], // Array de cards fixos
        pinnedCardKeys: new Set(), // Set para verificar se um card está fixo
        // Propriedades para drag and drop
@@ -743,6 +730,32 @@ export default {
     },
     isAdmin() {
       return this.$store.getters.isAdmin
+    },
+    // Opções de mercado achatadas para exibição direta
+    flattenedMarketOptions() {
+      const options = []
+      
+      Object.entries(this.marketOptions).forEach(([category, subcategories]) => {
+        Object.entries(subcategories).forEach(([subcategory, description]) => {
+          if (typeof description === 'string') {
+            // Subcategoria simples
+            options.push({
+              value: `${category}|${subcategory}`,
+              label: description
+            })
+          } else if (typeof description === 'object') {
+            // Subcategoria com sub-opções
+            Object.entries(description).forEach(([option, optionDescription]) => {
+              options.push({
+                value: `${category}|${subcategory}|${option}`,
+                label: optionDescription
+              })
+            })
+          }
+        })
+      })
+      
+      return options
     },
     totalSurebets() {
       return Object.keys(this.surebets).length
@@ -930,9 +943,9 @@ export default {
        }
       
       // Filtro por mercado (vinculado ao campo "market" da API)
-      if (this.selectedMarketSubcategories.length !== 0) {
+      if (this.selectedMarkets.length > 0) {
         console.log('🎯 Aplicando filtro de mercados...')
-        console.log('Mercados selecionados:', this.selectedMarketSubcategories)
+        console.log('Mercados selecionados:', this.selectedMarkets)
         
         const beforeFilter = surebetsArray.length
         surebetsArray = surebetsArray.filter(surebet => {
@@ -945,9 +958,16 @@ export default {
           }
           
           // Verifica se o mercado do surebet está na lista selecionada
-          const match = this.selectedMarketSubcategories.some(selectedMarket => {
-            const [category, subcategory] = selectedMarket.split('|')
-            return surebetMarket.includes(category) || surebetMarket.includes(subcategory)
+          const match = this.selectedMarkets.some(selectedMarket => {
+            const [category, subcategory, option] = selectedMarket.split('|')
+            
+            // Se tem opção específica, verifica se corresponde exatamente
+            if (option) {
+              return surebetMarket === `${category}|${subcategory}|${option}`
+            }
+            
+            // Se não tem opção, verifica se o mercado começa com a categoria e subcategoria
+            return surebetMarket.startsWith(`${category}|${subcategory}`)
           })
           
           if (!match) {
@@ -982,7 +1002,7 @@ export default {
       const allHousesSelected = this.selectedHouses.length === this.filterOptions.houses.length
       const allSportsSelected = this.selectedSports.length === this.filterOptions.sports.length
       const allCurrenciesSelected = this.selectedCurrencies.length === this.filterOptions.currencies.length
-      const allMarketsSelected = this.selectedMarketSubcategories.length === 0 // Se não há mercados selecionados, considera como "todos selecionados"
+      const allMarketsSelected = this.selectedMarkets.length === 0 // Se não há mercados selecionados, considera como "todos selecionados"
       const profitDefault = this.minProfit === 0 && this.maxProfit === 1000
       const dateDefault = !this.selectedDate
       return (!allHousesSelected) || (!allSportsSelected) || (!allCurrenciesSelected) || (!allMarketsSelected) || this.activeFilter !== 'prelive' || !profitDefault || !dateDefault
@@ -993,7 +1013,7 @@ export default {
       if (this.selectedHouses.length !== this.filterOptions.houses.length) count++
       if (this.selectedSports.length !== this.filterOptions.sports.length) count++
       if (this.selectedCurrencies.length !== this.filterOptions.currencies.length) count++
-      if (this.selectedMarketSubcategories.length > 0) count++
+      if (this.selectedMarkets.length > 0) count++
       if (this.activeFilter !== 'prelive') count++
       if (!(this.minProfit === 0 && this.maxProfit === 1000)) count++
       if (this.selectedDate) count++
@@ -1046,19 +1066,11 @@ export default {
     
 
     
-    selectedMarketCategories() {
-      this.saveFiltersToSettings()
-    },
-    
-    selectedMarketSubcategories() {
+    selectedMarkets() {
       this.saveFiltersToSettings()
     },
     
     activeFilter() {
-      this.saveFiltersToSettings()
-    },
-    
-    selectedMarketCategories() {
       this.saveFiltersToSettings()
     }
   },
@@ -1076,14 +1088,8 @@ export default {
         this.loadFiltersFromSettings()
         
         // Inicializar filtros de mercado se não houver filtros salvos
-        if (this.selectedMarketCategories.length === 0) {
-          this.selectedMarketCategories = Object.keys(this.marketOptions)
-          this.selectedMarketSubcategories = []
-          Object.keys(this.marketOptions).forEach(category => {
-            Object.keys(this.marketOptions[category]).forEach(subcategory => {
-              this.selectedMarketSubcategories.push(`${category}|${subcategory}`)
-            })
-          })
+        if (this.selectedMarkets.length === 0) {
+          this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
         }
         
         // Inicializar o cache dos filtros após carregar as configurações
@@ -1209,14 +1215,9 @@ export default {
               console.log('✅ Moedas carregadas:', this.selectedCurrencies)
             }
             
-            if (settings.filters.selectedMarketCategories && this.selectedMarketCategories.length === 0) {
-              this.selectedMarketCategories = settings.filters.selectedMarketCategories
-              console.log('✅ Categorias de mercado carregadas:', this.selectedMarketCategories)
-            }
-            
-            if (settings.filters.selectedMarketSubcategories && this.selectedMarketSubcategories.length === 0) {
-              this.selectedMarketSubcategories = settings.filters.selectedMarketSubcategories
-              console.log('✅ Subcategorias de mercado carregadas:', this.selectedMarketSubcategories)
+            if (settings.filters.selectedMarkets && this.selectedMarkets.length === 0) {
+              this.selectedMarkets = settings.filters.selectedMarkets
+              console.log('✅ Mercados carregados:', this.selectedMarkets)
             }
             
             if (settings.filters.selectedDate) {
@@ -1255,8 +1256,7 @@ export default {
         settings.filters.selectedHouses = this.selectedHouses
         settings.filters.selectedSports = this.selectedSports
         settings.filters.selectedCurrencies = this.selectedCurrencies
-        settings.filters.selectedMarketCategories = this.selectedMarketCategories
-        settings.filters.selectedMarketSubcategories = this.selectedMarketSubcategories
+        settings.filters.selectedMarkets = this.selectedMarkets
         settings.filters.selectedDate = this.selectedDate
         settings.filters.activeFilter = this.activeFilter
         
@@ -1273,8 +1273,7 @@ export default {
         selectedHouses: [...this.selectedHouses],
         selectedSports: [...this.selectedSports],
         selectedCurrencies: [...this.selectedCurrencies],
-        selectedMarketCategories: [...this.selectedMarketCategories],
-        selectedMarketSubcategories: [...this.selectedMarketSubcategories],
+        selectedMarkets: [...this.selectedMarkets],
         selectedDate: this.selectedDate,
         activeFilter: this.activeFilter,
         minProfit: this.minProfit,
@@ -1326,25 +1325,13 @@ export default {
         }
       }
       
-      if (this.filtersCache.selectedMarketCategories.length > 0) {
-        const currentCategories = [...this.selectedMarketCategories].sort()
-        const cachedCategories = [...this.filtersCache.selectedMarketCategories].sort()
+      if (this.filtersCache.selectedMarkets.length > 0) {
+        const currentMarkets = [...this.selectedMarkets].sort()
+        const cachedMarkets = [...this.filtersCache.selectedMarkets].sort()
         
-        if (JSON.stringify(currentCategories) !== JSON.stringify(cachedCategories)) {
-          this.selectedMarketCategories = [...this.filtersCache.selectedMarketCategories]
-          console.log('🔄 Restaurando categorias de mercado do cache:', this.selectedMarketCategories)
-          restoredCount++
-          changesDetected = true
-        }
-      }
-      
-      if (this.filtersCache.selectedMarketSubcategories.length > 0) {
-        const currentSubcategories = [...this.selectedMarketSubcategories].sort()
-        const cachedSubcategories = [...this.filtersCache.selectedMarketSubcategories].sort()
-        
-        if (JSON.stringify(currentSubcategories) !== JSON.stringify(cachedSubcategories)) {
-          this.selectedMarketSubcategories = [...this.filtersCache.selectedMarketSubcategories]
-          console.log('🔄 Restaurando subcategorias de mercado do cache:', this.selectedMarketSubcategories)
+        if (JSON.stringify(currentMarkets) !== JSON.stringify(cachedMarkets)) {
+          this.selectedMarkets = [...this.filtersCache.selectedMarkets]
+          console.log('🔄 Restaurando mercados do cache:', this.selectedMarkets)
           restoredCount++
           changesDetected = true
         }
@@ -1899,14 +1886,7 @@ export default {
       this.selectedHouses = housesToSelect
       this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
       this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
-      this.selectedMarketCategories = Object.keys(this.marketOptions)
-      this.selectedMarketSubcategories = []
-      // Seleciona todas as subcategorias de mercado
-      Object.keys(this.marketOptions).forEach(category => {
-        Object.keys(this.marketOptions[category]).forEach(subcategory => {
-          this.selectedMarketSubcategories.push(`${category}|${subcategory}`)
-        })
-      })
+      this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
       this.selectedDate = ''
       this.minProfit = 0
       this.maxProfit = 1000
@@ -2227,8 +2207,7 @@ export default {
              houses: [...this.selectedHouses],
              sports: [...this.selectedSports],
              currencies: [...this.selectedCurrencies],
-             marketCategories: [...this.selectedMarketCategories],
-             marketSubcategories: [...this.selectedMarketSubcategories],
+             markets: [...this.selectedMarkets],
              selectedDate: this.selectedDate,
              minProfit: this.minProfit,
              maxProfit: this.maxProfit,
@@ -2267,8 +2246,7 @@ export default {
            
            this.selectedSports = [...filter.sports]
            this.selectedCurrencies = [...filter.currencies]
-           this.selectedMarketCategories = filter.marketCategories ? [...filter.marketCategories] : []
-           this.selectedMarketSubcategories = filter.marketSubcategories ? [...filter.marketSubcategories] : []
+           this.selectedMarkets = filter.markets ? [...filter.markets] : []
            this.selectedDate = filter.selectedDate || ''
            this.minProfit = filter.minProfit
            this.maxProfit = filter.maxProfit
@@ -2288,41 +2266,13 @@ export default {
          
          // Métodos para filtros de mercado
          selectAllMarkets() {
-           // Seleciona todas as categorias de mercado
-           this.selectedMarketCategories = Object.keys(this.marketOptions)
-           
-           // Seleciona todas as subcategorias
-           this.selectedMarketSubcategories = []
-           Object.keys(this.marketOptions).forEach(category => {
-             Object.keys(this.marketOptions[category]).forEach(subcategory => {
-               this.selectedMarketSubcategories.push(`${category}|${subcategory}`)
-             })
-           })
-           
+           // Seleciona todas as opções de mercado
+           this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
            this.saveFiltersToSettings()
          },
          
          deselectAllMarkets() {
-           this.selectedMarketCategories = []
-           this.selectedMarketSubcategories = []
-           this.saveFiltersToSettings()
-         },
-         
-         handleMarketCategoryChange(category) {
-           if (this.selectedMarketCategories.includes(category)) {
-             // Se a categoria foi selecionada, seleciona todas as suas subcategorias
-             Object.keys(this.marketOptions[category]).forEach(subcategory => {
-               const subcategoryKey = `${category}|${subcategory}`
-               if (!this.selectedMarketSubcategories.includes(subcategoryKey)) {
-                 this.selectedMarketSubcategories.push(subcategoryKey)
-               }
-             })
-           } else {
-             // Se a categoria foi desmarcada, remove todas as suas subcategorias
-             this.selectedMarketSubcategories = this.selectedMarketSubcategories.filter(
-               subcategory => !subcategory.startsWith(`${category}|`)
-             )
-           }
+           this.selectedMarkets = []
            this.saveFiltersToSettings()
          },
          
@@ -3641,14 +3591,38 @@ export default {
 .filter-content {
   flex: 1;
   padding: 20px;
-  overflow: visible; /* Remove scroll interno para evitar conflito */
+  overflow-y: auto; /* Adiciona scroll único para todo o conteúdo */
   overflow-x: hidden; /* Remove scroll horizontal */
   position: relative;
   z-index: 1;
 }
 
-.filter-section {
+.filter-category {
   margin-bottom: 30px;
+  position: relative;
+  z-index: 1;
+}
+
+.filter-category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #404040;
+  
+  h4 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.filter-section {
+  margin-bottom: 20px;
   position: relative;
   z-index: 1;
 }
@@ -3843,7 +3817,7 @@ export default {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  max-height: 200px; /* Reduzido para evitar sobreposição */
+  max-height: none; /* Remove altura máxima para permitir scroll único */
   overflow: visible; /* Remove scroll interno para evitar conflito */
   overflow-x: hidden; /* Remove scroll horizontal */
   padding-right: 8px;
@@ -4233,13 +4207,13 @@ export default {
   }
 }
 
-/* Grid de Mercados */
-.markets-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-height: 300px;
-  overflow: visible; /* Remove scroll interno para evitar conflito */
+/* Grid de Mercados Direto */
+.markets-direct-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  max-height: none; /* Remove altura máxima para permitir scroll único */
+  overflow: visible; /* Remove scroll interno para permitir scroll único */
   overflow-x: hidden;
   padding-right: 8px;
   position: relative;
@@ -4247,42 +4221,23 @@ export default {
   margin-bottom: 10px;
 }
 
-.market-category {
-  border: 1px solid #404040;
-  border-radius: 8px;
-  padding: 12px;
-  background: rgba(45, 45, 45, 0.3);
+.market-option {
+  font-size: 13px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(45, 45, 45, 0.2);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
 }
 
-.market-category-header {
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #404040;
+.market-option:hover {
+  background: rgba(45, 45, 45, 0.4);
+  border-color: #404040;
 }
 
-.market-category-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.market-category-label {
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.market-subcategories {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.market-subcategory {
+.market-option .checkbox-label {
   font-size: 12px;
-  padding: 4px 6px;
+  line-height: 1.3;
 }
 
 /* Filtros de Data */

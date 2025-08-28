@@ -523,7 +523,7 @@ router.get('/', async (req, res) => {
     const users = await User.findAll({
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'created_at'
+        'vip_expires_at', 'created_at', 'last_login'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -535,7 +535,8 @@ router.get('/', async (req, res) => {
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'basic',
       status: 'active',
-      credits: 0
+      credits: 0,
+      lastLogin: user.last_login // Mapear para o formato esperado pelo frontend
     }));
 
     res.json({
@@ -557,7 +558,7 @@ router.get('/:id', async (req, res) => {
     const user = await User.findByPk(req.params.id, {
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'cpf', 'phone', 'created_at'
+        'vip_expires_at', 'cpf', 'phone', 'created_at', 'last_login'
       ]
     });
 
