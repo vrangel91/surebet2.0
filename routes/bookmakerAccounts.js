@@ -428,4 +428,86 @@ router.get('/:id/transactions', async (req, res) => {
   }
 });
 
+// POST /api/bookmaker-accounts/:id/adjust-balance - Ajustar saldo da conta
+router.post('/:id/adjust-balance', async (req, res) => {
+  try {
+    const { amount, description, type } = req.body;
+
+    if (!amount || isNaN(amount)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valor do ajuste deve ser um número válido'
+      });
+    }
+
+    const account = await BookmakerAccount.findOne({
+      where: {
+        id: req.params.id,
+        user_id: req.user.id
+      }
+    });
+
+    if (!account) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conta não encontrada'
+      });
+    }
+
+    if (account.status !== 'active') {
+      return res.status(400).json({
+        success: false,
+        message: 'Conta não está ativa'
+      });
+    }
+
+    const adjustAmount = parseFloat(amount);
+    const currentBalance = parseFloat(account.balance);
+    const newBalance = currentBalance + adjustAmount;
+
+    // Verificar se o novo saldo não ficará negativo
+    if (newBalance < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ajuste resultaria em saldo negativo'
+      });
+    }
+
+    // Atualizar saldo da conta
+    await account.update({
+      balance: newBalance,
+      last_updated: new Date()
+    });
+
+    // Criar transação de ajuste
+    const transaction = await TransactionHistory.create({
+      user_id: req.user.id,
+      bookmaker_account_id: account.id,
+      transaction_type: 'adjustment',
+      amount: Math.abs(adjustAmount), // Sempre positivo para o histórico
+      balance_before: currentBalance,
+      balance_after: newBalance,
+      description: description || `Ajuste de saldo: ${adjustAmount > 0 ? '+' : ''}${adjustAmount.toFixed(2)}`,
+      status: 'completed',
+      reference_id: type || 'manual_adjustment'
+    });
+
+    res.json({
+      success: true,
+      message: 'Saldo ajustado com sucesso',
+      data: {
+        transaction,
+        newBalance,
+        adjustment: adjustAmount
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao ajustar saldo:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor'
+    });
+  }
+});
+
 module.exports = router;

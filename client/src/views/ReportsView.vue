@@ -161,7 +161,7 @@
                 <td>{{ bet.roi }}%</td>
                 <td>{{ bet.sport }}</td>
                 <td>{{ bet.houses.join(', ') }}</td>
-                <td>{{ bet.market }}</td>
+                <td>{{ formatMarketForDisplay(bet.market) }}</td>
                 <td>{{ bet.odds }}</td>
                 <td>{{ formatCurrency(bet.stake) }}</td>
                 <td>{{ formatCurrency(bet.investment) }}</td>
@@ -260,7 +260,7 @@
             </div>
             <div class="detail-row">
               <span class="detail-label">Mercado:</span>
-              <span class="detail-value">{{ selectedBet.market }}</span>
+              <span class="detail-value">{{ formatMarketForDisplay(selectedBet.market) }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Odds:</span>
@@ -351,6 +351,7 @@ import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 export default {
   name: 'ReportsView',

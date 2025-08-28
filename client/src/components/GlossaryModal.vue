@@ -144,12 +144,12 @@ export default {
             '+5': 'Handicap +5 Escanteios Time Visitante'
           },
           'Totais': {
-            'TO': 'Total acima de x Escanteios',
-            'TU': 'Total abaixo de x Escanteios',
-            'TO_TimeCasa': 'Total acima de x Escanteios Time Casa',
-            'TU_TimeCasa': 'Total abaixo de x Escanteios Time Casa',
-            'TO_TimeVisitante': 'Total acima de x Escanteios Time Visitante',
-            'TU_TimeVisitante': 'Total abaixo de x Escanteios Time Visitante'
+            'TO': 'Over - Total acima de x Escanteios',
+            'TU': 'Under - Total abaixo de x Escanteios',
+            'TO_TimeCasa': 'Over - Total acima de x Escanteios Time Casa',
+            'TU_TimeCasa': 'Under - Total abaixo de x Escanteios Time Casa',
+            'TO_TimeVisitante': 'Over - Total acima de x Escanteios Time Visitante',
+            'TU_TimeVisitante': 'Under - Total abaixo de x Escanteios Time Visitante'
           }
         },
         'Gols': {
@@ -157,26 +157,26 @@ export default {
           'OneScoreless': 'Uma time não marca gols',
           'Even': 'Total de gols par',
           'Odd': 'Total de gols ímpar',
-          'TO': 'Total acima de x Gols',
-          'TU': 'Total abaixo de x Gols',
-          'TO_TimeCasa': 'Total acima de x Gols Time Casa',
-          'TU_TimeCasa': 'Total abaixo de x Gols Time Casa',
-          'TO_TimeVisitante': 'Total acima de x Gols Time Visitante',
-          'TU_TimeVisitante': 'Total abaixo de x Gols Time Visitante',
+          'TO': 'Over - Total acima de x Gols',
+          'TU': 'Under - Total abaixo de x Gols',
+          'TO_TimeCasa': 'Over - Total acima de x Gols Time Casa',
+          'TU_TimeCasa': 'Under - Total abaixo de x Gols Time Casa',
+          'TO_TimeVisitante': 'Over - Total acima de x Gols Time Visitante',
+          'TU_TimeVisitante': 'Under - Total abaixo de x Gols Time Visitante',
           'GolsPorTempo': {
-            'TO_1H': 'Total acima de x Gols 1º Tempo',
-            'TU_1H': 'Total abaixo de x Gols 1º Tempo',
-            'TO_2H': 'Total acima de x Gols 2º Tempo',
-            'TU_2H': 'Total abaixo de x Gols 2º Tempo'
+            'TO_1H': 'Over - Total acima de x Gols 1º Tempo',
+            'TU_1H': 'Under - Total abaixo de x Gols 1º Tempo',
+            'TO_2H': 'Over - Total acima de x Gols 2º Tempo',
+            'TU_2H': 'Under - Total abaixo de x Gols 2º Tempo'
           }
         },
         'Cartões': {
-          'TO': 'Total acima de x Cartões',
-          'TU': 'Total abaixo de x Cartões',
-          'TO_TimeCasa': 'Total acima de x Cartões Time Casa',
-          'TU_TimeCasa': 'Total abaixo de x Cartões Time Casa',
-          'TO_TimeVisitante': 'Total acima de x Cartões Time Visitante',
-          'TU_TimeVisitante': 'Total abaixo de x Cartões Time Visitante'
+          'TO': 'Over - Total acima de x Cartões',
+          'TU': 'Under - Total abaixo de x Cartões',
+          'TO_TimeCasa': 'Over - Total acima de x Cartões Time Casa',
+          'TU_TimeCasa': 'Under - Total abaixo de x Cartões Time Casa',
+          'TO_TimeVisitante': 'Over - Total acima de x Cartões Time Visitante',
+          'TU_TimeVisitante': 'Under - Total abaixo de x Cartões Time Visitante'
         },
         'Resultado Final': {
           'Team1Win': 'Vitória Time Casa',
@@ -217,6 +217,12 @@ export default {
           'CartõesPorJogador': 'Recebimento de cartões por jogador específico',
           'OddEvenEscanteios': 'Número par ou ímpar de escanteios',
           'OddEvenCartões': 'Número par ou ímpar de cartões'
+        },
+        'Impedimentos': {
+          'TO(0.5) for Team1': 'Over(0.5) for Team1 - Impedimentos',
+          'TU(0.5) for Team1': 'Under(0.5) for Team1 - Impedimentos',
+          'TO(0.5) for Team2': 'Over(0.5) for Team2 - Impedimentos',
+          'TU(0.5) for Team2': 'Under(0.5) for Team2 - Impedimentos'
         }
       }
     }
@@ -270,26 +276,28 @@ export default {
     getCategoryDisplayName(category) {
       const names = {
         'Handicap Asiático (AH)': 'Handicap Asiático (AH)',
-        'Escanteios (EH)': 'Escanteios (EH)',
+        'Handicap Europeu (EH)': 'Handicap Europeu (EH)',
         'Gols': 'Gols',
         'Cartões': 'Cartões',
         'Resultado Final': 'Resultado Final',
         'Dupla Chance': 'Dupla Chance',
         'Resultado Exato': 'Resultado Exato',
-        'Outros Mercados': 'Outros Mercados'
+        'Outros Mercados': 'Outros Mercados',
+        'Impedimentos': 'Impedimentos'
       }
       return names[category] || category
     },
     getCategoryDescription(category) {
       const descriptions = {
         'Handicap Asiático (AH)': 'Sistema de handicap que equilibra as probabilidades entre times, aplicado aos gols',
-        'Escanteios (EH)': 'Mercados relacionados a escanteios com handicap e totais',
+        'Handicap Europeu (EH)': 'Mercados relacionados a escanteios com handicap e totais',
         'Gols': 'Mercados baseados na quantidade e características dos gols marcados',
         'Cartões': 'Mercados relacionados ao total de cartões amarelos e vermelhos',
         'Resultado Final': 'Mercados sobre o resultado da partida, por tempo e final',
         'Dupla Chance': 'Mercados que combinam duas possibilidades de resultado',
         'Resultado Exato': 'Mercados sobre o placar exato da partida',
-        'Outros Mercados': 'Mercados especiais e únicos para situações específicas'
+        'Outros Mercados': 'Mercados especiais e únicos para situações específicas',
+        'Impedimentos': 'Mercados relacionados a impedimentos por equipe'
       }
       return descriptions[category] || ''
     },

@@ -531,6 +531,7 @@ import CreditStatus from '../components/CreditStatus.vue'
 import { filterOptions } from '../config/filters.js'
 import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
 import { MapPin, Trash2 } from 'lucide-vue-next'
+import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 
 export default {
@@ -617,7 +618,7 @@ export default {
              "+2.0": "Handicap +2 Gols Time Visitante"
            }
          },
-         "Escanteios (EH)": {
+         "Handicap Europeu (EH)": {
            "EH1": {
              "-5": "Handicap -5 Escanteios Time Casa",
              "-4": "Handicap -4 Escanteios Time Casa",
@@ -633,12 +634,12 @@ export default {
              "+5": "Handicap +5 Escanteios Time Visitante"
            },
            "Totais": {
-             "TO": "Total acima de x Escanteios",
-             "TU": "Total abaixo de x Escanteios",
-             "TO_TimeCasa": "Total acima de x Escanteios Time Casa",
-             "TU_TimeCasa": "Total abaixo de x Escanteios Time Casa",
-             "TO_TimeVisitante": "Total acima de x Escanteios Time Visitante",
-             "TU_TimeVisitante": "Total abaixo de x Escanteios Time Visitante"
+             "TO": "Over - Total acima de x Escanteios",
+             "TU": "Under - Total abaixo de x Escanteios",
+             "TO_TimeCasa": "Over - Total acima de x Escanteios Time Casa",
+             "TU_TimeCasa": "Under - Total abaixo de x Escanteios Time Casa",
+             "TO_TimeVisitante": "Over - Total acima de x Escanteios Time Visitante",
+             "TU_TimeVisitante": "Under - Total abaixo de x Escanteios Time Visitante"
            }
          },
          "Gols": {
@@ -646,26 +647,26 @@ export default {
            "OneScoreless": "Uma equipe não marca gols",
            "Even": "Total de gols par",
            "Odd": "Total de gols ímpar",
-           "TO": "Total acima de x Gols",
-           "TU": "Total abaixo de x Gols",
-           "TO_TimeCasa": "Total acima de x Gols Time Casa",
-           "TU_TimeCasa": "Total abaixo de x Gols Time Casa",
-           "TO_TimeVisitante": "Total acima de x Gols Time Visitante",
-           "TU_TimeVisitante": "Total abaixo de x Gols Time Visitante",
+           "TO": "Over - Total acima de x Gols",
+           "TU": "Under - Total abaixo de x Gols",
+           "TO_TimeCasa": "Over - Total acima de x Gols Time Casa",
+           "TU_TimeCasa": "Under - Total abaixo de x Gols Time Casa",
+           "TO_TimeVisitante": "Over - Total acima de x Gols Time Visitante",
+           "TU_TimeVisitante": "Under - Total abaixo de x Gols Time Visitante",
            "GolsPorTempo": {
-             "TO_1H": "Total acima de x Gols 1º Tempo",
-             "TU_1H": "Total abaixo de x Gols 1º Tempo",
-             "TO_2H": "Total acima de x Gols 2º Tempo",
-             "TU_2H": "Total abaixo de x Gols 2º Tempo"
+             "TO_1H": "Over - Total acima de x Gols 1º Tempo",
+             "TU_1H": "Under - Total abaixo de x Gols 1º Tempo",
+             "TO_2H": "Over - Total acima de x Gols 2º Tempo",
+             "TU_2H": "Under - Total abaixo de x Gols 2º Tempo"
            }
          },
          "Cartões": {
-           "TO": "Total acima de x Cartões",
-           "TU": "Total abaixo de x Cartões",
-           "TO_TimeCasa": "Total acima de x Cartões Time Casa",
-           "TU_TimeCasa": "Total abaixo de x Cartões Time Casa",
-           "TO_TimeVisitante": "Total acima de x Cartões Time Visitante",
-           "TU_TimeVisitante": "Total abaixo de x Cartões Time Visitante"
+           "TO": "Over - Total acima de x Cartões",
+           "TU": "Under - Total abaixo de x Cartões",
+           "TO_TimeCasa": "Over - Total acima de x Cartões Time Casa",
+           "TU_TimeCasa": "Under - Total abaixo de x Cartões Time Casa",
+           "TO_TimeVisitante": "Over - Total acima de x Cartões Time Visitante",
+           "TU_TimeVisitante": "Under - Total abaixo de x Cartões Time Visitante"
          },
          "Resultado Final": {
            "Team1Win": "Vitória Time Casa",
@@ -706,6 +707,12 @@ export default {
            "CartõesPorJogador": "Recebimento de cartões por jogador específico",
            "OddEvenEscanteios": "Número par ou ímpar de escanteios",
            "OddEvenCartões": "Número par ou ímpar de cartões"
+         },
+         "Impedimentos": {
+           "TO(0.5) for Team1": "Over(0.5) for Team1 - Impedimentos",
+           "TU(0.5) for Team1": "Under(0.5) for Team1 - Impedimentos",
+           "TO(0.5) for Team2": "Over(0.5) for Team2 - Impedimentos",
+           "TU(0.5) for Team2": "Under(0.5) for Team2 - Impedimentos"
          }
        },
        selectedMarketCategories: [],
@@ -1495,7 +1502,7 @@ export default {
           }
         }, 3000) // 3 segundos de timeout
 
-        this.ws = new WebSocket('ws://localhost:3002/ws')
+        this.ws = new WebSocket('ws://localhost:3002')
         
         this.ws.onopen = () => {
           clearTimeout(wsTimeout)
@@ -1529,6 +1536,19 @@ export default {
               // Toca som apenas se há novos dados e o som está habilitado
               if (this.soundEnabled && hasNewData) {
                 this.playNotificationSound()
+              }
+              break
+              
+            case 'search_state_changed':
+              // Atualiza o estado de busca baseado na mensagem do servidor
+              this.isSearching = data.isSearching
+              console.log(`Estado de busca atualizado via WebSocket: ${this.isSearching ? 'Ativo' : 'Pausado'}`)
+              
+              // Atualiza a busca automática baseado no novo estado
+              if (this.isSearching) {
+                this.startAutoUpdate()
+              } else {
+                this.stopAutoUpdate()
               }
               break
           }
@@ -1643,7 +1663,7 @@ export default {
     async checkServerAvailability() {
       try {
         // Tentar conectar ao WebSocket com timeout
-        const wsTest = new WebSocket('ws://localhost:3002/ws')
+        const wsTest = new WebSocket('ws://localhost:3002')
         
         const wsPromise = new Promise((resolve, reject) => {
           const timeout = setTimeout(() => {
@@ -2013,7 +2033,7 @@ export default {
            match: firstBet.match || 'Partida não especificada',
            sport: firstBet.sport || 'Esporte não especificado',
            houses: houses,
-           market: firstBet.market || 'Mercado não especificado',
+           market: formatMarketForDisplay(firstBet.market) || 'Mercado não especificado',
            odds: surebet.map(bet => bet.chance || bet.odds).join(' / '),
            stake: 100.00,
            investment: 100.00,

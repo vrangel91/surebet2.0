@@ -66,7 +66,7 @@
       <div v-for="(bet, index) in surebet" :key="index" class="bet-option">
         <div class="bet-header">
           <span class="bookmaker">{{ bet.house || 'Bet365' }}</span>
-          <span class="market">{{ bet.market || 'AH1(+1)' }}</span>
+                     <span class="market">{{ formatMarket(bet.market, surebet[0]?.sport) || 'Handicap1(+1)' }}</span>
         </div>
         
         <div class="bet-details">
@@ -97,6 +97,7 @@
 
 <script>
 import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
+import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 export default {
   name: 'SurebetCard',
@@ -215,6 +216,15 @@ export default {
         minute: '2-digit' 
       })
     },
+    
+             formatMarket(market, sport = null) {
+      if (!market) return 'Mercado não especificado'
+      
+      // Aplica as traduções para melhorar a legibilidade
+      return formatMarketForDisplay(market)
+    },
+    
+    
     
     loadSettings() {
       try {

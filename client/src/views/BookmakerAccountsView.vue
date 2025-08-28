@@ -128,6 +128,12 @@
               <button @click="openWithdrawModal(account)" class="withdraw-btn" :disabled="account.status !== 'active'">
                 Saque
               </button>
+              <button @click="addToReports(account)" class="add-reports-btn" :disabled="account.status !== 'active' || parseFloat(account.balance) <= 0">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M14.778.085A.5.5 0 0 1 15 .5V8a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1h1.5V1.5a.5.5 0 0 1 1 0V7H15a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H.5a.5.5 0 0 1-.5-.5v-3a.5.5 0 0 1 .5-.5H1V1.5a.5.5 0 0 1 1 0V7h1.5a.5.5 0 0 1 0 1h-3A.5.5 0 0 1 0 8V.5a.5.5 0 0 1 .222-.415zM4.5 1a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM4 3.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zM4.5 5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM9 1.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zM9.5 3a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM9 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1zM9.5 7a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1zM9 9.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1z"/>
+                </svg>
+                Adicionar aos Relatórios
+              </button>
             </div>
           </div>
         </div>
@@ -769,6 +775,67 @@ export default {
       }
     },
     
+    async addToReports(account) {
+      try {
+        console.log('📊 Adicionando conta aos relatórios:', account)
+        
+        // Verificar se a conta tem saldo suficiente
+        const currentBalance = parseFloat(account.balance || 0)
+        if (currentBalance <= 0) {
+          this.showToast('Erro', 'Conta não possui saldo para adicionar aos relatórios', 'error')
+          return
+        }
+        
+        // Verificar se a conta está ativa
+        if (account.status !== 'active') {
+          this.showToast('Erro', 'Apenas contas ativas podem ser adicionadas aos relatórios', 'error')
+          return
+        }
+        
+        // Valor padrão para o relatório (pode ser configurável)
+        const reportAmount = 100.00
+        
+        // Verificar se há saldo suficiente
+        if (currentBalance < reportAmount) {
+          this.showToast('Erro', `Saldo insuficiente. Necessário: ${this.formatCurrency(reportAmount)}, Disponível: ${this.formatCurrency(currentBalance)}`, 'error')
+          return
+        }
+        
+        // Confirmar ação
+        if (!confirm(`Deseja adicionar ${this.formatCurrency(reportAmount)} aos relatórios?\n\nEsta ação irá:\n• Descontar ${this.formatCurrency(reportAmount)} do saldo da conta\n• Registrar uma transação de ajuste\n• Salvar o relatório para análise`)) {
+          return
+        }
+        
+        // Realizar o desconto na conta
+        const response = await http.post(`/api/bookmaker-accounts/${account.id}/adjust-balance`, {
+          amount: -reportAmount,
+          description: `Adicionado aos relatórios - ${this.formatCurrency(reportAmount)}`,
+          type: 'report_addition'
+        })
+        
+        if (response.data.success) {
+          // Salvar o relatório no localStorage
+          this.saveReportToLocalStorage(account, reportAmount)
+          
+          // Atualizar a lista de contas
+          await this.loadAccounts()
+          
+          this.showToast('Sucesso', `Conta adicionada aos relatórios com sucesso! Descontado: ${this.formatCurrency(reportAmount)}`, 'success')
+          
+          // Registrar log de auditoria
+          await this.logAuditAction('ADD_TO_REPORTS', account.id, {
+            account_name: account.bookmaker_name,
+            amount: reportAmount,
+            new_balance: response.data.data.newBalance
+          })
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao adicionar aos relatórios:', error)
+        this.showToast('Erro', error.response?.data?.message || 'Erro ao adicionar aos relatórios', 'error')
+      }
+    },
+    
     openWithdrawModal(account) {
       this.selectedAccount = account
       this.withdrawData = {
@@ -1024,6 +1091,39 @@ export default {
         
       } catch (error) {
         console.warn('⚠️ Erro ao registrar log de auditoria:', error)
+      }
+    },
+    
+    // Salvar relatório no localStorage
+    saveReportToLocalStorage(account, amount) {
+      try {
+        const storedReports = JSON.parse(localStorage.getItem('bookmaker_accounts_reports') || '[]')
+        
+        const newReport = {
+          id: Date.now() + Math.random(),
+          account_id: account.id,
+          bookmaker_name: account.bookmaker_name,
+          amount: amount,
+          currency: account.currency,
+          date: new Date().toISOString(),
+          status: 'active',
+          type: 'report_addition',
+          description: `Conta adicionada aos relatórios - ${this.formatCurrency(amount)}`,
+          balance_before: parseFloat(account.balance),
+          balance_after: parseFloat(account.balance) - amount
+        }
+        
+        storedReports.unshift(newReport)
+        localStorage.setItem('bookmaker_accounts_reports', JSON.stringify(storedReports))
+        
+        console.log('💾 Relatório salvo no localStorage:', newReport)
+        
+        // Emitir evento para notificar outros componentes
+        this.$emit('report-added', newReport)
+        
+      } catch (error) {
+        console.error('❌ Erro ao salvar relatório no localStorage:', error)
+        this.showToast('Erro', 'Erro ao salvar relatório local', 'error')
       }
     },
     
@@ -1589,13 +1689,24 @@ export default {
 
 .account-transactions {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
   margin-top: auto; /* Empurrar para o final do card */
 }
 
+/* Ajustar layout dos botões para 3 botões */
+.account-transactions .transactions-btn,
+.account-transactions .withdraw-btn,
+.account-transactions .add-reports-btn {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+  padding: 8px 12px;
+}
+
 .transactions-btn,
-.withdraw-btn {
+.withdraw-btn,
+.add-reports-btn {
   flex: 1;
   padding: 10px 16px;
   border: none;
@@ -1606,6 +1717,10 @@ export default {
   transition: all 0.3s ease;
   min-width: 0;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .transactions-btn {
@@ -1627,9 +1742,26 @@ export default {
   box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
 }
 
-.withdraw-btn:disabled {
+.withdraw-btn:disabled,
+.add-reports-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.add-reports-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+}
+
+.add-reports-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.add-reports-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* Modal Styles */
@@ -2372,6 +2504,14 @@ export default {
    
    .account-transactions {
      flex-direction: column;
+     gap: 8px;
+   }
+   
+   .account-transactions .transactions-btn,
+   .account-transactions .withdraw-btn,
+   .account-transactions .add-reports-btn {
+     width: 100%;
+     justify-content: center;
    }
 
    /* Toast notifications responsivas */

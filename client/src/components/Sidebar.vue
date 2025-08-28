@@ -122,6 +122,18 @@
           </div>
         </li>
 
+        <!-- Relatórios de Contas -->
+        <li class="nav-item" :class="{ active: $route.path === '/bookmaker-reports' }">
+          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBookmakerReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
+            <BarChart3 class="nav-icon" size="18" />
+            <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios Contas</span>
+            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
+              <Lock class="vip-icon" size="14" />
+              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            </div>
+          </div>
+        </li>
+
         <!-- Suporte -->
         <li class="nav-item" :class="{ active: $route.path === '/support' }">
           <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
@@ -289,6 +301,15 @@ export default {
     handleBookmakerAccountsClick() {
       if (this.isVIP) {
         this.$router.push('/bookmaker-accounts')
+      } else {
+        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
+        this.$router.push('/plans')
+      }
+    },
+    
+    handleBookmakerReportsClick() {
+      if (this.isVIP) {
+        this.$router.push('/bookmaker-reports')
       } else {
         this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
         this.$router.push('/plans')

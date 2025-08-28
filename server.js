@@ -80,13 +80,18 @@ app.use('/api/surebet-stats', surebetStatsRoutes);
 app.use('/api/orders', ordersRoutes);
 
 // WebSocket server
-const wss = new WebSocket.Server({ port: 8080 });
+const wss = new WebSocket.Server({ port: 3002 });
 
 // Estado global
 let surebets = [];
 let isSearching = true;
 let soundEnabled = true;
 let lastSurebetCount = 0;
+
+console.log('🚀 Estado inicial do servidor:');
+console.log(`   - isSearching: ${isSearching}`);
+console.log(`   - soundEnabled: ${soundEnabled}`);
+console.log(`   - surebets: ${Object.keys(surebets).length} registros`);
 
 // Função para buscar surebets da API
 async function fetchSurebets() {
@@ -137,7 +142,10 @@ async function fetchSurebets() {
 // Agendar busca de surebets a cada 30 segundos
 cron.schedule('*/30 * * * * *', () => {
   if (isSearching) {
+    console.log('🔄 Cron job executando: buscando surebets...');
     fetchSurebets();
+  } else {
+    console.log('⏸️ Cron job pausado: busca desativada');
   }
 });
 
@@ -165,6 +173,16 @@ wss.on('connection', (ws) => {
         case 'toggle_search':
           isSearching = data.isSearching;
           console.log(`Busca ${isSearching ? 'ativada' : 'pausada'}`);
+          
+          // Notificar todos os clientes sobre a mudança de estado
+          wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({
+                type: 'search_state_changed',
+                isSearching: isSearching
+              }));
+            }
+          });
           break;
           
         case 'toggle_sound':
@@ -254,7 +272,7 @@ async function initializeApp() {
     // Iniciar servidor
     app.listen(PORT, () => {
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
-      console.log(`🔌 WebSocket rodando na porta 8080`);
+      console.log(`🔌 WebSocket rodando na porta 3002`);
       console.log(`📊 API disponível em http://localhost:${PORT}/api`);
     });
     
