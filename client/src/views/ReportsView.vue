@@ -351,6 +351,7 @@ import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 
 export default {
@@ -553,17 +554,12 @@ export default {
       }).format(value)
     },
     
-    // Formatar campo market para exibição
+    // Formatar campo market para exibição usando o novo sistema
     formatMarketForDisplay(marketText) {
       if (!marketText) return 'N/A'
       
-      // Aplicar traduções se disponível
-      if (typeof this.translateMarketField === 'function') {
-        return this.translateMarketField(marketText)
-      }
-      
-      // Fallback: retornar o texto original
-      return marketText
+      // Usar o novo sistema de formatação inteligente
+      return formatMarketForDisplay(marketText)
     },
     
     // Traduzir campo market (fallback se a importação falhar)

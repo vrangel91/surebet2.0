@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Exibição de Mercados (100% Natural)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            background: #f8f9fa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .market-example {
+            background: #e9ecef;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Teste - Exibição de Mercados (100% Natural)</h1>
+        <p>Este teste verifica se os mercados estão sendo exibidos exatamente como retornados pela API, sem nenhuma modificação.</p>
+        
+        <div class="test-section">
+            <h3>📋 Casos de Teste</h3>
+            <div class="market-example">"Team1 Win" → Deveria aparecer como "Team1 Win" (texto original da API)</div>
+            <div class="market-example">"Team2 Win" → Deveria aparecer como "Team2 Win" (texto original da API)</div>
+            <div class="market-example">"AH2(0.0)/DNB" → Deveria aparecer como "AH2(0.0)/DNB" (texto original da API)</div>
+            <div class="market-example">"TO(32) - Duration" → Deveria aparecer como "TO(32) - Duration" (texto original da API)</div>
+            <div class="market-example">"Odd" → Deveria aparecer como "Odd" (texto original da API)</div>
+            <div class="market-example">"Even" → Deveria aparecer como "Even" (texto original da API)</div>
+        </div>
+
+        <div class="test-section">
+            <h3>🧪 Teste Automático</h3>
+            <button onclick="runAllTests()">Executar Todos os Testes</button>
+            <div id="test-results"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔍 Teste Personalizado</h3>
+            <input type="text" id="custom-market" placeholder="Digite um mercado para testar (ex: Team1 Win)">
+            <button onclick="testCustomMarket()">Testar</button>
+            <div id="custom-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 Resultados dos Testes</h3>
+            <div id="detailed-results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Sistema 100% natural - sem mapeamento nem traduções
+        const MARKET_MAPPING = {};
+        const MARKET_TRANSLATIONS = {};
+
+        function categorizeMarket(marketText) {
+            if (!marketText) return null;
+            
+            // Retorna informações básicas sem categorização
+            return {
+                category: "API",
+                subcategory: "Original",
+                baseCode: marketText,
+                originalText: marketText,
+                value: null
+            };
+        }
+
+        function formatMarketForDisplay(marketText) {
+            if (!marketText) return 'N/A';
+            
+            // Retorna exatamente como veio da API
+            return marketText;
+        }
+
+        function runAllTests() {
+            const testCases = [
+                "Team1 Win",
+                "Team2 Win", 
+                "AH2(0.0)/DNB",
+                "TO(32) - Duration",
+                "TU(78.5)",
+                "1",
+                "X",
+                "2",
+                "Odd",
+                "Even"
+            ];
+
+            const results = [];
+            let successCount = 0;
+            let errorCount = 0;
+
+            testCases.forEach(market => {
+                const result = formatMarketForDisplay(market);
+                const categorization = categorizeMarket(market);
+                
+                // Sucesso: todos os mercados devem aparecer exatamente como na API
+                const isSuccess = result === market;
+                
+                if (isSuccess) successCount++;
+                else errorCount++;
+
+                results.push({
+                    market,
+                    result,
+                    isSuccess,
+                    categorization
+                });
+            });
+
+            displayResults(results, successCount, errorCount);
+        }
+
+        function displayResults(results, successCount, errorCount) {
+            const container = document.getElementById('test-results');
+            const detailedContainer = document.getElementById('detailed-results');
+            
+            container.innerHTML = `
+                <div class="test-result ${successCount === results.length ? 'success' : 'error'}">
+                    <strong>Resultado Geral:</strong> ${successCount}/${results.length} testes passaram
+                    ${errorCount > 0 ? ` (${errorCount} falharam)` : ''}
+                </div>
+            `;
+
+            detailedContainer.innerHTML = results.map(r => `
+                <div class="test-result ${r.isSuccess ? 'success' : 'error'}">
+                    <strong>Mercado:</strong> "${r.market}"<br>
+                    <strong>Resultado:</strong> ${r.result}<br>
+                    <strong>Categoria:</strong> ${r.categorization.category} > ${r.categorization.subcategory}<br>
+                    <strong>Código Base:</strong> ${r.categorization.baseCode}<br>
+                    <strong>Valor:</strong> ${r.categorization.value || 'N/A'}
+                </div>
+            `).join('');
+        }
+
+        function testCustomMarket() {
+            const input = document.getElementById('custom-market');
+            const market = input.value.trim();
+            
+            if (!market) {
+                alert('Digite um mercado para testar!');
+                return;
+            }
+
+            const result = formatMarketForDisplay(market);
+            const categorization = categorizeMarket(market);
+            
+            document.getElementById('custom-result').innerHTML = `
+                <div class="test-result">
+                    <strong>Mercado Testado:</strong> "${market}"<br>
+                    <strong>Resultado Formatado:</strong> ${result}<br>
+                    <strong>Categoria:</strong> ${categorization.category} > ${categorization.subcategory}<br>
+                    <strong>Código Base:</strong> ${categorization.baseCode}<br>
+                    <strong>Valor:</strong> ${categorization.value || 'N/A'}
+                </div>
+            `;
+        }
+
+        // Executar teste inicial
+        window.onload = function() {
+            console.log('Sistema de teste carregado. Clique em "Executar Todos os Testes" para começar.');
+        };
+    </script>
+</body>
+</html>

@@ -66,7 +66,7 @@
       <div v-for="(bet, index) in surebet" :key="index" class="bet-option">
         <div class="bet-header">
           <span class="bookmaker">{{ bet.house || 'Bet365' }}</span>
-                     <span class="market">{{ formatMarket(bet.market, surebet[0]?.sport) || 'Handicap1(+1)' }}</span>
+                     <span class="market">{{ formatMarket(bet.market, surebet[0]?.sport) || 'Resultado Final' }}</span>
         </div>
         
         <div class="bet-details">
@@ -218,9 +218,27 @@ export default {
     },
     
              formatMarket(market, sport = null) {
-      if (!market) return 'Mercado não especificado'
+      if (!market) {
+        // Retorna um tipo de mercado padrão baseado no esporte
+        if (sport) {
+          const defaultMarkets = {
+            'Futebol': 'Resultado Final',
+            'Tênis': 'Vencedor',
+            'Basquete': 'Handicap',
+            'Vôlei': 'Resultado Final',
+            'Handebol': 'Resultado Final',
+            'Futsal': 'Resultado Final',
+            'MMA': 'Vencedor',
+            'Boxe': 'Vencedor',
+            'Esports': 'Vencedor',
+            'Hóquei': 'Resultado Final'
+          }
+          return defaultMarkets[sport] || 'Resultado Final'
+        }
+        return 'Resultado Final'
+      }
       
-      // Aplica as traduções para melhorar a legibilidade
+      // Usa o novo sistema de formatação inteligente
       return formatMarketForDisplay(market)
     },
     

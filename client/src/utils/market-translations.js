@@ -1,112 +1,87 @@
 /**
- * Dicionário de Traduções para Campos Market - Surebets
- * Este arquivo contém as traduções dos campos market da API para melhorar a legibilidade
- * dos cards de surebet para usuários brasileiros.
+ * Sistema Simplificado de Mercados - Surebets
+ * Este arquivo retorna os mercados exatamente como são fornecidos pela API,
+ * sem categorização ou traduções.
  */
 
-// Dicionário de substituições para melhorar a legibilidade dos campos market
-export const MARKET_TRANSLATIONS = {
-    // Handicaps Asiáticos
-    'AH1': 'Handicap Asiático - Casa',
-    'AH2': 'Handicap Asiático - Visitante',
-    
-    // Handicaps Europeus
-    'EH1': 'Handicap Europeu - Casa',
-    'EH2': 'Handicap Europeu - Visitante',
-    
-    // Over/Under
-    'TO': 'Over',
-    'TU': 'Under',
-    
-    // Resultados
-    '1X2': 'Resultado Final',
-    'DC': 'Dupla Chance',
-    'BTS': 'Ambas Marcam',
-    'CS': 'Placar Exato',
-    
-    // Tempos
-    'HT': 'Primeiro Tempo',
-    'FT': 'Tempo Completo',
-    
-    // Par/Ímpar
-    'Even': 'Total de Gols – Par',
-    'Odd': 'Total de Gols – Ímpar',
-    
-    // Específicos por Time
-    'for Team1': 'Casa',
-    'for Team2': 'Visitante',
-    
-    // Estatísticas
-    'Corners': 'Escanteios',
-    'YC': 'Cartão Amarelo',
-    'RC': 'Cartão Vermelho',
-    'FOULS': 'Faltas',
-    'OFFSIDES': 'Impedimentos',
-    'SHOTS': 'Chutes',
-    'POSSESSION': 'Posse de Bola'
+// Objetos vazios - não há categorização nem traduções
+export const MARKET_MAPPING = {}
+export const MARKET_TRANSLATIONS = {}
+
+/**
+ * Função simplificada - retorna apenas o texto original
+ * @param {string} marketText - Texto do mercado
+ * @param {string} sport - Esporte (ignorado)
+ * @returns {Object} - Objeto com informações básicas
+ */
+export function categorizeMarket(marketText, sport = null) {
+  if (!marketText) return null
+  
+  return {
+    category: "API",
+    subcategory: "Original",
+    baseCode: marketText,
+    originalText: marketText,
+    value: null,
+    sport: sport
+  }
+}
+
+// Funções de extração removidas - não são mais necessárias
+
+/**
+ * Função simplificada - retorna o texto original da API
+ * @param {string} marketText - Texto do mercado
+ * @param {string} sport - Esporte (ignorado)
+ * @returns {string} - Texto original sem modificações
+ */
+export function formatMarketForDisplay(marketText, sport = null) {
+  if (!marketText) return 'N/A'
+  
+  // Retornar exatamente como veio da API
+  return marketText
 }
 
 /**
- * Função para aplicar traduções nos campos market
+ * Função simplificada - retorna o texto original
  * @param {string} marketText - Texto original do campo market
- * @returns {string} - Texto traduzido
+ * @returns {string} - Texto original sem modificações
  */
 export function translateMarketField(marketText) {
-    if (!marketText) return marketText
-    
-    let translatedText = marketText
-    
-    // Aplicar todas as substituições do dicionário
-    Object.entries(MARKET_TRANSLATIONS).forEach(([original, translation]) => {
-        // Usar regex para substituir apenas quando for uma palavra completa
-        const regex = new RegExp(`\\b${original}\\b`, 'g')
-        translatedText = translatedText.replace(regex, translation)
-    })
-    
-    return translatedText
+  if (!marketText) return marketText
+  
+  // Retornar exatamente como veio da API
+  return marketText
 }
 
 /**
- * Função para formatar o campo market para exibição
- * @param {string} marketText - Texto original do campo market
- * @returns {string} - Texto formatado e traduzido para exibição
+ * Funções utilitárias simplificadas
+ * Todas retornam valores vazios ou padrão
  */
-export function formatMarketForDisplay(marketText) {
-    if (!marketText) return 'N/A'
-    
-    const translated = translateMarketField(marketText)
-    
-    // Adicionar formatação adicional se necessário
-    // Por exemplo, se contém números entre parênteses, formatar melhor
-    if (translated.includes('(') && translated.includes(')')) {
-        return translated.replace(/\(([^)]+)\)/g, ' ($1)')
-    }
-    
-    return translated
+export function getMarketCategories() {
+  return []
 }
 
-/**
- * Função para obter apenas as traduções disponíveis
- * @returns {Object} - Objeto com as traduções disponíveis
- */
+export function getSubcategories(category) {
+  return []
+}
+
+export function getMarketCodes(category, subcategory) {
+  return []
+}
+
+export function isMarketInCategory(marketText, category) {
+  return false
+}
+
 export function getAvailableTranslations() {
-    return { ...MARKET_TRANSLATIONS }
+  return {}
 }
 
-/**
- * Função para verificar se uma tradução existe para um termo específico
- * @param {string} term - Termo a ser verificado
- * @returns {boolean} - True se existe tradução, false caso contrário
- */
 export function hasTranslation(term) {
-    return term in MARKET_TRANSLATIONS
+  return false
 }
 
-/**
- * Função para obter a tradução de um termo específico
- * @param {string} term - Termo a ser traduzido
- * @returns {string|null} - Tradução se existir, null caso contrário
- */
 export function getTranslation(term) {
-    return MARKET_TRANSLATIONS[term] || null
+  return null
 }

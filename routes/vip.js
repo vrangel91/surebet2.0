@@ -495,7 +495,7 @@ router.get('/cron/status', requireAdmin, async (req, res) => {
 // 17. Processar VIPs expirados manualmente
 router.post('/cron/process-expired', requireAdmin, async (req, res) => {
   try {
-    const result = await vipCronJobs.processExpiredVIPs();
+    const result = await vipCronJobs.processExpiredVIPsManual();
     res.json(result);
   } catch (error) {
     console.error('Erro ao processar VIPs expirados:', error);

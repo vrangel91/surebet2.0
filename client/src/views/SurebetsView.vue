@@ -380,38 +380,7 @@
            
            <div class="filter-divider"></div>
            
-           <!-- Categoria: Mercado -->
-           <div class="filter-category">
-             <div class="filter-category-header">
-               <h4>Mercado</h4>
-               <div class="filter-actions">
-                 <button @click="selectAllMarkets" class="action-btn">Marcar Todos</button>
-                 <button @click="deselectAllMarkets" class="action-btn">Desmarcar Todos</button>
-               </div>
-             </div>
-             
-             <!-- Filtro por Tipos de Mercado -->
-             <div class="filter-section">
-               <div class="filter-section-header">
-                 <label class="filter-section-label">Tipos de Mercado:</label>
-               </div>
-               <div class="markets-direct-grid">
-                 <label 
-                   v-for="market in flattenedMarketOptions" 
-                   :key="market.value"
-                   class="checkbox-item market-option"
-                 >
-                   <input 
-                     type="checkbox" 
-                     :value="market.value"
-                     v-model="selectedMarkets"
-                     class="filter-checkbox"
-                   />
-                   <span class="checkbox-label">{{ market.label }}</span>
-                 </label>
-               </div>
-             </div>
-           </div>
+
          </div>
          
          <div class="filter-footer">
@@ -456,9 +425,7 @@
               <div class="preview-item">
                 <strong>Moedas:</strong> {{ selectedCurrencies.length }} selecionadas
               </div>
-              <div class="preview-item">
-                <strong>Mercados:</strong> {{ selectedMarkets.length }} selecionados
-              </div>
+              
               <div class="preview-item">
                 <strong>Lucro:</strong> {{ minProfit }}% - {{ maxProfit }}%
               </div>
@@ -567,10 +534,9 @@ export default {
        // Cache para preservar filtros durante atualizações da API
        filtersCache: {
                    selectedHouses: [],
-          selectedSports: [],
-          selectedCurrencies: [],
-          selectedMarkets: [],
-         selectedDate: '',
+                     selectedSports: [],
+           selectedCurrencies: [],
+           selectedDate: '',
          activeFilter: 'prelive',
          minProfit: 0,
          maxProfit: 1000,
@@ -580,148 +546,8 @@ export default {
        houseSearchTerm: '',
        // Timestamp da última vez que o usuário desmarcou todos os filtros
        lastDeselectAllTime: 0,
-       // Novas variáveis para filtros de mercado
-       marketOptions: {
-         "Handicap Asiático": {
-           "AH1": {
-             "-2.5": "Handicap -2.5 Gols Time Casa",
-             "-2.0": "Handicap -2 Gols Time Casa",
-             "-1.5": "Handicap -1.5 Gols Time Casa",
-             "-1.0": "Handicap -1 Gol Time Casa",
-             "-0.5": "Handicap -0.5 Gol Time Casa",
-             "0.0": "Handicap 0 Gols Time Casa",
-             "+0.5": "Handicap +0.5 Gol Time Casa",
-             "+1.0": "Handicap +1 Gol Time Casa",
-             "+1.5": "Handicap +1.5 Gols Time Casa",
-             "+2.0": "Handicap +2 Gols Time Casa",
-             "+2.5": "Handicap +2.5 Gols Time Casa"
-           },
-           "AH2": {
-             "-2.5": "Handicap -2.5 Gols Time Visitante",
-             "-2.0": "Handicap -2 Gols Time Visitante",
-             "-1.5": "Handicap -1.5 Gols Time Visitante",
-             "-1.0": "Handicap -1 Gol Time Visitante",
-             "-0.5": "Handicap -0.5 Gol Time Visitante",
-             "0.0": "Handicap 0 Gols Time Visitante",
-             "+0.5": "Handicap +0.5 Gol Time Visitante",
-             "+1.0": "Handicap +1 Gol Time Visitante",
-             "+1.5": "Handicap +1.5 Gols Time Visitante",
-             "+2.0": "Handicap +2 Gols Time Visitante",
-             "+2.5": "Handicap +2.5 Gols Time Visitante"
-           }
-         },
-         "Handicap Europeu": {
-           "EH1": {
-             "-5": "Handicap -5 Gols Time Casa",
-             "-4": "Handicap -4 Gols Time Casa",
-             "-3": "Handicap -3 Gols Time Casa",
-             "-2": "Handicap -2 Gols Time Casa",
-             "-1": "Handicap -1 Gol Time Casa"
-           },
-           "EH2": {
-             "+1": "Handicap +1 Gol Time Visitante",
-             "+2": "Handicap +2 Gols Time Visitante",
-             "+3": "Handicap +3 Gols Time Visitante",
-             "+4": "Handicap +4 Gols Time Visitante",
-             "+5": "Handicap +5 Gols Time Visitante"
-           }
-         },
-         "Over/Under": {
-           "TO": "Over - Total acima de x Gols",
-           "TU": "Under - Total abaixo de x Gols",
-           "TO_1H": "Over - Total acima de x Gols 1º Tempo",
-           "TU_1H": "Under - Total abaixo de x Gols 1º Tempo",
-           "TO_2H": "Over - Total acima de x Gols 2º Tempo",
-           "TU_2H": "Under - Total abaixo de x Gols 2º Tempo",
-           "TO_TimeCasa": "Over - Total acima de x Gols Time Casa",
-           "TU_TimeCasa": "Under - Total abaixo de x Gols Time Casa",
-           "TO_TimeVisitante": "Over - Total acima de x Gols Time Visitante",
-           "TU_TimeVisitante": "Under - Total abaixo de x Gols Time Visitante"
-         },
-         "Resultado Final": {
-           "1X2": "Resultado Final",
-           "Team1Win": "Vitória Time Casa",
-           "Team2Win": "Vitória Time Visitante",
-           "Draw": "Empate",
-           "Team1Win_1H": "Vitória Time Casa 1º Tempo",
-           "Team2Win_1H": "Vitória Time Visitante 1º Tempo",
-           "Draw_1H": "Empate 1º Tempo",
-           "Team1Win_2H": "Vitória Time Casa 2º Tempo",
-           "Team2Win_2H": "Vitória Time Visitante 2º Tempo",
-           "Draw_2H": "Empate 2º Tempo"
-         },
-         "Dupla Chance": {
-           "DC": "Dupla Chance",
-           "1X": "Vitória Time Casa ou Empate",
-           "12": "Vitória de qualquer equipe (não empata)",
-           "X2": "Vitória Time Visitante ou Empate"
-         },
-         "Placar Exato": {
-           "CS": "Placar Exato",
-           "0-0": "0 a 0",
-           "1-0": "1 a 0",
-           "2-0": "2 a 0",
-           "2-1": "2 a 1",
-           "1-1": "1 a 1",
-           "3-0": "3 a 0",
-           "3-1": "3 a 1",
-           "3-2": "3 a 2",
-           "0-1": "0 a 1",
-           "0-2": "0 a 2",
-           "1-2": "1 a 2",
-           "2-2": "2 a 2"
-         },
-         "Ambas Marcam": {
-           "BTS": "Ambas Marcam",
-           "BothToScore": "Ambos os times marcam",
-           "OneScoreless": "Uma equipe não marca gols"
-         },
-         "Total de Gols": {
-           "Even": "Total de gols par",
-           "Odd": "Total de gols ímpar"
-         },
-         "Cartões": {
-           "YC": "Cartão Amarelo",
-           "RC": "Cartão Vermelho",
-           "TO_Corners": "Over - Total acima de x Escanteios",
-           "TU_Corners": "Under - Total abaixo de x Escanteios",
-           "TO_YC": "Over - Total acima de x Cartões Amarelos",
-           "TU_YC": "Under - Total abaixo de x Cartões Amarelos",
-           "TO_RC": "Over - Total acima de x Cartões Vermelhos",
-           "TU_RC": "Under - Total abaixo de x Cartões Vermelhos"
-         },
-         "Escanteios": {
-           "Corners": "Escanteios",
-           "TO_Corners": "Over - Total acima de x Escanteios",
-           "TU_Corners": "Under - Total abaixo de x Escanteios"
-         },
-         "Faltas": {
-           "FOULS": "Faltas",
-           "TO_Fouls": "Over - Total acima de x Faltas",
-           "TU_Fouls": "Under - Total abaixo de x Faltas"
-         },
-         "Impedimentos": {
-           "OFFSIDES": "Impedimentos",
-           "TO_Offsides": "Over - Total acima de x Impedimentos",
-           "TU_Offsides": "Under - Total abaixo de x Impedimentos"
-         },
-         "Chutes": {
-           "SHOTS": "Chutes",
-           "TO_Shots": "Over - Total acima de x Chutes",
-           "TU_Shots": "Under - Total abaixo de x Chutes"
-         },
-         "Posse de Bola": {
-           "POSSESSION": "Posse de Bola"
-         },
-         "Outros Mercados": {
-           "PrimeiroGol": "Quem marca primeiro",
-           "ÚltimoGol": "Quem marca por último",
-           "IntervaloFinal": "Resultado combinado 1H/FT",
-           "GolsPorJogador": "Marcação de gols por jogador específico",
-           "CartõesPorJogador": "Recebimento de cartões por jogador específico"
-         }
-       },
-       selectedMarkets: [], // Inicializa vazio, será preenchido no mounted
+
+       
        pinnedCards: [], // Array de cards fixos
        pinnedCardKeys: new Set(), // Set para verificar se um card está fixo
        // Propriedades para drag and drop
@@ -749,38 +575,7 @@ export default {
     isAdmin() {
       return this.$store.getters.isAdmin
     },
-    // Opções de mercado achatadas para exibição direta
-    flattenedMarketOptions() {
-      const options = []
-      
-      Object.entries(this.marketOptions).forEach(([category, subcategories]) => {
-        Object.entries(subcategories).forEach(([subcategory, description]) => {
-          if (typeof description === 'string') {
-            // Subcategoria simples
-            options.push({
-              value: `${category}|${subcategory}`,
-              label: description
-            })
-          } else if (typeof description === 'object') {
-            // Subcategoria com sub-opções
-            Object.entries(description).forEach(([option, optionDescription]) => {
-              options.push({
-                value: `${category}|${subcategory}|${option}`,
-                label: optionDescription
-              })
-            })
-          }
-        })
-      })
-      
-      // Log de debug para verificar as opções de mercado
-      console.log('🔍 DEBUG flattenedMarketOptions:', options.length, 'opções geradas')
-      if (options.length > 0) {
-        console.log('  - Exemplo de opção:', options[0])
-      }
-      
-      return options
-    },
+
     totalSurebets() {
       return Object.keys(this.surebets).length
     },
@@ -966,55 +761,7 @@ export default {
          console.log(`Filtro moedas: ${beforeFilter} -> ${surebetsArray.length}`)
        }
       
-      // Filtro por mercado (vinculado ao campo "market" da API)
-      if (this.selectedMarkets.length > 0) {
-        console.log('🎯 Aplicando filtro de mercados...')
-        console.log('Mercados selecionados:', this.selectedMarkets)
-        
-        const beforeFilter = surebetsArray.length
-        surebetsArray = surebetsArray.filter(surebet => {
-          // Extrai o mercado do primeiro bet do surebet
-          const surebetMarket = surebet[0]?.market
-          
-          if (!surebetMarket) {
-            console.log('❌ Surebet rejeitado - mercado não especificado')
-            return false
-          }
-          
-          // Verifica se o mercado do surebet está na lista selecionada
-          const match = this.selectedMarkets.some(selectedMarket => {
-            const [category, subcategory, option] = selectedMarket.split('|')
-            
-            // Se tem opção específica, verifica se corresponde exatamente
-            if (option) {
-              // Verifica correspondência exata
-              const exactMatch = surebetMarket === `${category}|${subcategory}|${option}`
-              if (exactMatch) return true
-              
-              // Verifica se o mercado contém a opção específica
-              return surebetMarket.includes(option)
-            }
-            
-            // Se não tem opção, verifica se o mercado começa com a categoria e subcategoria
-            if (subcategory) {
-              return surebetMarket.startsWith(`${category}|${subcategory}`) || 
-                     surebetMarket.includes(subcategory)
-            }
-            
-            // Se só tem categoria, verifica se o mercado contém a categoria
-            return surebetMarket.includes(category)
-          })
-          
-          if (!match) {
-            console.log('❌ Surebet rejeitado - mercado:', surebetMarket)
-          } else {
-            console.log('✅ Surebet aceito - mercado:', surebetMarket)
-          }
-          
-          return match
-        })
-        console.log(`Filtro mercados: ${beforeFilter} -> ${surebetsArray.length}`)
-      }
+
       
 
 
@@ -1038,7 +785,6 @@ export default {
       const housesUnselected = this.filterOptions.houses.length - this.selectedHouses.length
       const sportsUnselected = this.filterOptions.sports.length - this.selectedSports.length
       const currenciesUnselected = this.filterOptions.currencies.length - this.selectedCurrencies.length
-      const marketsUnselected = this.flattenedMarketOptions.length - this.selectedMarkets.length
       const profitNotDefault = !(this.minProfit === 0 && this.maxProfit === 1000)
       const dateSelected = !!this.selectedDate
       const filterNotDefault = this.activeFilter !== 'prelive' // prelive é o padrão
@@ -1048,14 +794,13 @@ export default {
       console.log('  - Houses unselected:', housesUnselected, '(', this.selectedHouses.length, '/', this.filterOptions.houses.length, ')')
       console.log('  - Sports unselected:', sportsUnselected, '(', this.selectedSports.length, '/', this.filterOptions.sports.length, ')')
       console.log('  - Currencies unselected:', currenciesUnselected, '(', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length, ')')
-      console.log('  - Markets unselected:', marketsUnselected, '(', this.selectedMarkets.length, '/', this.flattenedMarketOptions.length, ')')
       console.log('  - Profit not default:', profitNotDefault, '(', this.minProfit, '-', this.maxProfit, ')')
       console.log('  - Date selected:', dateSelected, '(', this.selectedDate, ')')
       console.log('  - Filter not default:', filterNotDefault, '(', this.activeFilter, ')')
       
       // Retorna true se pelo menos um filtro estiver ativo
       const result = housesUnselected > 0 || sportsUnselected > 0 || currenciesUnselected > 0 || 
-             marketsUnselected > 0 || profitNotDefault || dateSelected || filterNotDefault
+             profitNotDefault || dateSelected || filterNotDefault
       
       console.log('  - Result:', result)
       return result
@@ -1068,10 +813,9 @@ export default {
       const housesUnselected = this.filterOptions.houses.length - this.selectedHouses.length
       const sportsUnselected = this.filterOptions.sports.length - this.selectedSports.length
       const currenciesUnselected = this.filterOptions.currencies.length - this.selectedCurrencies.length
-      const marketsUnselected = this.flattenedMarketOptions.length - this.selectedMarkets.length
       
       // Soma todas as opções desmarcadas
-      count += housesUnselected + sportsUnselected + currenciesUnselected + marketsUnselected
+      count += housesUnselected + sportsUnselected + currenciesUnselected
       
       // Filtro de tipo só conta se NÃO for prelive (padrão)
       if (this.activeFilter !== 'prelive') count++
@@ -1087,7 +831,6 @@ export default {
       console.log('  - Houses unselected:', housesUnselected)
       console.log('  - Sports unselected:', sportsUnselected)
       console.log('  - Currencies unselected:', currenciesUnselected)
-      console.log('  - Markets unselected:', marketsUnselected)
       console.log('  - Filter not default:', this.activeFilter !== 'prelive' ? 1 : 0)
       console.log('  - Profit not default:', !(this.minProfit === 0 && this.maxProfit === 1000) ? 1 : 0)
       console.log('  - Date selected:', this.selectedDate ? 1 : 0)
@@ -1142,9 +885,7 @@ export default {
     
 
     
-    selectedMarkets() {
-      this.saveFiltersToSettings()
-    },
+
     
     activeFilter() {
       this.saveFiltersToSettings()
@@ -1172,8 +913,7 @@ export default {
         console.log('  - selectedHouses:', this.selectedHouses.length, '/', this.filterOptions.houses.length)
         console.log('  - selectedSports:', this.selectedSports.length, '/', this.filterOptions.sports.length)
         console.log('  - selectedCurrencies:', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length)
-        console.log('  - selectedMarkets:', this.selectedMarkets.length, '/', this.flattenedMarketOptions.length)
-        console.log('  - flattenedMarketOptions:', this.flattenedMarketOptions.length, 'opções disponíveis')
+
         console.log('  - hasActiveFilters:', this.hasActiveFilters)
         console.log('  - activeFiltersCount:', this.activeFiltersCount)
         
@@ -1317,13 +1057,11 @@ export default {
           this.selectedHouses = [...availableHouses]
           this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
           this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
-          this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
           
           console.log('✅ Filtros inicializados com todas as opções marcadas por padrão:')
           console.log('  - Casas:', this.selectedHouses.length, 'opções')
           console.log('  - Esportes:', this.selectedSports.length, 'opções')
           console.log('  - Moedas:', this.selectedCurrencies.length, 'opções')
-          console.log('  - Mercados:', this.selectedMarkets.length, 'opções')
           
           // Salvar as configurações iniciais
           this.saveFiltersToSettings()
@@ -1401,19 +1139,7 @@ export default {
               }
             }
             
-            if (settings.filters.selectedMarkets && settings.filters.selectedMarkets.length > 0) {
-              this.selectedMarkets = settings.filters.selectedMarkets
-              console.log('✅ Mercados carregados das configurações:', this.selectedMarkets.length, 'mercados')
-            } else {
-              // Se não há mercados salvos ou estão vazios, seleciona todos por padrão
-              // MAS verifica se o usuário explicitamente desmarcou todos os filtros
-              if (!this.checkIfUserExplicitlyDeselectedAll()) {
-                this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
-                console.log('✅ Mercados inicializados com todas as opções por padrão:', this.selectedMarkets.length, 'mercados')
-              } else {
-                console.log('🔒 Mercados não inicializados - usuário explicitamente desmarcou todos os filtros')
-              }
-            }
+
             
             if (settings.filters.selectedDate) {
               this.selectedDate = settings.filters.selectedDate
@@ -1459,12 +1185,10 @@ export default {
         settings.filters.selectedHouses = this.selectedHouses
         settings.filters.selectedSports = this.selectedSports
         settings.filters.selectedCurrencies = this.selectedCurrencies
-        settings.filters.selectedMarkets = this.selectedMarkets
         settings.filters.selectedDate = this.selectedDate
         settings.filters.activeFilter = this.activeFilter
         
         localStorage.setItem('app_settings', JSON.stringify(settings))
-        console.log('💾 Filtros salvos no localStorage - mercados:', this.selectedMarkets.length)
       } catch (error) {
         console.error('Erro ao salvar filtros nas configurações:', error)
       }
@@ -1485,14 +1209,12 @@ export default {
         selectedHouses: [...this.selectedHouses],
         selectedSports: [...this.selectedSports],
         selectedCurrencies: [...this.selectedCurrencies],
-        selectedMarkets: [...this.selectedMarkets],
         selectedDate: this.selectedDate,
         activeFilter: this.activeFilter,
         minProfit: this.minProfit,
         maxProfit: this.maxProfit,
         houseSearchTerm: this.houseSearchTerm
       }
-      console.log('📦 Cache de filtros atualizado - mercados:', this.selectedMarkets.length)
     },
     
     // Restaura filtros do cache
@@ -1546,17 +1268,7 @@ export default {
         }
       }
       
-      if (this.filtersCache.selectedMarkets.length > 0) {
-        const currentMarkets = [...this.selectedMarkets].sort()
-        const cachedMarkets = [...this.filtersCache.selectedMarkets].sort()
-        
-        if (JSON.stringify(currentMarkets) !== JSON.stringify(cachedMarkets)) {
-          this.selectedMarkets = [...this.filtersCache.selectedMarkets]
-          console.log('🔄 Restaurando mercados do cache:', this.selectedMarkets.length, 'mercados')
-          restoredCount++
-          changesDetected = true
-        }
-      }
+
       
       if (this.filtersCache.selectedDate && this.selectedDate !== this.filtersCache.selectedDate) {
         this.selectedDate = this.filtersCache.selectedDate
@@ -2160,7 +1872,6 @@ export default {
       this.selectedHouses = housesToSelect
       this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
       this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
-      this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
       this.selectedDate = ''
       this.minProfit = 0
       this.maxProfit = 1000
@@ -2171,7 +1882,6 @@ export default {
       
       // Mostrar notificação
       this.showNotification('Filtros limpos!')
-      console.log('🧹 Filtros limpos - mercados selecionados:', this.selectedMarkets.length)
     },
     
     toggleFilterOverlay() {
@@ -2488,7 +2198,6 @@ export default {
              houses: [...this.selectedHouses],
              sports: [...this.selectedSports],
              currencies: [...this.selectedCurrencies],
-             markets: [...this.selectedMarkets],
              selectedDate: this.selectedDate,
              minProfit: this.minProfit,
              maxProfit: this.maxProfit,
@@ -2500,7 +2209,6 @@ export default {
            this.saveSavedFilters()
            this.closeSaveFilterModal()
            this.showNotification('Filtro salvo com sucesso!')
-           console.log('💾 Filtro salvo - mercados incluídos:', this.selectedMarkets.length)
          },
          
          showSavedFiltersList() {
@@ -2538,7 +2246,6 @@ export default {
            
            this.selectedSports = [...filter.sports]
            this.selectedCurrencies = [...filter.currencies]
-           this.selectedMarkets = filter.markets ? [...filter.markets] : []
            this.selectedDate = filter.selectedDate || ''
            this.minProfit = filter.minProfit
            this.maxProfit = filter.maxProfit
@@ -2547,7 +2254,6 @@ export default {
            this.saveFiltersToSettings()
            this.closeSavedFiltersModal()
            this.showNotification(`Filtro "${filter.name}" carregado!`)
-           console.log('📥 Filtro carregado - mercados:', this.selectedMarkets.length)
          },
          
          deleteFilter(index) {
@@ -2557,20 +2263,7 @@ export default {
            this.showNotification(`Filtro "${filterName}" excluído!`)
          },
          
-         // Métodos para filtros de mercado
-         selectAllMarkets() {
-           // Seleciona todas as opções de mercado
-           this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
-           this.saveFiltersToSettings()
-           console.log('✅ Todos os mercados selecionados:', this.selectedMarkets.length)
-         },
-         
-         deselectAllMarkets() {
-           this.selectedMarkets = []
-           this.lastDeselectAllTime = Date.now()
-           this.saveFiltersToSettings()
-           console.log('❌ Todos os mercados desmarcados - timestamp registrado')
-         },
+
          
          // Métodos para gerenciar cards fixos
          togglePinCard(surebet) {
@@ -2784,10 +2477,7 @@ export default {
              needsReinforcement = true
            }
            
-           if (!this.selectedMarkets || this.selectedMarkets.length === 0) {
-             this.selectedMarkets = this.flattenedMarketOptions.map(option => option.value)
-             needsReinforcement = true
-           }
+
            
            if (needsReinforcement) {
              console.log('🔧 Estado dos filtros reforçado')

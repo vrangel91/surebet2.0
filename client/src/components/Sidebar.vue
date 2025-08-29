@@ -24,15 +24,49 @@
         <div class="user-details" v-show="!shouldBeCollapsed">
           <p class="user-greeting">Olá, {{ currentUser?.name || 'Usuário' }}</p>
           <div class="user-status"> 
-            <span class="status-dot"></span>
-            <span class="status-text">Online</span>
+            <span class="status-dot" :class="accountStatusClass"></span>
+            <span class="status-text">{{ accountStatusText }}</span>
           </div>
           <div class="user-account-type">
             <span class="account-type-badge" :class="userAccountTypeClass">
               {{ userAccountTypeDisplay }}
             </span>
           </div>
+          
+          <!-- Informações de Expiração -->
+          <div class="account-expiration" v-if="isVIP && accountExpiration">
+            <div class="expiration-info" :class="expirationStatusClass">
+              <Clock size="12" />
+              <span class="expiration-text">{{ expirationDisplayText }}</span>
+            </div>
+            <div class="expiration-countdown" v-if="showCountdown">
+              <span class="countdown-text">{{ countdownText }}</span>
+            </div>
+          </div>
+          
+          <!-- Mensagem quando não há dados VIP -->
+          <div class="account-expiration" v-if="isVIP && !accountExpiration && userVIPData === null">
+            <div class="expiration-info warning">
+              <Clock size="12" />
+              <span class="expiration-text">Carregando dados VIP...</span>
+            </div>
+          </div>
+          
+          <!-- Mensagem quando não há dados VIP da API -->
+          <div class="account-expiration" v-if="isVIP && !accountExpiration && userVIPData === false">
+            <div class="expiration-info expired">
+              <Clock size="12" />
+              <span class="expiration-text">Dados VIP não encontrados</span>
+            </div>
+          </div>
+          
+          <!-- Alertas de Expiração -->
+          <div class="expiration-alert" v-if="isVIP && showExpirationAlert" :class="expirationAlertClass">
+            <AlertTriangle size="12" />
+            <span class="alert-text">{{ expirationAlertText }}</span>
+          </div>
         </div>
+        
         <!-- Tipo de conta no sidebar colapsado -->
         <div class="user-account-type-collapsed" v-show="shouldBeCollapsed">
           <span class="account-type-badge-collapsed" :class="userAccountTypeClass" :title="userAccountTypeDisplay">
@@ -41,8 +75,18 @@
         </div>
       </div>
       
-      <!-- Status da Conta Compacto -->
-      
+      <!-- Ações do Perfil -->
+      <div class="profile-actions" v-show="!shouldBeCollapsed">
+        <button class="profile-action-btn renew-btn" @click="renewAccount" v-if="isVIP && showRenewButton" :title="renewButtonTitle">
+          <RefreshCw size="14" />
+          <span>Renovar</span>
+        </button>
+
+        <button class="profile-action-btn logout-btn" @click="logout" title="Sair da conta">
+          <LogOut size="14" />
+          <span>Sair</span>
+        </button>
+      </div>
       
       <!-- Ícones de Administração e Configurações -->
       <div class="admin-icons" v-show="!shouldBeCollapsed">
@@ -187,8 +231,13 @@ import {
   Building2, 
   HelpCircle, 
   BookOpen, 
-  LogOut 
+  LogOut,
+  Clock,
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-vue-next'
+
+import axios from '@/utils/axios'
 
 export default {
   name: 'Sidebar',
@@ -210,7 +259,10 @@ export default {
     Building2,
     HelpCircle,
     BookOpen,
-    LogOut
+    LogOut,
+    Clock,
+    AlertTriangle,
+    RefreshCw
   },
   props: {
     sidebarCollapsed: {
@@ -220,7 +272,9 @@ export default {
   },
   data() {
     return {
-      internalCollapsed: false
+      internalCollapsed: false,
+      countdownTimer: null,
+      userVIPData: null
     }
   },
   computed: {
@@ -251,6 +305,181 @@ export default {
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
     },
+    
+    // Sistema de Expiração da Conta
+    accountExpiration() {
+      // Retornar apenas dados reais da API
+      return this.userVIPData?.dataFim || null
+    },
+    
+    accountStatusClass() {
+      if (!this.accountExpiration) return 'status-active'
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (timeDiff < 0) return 'status-expired'
+      if (daysUntilExpiration <= 7) return 'status-warning'
+      return 'status-active'
+    },
+    
+    accountStatusText() {
+      if (!this.accountExpiration) return 'Ativo'
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      if (timeDiff < 0) return 'Expirado'
+      return 'Ativo'
+    },
+    
+    expirationStatusClass() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (timeDiff < 0) return 'expired'
+      if (daysUntilExpiration <= 7) return 'warning'
+      return 'normal'
+    },
+    
+    expirationDisplayText() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      let displayText = ''
+      if (timeDiff < 0) {
+        displayText = 'Conta expirada'
+      } else {
+        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+        
+        if (daysUntilExpiration === 0) {
+          displayText = 'Expira hoje'
+        } else if (daysUntilExpiration === 1) {
+          displayText = 'Expira amanhã'
+        } else {
+          displayText = `Expira em ${daysUntilExpiration} dias`
+        }
+      }
+      
+      return displayText
+    },
+    
+    showCountdown() {
+      if (!this.accountExpiration) return false
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      return timeDiff > 0 && daysUntilExpiration <= 3
+    },
+    
+    countdownText() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      if (timeDiff <= 0) return ''
+      
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60))
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+      
+      if (hours > 24) {
+        const days = Math.floor(hours / 24)
+        return `${days}d ${hours % 24}h`
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m`
+      } else {
+        return `${minutes}m`
+      }
+    },
+    
+    showExpirationAlert() {
+      if (!this.accountExpiration) return false
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      return timeDiff < 0 || daysUntilExpiration <= 7
+    },
+    
+    expirationAlertClass() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      return timeDiff < 0 ? 'alert-expired' : 'alert-warning'
+    },
+    
+    expirationAlertText() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      if (timeDiff < 0) {
+        return 'Renovação necessária!'
+      }
+      
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (daysUntilExpiration <= 1) {
+        return 'Renovação urgente!'
+      } else if (daysUntilExpiration <= 3) {
+        return 'Renovação recomendada'
+      } else {
+        return 'Considere renovar'
+      }
+    },
+    
+    showRenewButton() {
+      if (!this.accountExpiration) return false
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      return timeDiff < 0 || daysUntilExpiration <= 7
+    },
+    
+    renewButtonTitle() {
+      if (!this.accountExpiration) return 'Renovar conta'
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      if (timeDiff < 0) {
+        return 'Conta expirada - Renovar agora'
+      }
+      
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (daysUntilExpiration <= 1) {
+        return 'Renovação urgente - Expira em breve'
+      } else {
+        return `Renovar conta - Expira em ${daysUntilExpiration} dias`
+      }
+    }
 
   },
   watch: {
@@ -261,10 +490,24 @@ export default {
         this.saveSidebarState(newValue)
       },
       immediate: true
+    },
+    
+    // Observar mudanças no usuário atual para recarregar dados VIP
+    currentUser: {
+      handler(newUser) {
+        if (newUser && newUser.id) {
+          this.loadUserVIPData()
+        } else {
+          this.userVIPData = null
+        }
+      },
+      immediate: true
     }
   },
   mounted() {
     this.loadSidebarState()
+    this.startCountdownTimer()
+    this.loadUserVIPData()
     
     // Monitorar mudanças no localStorage para configurações
     window.addEventListener('storage', (event) => {
@@ -275,6 +518,7 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener('storage', this.handleStorageChange)
+    this.stopCountdownTimer()
   },
   methods: {
     handleDashboardClick() {
@@ -335,6 +579,66 @@ export default {
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
+    },
+    renewAccount() {
+      // Redireciona para a página de planos para renovação
+      this.$router.push('/plans')
+      this.showNotification('Redirecionando para renovação da conta...', 'info')
+    },
+    
+    async loadUserVIPData() {
+      try {
+        // Verificar se o usuário está logado
+        if (!this.currentUser || !this.currentUser.id) {
+          console.log('👤 Usuário não logado, não carregando dados VIP')
+          return
+        }
+        
+        // Verificar se o usuário é VIP
+        if (!this.isVIP) {
+          console.log('👤 Usuário não é VIP, não carregando dados VIP')
+          return
+        }
+        
+        // Fazer chamada para a API para obter dados do VIP do usuário atual
+        const response = await axios.get('/api/vip/my-status')
+        
+        if (response.data && response.data.success && response.data.vipStatus) {
+          this.userVIPData = response.data.vipStatus
+        } else {
+          this.userVIPData = false // false indica que a API foi chamada mas não retornou dados
+        }
+              } catch (error) {
+          console.error('Erro ao carregar dados VIP:', error)
+          this.userVIPData = false // false indica que houve erro na API
+        }
+    },
+    
+
+    
+
+    
+    startCountdownTimer() {
+      // Limpa timer anterior se existir
+      this.stopCountdownTimer()
+      
+      // Inicia timer para atualizar countdown a cada minuto
+      this.countdownTimer = setInterval(() => {
+        // Força re-render dos computed properties
+        this.$forceUpdate()
+        
+        // Recarregar dados do VIP a cada 5 minutos
+        if (this.isVIP && this.currentUser) {
+          this.loadUserVIPData()
+        }
+      }, 60000) // Atualiza a cada minuto
+    },
+    
+    stopCountdownTimer() {
+      if (this.countdownTimer) {
+        clearInterval(this.countdownTimer)
+        this.countdownTimer = null
+      }
     },
     
     // Carregar estado da sidebar das configurações
@@ -525,6 +829,18 @@ export default {
   gap: 4px;
 }
 
+.sidebar.collapsed .profile-actions {
+  display: none;
+}
+
+.sidebar.collapsed .account-expiration {
+  display: none;
+}
+
+.sidebar.collapsed .expiration-alert {
+  display: none;
+}
+
 .sidebar.collapsed .admin-icon-link {
   width: 28px;
   height: 28px;
@@ -682,6 +998,30 @@ export default {
   height: 8px;
   border-radius: 50%;
   background-color: #00ff88;
+  transition: background-color 0.3s ease;
+}
+
+.status-dot.status-active {
+  background-color: #00ff88;
+}
+
+.status-dot.status-warning {
+  background-color: #ffa500;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-dot.status-expired {
+  background-color: #ff4444;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .status-text {
@@ -767,6 +1107,161 @@ export default {
   color: #1a1a1a;
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
   animation: vipGlow 2s ease-in-out infinite alternate;
+}
+
+/* Informações de Expiração */
+.account-expiration {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.expiration-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary, #cccccc);
+}
+
+.expiration-info.normal {
+  color: #00ff88;
+}
+
+.expiration-info.warning {
+  color: #ffa500;
+}
+
+.expiration-info.expired {
+  color: #ff4444;
+}
+
+.expiration-info svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 1.5;
+}
+
+.expiration-text {
+  font-weight: 500;
+}
+
+.expiration-countdown {
+  margin-top: 4px;
+  text-align: center;
+}
+
+.countdown-text {
+  font-size: 10px;
+  font-weight: 700;
+  color: #ffa500;
+  background: rgba(255, 165, 0, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+/* Alertas de Expiração */
+.expiration-alert {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  animation: alertPulse 2s ease-in-out infinite;
+}
+
+.expiration-alert.alert-warning {
+  background: rgba(255, 165, 0, 0.1);
+  border: 1px solid rgba(255, 165, 0, 0.3);
+  color: #ffa500;
+}
+
+.expiration-alert.alert-expired {
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+}
+
+.expiration-alert svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 1.5;
+}
+
+.alert-text {
+  font-weight: 600;
+}
+
+@keyframes alertPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Ações do Perfil */
+.profile-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.profile-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 6px;
+  background: var(--bg-secondary, #2a2a2a);
+  color: var(--text-secondary, #cccccc);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  justify-content: center;
+}
+
+.profile-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.profile-action-btn.renew-btn {
+  color: #00ff88;
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
+.profile-action-btn.renew-btn:hover {
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+}
+
+.profile-action-btn.logout-btn {
+  color: #ff4444;
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.profile-action-btn.logout-btn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  border-color: #ff4444;
+}
+
+.profile-action-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.5;
 }
 
 /* Ícones de Administração */

@@ -7,6 +7,7 @@ class VIPCronJobs {
   constructor() {
     this.jobs = new Map();
     this.isInitialized = false;
+    this.lastExecution = null;
   }
 
   /**
@@ -15,7 +16,7 @@ class VIPCronJobs {
   async initialize() {
     if (this.isInitialized) {
       console.log('⚠️ Cron jobs VIP já estão inicializados');
-      return;
+      return { success: true, message: 'Cron jobs já estão inicializados' };
     }
 
     console.log('🚀 Inicializando cron jobs VIP...');
@@ -37,8 +38,17 @@ class VIPCronJobs {
       this.scheduleDataCleanup();
 
       this.isInitialized = true;
+      this.lastExecution = new Date();
+      
       console.log('✅ Cron jobs VIP inicializados com sucesso!');
       console.log(`📊 Total de cron jobs criados: ${this.jobs.size}`);
+      
+      return { 
+        success: true, 
+        message: 'Cron jobs inicializados com sucesso',
+        totalJobs: this.jobs.size,
+        jobs: Array.from(this.jobs.keys())
+      };
       
     } catch (error) {
       console.error('❌ Erro ao inicializar cron jobs VIP:', error);
@@ -306,34 +316,230 @@ class VIPCronJobs {
   stop() {
     console.log('🛑 Parando cron jobs VIP...');
     
+    const stoppedJobs = [];
     for (const [name, job] of this.jobs) {
       job.stop();
+      stoppedJobs.push(name);
       console.log(`⏹️ Cron job "${name}" parado`);
     }
     
     this.jobs.clear();
     this.isInitialized = false;
     console.log('✅ Todos os cron jobs VIP parados');
+    
+    return {
+      success: true,
+      message: 'Cron jobs parados com sucesso',
+      stoppedJobs: stoppedJobs,
+      totalStopped: stoppedJobs.length
+    };
+  }
+
+  /**
+   * Obter próxima execução dos cron jobs
+   */
+  getNextExecutionTime() {
+    console.log('🔍 [getNextExecutionTime] Calculando próxima execução...');
+    
+    if (this.jobs.size === 0) {
+      console.log('🔍 [getNextExecutionTime] Nenhum job encontrado, retornando null');
+      return null;
+    }
+    
+    const now = new Date();
+    let nextTime = null;
+    
+    console.log(`🔍 [getNextExecutionTime] Data atual: ${now.toISOString()}`);
+    console.log(`🔍 [getNextExecutionTime] Total de jobs para verificar: ${this.jobs.size}`);
+    
+    for (const [name, job] of this.jobs) {
+      console.log(`🔍 [getNextExecutionTime] Verificando job: ${name}`);
+      
+      // node-cron não possui nextDate, vamos calcular baseado no padrão cron
+      try {
+        // Obter o padrão cron do job
+        const cronPattern = this.getCronPatternFromJob(job);
+        if (cronPattern) {
+          console.log(`🔍 [getNextExecutionTime] Job ${name} - padrão cron: ${cronPattern}`);
+          
+          // Calcular próxima execução baseada no padrão
+          const nextExecution = this.calculateNextExecution(cronPattern, now);
+          if (nextExecution) {
+            console.log(`🔍 [getNextExecutionTime] Job ${name} - próxima execução calculada: ${nextExecution.toISOString()}`);
+            
+            if (!nextTime || nextExecution < nextTime) {
+              nextTime = nextExecution;
+              console.log(`🔍 [getNextExecutionTime] Nova próxima execução encontrada: ${nextTime.toISOString()} (job: ${name})`);
+            }
+          }
+        } else {
+          console.log(`🔍 [getNextExecutionTime] Job ${name} - não foi possível obter padrão cron`);
+        }
+      } catch (error) {
+        console.error(`🔍 [getNextExecutionTime] Erro ao calcular próxima execução do job ${name}:`, error);
+      }
+    }
+    
+    console.log(`🔍 [getNextExecutionTime] Próxima execução calculada: ${nextTime ? nextTime.toISOString() : 'null'}`);
+    return nextTime;
+  }
+
+  /**
+   * Extrair padrão cron do job
+   */
+  getCronPatternFromJob(job) {
+    try {
+      // Tentar acessar o padrão cron através do _scheduler
+      if (job._scheduler && job._scheduler.timeMatcher && job._scheduler.timeMatcher.pattern) {
+        return job._scheduler.timeMatcher.pattern;
+      }
+      
+      // Tentar outras propriedades
+      if (job.options && job.options.cron) {
+        return job.options.cron;
+      }
+      
+      // Se não conseguir extrair, retornar padrões padrão baseados no nome do job
+      return this.getDefaultCronPattern(job);
+    } catch (error) {
+      console.error('❌ Erro ao extrair padrão cron:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Obter padrão cron padrão baseado no nome do job
+   */
+  getDefaultCronPattern(job) {
+    // Mapear nomes de jobs para padrões cron padrão
+    const defaultPatterns = {
+      'expiredVIPs': '0 0 * * *',           // 00:00 diário
+      'expirationNotifications': '0 9 * * *', // 09:00 diário
+      'lastDayNotifications': '0 18 * * *',   // 18:00 diário
+      'weeklyReport': '0 8 * * 0',           // 08:00 domingo
+      'dataCleanup': '0 2 1 * *'             // 02:00 primeiro dia do mês
+    };
+    
+    // Tentar encontrar o nome do job no Map
+    for (const [name, jobInstance] of this.jobs) {
+      if (jobInstance === job) {
+        return defaultPatterns[name] || null;
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Calcular próxima execução baseada no padrão cron
+   */
+  calculateNextExecution(cronPattern, fromDate = new Date()) {
+    try {
+      // Implementação simplificada para padrões comuns
+      const parts = cronPattern.split(' ');
+      if (parts.length !== 5) {
+        console.log(`🔍 [calculateNextExecution] Padrão inválido: ${cronPattern}`);
+        return null;
+      }
+      
+      const [minute, hour, day, month, weekday] = parts;
+      
+      // Para padrões diários simples (ex: "0 0 * * *")
+      if (day === '*' && month === '*' && weekday === '*') {
+        const next = new Date(fromDate);
+        
+        // Se já passou da hora hoje, agendar para amanhã
+        if (next.getHours() > parseInt(hour) || 
+            (next.getHours() === parseInt(hour) && next.getMinutes() >= parseInt(minute))) {
+          next.setDate(next.getDate() + 1);
+        }
+        
+        next.setHours(parseInt(hour), parseInt(minute), 0, 0);
+        return next;
+      }
+      
+      // Para padrões semanais (ex: "0 8 * * 0")
+      if (day === '*' && month === '*' && weekday !== '*') {
+        const next = new Date(fromDate);
+        const targetWeekday = parseInt(weekday);
+        
+        // Calcular dias até o próximo dia da semana
+        let daysToAdd = (targetWeekday - next.getDay() + 7) % 7;
+        if (daysToAdd === 0 && (next.getHours() > parseInt(hour) || 
+            (next.getHours() === parseInt(hour) && next.getMinutes() >= parseInt(minute)))) {
+          daysToAdd = 7;
+        }
+        
+        next.setDate(next.getDate() + daysToAdd);
+        next.setHours(parseInt(hour), parseInt(minute), 0, 0);
+        return next;
+      }
+      
+      // Para padrões mensais (ex: "0 2 1 * *")
+      if (day !== '*' && month === '*' && weekday === '*') {
+        const next = new Date(fromDate);
+        const targetDay = parseInt(day);
+        
+        // Se já passou do dia este mês, agendar para o próximo mês
+        if (next.getDate() >= targetDay) {
+          next.setMonth(next.getMonth() + 1);
+        }
+        
+        next.setDate(targetDay);
+        next.setHours(parseInt(hour), parseInt(minute), 0, 0);
+        return next;
+      }
+      
+      console.log(`🔍 [calculateNextExecution] Padrão não suportado: ${cronPattern}`);
+      return null;
+      
+    } catch (error) {
+      console.error('❌ Erro ao calcular próxima execução:', error);
+      return null;
+    }
   }
 
   /**
    * Obter status dos cron jobs
    */
   getStatus() {
+    console.log('🔍 [getStatus] Verificando status dos cron jobs...');
+    console.log(`🔍 [getStatus] isInitialized: ${this.isInitialized}`);
+    console.log(`🔍 [getStatus] Total de jobs: ${this.jobs.size}`);
+    
     const status = {};
     
     for (const [name, job] of this.jobs) {
+      console.log(`🔍 [getStatus] Verificando job: ${name}`);
+      
+      // Para node-cron, vamos usar uma lógica mais confiável:
+      // Se o job foi criado e não foi explicitamente parado, ele está rodando
+      // Vamos verificar se o job tem as propriedades necessárias para funcionar
+      const hasValidJob = job && typeof job.stop === 'function';
+      const nextDate = job.nextDate ? job.nextDate() : null;
+      
+      // Se o job foi criado e não foi parado, ele está rodando
+      const isJobRunning = hasValidJob && this.isInitialized;
+      
+      console.log(`🔍 [getStatus] Job ${name}: hasValidJob=${hasValidJob}, isJobRunning=${isJobRunning}, nextDate=${nextDate}`);
+      
       status[name] = {
-        running: job.running,
-        nextDate: job.nextDate ? job.nextDate() : null
+        running: isJobRunning,
+        nextDate: nextDate
       };
     }
     
-    return {
+    const overallStatus = {
+      isRunning: this.isInitialized && this.jobs.size > 0,
       initialized: this.isInitialized,
       jobs: status,
-      totalJobs: this.jobs.size
+      totalJobs: this.jobs.size,
+      lastExecution: this.lastExecution || null,
+      nextExecution: this.getNextExecutionTime()
     };
+    
+    console.log('🔍 [getStatus] Status final:', overallStatus);
+    return overallStatus;
   }
 
   /**

@@ -33,10 +33,6 @@
             <p class="header-subtitle">Gerencie usuários VIP, cron jobs e relatórios</p>
           </div>
                      <div class="header-actions">
-             <button @click="testAuth" class="btn btn-info" :disabled="loading">
-               <Settings class="btn-icon" size="16" />
-               Testar Auth
-             </button>
              <button @click="refreshData" class="btn btn-secondary" :disabled="loading">
                <RefreshCw class="btn-icon" size="16" />
                Atualizar
@@ -152,12 +148,6 @@
               <div class="table-title">
                 <h3>VIPs Ativos ({{ activeVIPs.length }})</h3>
                 <div v-if="hasActiveFilters" class="filtered-results">
-                  <p style="color: yellow; background: red; padding: 5px;">
-                    DEBUG: hasActiveFilters = {{ hasActiveFilters }} | 
-                    searchTerm = "{{ searchTerm }}" | 
-                    planFilter = "{{ planFilter }}" | 
-                    statusFilter = "{{ statusFilter }}"
-                  </p>
                   <span class="filtered-count">{{ filteredActiveVIPs.length }} resultado(s) encontrado(s)</span>
                   <button @click="clearFilters" class="btn btn-secondary btn-sm">
                     Limpar Filtros
@@ -166,18 +156,15 @@
               </div>
               <div class="table-actions">
                 <div class="filters-row">
-                  <p style="color: red; font-weight: bold;">TESTE DE FILTROS</p>
                   <input 
                     v-model="searchTerm" 
                     type="text" 
                     placeholder="Buscar usuário..." 
                     class="search-input"
-                    style="border: 3px solid red; background: yellow; color: black;"
                   />
                   <select 
                     v-model="planFilter" 
                     class="filter-select"
-                    style="border: 3px solid blue; background: lightblue; color: black;"
                   >
                     <option value="all">Todos os Planos</option>
                     <option v-for="plan in availablePlans.filter(p => p !== 'all')" :key="plan" :value="plan">
@@ -187,16 +174,12 @@
                   <select 
                     v-model="statusFilter" 
                     class="filter-select"
-                    style="border: 3px solid green; background: lightgreen; color: black;"
                   >
                     <option value="all">Todos os Status</option>
                     <option value="active">Ativo</option>
                     <option value="expiring">Expirando</option>
                     <option value="expired">Expirado</option>
                   </select>
-                  <button @click="alert('Botão funcionando!')" class="btn btn-sm btn-danger">
-                    TESTE CLIQUE
-                  </button>
                 </div>
               </div>
             </div>
@@ -464,9 +447,25 @@
             <div class="cron-info">
               <h4>Informações dos Cron Jobs</h4>
               <div class="cron-details">
-                <p><strong>Status:</strong> {{ cronStatus.isRunning ? 'Executando' : 'Parado' }}</p>
-                <p><strong>Última Execução:</strong> {{ cronStatus.lastExecution || 'Nunca' }}</p>
-                <p><strong>Próxima Execução:</strong> {{ cronStatus.nextExecution || 'N/A' }}</p>
+                <p><strong>Status:</strong> 
+                  <span :class="cronStatus.isRunning ? 'status-running' : 'status-stopped'">
+                    {{ cronStatus.isRunning ? 'Executando' : 'Parado' }}
+                  </span>
+                </p>
+                <p><strong>Inicializado:</strong> {{ cronStatus.initialized ? 'Sim' : 'Não' }}</p>
+                <p><strong>Total de Jobs:</strong> {{ cronStatus.totalJobs || 0 }}</p>
+                <p><strong>Última Execução:</strong> {{ formatCronDate(cronStatus.lastExecution) }}</p>
+                <p><strong>Próxima Execução:</strong> {{ formatCronDate(cronStatus.nextExecution) }}</p>
+                
+                <div v-if="cronStatus.jobs && Object.keys(cronStatus.jobs).length > 0" class="jobs-details">
+                  <h5>Jobs Ativos:</h5>
+                  <div v-for="(job, name) in cronStatus.jobs" :key="name" class="job-item">
+                    <span class="job-name">{{ name }}</span>
+                    <span class="job-status" :class="job.running ? 'running' : 'stopped'">
+                      {{ job.running ? 'Ativo' : 'Parado' }}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -922,50 +921,12 @@ export default {
       }
     }
     
-    const testAuth = async () => {
-      console.log('🧪 Testando autenticação...')
-      try {
-        // Verificar token no store
-        const token = store.getters.authToken
-        console.log('🔑 Token no store:', !!token)
-        console.log('🔑 Token:', token ? token.substring(0, 20) + '...' : 'Nenhum')
-        
-        // Verificar token no localStorage
-        const localToken = localStorage.getItem('authToken')
-        console.log('🔑 Token no localStorage:', !!localToken)
-        console.log('🔑 Token localStorage:', localToken ? localToken.substring(0, 20) + '...' : 'Nenhum')
-        
-        // Verificar se os tokens são iguais
-        console.log('🔑 Tokens são iguais:', token === localToken)
-        
-        if (!token) {
-          console.error('❌ Nenhum token encontrado no store')
-          return false
-        }
-        
-        // Testar uma chamada simples
-        const response = await axios.get('/api/users')
-        console.log('✅ Teste de autenticação bem-sucedido:', response.data)
-        return true
-      } catch (error) {
-        console.error('❌ Teste de autenticação falhou:', error)
-        console.error('📋 Detalhes:', error.response?.data)
-        return false
-      }
-    }
+
     
     const refreshData = async () => {
       console.log('🔄 Iniciando refreshData...')
       loading.value = true
       try {
-        // Testar autenticação primeiro
-        console.log('🧪 Testando autenticação...')
-        const authOk = await testAuth()
-        if (!authOk) {
-          console.error('❌ Falha na autenticação, abortando carregamento')
-          return
-        }
-        
         // Carregar dados em sequência para identificar qual está falhando
         console.log('📊 Carregando estatísticas...')
         try {
@@ -1092,10 +1053,18 @@ export default {
     
     const loadCronStatus = async () => {
       try {
+        console.log('📊 Carregando status dos cron jobs...')
         const response = await axios.get('/api/vip/cron/status')
-        cronStatus.value = response.data.status || { isRunning: false }
+        console.log('✅ Status dos cron jobs:', response.data)
+        
+        if (response.data.status) {
+          cronStatus.value = response.data.status
+        } else {
+          cronStatus.value = { isRunning: false, initialized: false, totalJobs: 0 }
+        }
       } catch (error) {
-        console.error('Erro ao carregar status dos cron jobs:', error)
+        console.error('❌ Erro ao carregar status dos cron jobs:', error)
+        cronStatus.value = { isRunning: false, initialized: false, totalJobs: 0 }
       }
     }
     
@@ -1276,19 +1245,39 @@ export default {
     
     const initializeCronJobs = async () => {
       try {
-        await axios.post('/api/vip/cron/initialize')
+        console.log('🚀 Iniciando cron jobs...')
+        const response = await axios.post('/api/vip/cron/initialize')
+        console.log('✅ Resposta da inicialização:', response.data)
+        
+        if (response.data.success) {
+          alert(`✅ ${response.data.message}\nTotal de jobs: ${response.data.totalJobs}`)
+        } else {
+          alert('⚠️ Cron jobs não foram inicializados corretamente')
+        }
+        
         await loadCronStatus()
       } catch (error) {
-        console.error('Erro ao inicializar cron jobs:', error)
+        console.error('❌ Erro ao inicializar cron jobs:', error)
+        alert(`❌ Erro ao inicializar cron jobs: ${error.response?.data?.error || error.message}`)
       }
     }
     
     const stopCronJobs = async () => {
       try {
-        await axios.post('/api/vip/cron/stop')
+        console.log('🛑 Parando cron jobs...')
+        const response = await axios.post('/api/vip/cron/stop')
+        console.log('✅ Resposta da parada:', response.data)
+        
+        if (response.data.success) {
+          alert(`✅ ${response.data.message}\nJobs parados: ${response.data.totalStopped}`)
+        } else {
+          alert('⚠️ Cron jobs não foram parados corretamente')
+        }
+        
         await loadCronStatus()
       } catch (error) {
-        console.error('Erro ao parar cron jobs:', error)
+        console.error('❌ Erro ao parar cron jobs:', error)
+        alert(`❌ Erro ao parar cron jobs: ${error.response?.data?.error || error.message}`)
       }
     }
     
@@ -1341,6 +1330,15 @@ export default {
     
     const formatCurrency = (value) => {
       return parseFloat(value || 0).toFixed(2)
+    }
+    
+    const formatCronDate = (date) => {
+      if (!date) return 'N/A'
+      try {
+        return new Date(date).toLocaleString('pt-BR')
+      } catch (error) {
+        return 'Data inválida'
+      }
     }
     
     const getExpirationClass = (endDate) => {
@@ -1424,7 +1422,6 @@ export default {
       canActivateVIP,
       canUpdateVIP,
       toggleSidebar,
-      testAuth,
       refreshData,
       checkExistingVIP,
       activateVIP,
@@ -1442,6 +1439,7 @@ export default {
       generateReports,
       formatDate,
       formatCurrency,
+      formatCronDate,
       getExpirationClass,
       getDaysRemaining,
       getDaysRemainingClass
@@ -2127,17 +2125,76 @@ export default {
       color: var(--text-primary, #ffffff);
     }
     
-    .cron-details {
-      p {
-        margin: 8px 0;
-        color: var(--text-secondary, #a0a0a0);
-        font-size: 14px;
-        
-        strong {
-          color: var(--text-primary, #ffffff);
-        }
-      }
-    }
+         .cron-details {
+       p {
+         margin: 8px 0;
+         color: var(--text-secondary, #a0a0a0);
+         font-size: 14px;
+         
+         strong {
+           color: var(--text-primary, #ffffff);
+         }
+         
+         .status-running {
+           color: #28a745;
+           font-weight: 600;
+         }
+         
+         .status-stopped {
+           color: #dc3545;
+           font-weight: 600;
+         }
+       }
+       
+       .jobs-details {
+         margin-top: 16px;
+         padding-top: 16px;
+         border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+         
+         h5 {
+           margin: 0 0 12px 0;
+           font-size: 14px;
+           font-weight: 600;
+           color: var(--text-primary, #ffffff);
+         }
+         
+         .job-item {
+           display: flex;
+           justify-content: space-between;
+           align-items: center;
+           padding: 8px 0;
+           border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.05));
+           
+           &:last-child {
+             border-bottom: none;
+           }
+           
+           .job-name {
+             color: var(--text-primary, #ffffff);
+             font-weight: 500;
+             text-transform: capitalize;
+           }
+           
+           .job-status {
+             padding: 4px 8px;
+             border-radius: 12px;
+             font-size: 11px;
+             font-weight: 600;
+             text-transform: uppercase;
+             
+             &.running {
+               background: #28a745;
+               color: white;
+             }
+             
+             &.stopped {
+               background: #dc3545;
+               color: white;
+             }
+           }
+         }
+       }
+     }
   }
 }
 
