@@ -109,6 +109,7 @@
           >
             <Crown class="tab-icon" size="16" />
             VIPs Ativos
+            <span v-if="activeFiltersCount > 0" class="filter-badge">{{ activeFiltersCount }}</span>
           </button>
           <button 
             @click="activeTab = 'expiring'" 
@@ -123,6 +124,7 @@
           >
             <History class="tab-icon" size="16" />
             Histórico
+            <span v-if="historyFiltersCount > 0" class="filter-badge">{{ historyFiltersCount }}</span>
           </button>
           <button 
             @click="activeTab = 'cron'" 
@@ -150,6 +152,12 @@
               <div class="table-title">
                 <h3>VIPs Ativos ({{ activeVIPs.length }})</h3>
                 <div v-if="hasActiveFilters" class="filtered-results">
+                  <p style="color: yellow; background: red; padding: 5px;">
+                    DEBUG: hasActiveFilters = {{ hasActiveFilters }} | 
+                    searchTerm = "{{ searchTerm }}" | 
+                    planFilter = "{{ planFilter }}" | 
+                    statusFilter = "{{ statusFilter }}"
+                  </p>
                   <span class="filtered-count">{{ filteredActiveVIPs.length }} resultado(s) encontrado(s)</span>
                   <button @click="clearFilters" class="btn btn-secondary btn-sm">
                     Limpar Filtros
@@ -158,24 +166,37 @@
               </div>
               <div class="table-actions">
                 <div class="filters-row">
+                  <p style="color: red; font-weight: bold;">TESTE DE FILTROS</p>
                   <input 
                     v-model="searchTerm" 
                     type="text" 
                     placeholder="Buscar usuário..." 
                     class="search-input"
+                    style="border: 3px solid red; background: yellow; color: black;"
                   />
-                  <select v-model="planFilter" class="filter-select">
+                  <select 
+                    v-model="planFilter" 
+                    class="filter-select"
+                    style="border: 3px solid blue; background: lightblue; color: black;"
+                  >
                     <option value="all">Todos os Planos</option>
                     <option v-for="plan in availablePlans.filter(p => p !== 'all')" :key="plan" :value="plan">
                       {{ plan }}
                     </option>
                   </select>
-                  <select v-model="statusFilter" class="filter-select">
+                  <select 
+                    v-model="statusFilter" 
+                    class="filter-select"
+                    style="border: 3px solid green; background: lightgreen; color: black;"
+                  >
                     <option value="all">Todos os Status</option>
                     <option value="active">Ativo</option>
                     <option value="expiring">Expirando</option>
                     <option value="expired">Expirado</option>
                   </select>
+                  <button @click="alert('Botão funcionando!')" class="btn btn-sm btn-danger">
+                    TESTE CLIQUE
+                  </button>
                 </div>
               </div>
             </div>
@@ -847,6 +868,23 @@ export default {
       return historySearchTerm.value || planFilter.value !== 'all' || dateRangeFilter.value !== 'all'
     })
     
+    // Contar filtros ativos para exibir no badge
+    const activeFiltersCount = computed(() => {
+      let count = 0
+      if (searchTerm.value) count++
+      if (planFilter.value !== 'all') count++
+      if (statusFilter.value !== 'all') count++
+      return count
+    })
+    
+    const historyFiltersCount = computed(() => {
+      let count = 0
+      if (historySearchTerm.value) count++
+      if (planFilter.value !== 'all') count++
+      if (dateRangeFilter.value !== 'all') count++
+      return count
+    })
+    
     // Computed para validação
     const canActivateVIP = computed(() => {
       return activateForm.userId && 
@@ -1381,6 +1419,8 @@ export default {
       getVIPStatus,
       hasActiveFilters,
       hasActiveHistoryFilters,
+      activeFiltersCount,
+      historyFiltersCount,
       canActivateVIP,
       canUpdateVIP,
       toggleSidebar,
@@ -1721,6 +1761,22 @@ export default {
     width: 16px;
     height: 16px;
     flex-shrink: 0;
+  }
+  
+  .filter-badge {
+    background: #dc3545;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 4px;
+    min-width: 16px;
+    text-align: center;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

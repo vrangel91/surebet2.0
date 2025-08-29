@@ -80,12 +80,7 @@ const routes = [
     component: BookmakerAccountsView,
     beforeEnter: requireVIP
   },
-  {
-    path: '/bookmaker-reports',
-    name: 'bookmaker-reports',
-    component: () => import('../views/BookmakerReportsView.vue'),
-    beforeEnter: requireVIP
-  },
+
   {
     path: '/guide',
     name: 'guide',
