@@ -2,7 +2,7 @@
 
 ## 📋 Visão Geral
 
-O sistema VIP implementado oferece controle completo sobre planos de assinatura (Basic, Premium, VIP) com gerenciamento automático de datas de início, fim, renovação e expiração.
+O sistema VIP implementado oferece controle completo sobre planos de assinatura com **3 níveis**: **BÁSICO**, **PREMIUM** e **VIP**. O sistema gerencia automaticamente datas de início, fim, renovação e expiração, garantindo que quando qualquer plano expirar, o usuário volte para o nível **BÁSICO**.
 
 ## 🏗️ Arquitetura
 
@@ -196,10 +196,10 @@ const result = await VIPService.renewVIP(userId, {
 });
 ```
 
-### Processar VIPs Expirados
+### Processar Planos Expirados
 ```javascript
 const result = await VIPService.processExpiredVIPs();
-console.log(`${result.expiredCount} VIPs processados`);
+console.log(`${result.expiredCount} planos processados`);
 ```
 
 ## 🔄 Migração de Dados
@@ -230,12 +230,12 @@ console.log(`Expirando em 7 dias: ${stats.statistics.expiringSoon}`);
 
 ### Cron Jobs Recomendados
 ```javascript
-// Processar VIPs expirados diariamente às 00:00
+// Processar planos expirados diariamente às 00:00
 cron.schedule('0 0 * * *', async () => {
   await VIPService.processExpiredVIPs();
 });
 
-// Verificar VIPs que expiram em 7 dias
+// Verificar planos que expiram em 7 dias
 cron.schedule('0 9 * * *', async () => {
   // Enviar notificações de expiração
 });

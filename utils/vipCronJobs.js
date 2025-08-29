@@ -57,24 +57,24 @@ class VIPCronJobs {
   }
 
   /**
-   * Agendar processamento de VIPs expirados
+   * Agendar processamento de planos expirados (VIP e PREMIUM)
    */
   scheduleExpiredVIPsProcessing() {
     try {
       const job = cron.schedule('0 0 * * *', async () => {
-        console.log('🔄 [CRON] Processando VIPs expirados...');
+        console.log('🔄 [CRON] Processando planos expirados (VIP e PREMIUM)...');
         
         try {
           const result = await VIPService.processExpiredVIPs();
-          console.log(`✅ [CRON] ${result.expiredCount} VIPs expirados processados`);
+          console.log(`✅ [CRON] ${result.expiredCount} planos expirados processados`);
           
           // Log detalhado para administradores
           if (result.expiredCount > 0) {
-            console.log(`📊 [CRON] Relatório de expiração: ${result.expiredCount} usuários perderam acesso VIP`);
+            console.log(`📊 [CRON] Relatório de expiração: ${result.expiredCount} usuários tiveram planos expirados`);
           }
           
         } catch (error) {
-          console.error('❌ [CRON] Erro ao processar VIPs expirados:', error);
+          console.error('❌ [CRON] Erro ao processar planos expirados:', error);
         }
       }, {
         scheduled: true,
@@ -82,9 +82,9 @@ class VIPCronJobs {
       });
 
       this.jobs.set('expiredVIPs', job);
-      console.log('⏰ Cron job "Processar VIPs Expirados" agendado (00:00 diário)');
+      console.log('⏰ Cron job "Processar Planos Expirados" agendado (00:00 diário)');
     } catch (error) {
-      console.error('❌ Erro ao agendar processamento de VIPs expirados:', error);
+      console.error('❌ Erro ao agendar processamento de planos expirados:', error);
     }
   }
 
@@ -543,14 +543,14 @@ class VIPCronJobs {
   }
 
   /**
-   * Executar processamento manual de VIPs expirados
+   * Executar processamento manual de planos expirados (VIP e PREMIUM)
    */
   async processExpiredVIPsManual() {
-    console.log('🔄 Executando processamento manual de VIPs expirados...');
+    console.log('🔄 Executando processamento manual de planos expirados (VIP e PREMIUM)...');
     
     try {
       const result = await VIPService.processExpiredVIPs();
-      console.log(`✅ ${result.expiredCount} VIPs expirados processados manualmente`);
+      console.log(`✅ ${result.expiredCount} planos expirados processados manualmente`);
       return result;
     } catch (error) {
       console.error('❌ Erro no processamento manual:', error);

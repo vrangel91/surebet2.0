@@ -139,11 +139,11 @@ module.exports = (sequelize) => {
     await this.save();
   };
 
-  // Método estático para verificar e atualizar VIPs expirados
+  // Método estático para verificar e atualizar planos expirados (VIP e PREMIUM)
   UserVIP.checkExpiredVIPs = async function() {
     const { Op } = require('sequelize');
     const now = new Date();
-    const expiredVIPs = await UserVIP.findAll({
+    const expiredPlans = await UserVIP.findAll({
       where: {
         status: 'ativo',
         data_fim: {
@@ -152,12 +152,13 @@ module.exports = (sequelize) => {
       }
     });
 
-    for (const vip of expiredVIPs) {
-      vip.status = 'expirado';
-      await vip.save();
+    for (const plan of expiredPlans) {
+      console.log(`🔄 Marcando plano como expirado: ${plan.plan_name} (${plan.plan_id}) para usuário ${plan.user_id}`);
+      plan.status = 'expirado';
+      await plan.save();
     }
 
-    return expiredVIPs.length;
+    return expiredPlans.length;
   };
 
   // Método estático para ativar VIP

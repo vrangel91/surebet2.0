@@ -2510,33 +2510,30 @@ export default {
 
 .surebets-container {
   display: flex;
-  height: 100vh; /* Altura fixa para garantir scroll */
-  overflow-y: auto; /* Habilita scroll vertical na página */
-  overflow-x: hidden; /* Previne overflow horizontal */
+  min-height: 100vh; /* Mudança de height para min-height */
+  overflow: hidden; /* Remove scroll do container principal */
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   width: 100%; /* Garante que o container ocupe toda a largura disponível */
   max-width: 100%; /* Previne overflow horizontal */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-/* Scrollbar personalizada para o container principal */
-.surebets-container::-webkit-scrollbar {
+/* Scrollbar personalizada para o main-content */
+.main-content::-webkit-scrollbar {
   width: 8px;
 }
 
-.surebets-container::-webkit-scrollbar-track {
+.main-content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.surebets-container::-webkit-scrollbar-thumb {
+.main-content::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
   border-radius: 4px;
 }
 
-.surebets-container::-webkit-scrollbar-thumb:hover {
+.main-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
@@ -2550,7 +2547,7 @@ export default {
   border-right: 1px solid var(--border-primary);
   flex-shrink: 0;
   transition: width 0.3s ease;
-  overflow: visible; /* Permite overflow para o scroll funcionar */
+  overflow: hidden; /* Remove overflow do sidebar */
   
   &.collapsed {
     width: 80px;
@@ -2752,10 +2749,13 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden; /* Previne apenas overflow horizontal */
+  overflow-y: auto; /* Habilita scroll vertical apenas no main-content */
+  overflow-x: hidden; /* Previne overflow horizontal */
   width: 100%; /* Garante que o conteúdo ocupe toda a largura disponível */
   max-width: 100%; /* Previne overflow horizontal */
   min-height: 0; /* Permite que o conteúdo cresça além da altura do container */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .content-header {
@@ -2766,7 +2766,7 @@ export default {
   border-bottom: 1px solid var(--border-primary);
   width: 100%; /* Garante que o header ocupe toda a largura disponível */
   max-width: 100%; /* Previne overflow horizontal */
-  overflow: visible; /* Permite overflow para o scroll funcionar */
+  overflow: hidden; /* Remove overflow do header */
 }
 
 .header-left {

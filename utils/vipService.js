@@ -218,17 +218,17 @@ class VIPService {
   }
 
   /**
-   * Verificar e processar VIPs expirados
+   * Verificar e processar planos expirados (VIP e PREMIUM)
    * @returns {Object} - Resultado do processamento
    */
   static async processExpiredVIPs() {
     try {
-      console.log('🔄 Processando VIPs expirados...');
+      console.log('🔄 Processando planos expirados (VIP e PREMIUM)...');
       
       const expiredCount = await UserVIP.checkExpiredVIPs();
       
       if (expiredCount > 0) {
-        // Atualizar status dos usuários que tiveram VIP expirado
+        // Atualizar status dos usuários que tiveram planos expirados
         const expiredVIPs = await UserVIP.findAll({
           where: {
             status: 'expirado'
@@ -241,23 +241,53 @@ class VIPService {
 
         for (const vip of expiredVIPs) {
           if (vip.user) {
-            await vip.user.update({
-              is_vip: false,
-              account_type: 'basic'
+            console.log(`🔄 Processando expiração para usuário ${vip.user.id} - Plano: ${vip.plan_name} (${vip.plan_id})`);
+            
+            // Verificar se o usuário tem outros planos ativos
+            const activePlans = await UserVIP.findAll({
+              where: {
+                user_id: vip.user_id,
+                status: 'ativo'
+              }
             });
+
+            if (activePlans.length === 0) {
+              // Se não há planos ativos, fazer downgrade para BÁSICO
+              await vip.user.update({
+                is_vip: false,
+                account_type: 'basic'
+              });
+              
+              console.log(`✅ Usuário ${vip.user.id} movido para plano BÁSICO`);
+            } else {
+              // Se há outros planos ativos, manter o plano mais alto
+              const highestPlan = activePlans.reduce((highest, plan) => {
+                const planHierarchy = { 'basic': 0, 'premium': 1, 'vip': 2 };
+                const currentLevel = planHierarchy[plan.plan_id] || 0;
+                const highestLevel = planHierarchy[highest.plan_id] || 0;
+                return currentLevel > highestLevel ? plan : highest;
+              });
+              
+              await vip.user.update({
+                is_vip: highestPlan.plan_id === 'vip',
+                account_type: highestPlan.plan_id
+              });
+              
+              console.log(`✅ Usuário ${vip.user.id} mantido no plano ${highestPlan.plan_name} (${highestPlan.plan_id})`);
+            }
           }
         }
       }
       
-      console.log(`✅ ${expiredCount} VIPs expirados processados`);
+      console.log(`✅ ${expiredCount} planos expirados processados`);
       
       return {
         success: true,
         expiredCount,
-        message: `${expiredCount} VIPs expirados processados`
+        message: `${expiredCount} planos expirados processados`
       };
     } catch (error) {
-      console.error('❌ Erro ao processar VIPs expirados:', error);
+      console.error('❌ Erro ao processar planos expirados:', error);
       throw error;
     }
   }

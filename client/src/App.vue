@@ -58,7 +58,7 @@ export default {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: auto; /* Permitir scroll na aplicação */
+  overflow: hidden; /* Remove scroll do app para evitar duplicação */
 }
 
 * {
@@ -69,7 +69,7 @@ export default {
 
 html, body {
   height: 100%;
-  overflow: auto; /* Permitir scroll vertical */
+  overflow: hidden; /* Remove scroll do html/body para evitar duplicação */
   min-height: 100vh; /* Garantir altura mínima */
 }
 
@@ -78,6 +78,7 @@ body {
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh; /* Garantir altura mínima */
+  overflow: hidden; /* Remove scroll do body para evitar duplicação */
 }
 
 html {

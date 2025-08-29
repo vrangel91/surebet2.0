@@ -39,9 +39,6 @@
               <Clock size="12" />
               <span class="expiration-text">{{ expirationDisplayText }}</span>
             </div>
-            <div class="expiration-countdown" v-if="showCountdown">
-              <span class="countdown-text">{{ countdownText }}</span>
-            </div>
           </div>
           
           <!-- Mensagem quando não há dados VIP -->
@@ -80,11 +77,6 @@
         <button class="profile-action-btn renew-btn" @click="renewAccount" v-if="isVIP && showRenewButton" :title="renewButtonTitle">
           <RefreshCw size="14" />
           <span>Renovar</span>
-        </button>
-
-        <button class="profile-action-btn logout-btn" @click="logout" title="Sair da conta">
-          <LogOut size="14" />
-          <span>Sair</span>
         </button>
       </div>
       
@@ -356,56 +348,29 @@ export default {
       const expiration = new Date(this.accountExpiration)
       const timeDiff = expiration - now
       
-      let displayText = ''
       if (timeDiff < 0) {
-        displayText = 'Conta expirada'
-      } else {
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (daysUntilExpiration === 0) {
-          displayText = 'Expira hoje'
-        } else if (daysUntilExpiration === 1) {
-          displayText = 'Expira amanhã'
-        } else {
-          displayText = `Expira em ${daysUntilExpiration} dias`
+        return 'Conta expirada'
+      }
+      
+      // Calcular dias e horas restantes
+      const totalHours = Math.floor(timeDiff / (1000 * 60 * 60))
+      const days = Math.floor(totalHours / 24)
+      const hours = totalHours % 24
+      
+      if (days === 0) {
+        if (hours === 0) {
+          const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+          return `Expira em ${minutes} min`
         }
-      }
-      
-      return displayText
-    },
-    
-    showCountdown() {
-      if (!this.accountExpiration) return false
-      
-      const now = new Date()
-      const expiration = new Date(this.accountExpiration)
-      const timeDiff = expiration - now
-      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-      
-      return timeDiff > 0 && daysUntilExpiration <= 3
-    },
-    
-    countdownText() {
-      if (!this.accountExpiration) return ''
-      
-      const now = new Date()
-      const expiration = new Date(this.accountExpiration)
-      const timeDiff = expiration - now
-      
-      if (timeDiff <= 0) return ''
-      
-      const hours = Math.floor(timeDiff / (1000 * 60 * 60))
-      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-      
-      if (hours > 24) {
-        const days = Math.floor(hours / 24)
-        return `${days}d ${hours % 24}h`
-      } else if (hours > 0) {
-        return `${hours}h ${minutes}m`
+        return `Expira em ${hours}h`
+      } else if (days === 1) {
+        return `Expira em ${days}d ${hours}h`
       } else {
-        return `${minutes}m`
+        return `Expira em ${days}d ${hours}h`
       }
     },
+    
+
     
     showExpirationAlert() {
       if (!this.accountExpiration) return false
@@ -622,7 +587,7 @@ export default {
       // Limpa timer anterior se existir
       this.stopCountdownTimer()
       
-      // Inicia timer para atualizar countdown a cada minuto
+      // Inicia timer para atualizar countdown a cada 30 segundos
       this.countdownTimer = setInterval(() => {
         // Força re-render dos computed properties
         this.$forceUpdate()
@@ -631,7 +596,7 @@ export default {
         if (this.isVIP && this.currentUser) {
           this.loadUserVIPData()
         }
-      }, 60000) // Atualiza a cada minuto
+      }, 30000) // Atualiza a cada 30 segundos
     },
     
     stopCountdownTimer() {
@@ -1148,20 +1113,7 @@ export default {
   font-weight: 500;
 }
 
-.expiration-countdown {
-  margin-top: 4px;
-  text-align: center;
-}
 
-.countdown-text {
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffa500;
-  background: rgba(255, 165, 0, 0.1);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 165, 0, 0.3);
-}
 
 /* Alertas de Expiração */
 .expiration-alert {
