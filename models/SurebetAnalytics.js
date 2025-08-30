@@ -58,17 +58,49 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(5, 2),
       defaultValue: 0,
       comment: 'Retorno sobre investimento em percentual'
+    },
+    
+    // Tipo de análise
+    analysis_type: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'comprehensive',
+      comment: 'Tipo de análise realizada'
+    },
+    
+    // Período em dias
+    period_days: {
+      type: DataTypes.INTEGER,
+      defaultValue: 30,
+      comment: 'Período da análise em dias'
+    },
+    
+    // Filtro de esporte
+    sport_filter: {
+      type: DataTypes.STRING(50),
+      defaultValue: 'all',
+      comment: 'Filtro de esporte aplicado'
     }
     
   }, {
     tableName: 'surebet_analytics',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
         fields: ['user_id']
       },
       {
         fields: ['date']
+      },
+      {
+        fields: ['analysis_type']
+      },
+      {
+        fields: ['period_days']
+      },
+      {
+        fields: ['sport_filter']
       }
     ],
     comment: 'Tabela para armazenar análises de surebets por usuário'

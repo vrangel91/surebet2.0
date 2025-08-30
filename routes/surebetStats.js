@@ -115,6 +115,7 @@ router.post('/', async (req, res) => {
     
     // Criar nova estatística
     const newStat = await SurebetStats.create({
+      user_id: req.user.id, // Usar o ID do usuário autenticado
       surebet_id,
       house,
       market,
@@ -139,10 +140,28 @@ router.post('/', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Erro ao criar estatística:', error);
-    res.status(500).json({
+    console.error('❌ Erro ao criar estatística:', error);
+    
+    // 🔍 DETALHAR O ERRO PARA DEBUG
+    let errorMessage = 'Erro interno do servidor';
+    let statusCode = 500;
+    
+    if (error.name === 'SequelizeValidationError') {
+      errorMessage = 'Dados inválidos fornecidos';
+      statusCode = 400;
+    } else if (error.name === 'SequelizeForeignKeyConstraintError') {
+      errorMessage = 'Referência inválida (usuário não existe)';
+      statusCode = 400;
+    } else if (error.name === 'SequelizeUniqueConstraintError') {
+      errorMessage = 'Registro já existe';
+      statusCode = 409;
+    }
+    
+    res.status(statusCode).json({
       success: false,
-      error: 'Erro interno do servidor'
+      error: errorMessage,
+      details: error.message,
+      type: error.name
     });
   }
 });
@@ -158,6 +177,37 @@ router.post('/bulk', async (req, res) => {
         error: 'Array de estatísticas é obrigatório'
       });
     }
+    
+    // 🔍 VALIDAR CAMPOS OBRIGATÓRIOS EM CADA REGISTRO
+    const requiredFields = ['surebet_id', 'house', 'market', 'profit', 'date', 'hour', 'sport'];
+    const invalidRecords = [];
+    
+    stats.forEach((stat, index) => {
+      const missingFields = requiredFields.filter(field => !stat[field]);
+      if (missingFields.length > 0) {
+        invalidRecords.push({
+          index,
+          surebet_id: stat.surebet_id || 'N/A',
+          missingFields,
+          data: stat
+        });
+      }
+    });
+    
+    if (invalidRecords.length > 0) {
+      console.error('❌ Registros inválidos recebidos:', invalidRecords);
+      return res.status(400).json({
+        success: false,
+        error: 'Registros com campos obrigatórios faltando',
+        details: {
+          totalRecords: stats.length,
+          invalidRecords: invalidRecords.length,
+          invalidDetails: invalidRecords
+        }
+      });
+    }
+    
+    console.log(`✅ Validados ${stats.length} registros - todos os campos obrigatórios presentes`);
     
     const createdStats = [];
     const updatedStats = [];
@@ -180,49 +230,58 @@ router.post('/bulk', async (req, res) => {
         metadata
       } = stat;
       
-      // Verificar se já existe
-      const existingStat = await SurebetStats.findOne({
-        where: {
-          surebet_id,
-          house,
-          date
+      try {
+        // Verificar se já existe
+        const existingStat = await SurebetStats.findOne({
+          where: {
+            surebet_id,
+            house,
+            date
+          }
+        });
+        
+        if (existingStat) {
+          // Atualizar
+          await existingStat.update({
+            profit,
+            hour,
+            period,
+            minutes,
+            anchorh1,
+            anchorh2,
+            chance,
+            metadata,
+            updatedAt: new Date()
+          });
+          updatedStats.push(existingStat);
+          console.log(`✅ Registro atualizado: ${surebet_id} - ${house}`);
+        } else {
+          // Criar nova
+          const newStat = await SurebetStats.create({
+            user_id: req.user.id, // Usar o ID do usuário autenticado
+            surebet_id,
+            house,
+            market,
+            match,
+            profit,
+            date,
+            hour,
+            sport,
+            period,
+            minutes,
+            anchorh1,
+            anchorh2,
+            chance,
+            metadata,
+            status: 'active'
+          });
+          createdStats.push(newStat);
+          console.log(`✅ Novo registro criado: ${surebet_id} - ${house}`);
         }
-      });
-      
-      if (existingStat) {
-        // Atualizar
-        await existingStat.update({
-          profit,
-          hour,
-          period,
-          minutes,
-          anchorh1,
-          anchorh2,
-          chance,
-          metadata,
-          updatedAt: new Date()
-        });
-        updatedStats.push(existingStat);
-      } else {
-        // Criar nova
-        const newStat = await SurebetStats.create({
-          surebet_id,
-          house,
-          market,
-          match,
-          profit,
-          date,
-          hour,
-          sport,
-          period,
-          minutes,
-          anchorh1,
-          anchorh2,
-          chance,
-          metadata,
-          status: 'active'
-        });
-        createdStats.push(newStat);
+      } catch (recordError) {
+        console.error(`❌ Erro ao processar registro ${surebet_id}:`, recordError);
+        // Continuar com outros registros em vez de falhar completamente
+        continue;
       }
     }
     
@@ -236,10 +295,11 @@ router.post('/bulk', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Erro no bulk operation:', error);
+    console.error('❌ Erro no bulk operation:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor'
+      error: 'Erro interno do servidor',
+      details: error.message
     });
   }
 });
@@ -349,6 +409,7 @@ router.post('/analytics', async (req, res) => {
     
     // Criar nova análise
     const newAnalytics = await SurebetAnalytics.create({
+      user_id: req.user.id, // Usar o ID do usuário autenticado
       analysis_type,
       period_days,
       sport_filter,

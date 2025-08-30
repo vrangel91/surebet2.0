@@ -23,6 +23,14 @@
           <button class="action-btn add-report-btn" @click="addToReports" title="Adicionar aos Relatórios">
             <i class="bi bi-file-text icon-text"></i>
           </button>
+          <button 
+            class="action-btn debit-icon-btn" 
+            :class="{ 'disabled': !canDebitFromAllBalances() }"
+            @click="debitFromAllBalances()"
+            :title="getDebitButtonTooltip()"
+          >
+            <i class="bi bi-wallet2 icon-text"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -98,6 +106,7 @@
 <script>
 import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
 import { formatMarketForDisplay } from '../utils/market-translations.js'
+import { http } from '../utils/http.js'
 
 export default {
   name: 'SurebetCard',
@@ -117,7 +126,9 @@ export default {
   },
   data() {
     return {
-      defaultStake: 100.00 // Valor padrão, será carregado das configurações
+      defaultStake: 100.00, // Valor padrão, será carregado das configurações
+      bookmakerAccounts: [], // Lista de contas de Bookmaker Accounts
+      isLoadingAccounts: false
     }
   },
   computed: {
@@ -194,6 +205,7 @@ export default {
   },
   mounted() {
     this.loadSettings()
+    this.loadBookmakerAccounts()
   },
   methods: {
     formatProfit(profit) {
@@ -337,17 +349,40 @@ export default {
       this.$emit('toggle-pin', this.surebet)
     },
     
-    showNotification(message) {
+    showNotification(message, type = 'success') {
       // Cria elemento de notificação
       const notification = document.createElement('div')
       notification.className = 'notification'
       notification.textContent = message
+      
+      // Define cores baseadas no tipo
+      let backgroundColor = '#00ff88'
+      let textColor = '#1a1a1a'
+      
+      switch (type) {
+        case 'error':
+          backgroundColor = '#ff4757'
+          textColor = '#ffffff'
+          break
+        case 'info':
+          backgroundColor = '#3742fa'
+          textColor = '#ffffff'
+          break
+        case 'warning':
+          backgroundColor = '#ffa502'
+          textColor = '#1a1a1a'
+          break
+        default: // success
+          backgroundColor = '#00ff88'
+          textColor = '#1a1a1a'
+      }
+      
       notification.style.cssText = `
         position: fixed;
         top: 100px;
         right: 20px;
-        background: #00ff88;
-        color: #1a1a1a;
+        background: ${backgroundColor};
+        color: ${textColor};
         padding: 12px 20px;
         border-radius: 8px;
         font-weight: 600;
@@ -390,6 +425,256 @@ export default {
       }
       
       return tooltip
+    },
+
+    // Verifica se é possível debitar do saldo
+    // Verifica se pode debitar do saldo de todas as contas
+    canDebitFromAllBalances() {
+      if (this.bookmakerAccounts.length === 0) {
+        return false
+      }
+      
+      // Verificar se todas as contas têm saldo suficiente
+      for (let i = 0; i < this.surebet.length; i++) {
+        const bet = this.surebet[i]
+        const account = this.findBookmakerAccount(bet.house)
+        
+        if (!account || account.status !== 'active') {
+          return false
+        }
+        
+        const currentBalance = parseFloat(account.balance || 0)
+        const stakeAmount = this.calculatedStakes[i]
+        
+        if (currentBalance < stakeAmount) {
+          return false
+        }
+      }
+      
+      return true
+    },
+
+    // Função para debitar do saldo de todas as contas da surebet
+    async debitFromAllBalances() {
+      try {
+        console.log('💰 Iniciando processo de débito para todas as contas da surebet')
+        
+        // 1. Verificar se há contas carregadas
+        if (this.bookmakerAccounts.length === 0) {
+          this.showNotification('Nenhuma conta de Bookmaker encontrada. Adicione contas em Bookmaker Accounts.', 'error')
+          return
+        }
+        
+        // 2. Verificar todas as contas antes de processar
+        const debitOperations = []
+        const insufficientAccounts = []
+        
+        for (let i = 0; i < this.surebet.length; i++) {
+          const bet = this.surebet[i]
+          const account = this.findBookmakerAccount(bet.house)
+          const stakeAmount = this.calculatedStakes[i]
+          
+          if (!account) {
+            this.showNotification(`Conta não encontrada para ${bet.house}. Adicione uma conta em Bookmaker Accounts.`, 'error')
+            return
+          }
+          
+          if (account.status !== 'active') {
+            this.showNotification(`Conta ${bet.house} não está ativa.`, 'error')
+            return
+          }
+          
+          const currentBalance = parseFloat(account.balance || 0)
+          
+          if (currentBalance < stakeAmount) {
+            insufficientAccounts.push({
+              house: bet.house,
+              required: stakeAmount,
+              available: currentBalance
+            })
+          } else {
+            debitOperations.push({
+              account: account,
+              bet: bet,
+              stakeAmount: stakeAmount,
+              currentBalance: currentBalance
+            })
+          }
+        }
+        
+        // 3. Se há contas com saldo insuficiente, mostrar erro
+        if (insufficientAccounts.length > 0) {
+          const errorMessage = insufficientAccounts.map(acc => 
+            `${acc.house}: Necessário ${this.formatCurrency(acc.required)}, Disponível ${this.formatCurrency(acc.available)}`
+          ).join('\n')
+          
+          this.showNotification(
+            `Saldo insuficiente em algumas contas:\n${errorMessage}`, 
+            'error'
+          )
+          return
+        }
+        
+        // 4. Confirmar operação para todas as contas
+        const totalAmount = debitOperations.reduce((sum, op) => sum + op.stakeAmount, 0)
+        const confirmMessage = `Confirmar débito total de ${this.formatCurrency(totalAmount)}?\n\n` +
+          debitOperations.map(op => 
+            `${op.bet.house}: ${this.formatCurrency(op.stakeAmount)} (Saldo: ${this.formatCurrency(op.currentBalance)} → ${this.formatCurrency(op.currentBalance - op.stakeAmount)})`
+          ).join('\n')
+        
+        if (!confirm(confirmMessage)) {
+          return
+        }
+        
+        // 5. Processar débitos para todas as contas
+        this.showNotification(`Processando débitos...`, 'info')
+        
+        const results = []
+        let successCount = 0
+        
+        for (const operation of debitOperations) {
+          try {
+            const response = await http.post(`/api/bookmaker-accounts/${operation.account.id}/adjust-balance`, {
+              amount: -operation.stakeAmount,
+              description: `Débito automático - Surebet ${operation.bet.house} - ${this.formatCurrency(operation.stakeAmount)}`,
+              type: 'surebet_debit'
+            })
+            
+            if (response.data.success) {
+              results.push({
+                account: operation.account,
+                bet: operation.bet,
+                amount: operation.stakeAmount,
+                newBalance: response.data.data.newBalance,
+                success: true
+              })
+              successCount++
+            } else {
+              results.push({
+                account: operation.account,
+                bet: operation.bet,
+                amount: operation.stakeAmount,
+                success: false,
+                error: response.data.message
+              })
+            }
+          } catch (error) {
+            console.error(`❌ Erro ao debitar de ${operation.bet.house}:`, error)
+            results.push({
+              account: operation.account,
+              bet: operation.bet,
+              amount: operation.stakeAmount,
+              success: false,
+              error: error.response?.data?.message || 'Erro desconhecido'
+            })
+          }
+        }
+        
+        // 6. Atualizar lista de contas
+        await this.loadBookmakerAccounts()
+        
+        // 7. Emitir eventos e mostrar resultados
+        const successfulResults = results.filter(r => r.success)
+        const failedResults = results.filter(r => !r.success)
+        
+        if (successfulResults.length > 0) {
+          // Emitir evento para cada débito bem-sucedido
+          for (const result of successfulResults) {
+            this.$emit('balance-debited', {
+              account: result.account,
+              amount: result.amount,
+              surebet: this.surebet,
+              newBalance: result.newBalance
+            })
+          }
+          
+          const totalDebited = successfulResults.reduce((sum, r) => sum + r.amount, 0)
+          this.showNotification(
+            `Débitos realizados com sucesso! Total: ${this.formatCurrency(totalDebited)}`, 
+            'success'
+          )
+          
+          console.log('✅ Débitos processados com sucesso:', successfulResults)
+        }
+        
+        if (failedResults.length > 0) {
+          const errorMessage = failedResults.map(r => 
+            `${r.bet.house}: ${r.error}`
+          ).join('\n')
+          
+          this.showNotification(
+            `Alguns débitos falharam:\n${errorMessage}`, 
+            'error'
+          )
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao processar débitos:', error)
+        this.showNotification(
+          error.response?.data?.message || 'Erro ao processar débitos do saldo', 
+          'error'
+        )
+      }
+    },
+
+    // Gera tooltip para o botão de debitar do saldo
+    getDebitButtonTooltip() {
+      if (this.bookmakerAccounts.length === 0) {
+        return 'Nenhuma conta de Bookmaker encontrada'
+      }
+      
+      const tooltips = []
+      
+      for (let i = 0; i < this.surebet.length; i++) {
+        const bet = this.surebet[i]
+        const account = this.findBookmakerAccount(bet.house)
+        const stakeAmount = this.calculatedStakes[i]
+        
+        if (!account) {
+          tooltips.push(`Conta não encontrada para ${bet.house}`)
+        } else if (account.status !== 'active') {
+          tooltips.push(`Conta ${bet.house} não está ativa`)
+        } else {
+          const currentBalance = parseFloat(account.balance || 0)
+          
+          if (currentBalance < stakeAmount) {
+            tooltips.push(`${bet.house}: Saldo insuficiente (${this.formatCurrency(currentBalance)} < ${this.formatCurrency(stakeAmount)})`)
+          } else {
+            tooltips.push(`${bet.house}: ${this.formatCurrency(stakeAmount)}`)
+          }
+        }
+      }
+      
+      if (tooltips.length === 0) {
+        return 'Erro ao verificar contas'
+      }
+      
+      return tooltips.join('\n')
+    },
+
+    // Busca conta de Bookmaker por nome da casa
+    findBookmakerAccount(bookmakerName) {
+      return this.bookmakerAccounts.find(account => 
+        account.bookmaker_name.toLowerCase() === bookmakerName.toLowerCase()
+      )
+    },
+
+    // Carrega contas de Bookmaker Accounts
+    async loadBookmakerAccounts() {
+      try {
+        this.isLoadingAccounts = true
+        const response = await http.get('/api/bookmaker-accounts')
+        
+        if (response.data.success) {
+          this.bookmakerAccounts = response.data.data.accounts || []
+          console.log('📊 Contas de Bookmaker carregadas:', this.bookmakerAccounts.length)
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar contas de Bookmaker:', error)
+        this.bookmakerAccounts = []
+      } finally {
+        this.isLoadingAccounts = false
+      }
     }
   }
 }
@@ -851,6 +1136,22 @@ export default {
   font-size: 12px;
 }
 
+.debit-icon-btn {
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    
+    &:hover {
+      background: var(--bg-overlay);
+      transform: none;
+    }
+    
+    .icon-text {
+      color: var(--text-secondary);
+    }
+  }
+}
+
 
 
 .bet-btn.disabled {
@@ -969,4 +1270,5 @@ export default {
   z-index: 1000;
 }
 </style>
+
 

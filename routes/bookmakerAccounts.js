@@ -16,7 +16,9 @@ router.get('/', async (req, res) => {
 
     res.json({
       success: true,
-      data: accounts
+      data: {
+        accounts: accounts
+      }
     });
   } catch (error) {
     console.error('Erro ao listar contas:', error);
@@ -215,23 +217,35 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    // Verificar se há transações associadas
+    // Verificar se há transações associadas (apenas para log)
     const transactionCount = await TransactionHistory.count({
       where: { bookmaker_account_id: req.params.id }
     });
 
+    // Log da operação antes da exclusão
+    console.log(`🗑️ Excluindo conta: ${account.bookmaker_name} (ID: ${account.id})`);
+    console.log(`💰 Saldo da conta: ${account.balance}`);
+    console.log(`📊 Transações associadas: ${transactionCount}`);
+
+    // Excluir transações associadas primeiro (cascade delete)
     if (transactionCount > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Não é possível excluir uma conta que possui histórico de transações'
+      await TransactionHistory.destroy({
+        where: { bookmaker_account_id: req.params.id }
       });
+      console.log(`🗑️ ${transactionCount} transação(ões) excluída(s)`);
     }
 
+    // Excluir a conta
     await account.destroy();
 
     res.json({
       success: true,
-      message: 'Conta excluída com sucesso'
+      message: 'Conta excluída com sucesso',
+      data: {
+        deletedAccount: account.bookmaker_name,
+        balance: account.balance,
+        transactionsDeleted: transactionCount
+      }
     });
   } catch (error) {
     console.error('Erro ao excluir conta:', error);
@@ -431,15 +445,20 @@ router.get('/:id/transactions', async (req, res) => {
 // POST /api/bookmaker-accounts/:id/adjust-balance - Ajustar saldo da conta
 router.post('/:id/adjust-balance', async (req, res) => {
   try {
+    console.log('💰 Iniciando ajuste de saldo para conta ID:', req.params.id);
+    console.log('📊 Dados recebidos:', req.body);
+    
     const { amount, description, type } = req.body;
 
     if (!amount || isNaN(amount)) {
+      console.log('❌ Valor inválido:', amount);
       return res.status(400).json({
         success: false,
         message: 'Valor do ajuste deve ser um número válido'
       });
     }
 
+    console.log('🔍 Buscando conta...');
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
@@ -448,13 +467,17 @@ router.post('/:id/adjust-balance', async (req, res) => {
     });
 
     if (!account) {
+      console.log('❌ Conta não encontrada');
       return res.status(404).json({
         success: false,
         message: 'Conta não encontrada'
       });
     }
 
+    console.log('✅ Conta encontrada:', account.bookmaker_name, 'Saldo atual:', account.balance);
+
     if (account.status !== 'active') {
+      console.log('❌ Conta não está ativa:', account.status);
       return res.status(400).json({
         success: false,
         message: 'Conta não está ativa'
@@ -465,20 +488,31 @@ router.post('/:id/adjust-balance', async (req, res) => {
     const currentBalance = parseFloat(account.balance);
     const newBalance = currentBalance + adjustAmount;
 
+    console.log('📊 Cálculos:', {
+      adjustAmount,
+      currentBalance,
+      newBalance
+    });
+
     // Verificar se o novo saldo não ficará negativo
     if (newBalance < 0) {
+      console.log('❌ Saldo ficaria negativo:', newBalance);
       return res.status(400).json({
         success: false,
         message: 'Ajuste resultaria em saldo negativo'
       });
     }
 
+    console.log('💾 Atualizando saldo da conta...');
     // Atualizar saldo da conta
     await account.update({
       balance: newBalance,
       last_updated: new Date()
     });
 
+    console.log('✅ Saldo atualizado com sucesso');
+
+    console.log('📝 Criando transação...');
     // Criar transação de ajuste
     const transaction = await TransactionHistory.create({
       user_id: req.user.id,
@@ -492,6 +526,8 @@ router.post('/:id/adjust-balance', async (req, res) => {
       reference_id: type || 'manual_adjustment'
     });
 
+    console.log('✅ Transação criada com sucesso:', transaction.id);
+
     res.json({
       success: true,
       message: 'Saldo ajustado com sucesso',
@@ -502,7 +538,8 @@ router.post('/:id/adjust-balance', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Erro ao ajustar saldo:', error);
+    console.error('❌ Erro ao ajustar saldo:', error);
+    console.error('❌ Stack trace:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Erro interno do servidor'

@@ -35,11 +35,11 @@ module.exports = (sequelize) => {
       }
     },
     
-    // Lucro/Perda da surebet
+    // Lucro/Perda da surebet (campo antigo)
     profit_loss: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0,
-      comment: 'Lucro ou perda da surebet'
+      comment: 'Lucro ou perda da surebet (campo legado)'
     },
     
     // Valor da aposta
@@ -70,23 +70,103 @@ module.exports = (sequelize) => {
       comment: 'Status da surebet (pending, completed, cancelled)'
     },
     
-    // Status da surebet
-    status: {
-      type: DataTypes.STRING,
-      defaultValue: 'active',
-      comment: 'Status atual da surebet'
-    },
-    
     // Metadados adicionais
     metadata: {
       type: DataTypes.JSON,
       allowNull: true,
       comment: 'Dados adicionais em formato JSON'
+    },
+    
+    // NOVOS CAMPOS ADICIONADOS
+    // Casa de apostas
+    house: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Nome da casa de apostas'
+    },
+    
+    // Mercado da aposta
+    market: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Tipo de mercado da aposta'
+    },
+    
+    // Partida/Evento
+    match: {
+      type: DataTypes.STRING(200),
+      allowNull: true,
+      comment: 'Nome da partida ou evento'
+    },
+    
+    // Lucro (novo campo)
+    profit: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      comment: 'Lucro da surebet'
+    },
+    
+    // Data da partida
+    date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+      comment: 'Data da partida'
+    },
+    
+    // Hora da partida
+    hour: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Hora da partida (0-23)'
+    },
+    
+    // Esporte
+    sport: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Tipo de esporte'
+    },
+    
+    // Período da partida
+    period: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: 'Período da partida (1H, 2H, etc)'
+    },
+    
+    // Minutos da partida
+    minutes: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      comment: 'Minutos da partida'
+    },
+    
+    // Âncora 1
+    anchorh1: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Primeira âncora da surebet'
+    },
+    
+    // Âncora 2
+    anchorh2: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      comment: 'Segunda âncora da surebet'
+    },
+    
+    // Chance de sucesso
+    chance: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true,
+      comment: 'Chance de sucesso da surebet (%)'
     }
     
   }, {
     tableName: 'surebet_stats',
     timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at',
     indexes: [
       {
         fields: ['surebet_id']
@@ -99,6 +179,18 @@ module.exports = (sequelize) => {
       },
       {
         fields: ['status']
+      },
+      {
+        fields: ['house']
+      },
+      {
+        fields: ['market']
+      },
+      {
+        fields: ['sport']
+      },
+      {
+        fields: ['date']
       }
     ],
     comment: 'Tabela para armazenar estatísticas e dados de surebets'

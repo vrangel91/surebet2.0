@@ -359,9 +359,9 @@
                          <div class="delete-consequences">
                <h4>🔒 Esta ação irá:</h4>
                 <ul class="consequences-list">
-                  <li>Marcar a conta como inativa (soft delete)</li>
-                  <li>Preservar histórico de transações (não será perdido)</li>
-                  <li>Preservar saldo da conta (não será perdido)</li>
+                  <li>Excluir permanentemente a conta</li>
+                  <li>Excluir todo o histórico de transações</li>
+                  <li>Perder o saldo disponível</li>
                   <li>Atualizar totalizadores da dashboard</li>
                   <li>Registrar log de auditoria</li>
                 </ul>
@@ -487,16 +487,19 @@ export default {
 
     
     totalBalance() {
+      if (!Array.isArray(this.accounts)) return 0
       return this.accounts.reduce((total, account) => {
         return total + parseFloat(account.balance || 0)
       }, 0)
     },
     
     activeAccounts() {
+      if (!Array.isArray(this.accounts)) return 0
       return this.accounts.filter(account => account.status === 'active').length
     },
     
     totalTransactions() {
+      if (!Array.isArray(this.transactions)) return 0
       return this.transactions.reduce((total, transaction) => {
         return total + parseFloat(transaction.amount || 0)
       }, 0)
@@ -528,7 +531,24 @@ export default {
         console.log('📊 Resposta da API:', response)
         
         if (response && response.data) {
-          this.accounts = response.data.data || response.data || []
+          // Garantir que accounts seja sempre um array
+          let accountsData = []
+          
+          if (response.data.data && response.data.data.accounts) {
+            // Estrutura: { data: { accounts: [...] } }
+            accountsData = response.data.data.accounts
+          } else if (response.data.data && Array.isArray(response.data.data)) {
+            // Estrutura: { data: [...] }
+            accountsData = response.data.data
+          } else if (Array.isArray(response.data)) {
+            // Estrutura: { data: [...] }
+            accountsData = response.data
+          } else if (response.data.accounts && Array.isArray(response.data.accounts)) {
+            // Estrutura: { accounts: [...] }
+            accountsData = response.data.accounts
+          }
+          
+          this.accounts = Array.isArray(accountsData) ? accountsData : []
           console.log('✅ Contas carregadas:', this.accounts.length)
           console.log('📋 Lista de contas:', this.accounts)
           
@@ -542,8 +562,8 @@ export default {
           console.log('⚠️ Nenhuma conta encontrada')
         }
       } catch (error) {
-                 console.error('❌ Erro ao carregar contas:', error)
-         this.showToast('Erro', 'Erro ao carregar contas', 'error')
+        console.error('❌ Erro ao carregar contas:', error)
+        this.showToast('Erro', 'Erro ao carregar contas', 'error')
         this.accounts = []
       } finally {
         this.isLoading = false
@@ -1008,10 +1028,10 @@ export default {
        }
        
        message += `🔒 Esta ação irá:\n`
-       message += `• Marcar a conta como inativa\n`
-        message += `• Preservar histórico de transações (não será perdido)\n`
-        message += `• Preservar saldo da conta (não será perdido)\n`
-        message += `• Atualizar totalizadores\n\n`
+       message += `• Excluir permanentemente a conta\n`
+       message += `• Excluir todo o histórico de transações\n`
+       message += `• Perder o saldo disponível\n`
+       message += `• Atualizar totalizadores\n\n`
         
         message += `Tem certeza que deseja continuar?`
         

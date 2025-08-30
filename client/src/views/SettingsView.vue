@@ -253,6 +253,99 @@
             </div>
           </div>
 
+          <!-- Perfil e Segurança -->
+          <div class="settings-card">
+            <div class="card-header">
+              <div class="card-icon">🔐</div>
+              <h3 class="card-title">Perfil e Segurança</h3>
+              <p class="card-description">Gerencie suas informações pessoais e segurança</p>
+            </div>
+            <div class="card-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Nome Completo</label>
+                  <p class="setting-description">Seu nome completo para exibição</p>
+                </div>
+                <div class="setting-control">
+                  <input 
+                    type="text" 
+                    v-model="settings.profile.fullName" 
+                    @change="saveSettings"
+                    class="setting-input profile-input"
+                    placeholder="Seu nome completo"
+                  >
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Email</label>
+                  <p class="setting-description">Seu endereço de email</p>
+                </div>
+                <div class="setting-control">
+                  <input 
+                    type="email" 
+                    v-model="settings.profile.email" 
+                    @change="saveSettings"
+                    class="setting-input profile-input"
+                    placeholder="seu@email.com"
+                  >
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Nova Senha</label>
+                  <p class="setting-description">Digite sua nova senha (mínimo 6 caracteres)</p>
+                </div>
+                <div class="setting-control">
+                  <div class="password-input-group">
+                    <input 
+                      type="password" 
+                      v-model="settings.profile.newPassword" 
+                      @change="saveSettings"
+                      class="setting-input profile-input"
+                      placeholder="Nova senha"
+                      minlength="6"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Confirmar Senha</label>
+                  <p class="setting-description">Confirme sua nova senha</p>
+                </div>
+                <div class="setting-control">
+                  <div class="password-input-group">
+                    <input 
+                      type="password" 
+                      v-model="settings.profile.confirmPassword" 
+                      @change="saveSettings"
+                      class="setting-input profile-input"
+                      placeholder="Confirmar senha"
+                      minlength="6"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Alterar Senha</label>
+                  <p class="setting-description">Clique para alterar sua senha</p>
+                </div>
+                <div class="setting-control">
+                  <button @click="changePassword" class="change-password-btn" :disabled="!isPasswordFormValid">
+                    <span class="btn-icon">🔑</span>
+                    Alterar Senha
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Relatórios e Ações -->
           <div class="reports-actions-container">
             <!-- Relatórios -->
@@ -415,6 +508,12 @@ export default {
           sidebarCollapsed: false,
           cardsPerRow: 3
         },
+        profile: {
+          fullName: '',
+          email: '',
+          newPassword: '',
+          confirmPassword: ''
+        },
         reports: {
           defaultStake: 100.00,
           defaultCurrency: 'BRL',
@@ -433,6 +532,12 @@ export default {
   computed: {
     isAdmin() {
       return this.$store.getters.isAdmin
+    },
+    isPasswordFormValid() {
+      return this.settings.profile.newPassword && 
+             this.settings.profile.confirmPassword && 
+             this.settings.profile.newPassword === this.settings.profile.confirmPassword &&
+             this.settings.profile.newPassword.length >= 6;
     }
   },
   methods: {
@@ -580,10 +685,38 @@ export default {
             notification.parentNode.removeChild(notification)
           }
         }, 300)
-      }, 3000)
+              }, 3000)
+      },
+      
+      async changePassword() {
+        if (!this.isPasswordFormValid) {
+          this.showNotification('As senhas não coincidem ou são muito curtas.', 'error');
+          return;
+        }
+
+        try {
+          // Aqui você pode implementar a chamada para a API de mudança de senha
+          // Por enquanto, vamos simular o sucesso
+          console.log('Alterando senha para:', this.settings.profile.newPassword);
+          
+          // Simular delay da API
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          this.showNotification('Senha alterada com sucesso!', 'success');
+          
+          // Limpar os campos de senha
+          this.settings.profile.newPassword = '';
+          this.settings.profile.confirmPassword = '';
+          
+          // Salvar configurações
+          this.saveSettings();
+        } catch (error) {
+          console.error('Erro ao alterar senha:', error);
+          this.showNotification('Erro ao alterar senha: ' + (error.message || 'Erro desconhecido'), 'error');
+        }
+      }
     }
   }
-}
 </script>
 
 <style lang="scss" scoped>
@@ -839,9 +972,9 @@ export default {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 24px;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -1051,6 +1184,11 @@ input:checked + .toggle-slider:before {
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
   }
+  
+  &.profile-input {
+    width: 200px;
+    text-align: left;
+  }
 }
 
 .setting-select {
@@ -1080,6 +1218,45 @@ input:checked + .toggle-slider:before {
   font-size: 14px;
   color: var(--text-secondary);
   font-weight: 500;
+}
+
+/* Botão de Alterar Senha */
+.change-password-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-icon {
+    font-size: 16px;
+  }
+}
+
+/* Grupo de Input de Senha */
+.password-input-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Relatórios e Ações */
@@ -1170,6 +1347,38 @@ input:checked + .toggle-slider:before {
   }
 }
 
+/* Botão de Alterar Senha */
+.change-password-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+  }
+  
+  &:disabled {
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-icon {
+    font-size: 16px;
+  }
+}
+
 /* Animações */
 @keyframes slideIn {
   from {
@@ -1194,6 +1403,12 @@ input:checked + .toggle-slider:before {
 }
 
 /* Responsividade */
+@media (max-width: 1400px) {
+  .settings-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .settings-grid {
     grid-template-columns: repeat(2, 1fr);

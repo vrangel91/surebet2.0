@@ -2,37 +2,32 @@ const { sequelize } = require('../config/database');
 
 async function checkTableStructure() {
   try {
-    console.log('🔍 Verificando estrutura da tabela users...');
+    console.log('🔍 Verificando estrutura da tabela surebet_stats...');
     
     const [results] = await sequelize.query(`
       SELECT column_name, data_type, is_nullable, column_default
       FROM information_schema.columns 
-      WHERE table_name = 'users' 
+      WHERE table_name = 'surebet_stats' 
       ORDER BY ordinal_position
     `);
     
-    console.log('\n📋 Estrutura da tabela users:');
+    console.log('\n📋 Estrutura da tabela surebet_stats:');
     results.forEach(col => {
       console.log(`- ${col.column_name}: ${col.data_type} (nullable: ${col.is_nullable})`);
     });
     
-    // Verificar dados de exemplo
-    console.log('\n📊 Dados de exemplo da tabela users:');
-    const [userData] = await sequelize.query(`
-      SELECT id, username, first_name, last_name, email, is_admin, is_vip, account_type
-      FROM users 
-      LIMIT 3
+    console.log('\n🔍 Verificando estrutura da tabela surebet_analytics...');
+    
+    const [analyticsResults] = await sequelize.query(`
+      SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns 
+      WHERE table_name = 'surebet_analytics' 
+      ORDER BY ordinal_position
     `);
     
-    userData.forEach(user => {
-      console.log(`\nUsuário ID ${user.id}:`);
-      console.log(`  - username: "${user.username}"`);
-      console.log(`  - first_name: "${user.first_name}"`);
-      console.log(`  - last_name: "${user.last_name}"`);
-      console.log(`  - email: "${user.email}"`);
-      console.log(`  - is_admin: ${user.is_admin}`);
-      console.log(`  - is_vip: ${user.is_vip}`);
-      console.log(`  - account_type: "${user.account_type}"`);
+    console.log('\n📋 Estrutura da tabela surebet_analytics:');
+    analyticsResults.forEach(col => {
+      console.log(`- ${col.column_name}: ${col.data_type} (nullable: ${col.is_nullable})`);
     });
     
   } catch (error) {

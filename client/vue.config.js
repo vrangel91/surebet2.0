@@ -3,7 +3,7 @@ const { defineConfig } = require('@vue/cli-service')
 module.exports = defineConfig({
   transpileDependencies: true,
   devServer: {
-    port: 3002,
+    port: 8080,
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
@@ -13,7 +13,7 @@ module.exports = defineConfig({
         }
       },
       '/ws': {
-        target: 'ws://localhost:8080',
+        target: 'ws://localhost:3002',
         ws: true,
         changeOrigin: true
       }

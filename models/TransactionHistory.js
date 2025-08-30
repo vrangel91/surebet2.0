@@ -76,18 +76,9 @@ module.exports = (sequelize) => {
 
   // Hook para atualizar o saldo da conta após a transação
   TransactionHistory.addHook('afterCreate', async (transaction, options) => {
-    const { BookmakerAccount } = require('./index');
-    
-    try {
-      const account = await BookmakerAccount.findByPk(transaction.bookmaker_account_id);
-      if (account) {
-        account.balance = transaction.balance_after;
-        account.last_updated = new Date();
-        await account.save();
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar saldo da conta:', error);
-    }
+    // Removendo este hook temporariamente para evitar conflito com o ajuste manual
+    // O saldo já está sendo atualizado no endpoint adjust-balance
+    console.log('📝 Hook afterCreate executado para transação:', transaction.id);
   });
 
   return TransactionHistory;

@@ -380,7 +380,9 @@ export default {
       // Dados dos surebets da API
       surebets: {},
       // Dados das apostas processadas para relatórios
-      bets: []
+      bets: [],
+      // Timer para verificar status das apostas
+      statusCheckTimer: null
     }
   },
   computed: {
@@ -488,6 +490,10 @@ export default {
   mounted() {
     this.fetchSurebets()
     this.loadStoredBets()
+    this.startStatusCheckTimer() // Inicia verificação automática de status das apostas
+  },
+  beforeDestroy() {
+    this.stopStatusCheckTimer() // Limpa o timer ao destruir o componente
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -681,6 +687,13 @@ export default {
       const firstBet = surebet[0]
       const houses = surebet.map(bet => bet.house).filter(Boolean)
       
+      // Extrai a data e hora da partida do surebet
+      const matchDate = firstBet.date || new Date().toISOString().split('T')[0]
+      const matchHour = firstBet.hour || '00:00'
+      
+      // Cria a data completa da partida
+      const matchDateTime = new Date(`${matchDate}T${matchHour}`)
+      
       const newBet = {
         id: Date.now() + Math.random(), // ID único
         match: firstBet.match || 'Partida não especificada',
@@ -693,8 +706,9 @@ export default {
         status: 'Em andamento',
         profit: firstBet.profit || 0,
         roi: firstBet.profit || 0,
-        date: new Date().toISOString(),
-        surebetId: surebetId // Referência ao surebet original
+        date: matchDateTime.toISOString(), // Data e hora de início da partida
+        surebetId: surebetId, // Referência ao surebet original
+        statusUpdated: false // Flag para controlar notificações
       }
       
       this.bets.unshift(newBet) // Adiciona no início
@@ -807,7 +821,63 @@ export default {
           refreshBtn.disabled = false
         }
       }
-    }
+    },
+    // Inicia o timer para verificar o status das apostas
+    startStatusCheckTimer() {
+      this.stopStatusCheckTimer() // Garante que não haja múltiplos timers
+      this.statusCheckTimer = setInterval(this.checkBetStatuses, 60000) // Verifica a cada 60 segundos
+    },
+    // Para o timer de status das apostas
+    stopStatusCheckTimer() {
+      if (this.statusCheckTimer) {
+        clearInterval(this.statusCheckTimer)
+        this.statusCheckTimer = null
+      }
+    },
+         // Método para verificar o status das apostas e atualizar automaticamente após 3 horas
+     checkBetStatuses() {
+       const now = new Date()
+       const threeHoursInMs = 3 * 60 * 60 * 1000 // 3 horas em milissegundos
+       
+       let hasChanges = false
+       
+       for (let i = 0; i < this.bets.length; i++) {
+         const bet = this.bets[i]
+         
+         if (bet.status === 'Em andamento') {
+           try {
+             // Verifica se a partida já começou há mais de 3 horas
+             const matchStartTime = new Date(bet.date)
+             const timeSinceMatchStart = now.getTime() - matchStartTime.getTime()
+             
+             if (timeSinceMatchStart >= threeHoursInMs) {
+               // Atualiza o status para "Finalizado" automaticamente
+               this.bets[i] = {
+                 ...bet,
+                 status: 'Finalizado',
+                 profit: bet.profit || 0, // Mantém o lucro atual ou define como 0
+                 roi: bet.roi || 0 // Mantém o ROI atual ou define como 0
+               }
+               
+               hasChanges = true
+               
+               // Mostra notificação apenas uma vez por aposta
+               if (!bet.statusUpdated) {
+                 this.showNotification(`✅ Partida "${bet.match}" finalizada automaticamente após 3 horas.`)
+                 this.bets[i].statusUpdated = true
+               }
+             }
+           } catch (error) {
+             console.error(`Erro ao verificar status da aposta ${bet.id}:`, error)
+           }
+         }
+       }
+       
+       // Salva as mudanças apenas se houve atualizações
+       if (hasChanges) {
+         this.saveBets()
+       }
+     }
   },
   watch: {
     searchTerm() {

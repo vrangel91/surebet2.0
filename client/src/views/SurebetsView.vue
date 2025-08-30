@@ -41,7 +41,6 @@
                @click="toggleFilterOverlay"
              >
                <span class="control-text">Filtros</span>
-               <span v-if="hasActiveFilters" class="filter-badge">{{ activeFiltersCount }}</span>
              </button>
              
              <button 
@@ -175,6 +174,7 @@
             :isDragging="dragMode"
             @add-to-reports="addSurebetToReports"
             @toggle-pin="togglePinCard"
+            @balance-debited="handleBalanceDebited"
           />
         </div>
       </div>
@@ -220,6 +220,7 @@
             :isPinned="isPinned(surebet)"
             @add-to-reports="addSurebetToReports"
             @toggle-pin="togglePinCard"
+            @balance-debited="handleBalanceDebited"
           />
         </div>
       </div>
@@ -780,64 +781,7 @@ export default {
       return surebetsArray
     },
     
-    hasActiveFilters() {
-      // Verifica se há filtros ativos (não padrão)
-      const housesUnselected = this.filterOptions.houses.length - this.selectedHouses.length
-      const sportsUnselected = this.filterOptions.sports.length - this.selectedSports.length
-      const currenciesUnselected = this.filterOptions.currencies.length - this.selectedCurrencies.length
-      const profitNotDefault = !(this.minProfit === 0 && this.maxProfit === 1000)
-      const dateSelected = !!this.selectedDate
-      const filterNotDefault = this.activeFilter !== 'prelive' // prelive é o padrão
-      
-      // Log de debug para verificar os valores
-      console.log('🔍 DEBUG hasActiveFilters:')
-      console.log('  - Houses unselected:', housesUnselected, '(', this.selectedHouses.length, '/', this.filterOptions.houses.length, ')')
-      console.log('  - Sports unselected:', sportsUnselected, '(', this.selectedSports.length, '/', this.filterOptions.sports.length, ')')
-      console.log('  - Currencies unselected:', currenciesUnselected, '(', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length, ')')
-      console.log('  - Profit not default:', profitNotDefault, '(', this.minProfit, '-', this.maxProfit, ')')
-      console.log('  - Date selected:', dateSelected, '(', this.selectedDate, ')')
-      console.log('  - Filter not default:', filterNotDefault, '(', this.activeFilter, ')')
-      
-      // Retorna true se pelo menos um filtro estiver ativo
-      const result = housesUnselected > 0 || sportsUnselected > 0 || currenciesUnselected > 0 || 
-             profitNotDefault || dateSelected || filterNotDefault
-      
-      console.log('  - Result:', result)
-      return result
-    },
-    
-    activeFiltersCount() {
-      let count = 0
-      
-      // Conta apenas opções DESMARCADAS (não selecionadas)
-      const housesUnselected = this.filterOptions.houses.length - this.selectedHouses.length
-      const sportsUnselected = this.filterOptions.sports.length - this.selectedSports.length
-      const currenciesUnselected = this.filterOptions.currencies.length - this.selectedCurrencies.length
-      
-      // Soma todas as opções desmarcadas
-      count += housesUnselected + sportsUnselected + currenciesUnselected
-      
-      // Filtro de tipo só conta se NÃO for prelive (padrão)
-      if (this.activeFilter !== 'prelive') count++
-      
-      // Filtro de lucro só conta se NÃO for o padrão (0-1000)
-      if (!(this.minProfit === 0 && this.maxProfit === 1000)) count++
-      
-      // Data só conta se estiver selecionada
-      if (this.selectedDate) count++
-      
-      // Log de debug para verificar o contador
-      console.log('🔍 DEBUG activeFiltersCount:')
-      console.log('  - Houses unselected:', housesUnselected)
-      console.log('  - Sports unselected:', sportsUnselected)
-      console.log('  - Currencies unselected:', currenciesUnselected)
-      console.log('  - Filter not default:', this.activeFilter !== 'prelive' ? 1 : 0)
-      console.log('  - Profit not default:', !(this.minProfit === 0 && this.maxProfit === 1000) ? 1 : 0)
-      console.log('  - Date selected:', this.selectedDate ? 1 : 0)
-      console.log('  - Total count:', count)
-      
-      return count
-    },
+
     
     isUsingDefaultProfitFilters() {
       try {
@@ -914,8 +858,7 @@ export default {
         console.log('  - selectedSports:', this.selectedSports.length, '/', this.filterOptions.sports.length)
         console.log('  - selectedCurrencies:', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length)
 
-        console.log('  - hasActiveFilters:', this.hasActiveFilters)
-        console.log('  - activeFiltersCount:', this.activeFiltersCount)
+
         
         // Carregar filtros salvos do usuário
         this.loadSavedFilters()
@@ -2023,6 +1966,26 @@ export default {
        }
      },
      
+     // Manipula evento de débito do saldo
+     handleBalanceDebited(data) {
+       console.log('💰 Débito processado:', data)
+       
+       // Atualiza a interface se necessário
+       // Por exemplo, pode atualizar contadores de saldo ou notificações
+       this.showNotification(
+         `Débito de ${this.formatCurrency(data.amount)} processado com sucesso em ${data.account.bookmaker_name}`, 
+         'success'
+       )
+     },
+     
+     // Formata valor monetário
+     formatCurrency(value) {
+       return new Intl.NumberFormat('pt-BR', {
+         style: 'currency',
+         currency: 'BRL'
+       }).format(value)
+     },
+     
      // Cria uma chave única para identificar surebets duplicados
      createSurebetKey(surebet) {
        if (!surebet || surebet.length === 0) return ''
@@ -2896,34 +2859,7 @@ export default {
 
 
 
-.filter-badge {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-  color: #ffffff;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
-  margin-left: 8px;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
-  animation: bounce 1s ease-in-out infinite;
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
 
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-3px);
-  }
-  60% {
-    transform: translateY(-2px);
-  }
-}
 
 .filter-toggle-btn {
   position: relative;
