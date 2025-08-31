@@ -724,8 +724,13 @@ export default {
           console.log(`✅ Carregados ${apiData.length} registros da API externa`)
           this.surebets = apiData
           
-          // Salvar dados no banco local para cache
-          await this.saveDataToDatabase()
+          // Salvar dados no banco local para cache (com tratamento de erro)
+          try {
+            await this.saveDataToDatabase()
+          } catch (saveError) {
+            console.warn('⚠️ Erro ao salvar dados no banco (não crítico):', saveError)
+            // Continuar mesmo se falhar ao salvar
+          }
         } else {
           console.log('📊 Nenhum dado encontrado na API externa, tentando carregar do banco local')
           
@@ -1053,22 +1058,41 @@ export default {
       const marketStats = {}
       const surebetGroups = {}
       
+      // Verificar se data é válido
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('⚠️ Dados de mercados inválidos ou vazios')
+        this.topMarkets = []
+        this.groupedMarkets = {}
+        return
+      }
+      
       data.forEach(item => {
         if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
       })
       
       Object.values(surebetGroups).forEach(item => {
-        if (!marketStats[item.market]) {
-          marketStats[item.market] = { name: item.market, count: 0, profits: [], totalProfit: 0 }
+        // Verificar se item.market existe
+        const marketName = item.market || 'Mercado Desconhecido'
+        if (!marketStats[marketName]) {
+          marketStats[marketName] = { name: marketName, count: 0, profits: [], totalProfit: 0 }
         }
-        marketStats[item.market].count++
-        marketStats[item.market].profits.push(item.profit)
-        marketStats[item.market].totalProfit += item.profit
+        marketStats[marketName].count++
+        marketStats[marketName].profits.push(item.profit || 0)
+        marketStats[marketName].totalProfit += item.profit || 0
       })
+      
+      // Verificar se há dados de mercados
+      const marketsArray = Object.values(marketStats)
+      if (marketsArray.length === 0) {
+        console.warn('⚠️ Nenhum mercado encontrado nos dados')
+        this.topMarkets = []
+        this.groupedMarkets = {}
+        return
+      }
       
       // Filtrar mercados por relevância
       const relevantMarkets = filterMarketsByRelevance(
-        Object.values(marketStats), 
+        marketsArray, 
         this.marketsChartFilters.minCount, 
         this.marketsChartFilters.minPercentage
       )
@@ -1076,14 +1100,16 @@ export default {
       // Agrupar mercados por categoria
       this.groupedMarkets = groupMarketsByCategory(relevantMarkets)
       
-      const totalMarkets = Object.values(marketStats).reduce((sum, market) => sum + market.count, 0)
+      const totalMarkets = marketsArray.reduce((sum, market) => sum + (market.count || 0), 0)
       
       this.topMarkets = Object.values(marketStats).map(market => {
-        const averageProfit = market.profits.reduce((sum, p) => sum + p, 0) / market.profits.length
-        const maxProfit = Math.max(...market.profits)
-        const variability = this.calculateVariation(market.profits)
+        // Verificar se market.profits existe e é um array válido
+        const profits = Array.isArray(market.profits) ? market.profits : []
+        const averageProfit = profits.length > 0 ? profits.reduce((sum, p) => sum + (p || 0), 0) / profits.length : 0
+        const maxProfit = profits.length > 0 ? Math.max(...profits) : 0
+        const variability = this.calculateVariation(profits)
         const consistency = 100 - variability
-        const percentage = (market.count / totalMarkets) * 100
+        const percentage = totalMarkets > 0 ? (market.count / totalMarkets) * 100 : 0
         const score = (market.count * 0.3) + (averageProfit * 0.4) + (consistency * 0.3)
         
         // Adicionar informações de categoria
@@ -1099,7 +1125,7 @@ export default {
           score,
           category: category.group,
           categoryName: category.groupName,
-          subcategory: category.subcategory.name
+          subcategory: category.subcategory?.name || 'Diversos'
         }
       }).sort((a, b) => b.score - a.score).slice(0, 10)
     },
@@ -1517,70 +1543,104 @@ export default {
         
         console.log(`💾 Salvando ${this.surebets.length} registros no banco para usuário ${this.currentUser.id}...`)
         
-        // Preparar dados para salvar no banco
-        const statsToSave = this.surebets.map(item => ({
-          user_id: this.currentUser?.id,
-          surebet_id: item.surebet_id,
-          house: item.house,
-          market: item.market,
-          match: item.match || 'Partida não especificada',
-          profit: item.profit,
-          date: item.date,
-          hour: item.hour,
-          sport: item.sport,
-          period: item.period || null,
-          minutes: item.minutes || null,
-          anchorh1: item.anchorh1 || null,
-          anchorh2: item.anchorh2 || null,
-          chance: item.chance || null,
-          metadata: {
-            source: 'ranking_view',
-            generated_at: new Date().toISOString(),
-            ...item.metadata
-          }
-        }))
-        
-        // Usar endpoint bulk para salvar múltiplos registros de uma vez
-        const response = await fetch('/api/surebet-stats/bulk', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${this.$store.state.authToken}`
-          },
-          body: JSON.stringify({ stats: statsToSave })
-        })
-        
-        if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
+        // Verificar se o token de autenticação existe
+        if (!this.$store.state.authToken) {
+          console.error('❌ Token de autenticação não encontrado')
+          throw new Error('Token de autenticação não encontrado')
         }
         
-        const result = await response.json()
-        console.log('✅ Dados salvos no banco:', result.message)
+        // Salvar registros individualmente (mais seguro)
+        let savedCount = 0
+        const maxRecords = Math.min(this.surebets.length, 50) // Limitar a 50 registros
+        
+        for (let i = 0; i < maxRecords; i++) {
+          try {
+            const item = this.surebets[i]
+            
+            // Verificar se o item tem dados válidos
+            if (!item.surebet_id || !item.house || !item.market) {
+              console.warn(`⚠️ Item ${i} com dados inválidos, pulando...`)
+              continue
+            }
+            
+            await this.saveIndividualRecord(item)
+            savedCount++
+            
+            // Pequena pausa para não sobrecarregar o servidor
+            if (i % 10 === 0 && i > 0) {
+              await new Promise(resolve => setTimeout(resolve, 100))
+            }
+            
+          } catch (itemError) {
+            console.error(`❌ Erro ao salvar item ${i}:`, itemError)
+            // Continuar com o próximo item
+          }
+        }
+        
+        console.log(`✅ ${savedCount} registros salvos com sucesso`)
         
         // Salvar análise também
-        await this.saveAnalyticsToDatabase(this.filteredSurebets)
+        if (this.filteredSurebets && this.filteredSurebets.length > 0) {
+          await this.saveAnalyticsToDatabase(this.filteredSurebets)
+        }
         
       } catch (error) {
         console.error('❌ Erro ao salvar dados no banco:', error)
-        
-        // Tentar salvar individualmente se o bulk falhar
-        try {
-          console.log('🔄 Tentando salvar registros individualmente...')
-          for (const item of this.surebets.slice(0, 10)) { // Limitar a 10 para não sobrecarregar
-            await this.saveIndividualRecord(item)
-          }
-          console.log('✅ Alguns registros salvos individualmente')
-        } catch (individualError) {
-          console.error('❌ Erro ao salvar individualmente:', individualError)
-        }
+        throw error
       }
     },
     
     async saveIndividualRecord(item) {
       try {
+        // Verificações de segurança
         if (!this.currentUser?.id) {
           console.error('❌ Usuário não autenticado ou ID não encontrado')
           throw new Error('Usuário não autenticado')
+        }
+        
+        if (!this.$store.state.authToken) {
+          console.error('❌ Token de autenticação não encontrado')
+          throw new Error('Token de autenticação não encontrado')
+        }
+        
+        // Validar dados obrigatórios com fallbacks inteligentes
+        const missingFields = []
+        if (!item.surebet_id && !item.id) missingFields.push('surebet_id')
+        if (!item.house && !item.house_name) missingFields.push('house')
+        if (!item.market && !item.market_name) missingFields.push('market')
+        
+        if (missingFields.length > 0) {
+          console.warn(`⚠️ Item ${item.surebet_id || item.id || 'sem ID'} com campos ausentes:`, missingFields)
+          console.warn('📋 Dados do item:', item)
+          
+          // Em vez de falhar, vamos usar valores padrão
+          console.log('🔄 Aplicando valores padrão para campos ausentes...')
+        }
+        
+        // Preparar dados com validação robusta e fallbacks
+        const recordData = {
+          user_id: this.currentUser.id,
+          surebet_id: item.surebet_id || item.id || `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          house: item.house || item.house_name || item.bookmaker || 'Casa não especificada',
+          market: item.market || item.market_name || item.bet_type || 'Mercado não especificado',
+          match: item.match || item.match_name || item.game || item.event || 'Partida não especificada',
+          profit: typeof item.profit === 'number' ? item.profit : parseFloat(item.profit) || parseFloat(item.return) || 0,
+          date: item.date || item.match_date || item.event_date || new Date().toISOString().split('T')[0],
+          hour: typeof item.hour === 'number' ? item.hour : parseInt(item.hour) || parseInt(item.time) || 0,
+          sport: item.sport || item.sport_name || item.category || 'Esporte não especificado',
+          period: item.period || item.time_period || item.period_name || null,
+          minutes: item.minutes || item.match_minutes || item.duration || null,
+          anchorh1: item.anchorh1 || item.anchor_h1 || item.anchor1 || null,
+          anchorh2: item.anchorh2 || item.anchor_h2 || item.anchor2 || null,
+          chance: item.chance || item.odds || item.probability || null,
+          metadata: {
+            source: 'ranking_view',
+            generated_at: new Date().toISOString(),
+            original_data: item,
+            has_fallbacks: missingFields.length > 0,
+            missing_fields: missingFields,
+            ...(item.metadata || {})
+          }
         }
         
         const response = await fetch('/api/surebet-stats', {
@@ -1589,76 +1649,83 @@ export default {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.$store.state.authToken}`
           },
-          body: JSON.stringify({
-            user_id: this.currentUser?.id,
-            surebet_id: item.surebet_id,
-            house: item.house,
-            market: item.market,
-            match: item.match || 'Partida não especificada',
-            profit: item.profit,
-            date: item.date,
-            hour: item.hour,
-            sport: item.sport,
-            period: item.period || null,
-            minutes: item.minutes || null,
-            anchorh1: item.anchorh1 || null,
-            anchorh2: item.anchorh2 || null,
-            chance: item.chance || null,
-            metadata: {
-              source: 'ranking_view',
-              generated_at: new Date().toISOString(),
-              ...item.metadata
-            }
-          })
+          body: JSON.stringify(recordData)
         })
         
         if (!response.ok) {
-          throw new Error(`Erro HTTP: ${response.status}`)
+          const errorText = await response.text()
+          throw new Error(`Erro HTTP: ${response.status} - ${errorText}`)
         }
         
-        return await response.json()
+        const result = await response.json()
+        const recordId = recordData.surebet_id
+        const hasFallbacks = missingFields.length > 0
+        
+        if (hasFallbacks) {
+          console.log(`✅ Registro ${recordId} salvo com sucesso (com fallbacks para: ${missingFields.join(', ')})`)
+        } else {
+          console.log(`✅ Registro ${recordId} salvo com sucesso`)
+        }
+        
+        return result
+        
       } catch (error) {
-        console.error(`Erro ao salvar registro ${item.surebet_id}:`, error)
+        console.error(`❌ Erro ao salvar registro ${item.surebet_id}:`, error)
         throw error
       }
     },
     
     async saveAnalyticsToDatabase(filteredData) {
       try {
-        // Calcular estatísticas para salvar
-        const totalSurebets = new Set(filteredData.map(s => s.surebet_id)).size
-        const uniqueHouses = new Set(filteredData.map(s => s.house)).size
-        const uniqueMarkets = new Set(filteredData.map(s => s.market)).size
+        // Verificar se há dados para analisar
+        if (!filteredData || !Array.isArray(filteredData) || filteredData.length === 0) {
+          console.log('📊 Nenhum dado para análise')
+          return
+        }
+        
+        // Verificar se o usuário está autenticado
+        if (!this.currentUser?.id) {
+          console.error('❌ Usuário não autenticado para salvar análise')
+          return
+        }
+        
+        // Calcular estatísticas para salvar com validação
+        const validData = filteredData.filter(item => item && item.surebet_id)
+        const totalSurebets = new Set(validData.map(s => s.surebet_id)).size
+        const uniqueHouses = new Set(validData.map(s => s.house || 'Desconhecida')).size
+        const uniqueMarkets = new Set(validData.map(s => s.market || 'Desconhecido')).size
         
         const surebetProfits = {}
-        filteredData.forEach(item => {
+        validData.forEach(item => {
           if (!surebetProfits[item.surebet_id]) {
-            surebetProfits[item.surebet_id] = item.profit
+            surebetProfits[item.surebet_id] = parseFloat(item.profit) || 0
           }
         })
         const profits = Object.values(surebetProfits)
         const averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
         
-        // Preparar dados de análise
+        // Preparar dados de análise com validação
         const analyticsData = {
+          user_id: this.currentUser.id,
           analysis_type: 'comprehensive',
-          period_days: parseInt(this.selectedPeriod),
-          sport_filter: this.selectedSport,
+          period_days: parseInt(this.selectedPeriod) || 30,
+          sport_filter: this.selectedSport || 'all',
           analysis_data: {
-            topHouses: this.topHouses,
-            topHousePairs: this.topHousePairs,
-            topMarkets: this.topMarkets,
+            topHouses: this.topHouses || [],
+            topHousePairs: this.topHousePairs || [],
+            topMarkets: this.topMarkets || [],
             insights: {
-              bestPair: this.bestPair,
-              peakHour: this.peakHour,
-              bestMarket: this.bestMarket,
-              mostActiveSport: this.mostActiveSport
+              bestPair: this.bestPair || null,
+              peakHour: this.peakHour || null,
+              bestMarket: this.bestMarket || null,
+              mostActiveSport: this.mostActiveSport || null
             }
           },
           total_surebets: totalSurebets,
           unique_houses: uniqueHouses,
           unique_markets: uniqueMarkets,
-          average_profit: averageProfit
+          average_profit: averageProfit,
+          generated_at: new Date().toISOString()
         }
         
         // Salvar análise no banco
@@ -1667,6 +1734,7 @@ export default {
         
       } catch (error) {
         console.error('❌ Erro ao salvar análise no banco:', error)
+        // Não re-throw para não interromper o fluxo principal
       }
     },
 
@@ -1794,9 +1862,15 @@ export default {
 
 
     calculateVariation(values) {
-      if (values.length <= 1) return 0
-      const mean = values.reduce((sum, val) => sum + val, 0) / values.length
-      const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length
+      // Verificar se values é um array válido
+      if (!Array.isArray(values) || values.length <= 1) return 0
+      
+      // Filtrar valores válidos (números)
+      const validValues = values.filter(val => typeof val === 'number' && !isNaN(val))
+      if (validValues.length <= 1) return 0
+      
+      const mean = validValues.reduce((sum, val) => sum + val, 0) / validValues.length
+      const variance = validValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validValues.length
       const stdDev = Math.sqrt(variance)
       return mean > 0 ? (stdDev / mean) * 100 : 0
     },
@@ -1878,8 +1952,13 @@ export default {
             // Reprocessar análises
             this.processAnalytics()
             
-            // Salvar no banco
-            await this.saveDataToDatabase()
+            // Salvar no banco (com tratamento de erro)
+            try {
+              await this.saveDataToDatabase()
+            } catch (saveError) {
+              console.warn('⚠️ Erro ao salvar dados no banco (não crítico):', saveError)
+              // Continuar mesmo se falhar ao salvar
+            }
             
             // Atualizar gráficos
             this.updateCharts()

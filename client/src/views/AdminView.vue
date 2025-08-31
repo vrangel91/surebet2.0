@@ -85,7 +85,6 @@
             <th>E-mail</th>
             <th>Função</th>
             <th>Status</th>
-            <th>Créditos</th>
             <th>Tipo de Conta</th>
             <th>Último Login</th>
             <th>Criado em</th>
@@ -110,11 +109,6 @@
               </span>
             </td>
             <td>
-              <span class="credits-display">
-                {{ user.credits || 0 }} 💰
-              </span>
-            </td>
-            <td>
               <span :class="['account-type-badge', user.accountType || 'basic']">
                 {{ getAccountTypeText(user.accountType || 'basic') }}
               </span>
@@ -132,13 +126,7 @@
               >
                 🔐
               </button>
-              <button 
-                @click="addCredits(user)" 
-                class="btn-icon btn-credits"
-                title="Adicionar Créditos"
-              >
-                💰
-              </button>
+
               <button 
                 @click="changeAccountType(user)" 
                 class="btn-icon btn-account"
@@ -443,60 +431,7 @@
       </div>
     </div>
 
-    <!-- Add Credits Modal -->
-    <div v-if="showCreditsModal" class="modal-overlay">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Adicionar Créditos</h2>
-          <button @click="showCreditsModal = false" class="modal-close">✕</button>
-        </div>
-        
-        <form @submit.prevent="saveCredits" class="modal-form">
-          <div class="form-group">
-            <label>Usuário</label>
-            <input
-              :value="creditsForm.userName"
-              type="text"
-              disabled
-              class="form-input disabled"
-              placeholder="Nome do usuário"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Créditos Atuais</label>
-            <input
-              :value="creditsForm.currentCredits"
-              type="number"
-              disabled
-              class="form-input disabled"
-              placeholder="Créditos atuais"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Adicionar Créditos</label>
-            <input
-              v-model="creditsForm.creditsToAdd"
-              type="number"
-              required
-              min="1"
-              class="form-input"
-              placeholder="Quantidade de créditos"
-            />
-          </div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="showCreditsModal = false" class="btn-secondary">
-              Cancelar
-            </button>
-            <button type="submit" class="btn-primary">
-              Adicionar Créditos
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+
 
     <!-- Change Account Type Modal -->
     <div v-if="showAccountTypeModal" class="modal-overlay">
@@ -737,7 +672,7 @@ export default {
       showEditModal: false,
       showDeleteModal: false,
       showPasswordModal: false,
-      showCreditsModal: false,
+
       showAccountTypeModal: false,
       showTicketDetailModal: false,
       userToDelete: null,
@@ -761,12 +696,7 @@ export default {
         newPassword: '',
         confirmPassword: ''
       },
-      creditsForm: {
-        userId: '',
-        userName: '',
-        currentCredits: 0,
-        creditsToAdd: 1
-      },
+
       accountTypeForm: {
         userId: '',
         userName: '',
@@ -856,8 +786,7 @@ export default {
     
     console.log('✅ Acesso administrativo autorizado para:', this.currentUser?.email)
     
-    // Garantir que todos os usuários tenham a propriedade credits
-    this.ensureAllUsersHaveCredits()
+
     
     // Buscar usuários da API
     this.fetchUsersFromAPI()
@@ -870,9 +799,7 @@ export default {
       'deleteUserData', 
       'updateTicketData', 
       'addMessageToTicket',
-      'addCreditsToUser',
       'upgradeAccountType',
-      'ensureAllUsersHaveCredits',
       'fetchUsers'
     ]),
     
@@ -1005,15 +932,7 @@ export default {
       this.showPasswordModal = true
     },
 
-    addCredits(user) {
-      console.log('Método addCredits chamado para usuário:', user)
-      this.creditsForm.userId = user.id
-      this.creditsForm.userName = user.name
-      this.creditsForm.currentCredits = user.credits || 0
-      this.creditsForm.creditsToAdd = 1
-      this.showCreditsModal = true
-      console.log('Formulário de créditos preenchido:', this.creditsForm)
-    },
+
 
     changeAccountType(user) {
       this.accountTypeForm.userId = user.id
@@ -1057,37 +976,7 @@ export default {
        this.showToast('Sucesso', `🔐 Senha atualizada com sucesso para ${userName}`, 'success')
      },
 
-         async saveCredits() {
-       console.log('Método saveCredits chamado')
-       console.log('Formulário atual:', this.creditsForm)
-       
-       try {
-         const creditsToAdd = parseInt(this.creditsForm.creditsToAdd)
-         const userName = this.creditsForm.userName
-         const userId = this.creditsForm.userId
-         
-         console.log('Tentando adicionar créditos:', { userId, creditsToAdd, userName })
-         
-         await this.addCreditsToUser({
-           userId: userId,
-           amount: creditsToAdd
-         })
-         
-         this.showCreditsModal = false
-         this.creditsForm = {
-           userId: '',
-           userName: '',
-           currentCredits: 0,
-           creditsToAdd: 1
-         }
-         
-         // Usar alert nativo para garantir que apareça visualmente
-         alert(`✅ ${creditsToAdd} crédito(s) adicionado(s) com sucesso para ${userName}`)
-       } catch (error) {
-         console.error('Erro ao adicionar créditos:', error)
-         alert('❌ Erro ao processar a adição de créditos. Tente novamente.')
-       }
-     },
+
 
          async saveAccountType() {
        try {
@@ -2333,23 +2222,14 @@ export default {
   box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
 }
 
-.btn-credits:hover {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
-}
+
 
 .btn-account:hover {
   background: rgba(138, 43, 226, 0.2);
   color: #8a2be2;
 }
 
-.credits-display {
-  font-weight: 600;
-  color: #ffd700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+
 
 .account-type-badge {
   padding: 4px 8px;

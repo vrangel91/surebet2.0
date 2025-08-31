@@ -19,32 +19,29 @@
             <p class="page-subtitle">Personalize sua experiência de arbitragem</p>
           </div>
         </div>
-        <div class="header-actions">
-          <button @click="saveAllSettings" class="save-all-btn">
-            <span class="btn-icon">💾</span>
-            Salvar Tudo
-          </button>
-        </div>
+
       </header>
 
       <!-- Conteúdo das Configurações -->
       <div class="settings-content">
-        <div class="settings-grid">
+        <div class="settings-layout">
           <!-- Notificações -->
-          <div class="settings-card">
-            <div class="card-header">
-              <div class="card-icon">🔔</div>
-              <h3 class="card-title">Notificações</h3>
-              <p class="card-description">Configure como receber alertas e notificações</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🔔</div>
+              <div class="section-title">
+                <h3>Notificações</h3>
+                <p>Configure como receber alertas e notificações</p>
+              </div>
             </div>
-            <div class="card-content">
+            <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
                   <label class="setting-label">Som de Notificação</label>
                   <p class="setting-description">Reproduz som quando novos surebets são encontrados</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.notifications.sound" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
@@ -57,7 +54,7 @@
                   <p class="setting-description">Mostra notificações do sistema quando novos surebets são encontrados</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.notifications.browser" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
@@ -87,20 +84,22 @@
           </div>
 
           <!-- Busca Automática -->
-          <div class="settings-card">
-            <div class="card-header">
-              <div class="card-icon">🔄</div>
-              <h3 class="card-title">Busca Automática</h3>
-              <p class="card-description">Configure a busca automática de surebets</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🔄</div>
+              <div class="section-title">
+                <h3>Busca Automática</h3>
+                <p>Configure a busca automática de surebets</p>
+              </div>
             </div>
-            <div class="card-content">
+            <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
                   <label class="setting-label">Iniciar Busca Automaticamente</label>
                   <p class="setting-description">Inicia a busca de surebets ao carregar a página</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.autoSearch.enabled" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
@@ -113,7 +112,7 @@
                   <p class="setting-description">Frequência de atualização dos surebets</p>
                 </div>
                 <div class="setting-control">
-                  <select v-model="settings.autoSearch.interval" @change="saveSettings" class="setting-select">
+                  <select v-model="settings.autoSearch.interval" @change="saveSettings" class="enhanced-select">
                     <option value="3">3 segundos</option>
                     <option value="5">5 segundos</option>
                     <option value="10">10 segundos</option>
@@ -129,7 +128,7 @@
                   <p class="setting-description">Continua buscando mesmo quando a aba não está ativa</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.autoSearch.background" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
@@ -139,13 +138,15 @@
           </div>
 
           <!-- Filtros Padrão -->
-          <div class="settings-card">
-            <div class="card-header">
-              <div class="card-icon">🎯</div>
-              <h3 class="card-title">Filtros Padrão</h3>
-              <p class="card-description">Configure os filtros padrão para surebets</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🎯</div>
+              <div class="section-title">
+                <h3>Filtros Padrão</h3>
+                <p>Configure os filtros padrão para surebets</p>
+              </div>
             </div>
-            <div class="card-content">
+            <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
                   <label class="setting-label">Lucro Mínimo Padrão</label>
@@ -157,7 +158,7 @@
                       type="number" 
                       v-model="settings.defaultFilters.minProfit" 
                       @change="saveSettings"
-                      class="setting-input"
+                      class="enhanced-input"
                       min="0"
                       max="100"
                     >
@@ -177,7 +178,7 @@
                       type="number" 
                       v-model="settings.defaultFilters.maxProfit" 
                       @change="saveSettings"
-                      class="setting-input"
+                      class="enhanced-input"
                       min="0"
                       max="1000"
                     >
@@ -192,7 +193,7 @@
                   <p class="setting-description">Filtro inicial ao carregar a página</p>
                 </div>
                 <div class="setting-control">
-                  <select v-model="settings.defaultFilters.activeFilter" @change="saveSettings" class="setting-select">
+                  <select v-model="settings.defaultFilters.activeFilter" @change="saveSettings" class="enhanced-select">
                     <option value="all">Todas</option>
                     <option value="prelive">Pré-live</option>
                     <option value="live">Live</option>
@@ -203,20 +204,22 @@
           </div>
 
           <!-- Interface -->
-          <div class="settings-card">
-            <div class="card-header">
-              <div class="card-icon">🎨</div>
-              <h3 class="card-title">Interface</h3>
-              <p class="card-description">Personalize a aparência da aplicação</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🎨</div>
+              <div class="section-title">
+                <h3>Interface</h3>
+                <p>Personalize a aparência da aplicação</p>
+              </div>
             </div>
-            <div class="card-content">
+            <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
                   <label class="setting-label">Tema Escuro</label>
                   <p class="setting-description">Ativa o tema escuro por padrão</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.interface.darkMode" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
@@ -229,38 +232,27 @@
                   <p class="setting-description">Inicia com a sidebar minimizada</p>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle-switch">
+                  <label class="enhanced-toggle">
                     <input type="checkbox" v-model="settings.interface.sidebarCollapsed" @change="saveSettings">
                     <span class="toggle-slider"></span>
                   </label>
                 </div>
               </div>
 
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Cards por Linha</label>
-                  <p class="setting-description">Número de cards de surebet por linha</p>
-                </div>
-                <div class="setting-control">
-                  <select v-model="settings.interface.cardsPerRow" @change="saveSettings" class="setting-select">
-                    <option value="1">1 card</option>
-                    <option value="2">2 cards</option>
-                    <option value="3">3 cards</option>
-                    <option value="4">4 cards</option>
-                  </select>
-                </div>
-              </div>
+
             </div>
           </div>
 
           <!-- Perfil e Segurança -->
-          <div class="settings-card">
-            <div class="card-header">
-              <div class="card-icon">🔐</div>
-              <h3 class="card-title">Perfil e Segurança</h3>
-              <p class="card-description">Gerencie suas informações pessoais e segurança</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🔐</div>
+              <div class="section-title">
+                <h3>Perfil e Segurança</h3>
+                <p>Gerencie suas informações pessoais e segurança</p>
+              </div>
             </div>
-            <div class="card-content">
+            <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
                   <label class="setting-label">Nome Completo</label>
@@ -271,7 +263,7 @@
                     type="text" 
                     v-model="settings.profile.fullName" 
                     @change="saveSettings"
-                    class="setting-input profile-input"
+                    class="enhanced-input profile-input"
                     placeholder="Seu nome completo"
                   >
                 </div>
@@ -287,7 +279,7 @@
                     type="email" 
                     v-model="settings.profile.email" 
                     @change="saveSettings"
-                    class="setting-input profile-input"
+                    class="enhanced-input profile-input"
                     placeholder="seu@email.com"
                   >
                 </div>
@@ -304,10 +296,14 @@
                       type="password" 
                       v-model="settings.profile.newPassword" 
                       @change="saveSettings"
-                      class="setting-input profile-input"
+                      class="enhanced-input profile-input"
                       placeholder="Nova senha"
                       minlength="6"
                     >
+                    <button @click="togglePasswordVisibility" class="password-toggle-btn">
+                      <span v-if="!showPassword" class="btn-icon">👁️</span>
+                      <span v-if="showPassword" class="btn-icon">🙈</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -323,10 +319,14 @@
                       type="password" 
                       v-model="settings.profile.confirmPassword" 
                       @change="saveSettings"
-                      class="setting-input profile-input"
+                      class="enhanced-input profile-input"
                       placeholder="Confirmar senha"
                       minlength="6"
                     >
+                    <button @click="togglePasswordVisibility" class="password-toggle-btn">
+                      <span v-if="!showPassword" class="btn-icon">👁️</span>
+                      <span v-if="showPassword" class="btn-icon">🙈</span>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -337,7 +337,7 @@
                   <p class="setting-description">Clique para alterar sua senha</p>
                 </div>
                 <div class="setting-control">
-                  <button @click="changePassword" class="change-password-btn" :disabled="!isPasswordFormValid">
+                  <button @click="changePassword" class="primary-btn" :disabled="!isPasswordFormValid">
                     <span class="btn-icon">🔑</span>
                     Alterar Senha
                   </button>
@@ -347,103 +347,104 @@
           </div>
 
           <!-- Relatórios e Ações -->
-          <div class="reports-actions-container">
-            <!-- Relatórios -->
-            <div class="settings-card">
-              <div class="card-header">
-                <div class="card-icon">📊</div>
-                <h3 class="card-title">Relatórios</h3>
-                <p class="card-description">Configure as opções de relatórios</p>
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">📊</div>
+              <div class="section-title">
+                <h3>Relatórios</h3>
+                <p>Configure as opções de relatórios</p>
               </div>
-              <div class="card-content">
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <label class="setting-label">Aposta Padrão</label>
-                    <p class="setting-description">Valor padrão para apostas nos relatórios</p>
-                  </div>
-                  <div class="setting-control">
-                    <div class="input-group">
-                      <input 
-                        type="number" 
-                        v-model="settings.reports.defaultStake" 
-                        @change="saveSettings"
-                        class="setting-input"
-                        min="1"
-                        step="0.01"
-                      >
-                      <span class="input-suffix">R$</span>
-                    </div>
+            </div>
+            <div class="section-content">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Aposta Padrão</label>
+                  <p class="setting-description">Valor padrão para apostas nos relatórios</p>
+                </div>
+                <div class="setting-control">
+                  <div class="input-group">
+                    <input 
+                      type="number" 
+                      v-model="settings.reports.defaultStake" 
+                      @change="saveSettings"
+                      class="enhanced-input"
+                      min="1"
+                      step="0.01"
+                    >
+                    <span class="input-suffix">R$</span>
                   </div>
                 </div>
+              </div>
 
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <label class="setting-label">Moeda Padrão</label>
-                    <p class="setting-description">Moeda padrão para exibição nos relatórios</p>
-                  </div>
-                  <div class="setting-control">
-                    <select v-model="settings.reports.defaultCurrency" @change="saveSettings" class="setting-select">
-                      <option value="BRL">Real (R$)</option>
-                      <option value="USD">Dólar ($)</option>
-                      <option value="EUR">Euro (€)</option>
-                      <option value="PEN">Sol Peruano (S/)</option>
-                    </select>
-                  </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Moeda Padrão</label>
+                  <p class="setting-description">Moeda padrão para exibição nos relatórios</p>
                 </div>
+                <div class="setting-control">
+                  <select v-model="settings.reports.defaultCurrency" @change="saveSettings" class="enhanced-select">
+                    <option value="BRL">Real (R$)</option>
+                    <option value="USD">Dólar ($)</option>
+                    <option value="EUR">Euro (€)</option>
+                    <option value="PEN">Sol Peruano (S/)</option>
+                  </select>
+                </div>
+              </div>
 
-                <div class="setting-item">
-                  <div class="setting-info">
-                    <label class="setting-label">Auto-save de Relatórios</label>
-                    <p class="setting-description">Salva automaticamente os dados dos relatórios</p>
-                  </div>
-                  <div class="setting-control">
-                    <label class="toggle-switch">
-                      <input type="checkbox" v-model="settings.reports.autoSave" @change="saveSettings">
-                      <span class="toggle-slider"></span>
-                    </label>
-                  </div>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <label class="setting-label">Auto-save de Relatórios</label>
+                  <p class="setting-description">Salva automaticamente os dados dos relatórios</p>
+                </div>
+                <div class="setting-control">
+                  <label class="enhanced-toggle">
+                    <input type="checkbox" v-model="settings.reports.autoSave" @change="saveSettings">
+                    <span class="toggle-slider"></span>
+                  </label>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- Ações -->
-            <div class="settings-card actions-card">
-              <div class="card-header">
-                <div class="card-icon">🛠️</div>
-                <h3 class="card-title">Ações</h3>
-                <p class="card-description">Gerencie suas configurações</p>
+          <!-- Ações -->
+          <div class="settings-section">
+            <div class="section-header">
+              <div class="section-icon">🛠️</div>
+              <div class="section-title">
+                <h3>Ações</h3>
+                <p>Gerencie suas configurações</p>
               </div>
-              <div class="card-content">
-                <div class="actions-grid">
-                  <button @click="resetSettings" class="action-btn reset-btn">
-                    <span class="btn-icon">🔄</span>
-                    <div class="btn-content">
-                      <span class="btn-title">Restaurar Padrões</span>
-                      <span class="btn-description">Volta para configurações iniciais</span>
-                    </div>
-                  </button>
-                  <button @click="exportSettings" class="action-btn export-btn">
-                    <span class="btn-icon">📤</span>
-                    <div class="btn-content">
-                      <span class="btn-title">Exportar Configurações</span>
-                      <span class="btn-description">Salva suas configurações em arquivo</span>
-                    </div>
-                  </button>
-                  <button @click="importSettings" class="action-btn import-btn">
-                    <span class="btn-icon">📥</span>
-                    <div class="btn-content">
-                      <span class="btn-title">Importar Configurações</span>
-                      <span class="btn-description">Carrega configurações de arquivo</span>
-                    </div>
-                  </button>
-                  <button @click="clearData" class="action-btn clear-btn">
-                    <span class="btn-icon">🗑️</span>
-                    <div class="btn-content">
-                      <span class="btn-title">Limpar Dados</span>
-                      <span class="btn-description">Remove todos os dados salvos</span>
-                    </div>
-                  </button>
-                </div>
+            </div>
+            <div class="section-content">
+              <div class="actions-grid">
+                <button @click="resetSettings" class="action-btn reset-btn">
+                  <span class="btn-icon">🔄</span>
+                  <div class="btn-content">
+                    <span class="btn-title">Restaurar Padrões</span>
+                    <span class="btn-description">Volta para configurações iniciais</span>
+                  </div>
+                </button>
+                <button @click="exportSettings" class="action-btn export-btn">
+                  <span class="btn-icon">📤</span>
+                  <div class="btn-content">
+                    <span class="btn-title">Exportar Configurações</span>
+                    <span class="btn-description">Salva suas configurações em arquivo</span>
+                  </div>
+                </button>
+                <button @click="importSettings" class="action-btn import-btn">
+                  <span class="btn-icon">📥</span>
+                  <div class="btn-content">
+                    <span class="btn-title">Importar Configurações</span>
+                    <span class="btn-description">Carrega configurações de arquivo</span>
+                  </div>
+                </button>
+                <button @click="clearData" class="action-btn clear-btn">
+                  <span class="btn-icon">🗑️</span>
+                  <div class="btn-content">
+                    <span class="btn-title">Limpar Dados</span>
+                    <span class="btn-description">Remove todos os dados salvos</span>
+                  </div>
+                </button>
               </div>
             </div>
           </div>
@@ -505,8 +506,7 @@ export default {
         },
         interface: {
           darkMode: true,
-          sidebarCollapsed: false,
-          cardsPerRow: 3
+          sidebarCollapsed: false
         },
         profile: {
           fullName: '',
@@ -569,10 +569,7 @@ export default {
       this.$router.push('/login')
     },
     
-    saveAllSettings() {
-      this.saveSettings()
-      this.showNotification('Todas as configurações foram salvas!', 'success')
-    },
+
     
     loadSettings() {
       const savedSettings = localStorage.getItem('app_settings')
@@ -714,6 +711,9 @@ export default {
           console.error('Erro ao alterar senha:', error);
           this.showNotification('Erro ao alterar senha: ' + (error.message || 'Erro desconhecido'), 'error');
         }
+      },
+      togglePasswordVisibility() {
+        this.showPassword = !this.showPassword;
       }
     }
   }
@@ -938,31 +938,7 @@ export default {
   }
 }
 
-.header-actions {
-  .save-all-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 20px;
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      background: var(--accent-secondary);
-      transform: translateY(-2px);
-    }
-    
-    .btn-icon {
-      font-size: 16px;
-    }
-  }
-}
+
 
 .settings-content {
   flex: 1;
@@ -970,68 +946,82 @@ export default {
   overflow-y: auto;
 }
 
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
-  max-width: 1600px;
+/* NOVO LAYOUT - DIV INTEIRA COM SEÇÕES SEPARADAS */
+.settings-layout {
+  max-width: 1400px;
   margin: 0 auto;
-}
-
-.settings-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.settings-section {
+  border-bottom: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
   transition: all 0.3s ease;
-  height: 500px;
-  display: flex;
-  flex-direction: column;
+  
+  &:last-child {
+    border-bottom: none;
+  }
   
   &:hover {
-    border-color: var(--accent-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--bg-tertiary);
   }
 }
 
-.card-header {
-  padding: 20px 24px;
+.section-header {
+  padding: 24px 32px;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-primary);
-  border-radius: 12px 12px 0 0;
-}
-
-.card-icon {
-  font-size: 24px;
-  margin-bottom: 12px;
-}
-
-.card-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-.card-description {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.card-content {
-  padding: 20px 24px 24px;
-  flex: 1;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.section-icon {
+  font-size: 28px;
+  color: var(--accent-primary);
+  background: var(--bg-secondary);
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  height: 52px;
+}
+
+.section-title {
+  flex: 1;
+  
+  h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
+  }
+  
+  p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+.section-content {
+  padding: 32px;
+  background: var(--bg-secondary);
 }
 
 .setting-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--border-primary);
-  flex-shrink: 0;
+  padding: 20px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   
   &:last-child {
     border-bottom: none;
@@ -1041,11 +1031,19 @@ export default {
   &:first-child {
     padding-top: 0;
   }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.02);
+    margin: 0 -32px;
+    padding-left: 32px;
+    padding-right: 32px;
+    border-radius: 8px;
+  }
 }
 
 .setting-info {
   flex: 1;
-  margin-right: 20px;
+  margin-right: 24px;
 }
 
 .setting-label {
@@ -1053,7 +1051,7 @@ export default {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .setting-description {
@@ -1066,34 +1064,45 @@ export default {
 .setting-control {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-shrink: 0;
 }
 
-/* Toggle Switch */
-.toggle-switch {
+/* Enhanced Toggle Switch */
+.enhanced-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+  }
+  
+  input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+}
+
+.toggle-slider {
   position: relative;
   display: inline-block;
   width: 50px;
   height: 24px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
   background-color: var(--bg-overlay);
-  transition: 0.3s;
   border-radius: 24px;
+  transition: 0.3s;
   
   &:before {
     position: absolute;
@@ -1116,6 +1125,208 @@ input:checked + .toggle-slider:before {
   transform: translateX(26px);
 }
 
+
+
+
+
+
+
+/* Enhanced Inputs */
+.enhanced-input {
+  width: 200px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: var(--bg-hover);
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  }
+  
+  &.profile-input {
+    width: 250px;
+  }
+}
+
+.enhanced-select {
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: var(--bg-hover);
+    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+  }
+  
+  option {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 8px;
+  }
+}
+
+/* Password Toggle Button */
+.password-toggle-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
+  
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+  }
+}
+
+.password-input-group {
+  display: flex;
+  align-items: stretch;
+  
+  .enhanced-input {
+    border-radius: 8px 0 0 8px;
+    border-right: none;
+  }
+}
+
+/* Primary Button */
+.primary-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover:not(:disabled) {
+    background: var(--accent-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  }
+  
+  &:disabled {
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .btn-icon {
+    font-size: 16px;
+  }
+}
+
+/* Password Strength Indicator */
+.password-strength {
+  margin: 20px 0;
+  padding: 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.strength-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 120px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 8px;
+  background: var(--bg-overlay);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.strength-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.strength-fill.very-weak {
+  background: linear-gradient(90deg, #dc3545, #ff6b6b);
+  width: 25%;
+}
+
+.strength-fill.weak {
+  background: linear-gradient(90deg, #ffc107, #ffdb4d);
+  width: 50%;
+}
+
+.strength-fill.medium {
+  background: linear-gradient(90deg, #007bff, #4da6ff);
+  width: 75%;
+}
+
+.strength-fill.strong {
+  background: linear-gradient(90deg, #28a745, #5cb85c);
+  width: 100%;
+}
+
+.strength-text {
+  font-weight: 700;
+  min-width: 80px;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.strength-text.very-weak {
+  color: #fff;
+  background: #dc3545;
+}
+
+.strength-text.weak {
+  color: #000;
+  background: #ffc107;
+}
+
+.strength-text.medium {
+  color: #fff;
+  background: #007bff;
+}
+
+.strength-text.strong {
+  color: #fff;
+  background: #28a745;
+}
+
 /* Volume Control */
 .volume-control {
   display: flex;
@@ -1124,12 +1335,13 @@ input:checked + .toggle-slider:before {
 }
 
 .volume-slider {
-  width: 100px;
+  width: 120px;
   height: 6px;
   border-radius: 3px;
   background: var(--bg-overlay);
   outline: none;
   -webkit-appearance: none;
+  position: relative;
   
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -1139,7 +1351,13 @@ input:checked + .toggle-slider:before {
     border-radius: 50%;
     background: var(--accent-primary);
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
   }
   
   &::-moz-range-thumb {
@@ -1149,7 +1367,13 @@ input:checked + .toggle-slider:before {
     background: var(--accent-primary);
     cursor: pointer;
     border: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
   }
 }
 
@@ -1165,53 +1389,7 @@ input:checked + .toggle-slider:before {
 .input-group {
   display: flex;
   align-items: center;
-  gap: 4px;
-}
-
-.setting-input {
-  width: 80px;
-  padding: 8px 12px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  text-align: center;
-  transition: all 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
-  }
-  
-  &.profile-input {
-    width: 200px;
-    text-align: left;
-  }
-}
-
-.setting-select {
-  padding: 8px 12px;
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-size: 14px;
-  min-width: 120px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
-  }
-  
-  option {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-  }
+  gap: 8px;
 }
 
 .input-suffix {
@@ -1220,83 +1398,36 @@ input:checked + .toggle-slider:before {
   font-weight: 500;
 }
 
-/* Botão de Alterar Senha */
-.change-password-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--accent-primary);
-  color: var(--bg-primary);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover:not(:disabled) {
-    background: var(--accent-secondary);
-    transform: translateY(-2px);
-  }
-  
-  &:disabled {
-    background: var(--bg-overlay);
-    color: var(--text-secondary);
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  .btn-icon {
-    font-size: 16px;
-  }
-}
-
-/* Grupo de Input de Senha */
-.password-input-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Relatórios e Ações */
-.reports-actions-container {
-  display: contents;
-}
-
-/* Ações */
-.actions-card {
-  // Removido grid-column: 1 / -1; pois agora está dentro do container
-}
-
+/* Actions */
 .actions-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 16px;
+  padding: 20px;
   border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background: var(--bg-primary);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: left;
   
   &:hover {
+    background: var(--bg-hover);
     border-color: var(--accent-primary);
-    background: var(--bg-overlay);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
   .btn-icon {
-    font-size: 18px;
+    font-size: 24px;
     flex-shrink: 0;
   }
   
@@ -1306,76 +1437,48 @@ input:checked + .toggle-slider:before {
   
   .btn-title {
     display: block;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: 2px;
+    margin-bottom: 4px;
   }
   
   .btn-description {
     display: block;
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
   }
   
   &.reset-btn {
+    border-left: 4px solid #ffc107;
+    
     &:hover {
-      border-color: #ffc107;
       background: rgba(255, 193, 7, 0.1);
     }
   }
   
   &.export-btn {
+    border-left: 4px solid var(--accent-primary);
+    
     &:hover {
-      border-color: var(--accent-primary);
       background: rgba(0, 255, 136, 0.1);
     }
   }
   
   &.import-btn {
+    border-left: 4px solid #007bff;
+    
     &:hover {
-      border-color: #007bff;
       background: rgba(0, 123, 255, 0.1);
     }
   }
   
   &.clear-btn {
+    border-left: 4px solid #dc3545;
+    
     &:hover {
-      border-color: #dc3545;
       background: rgba(220, 53, 69, 0.1);
     }
-  }
-}
-
-/* Botão de Alterar Senha */
-.change-password-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: var(--accent-primary);
-  color: var(--bg-primary);
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  
-  &:hover:not(:disabled) {
-    background: var(--accent-secondary);
-    transform: translateY(-2px);
-  }
-  
-  &:disabled {
-    background: var(--bg-overlay);
-    color: var(--text-secondary);
-    cursor: not-allowed;
-    transform: none;
-  }
-  
-  .btn-icon {
-    font-size: 16px;
   }
 }
 
@@ -1404,18 +1507,9 @@ input:checked + .toggle-slider:before {
 
 /* Responsividade */
 @media (max-width: 1400px) {
-  .settings-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 1200px) {
-  .settings-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .settings-card {
-    height: 550px;
+  .settings-layout {
+    max-width: 100%;
+    margin: 0 16px;
   }
 }
 
@@ -1431,27 +1525,21 @@ input:checked + .toggle-slider:before {
     width: 100%;
   }
   
-  .header-actions {
-    width: 100%;
-    
-    .save-all-btn {
-      width: 100%;
-      justify-content: center;
-    }
-  }
+
   
   .settings-content {
     padding: 16px 20px;
   }
   
-  .settings-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  .section-header {
+    padding: 20px;
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
   }
   
-  .settings-card {
-    height: auto;
-    min-height: 450px;
+  .section-content {
+    padding: 20px;
   }
   
   .setting-item {
@@ -1462,31 +1550,44 @@ input:checked + .toggle-slider:before {
   
   .setting-control {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: flex-start;
+  }
+  
+  .enhanced-input,
+  .enhanced-select {
+    width: 100%;
+  }
+  
+  .password-strength {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .strength-label {
+    min-width: auto;
+  }
+  
+  .strength-bar {
+    width: 100%;
+  }
+  
+  .strength-text {
+    align-self: flex-end;
   }
   
   .actions-grid {
-    flex-direction: column;
-  }
-  
-  .action-btn {
-    flex-direction: row;
-    text-align: left;
-    gap: 12px;
-    
-    .btn-content {
-      text-align: left;
-    }
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .card-header {
-    padding: 20px;
+  .section-header {
+    padding: 16px;
   }
   
-  .card-content {
-    padding: 20px;
+  .section-content {
+    padding: 16px;
   }
   
   .setting-item {
@@ -1494,3 +1595,4 @@ input:checked + .toggle-slider:before {
   }
 }
 </style>
+

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Avançado - Cards por Linha</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .test-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .test-section h2::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+        }
+        
+        .form-group {
+            margin: 20px 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .result::before {
+            content: '📋';
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: white;
+            padding: 0 10px;
+            font-size: 14px;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result.warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .grid-preview {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .grid-preview.grid-1 { grid-template-columns: 1fr; }
+        .grid-preview.grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-preview.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .grid-preview.grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+        
+        .grid-item {
+            background: #667eea;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+        
+        .debug-info {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        
+        .debug-info h3 {
+            color: #f7fafc;
+            margin-top: 0;
+        }
+        
+        .debug-info .key {
+            color: #81e6d9;
+        }
+        
+        .debug-info .value {
+            color: #fbb6ce;
+        }
+        
+        .debug-info .comment {
+            color: #718096;
+            font-style: italic;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        .tab.active {
+            border-bottom-color: #667eea;
+            color: #667eea;
+        }
+        
+        .tab:hover {
+            background: #f8f9fa;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .real-time-updates {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .real-time-updates h4 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        
+        .update-log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .update-log .timestamp {
+            color: #666;
+        }
+        
+        .update-log .action {
+            color: #1976d2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Teste Avançado - Cards por Linha</h1>
+            <p>Simulação completa da funcionalidade de configuração de interface</p>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('settings')">⚙️ Configurações</div>
+                <div class="tab" onclick="switchTab('preview')">👁️ Preview do Grid</div>
+                <div class="tab" onclick="switchTab('debug')">🐛 Debug</div>
+                <div class="tab" onclick="switchTab('realtime')">🔄 Tempo Real</div>
+            </div>
+            
+            <!-- Tab: Configurações -->
+            <div id="settings" class="tab-content active">
+                <div class="test-section">
+                    <h2>Configuração de Interface</h2>
+                    
+                    <div class="form-group">
+                        <label for="cardsPerRowSelect">Cards por Linha:</label>
+                        <select id="cardsPerRowSelect" class="form-control">
+                            <option value="1">1 card</option>
+                            <option value="2">2 cards</option>
+                            <option value="3">3 cards</option>
+                            <option value="4">4 cards</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sidebarCollapsedSelect">Estado da Sidebar:</label>
+                        <select id="sidebarCollapsedSelect" class="form-control">
+                            <option value="false">Expandida</option>
+                            <option value="true">Colapsada</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn" onclick="saveSettings()">💾 Salvar Configurações</button>
+                    <button class="btn btn-secondary" onclick="loadSettings()">📂 Carregar Configurações</button>
+                    <button class="btn btn-danger" onclick="clearSettings()">🗑️ Limpar Tudo</button>
+                </div>
+                
+                <div class="test-section">
+                    <h2>Simulação de Mudanças</h2>
+                    <p>Teste como a aplicação reage a mudanças nas configurações:</p>
+                    
+                    <button class="btn" onclick="simulateSettingsChange()">🔄 Simular Mudança</button>
+                    <button class="btn btn-secondary" onclick="simulateStorageEvent()">📡 Simular Evento Storage</button>
+                    <button class="btn" onclick="testReactivity()">⚡ Testar Reatividade</button>
+                </div>
+                
+                <div class="test-section">
+                    <h2>Status das Configurações</h2>
+                    <div id="settingsStatus" class="result">
+                        <span class="status-indicator status-warning"></span>
+                        Aguardando configuração...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab: Preview do Grid -->
+            <div id="preview" class="tab-content">
+                <div class="test-section">
+                    <h2>Preview do Grid Atual</h2>
+                    <p>Visualize como o grid será exibido com as configurações atuais:</p>
+                    
+                    <div id="gridPreview" class="grid-preview grid-3">
+                        <div class="grid-item">Card 1</div>
+                        <div class="grid-item">Card 2</div>
+                        <div class="grid-item">Card 3</div>
+                        <div class="grid-item">Card 4</div>
+                        <div class="grid-item">Card 5</div>
+                        <div class="grid-item">Card 6</div>
+                    </div>
+                    
+                    <div class="result">
+                        <strong>Configuração Atual:</strong><br>
+                        • Cards por linha: <span id="currentCardsPerRow">3</span><br>
+                        • Sidebar: <span id="currentSidebarState">Expandida</span><br>
+                        • Grid calculado: <span id="currentGridColumns">3</span> colunas
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab: Debug -->
+            <div id="debug" class="tab-content">
+                <div class="test-section">
+                    <h2>Informações de Debug</h2>
+                    
+                    <div class="debug-info">
+                        <h3>Estado do localStorage:</h3>
+                        <div id="localStorageDebug"></div>
+                    </div>
+                    
+                    <div class="debug-info">
+                        <h3>Cálculo do Grid:</h3>
+                        <div id="gridCalculationDebug"></div>
+                    </div>
+                    
+                    <div class="debug-info">
+                        <h3>Variáveis CSS:</h3>
+                        <div id="cssVariablesDebug"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tab: Tempo Real -->
+            <div id="realtime" class="tab-content">
+                <div class="test-section">
+                    <h2>Monitoramento em Tempo Real</h2>
+                    
+                    <div class="real-time-updates">
+                        <h4>🔄 Atualizações em Tempo Real</h4>
+                        <div class="update-log" id="updateLog">
+                            <div class="timestamp">[00:00:00]</div>
+                            <div class="action">Sistema iniciado</div>
+                        </div>
+                    </div>
+                    
+                    <button class="btn" onclick="startMonitoring()">▶️ Iniciar Monitoramento</button>
+                    <button class="btn btn-secondary" onclick="stopMonitoring()">⏹️ Parar Monitoramento</button>
+                    <button class="btn btn-danger" onclick="clearLog()">🗑️ Limpar Log</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global da aplicação
+        let appState = {
+            cardsPerRow: 3,
+            sidebarCollapsed: false,
+            monitoring: false,
+            updateInterval: null
+        };
+        
+        // Inicialização
+        window.onload = function() {
+            loadSettings();
+            updateUI();
+            logUpdate('Sistema iniciado');
+        };
+        
+        // Funções de navegação por tabs
+        function switchTab(tabName) {
+            // Esconder todas as tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Mostrar tab selecionada
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        // Função para salvar configurações
+        function saveSettings() {
+            const cardsPerRow = parseInt(document.getElementById('cardsPerRowSelect').value);
+            const sidebarCollapsed = document.getElementById('sidebarCollapsedSelect').value === 'true';
+            
+            // Atualizar estado local
+            appState.cardsPerRow = cardsPerRow;
+            appState.sidebarCollapsed = sidebarCollapsed;
+            
+            // Salvar no localStorage (simulando a aplicação real)
+            const settings = {
+                interface: {
+                    cardsPerRow: cardsPerRow,
+                    sidebarCollapsed: sidebarCollapsed
+                },
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('app_settings', JSON.stringify(settings));
+            
+            // Atualizar UI
+            updateUI();
+            updateGridPreview();
+            
+            // Log da ação
+            logUpdate(`Configurações salvas: ${cardsPerRow} cards, sidebar ${sidebarCollapsed ? 'colapsada' : 'expandida'}`);
+            
+            // Simular evento de mudança
+            simulateSettingsChange();
+        }
+        
+        // Função para carregar configurações
+        function loadSettings() {
+            try {
+                const settings = localStorage.getItem('app_settings');
+                if (settings) {
+                    const parsed = JSON.parse(settings);
+                    if (parsed.interface) {
+                        appState.cardsPerRow = parsed.interface.cardsPerRow || 3;
+                        appState.sidebarCollapsed = parsed.interface.sidebarCollapsed || false;
+                        
+                        // Atualizar selects
+                        document.getElementById('cardsPerRowSelect').value = appState.cardsPerRow;
+                        document.getElementById('sidebarCollapsedSelect').value = appState.sidebarCollapsed.toString();
+                        
+                        updateUI();
+                        updateGridPreview();
+                        
+                        logUpdate('Configurações carregadas do localStorage');
+                        return;
+                    }
+                }
+                
+                logUpdate('Nenhuma configuração encontrada, usando padrões');
+                
+            } catch (error) {
+                logUpdate(`Erro ao carregar configurações: ${error.message}`);
+            }
+        }
+        
+        // Função para limpar configurações
+        function clearSettings() {
+            localStorage.removeItem('app_settings');
+            appState.cardsPerRow = 3;
+            appState.sidebarCollapsed = false;
+            
+            document.getElementById('cardsPerRowSelect').value = '3';
+            document.getElementById('sidebarCollapsedSelect').value = 'false';
+            
+            updateUI();
+            updateGridPreview();
+            
+            logUpdate('Todas as configurações foram limpas');
+        }
+        
+        // Função para atualizar a UI
+        function updateUI() {
+            // Atualizar status
+            const statusDiv = document.getElementById('settingsStatus');
+            statusDiv.className = 'result success';
+            statusDiv.innerHTML = `
+                <span class="status-indicator status-success"></span>
+                <strong>✅ Configurações ativas:</strong><br>
+                • Cards por linha: <strong>${appState.cardsPerRow}</strong><br>
+                • Sidebar: <strong>${appState.sidebarCollapsed ? 'Colapsada' : 'Expandida'}</strong><br>
+                • Grid calculado: <strong>${calculateGridColumns()}</strong> colunas
+            `;
+            
+            // Atualizar debug info
+            updateDebugInfo();
+        }
+        
+        // Função para calcular colunas do grid (simulando a lógica do Vue)
+        function calculateGridColumns() {
+            let baseColumns = appState.cardsPerRow || 3;
+            
+            if (appState.sidebarCollapsed) {
+                return Math.min(baseColumns + 1, 6); // Máximo 6 colunas
+            } else {
+                return Math.max(baseColumns, 2); // Mínimo 2 colunas
+            }
+        }
+        
+        // Função para atualizar preview do grid
+        function updateGridPreview() {
+            const gridPreview = document.getElementById('gridPreview');
+            const gridColumns = calculateGridColumns();
+            
+            // Remover classes antigas
+            gridPreview.className = 'grid-preview';
+            
+            // Adicionar nova classe
+            gridPreview.classList.add(`grid-${gridColumns}`);
+            
+            // Atualizar informações
+            document.getElementById('currentCardsPerRow').textContent = appState.cardsPerRow;
+            document.getElementById('currentSidebarState').textContent = appState.sidebarCollapsed ? 'Colapsada' : 'Expandida';
+            document.getElementById('currentGridColumns').textContent = gridColumns;
+            
+            // Ajustar número de cards visíveis
+            const gridItems = gridPreview.querySelectorAll('.grid-item');
+            gridItems.forEach((item, index) => {
+                if (index < gridColumns * 2) { // Mostrar 2 linhas
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Função para simular mudança de configurações
+        function simulateSettingsChange() {
+            logUpdate('Simulando mudança de configurações...');
+            
+            // Simular o comportamento da aplicação Vue
+            setTimeout(() => {
+                updateUI();
+                updateGridPreview();
+                logUpdate('Mudança de configurações aplicada');
+            }, 500);
+        }
+        
+        // Função para simular evento storage
+        function simulateStorageEvent() {
+            logUpdate('Simulando evento storage...');
+            
+            const event = new StorageEvent('storage', {
+                key: 'app_settings',
+                newValue: localStorage.getItem('app_settings'),
+                oldValue: null,
+                url: window.location.href
+            });
+            
+            window.dispatchEvent(event);
+            logUpdate('Evento storage disparado');
+        }
+        
+        // Função para testar reatividade
+        function testReactivity() {
+            logUpdate('Testando reatividade...');
+            
+            // Simular múltiplas mudanças
+            const testValues = [1, 2, 3, 4, 3, 2, 1];
+            let currentIndex = 0;
+            
+            const testInterval = setInterval(() => {
+                if (currentIndex < testValues.length) {
+                    const testValue = testValues[currentIndex];
+                    appState.cardsPerRow = testValue;
+                    document.getElementById('cardsPerRowSelect').value = testValue;
+                    
+                    updateUI();
+                    updateGridPreview();
+                    
+                    logUpdate(`Teste de reatividade: ${testValue} cards`);
+                    currentIndex++;
+                } else {
+                    clearInterval(testInterval);
+                    logUpdate('Teste de reatividade concluído');
+                }
+            }, 800);
+        }
+        
+        // Função para atualizar informações de debug
+        function updateDebugInfo() {
+            const gridColumns = calculateGridColumns();
+            
+            // Debug do localStorage
+            const localStorageData = localStorage.getItem('app_settings');
+            document.getElementById('localStorageDebug').innerHTML = `
+                <span class="key">app_settings:</span> <span class="value">${localStorageData || 'null'}</span><br>
+                <span class="comment">// Configurações salvas no navegador</span>
+            `;
+            
+            // Debug do cálculo do grid
+            document.getElementById('gridCalculationDebug').innerHTML = `
+                <span class="key">cardsPerRow:</span> <span class="value">${appState.cardsPerRow}</span><br>
+                <span class="key">sidebarCollapsed:</span> <span class="value">${appState.sidebarCollapsed}</span><br>
+                <span class="key">gridColumns:</span> <span class="value">${gridColumns}</span><br>
+                <span class="comment">// Lógica: ${appState.sidebarCollapsed ? `Math.min(${appState.cardsPerRow} + 1, 6)` : `Math.max(${appState.cardsPerRow}, 2)`}</span>
+            `;
+            
+            // Debug das variáveis CSS
+            document.getElementById('cssVariablesDebug').innerHTML = `
+                <span class="key">--grid-columns:</span> <span class="value">${gridColumns}</span><br>
+                <span class="key">--grid-columns-mobile:</span> <span class="value">${Math.min(gridColumns, 1)}</span><br>
+                <span class="key">--grid-columns-tablet:</span> <span class="value">${Math.min(gridColumns, 2)}</span><br>
+                <span class="comment">// Variáveis CSS aplicadas ao documento</span>
+            `;
+        }
+        
+        // Função para log de atualizações
+        function logUpdate(message) {
+            const logDiv = document.getElementById('updateLog');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `
+                <div class="timestamp">[${timestamp}]</div>
+                <div class="action">${message}</div>
+            `;
+            
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        // Função para iniciar monitoramento
+        function startMonitoring() {
+            if (appState.monitoring) return;
+            
+            appState.monitoring = true;
+            logUpdate('Monitoramento iniciado');
+            
+            // Monitorar mudanças no localStorage
+            appState.updateInterval = setInterval(() => {
+                const currentSettings = localStorage.getItem('app_settings');
+                if (currentSettings !== appState.lastSettings) {
+                    appState.lastSettings = currentSettings;
+                    loadSettings();
+                    logUpdate('Mudança detectada no localStorage');
+                }
+            }, 1000);
+        }
+        
+        // Função para parar monitoramento
+        function stopMonitoring() {
+            if (appState.updateInterval) {
+                clearInterval(appState.updateInterval);
+                appState.updateInterval = null;
+            }
+            appState.monitoring = false;
+            logUpdate('Monitoramento parado');
+        }
+        
+        // Função para limpar log
+        function clearLog() {
+            document.getElementById('updateLog').innerHTML = `
+                <div class="timestamp">[${new Date().toLocaleTimeString()}]</div>
+                <div class="action">Log limpo</div>
+            `;
+        }
+        
+        // Event listeners
+        document.getElementById('cardsPerRowSelect').addEventListener('change', function() {
+            appState.cardsPerRow = parseInt(this.value);
+            updateUI();
+            updateGridPreview();
+        });
+        
+        document.getElementById('sidebarCollapsedSelect').addEventListener('change', function() {
+            appState.sidebarCollapsed = this.value === 'true';
+            updateUI();
+            updateGridPreview();
+        });
+        
+        // Listener para eventos storage (simulando a aplicação real)
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'app_settings') {
+                logUpdate('Evento storage detectado - recarregando configurações');
+                setTimeout(() => {
+                    loadSettings();
+                }, 100);
+            }
+        });
+        
+        // Atualizar debug a cada mudança
+        setInterval(updateDebugInfo, 2000);
+    </script>
+</body>
+</html>

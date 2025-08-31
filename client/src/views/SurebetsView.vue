@@ -511,6 +511,8 @@ export default {
       ws: null,
       sidebarCollapsed: false,
       updateInterval: null,
+      autoUpdateInterval: 5000, // Intervalo de atualização em milissegundos (padrão: 5s)
+      backgroundSearch: true, // Busca em segundo plano habilitada por padrão
       selectedHouses: [...filterOptions.houses], // Inicia com todas as casas selecionadas
       selectedSports: filterOptions.sports.map(sport => sport.value), // Inicia com todos os esportes selecionados
       selectedCurrencies: filterOptions.currencies.map(currency => currency.code), // Inicia com todas as moedas selecionadas
@@ -555,6 +557,8 @@ export default {
        dragMode: false, // Modo de arrastar ativo/inativo
        draggedIndex: null, // Índice do card sendo arrastado
        dragOverIndex: null, // Índice onde o card está sendo arrastado sobre
+       
+
 
     }
   },
@@ -798,6 +802,21 @@ export default {
         console.warn('Erro ao verificar filtros padrão:', error)
       }
       return this.minProfit === 0 && this.maxProfit === 1000
+    },
+    
+    // Computed property para calcular o grid - sempre 3 cards por linha
+    gridColumns() {
+      // Sempre 3 cards por linha horizontal
+      const baseColumns = 3
+      
+      // Log para debug
+      console.log('🎨 gridColumns computado:', {
+        baseColumns: baseColumns,
+        sidebarCollapsed: this.sidebarCollapsed
+      })
+      
+      // Retorna sempre 3 colunas para garantir layout consistente
+      return baseColumns
     }
   },
   watch: {
@@ -833,7 +852,19 @@ export default {
     
     activeFilter() {
       this.saveFiltersToSettings()
-    }
+    },
+    
+    // Monitorar mudanças no gridColumns para atualizar variáveis CSS
+    gridColumns() {
+      this.updateGridCSSVariables()
+    },
+    
+    // Monitorar mudanças no estado da sidebar para atualizar variáveis CSS
+    sidebarCollapsed() {
+      this.updateGridCSSVariables()
+    },
+    
+
   },
                mounted() {
         // DEBUG: Verificar estado inicial
@@ -845,8 +876,24 @@ export default {
         // Carregar filtros padrão das configurações
         this.loadDefaultFilters()
         
+        // Carregar configurações de busca automática
+        this.loadAutoSearchSettings()
+        
+
+        
+        // Aplicar configurações de busca em segundo plano
+        this.applyBackgroundSearchSettings()
+        
+        // Atualizar variáveis CSS do grid
+        this.updateGridCSSVariables()
+        
         // Carregar filtros salvos das configurações (inicializa com todas as opções marcadas por padrão)
         this.loadFiltersFromSettings()
+        
+        console.log('🔍 Estado inicial da busca automática:')
+        console.log('  - isSearching:', this.isSearching)
+        console.log('  - autoUpdateInterval:', this.autoUpdateInterval / 1000, 'segundos')
+        console.log('  - backgroundSearch:', this.backgroundSearch)
         
         // Inicializar o cache dos filtros após carregar as configurações
         this.updateFiltersCache()
@@ -894,12 +941,25 @@ export default {
         // Verificar se o servidor está disponível antes de tentar WebSocket
         this.checkServerAvailability()
         this.fetchSurebets()
-        this.startAutoUpdate()
+        
+        // Iniciar busca automática apenas se estiver habilitada
+        if (this.isSearching) {
+          this.startAutoUpdate()
+          console.log('🚀 Busca automática iniciada no mounted')
+        } else {
+          console.log('⏸️ Busca automática não iniciada (desabilitada nas configurações)')
+        }
         
         // Atualiza estatísticas a cada minuto
         setInterval(() => {
           this.updateStats()
         }, 60000)
+        
+        console.log('🔍 Resumo das configurações de busca automática aplicadas:')
+        console.log('  - Busca habilitada:', this.isSearching)
+        console.log('  - Intervalo configurado:', this.autoUpdateInterval / 1000, 'segundos')
+        console.log('  - Busca em segundo plano:', this.backgroundSearch)
+        console.log('  - Intervalo ativo:', this.updateInterval ? 'Sim' : 'Não')
         
         // Monitorar mudanças no localStorage para configurações
         window.addEventListener('storage', (event) => {
@@ -914,8 +974,20 @@ export default {
             }
             
             this.loadDefaultFilters()
+            this.loadAutoSearchSettings() // Recarrega configurações de busca automática
+
+            this.applyBackgroundSearchSettings() // Reaplica configurações de busca em segundo plano
             this.loadFiltersFromSettings()
+            
+            // Atualizar variáveis CSS do grid
+            this.updateGridCSSVariables()
             this.updateFiltersCache() // Atualiza cache quando configurações mudam
+            
+            // Reiniciar busca automática se necessário
+            if (this.isSearching && !this.updateInterval) {
+              this.startAutoUpdate()
+              console.log('🔄 Busca automática reiniciada após mudança nas configurações')
+            }
           }
         })
         
@@ -1472,10 +1544,12 @@ export default {
       // Fazer primeira busca imediatamente
       this.fetchSurebets()
       
-      // Configurar polling a cada 5 segundos
-      this.pollingInterval = setInterval(() => {
-        this.fetchSurebets()
-      }, 5000)
+              // Configurar polling usando o intervalo configurável
+        this.pollingInterval = setInterval(() => {
+          this.fetchSurebets()
+        }, this.autoUpdateInterval)
+        
+        console.log('🔄 HTTP polling iniciado com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
     },
 
     stopHttpPolling() {
@@ -1768,9 +1842,14 @@ export default {
       
       if (this.isSearching) {
         this.startAutoUpdate()
+        console.log('🔍 Busca automática iniciada com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
       } else {
         this.stopAutoUpdate()
+        console.log('⏸️ Busca automática pausada')
       }
+      
+      // Salvar o estado da busca nas configurações
+      this.saveSearchStateToSettings()
     },
     
     toggleSound() {
@@ -1904,11 +1983,20 @@ export default {
     
     startAutoUpdate() {
       this.stopAutoUpdate() // Limpa qualquer intervalo existente
+      
+      // Garantir que o intervalo seja válido
+      if (!this.autoUpdateInterval || this.autoUpdateInterval < 1000) {
+        this.autoUpdateInterval = 5000 // Valor mínimo: 1 segundo
+        console.log('⚠️ Intervalo inválido, usando valor padrão de 5 segundos')
+      }
+      
       this.updateInterval = setInterval(() => {
         if (this.isSearching) {
           this.fetchSurebets()
         }
-      }, 5000) // Atualiza a cada 5 segundos
+      }, this.autoUpdateInterval) // Usa o intervalo configurável das configurações
+      
+      console.log('🔍 Busca automática iniciada com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
     },
     
     updateStats() {
@@ -1925,10 +2013,49 @@ export default {
        if (this.updateInterval) {
          clearInterval(this.updateInterval)
          this.updateInterval = null
-       }
-     },
-     
-     // Adiciona surebet aos relatórios
+             }
+    },
+    
+    // Salva o estado da busca nas configurações
+    saveSearchStateToSettings() {
+      try {
+        const savedSettings = localStorage.getItem('app_settings')
+        let settings = savedSettings ? JSON.parse(savedSettings) : {}
+        
+        // Inicializar autoSearch se não existir
+        if (!settings.autoSearch) {
+          settings.autoSearch = {}
+        }
+        
+        // Salvar estado atual da busca
+        settings.autoSearch.enabled = this.isSearching
+        
+        localStorage.setItem('app_settings', JSON.stringify(settings))
+        console.log('💾 Estado da busca salvo nas configurações:', this.isSearching ? 'Habilitada' : 'Desabilitada')
+      } catch (error) {
+        console.log('Erro ao salvar estado da busca nas configurações:', error)
+      }
+    },
+
+    // Aplica configurações de busca em segundo plano
+    applyBackgroundSearchSettings() {
+      if (this.backgroundSearch) {
+        // Adicionar listener para detectar quando a aba não está ativa
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            console.log('🔄 Aba não está ativa, mas busca em segundo plano está habilitada')
+            // A busca continua mesmo com a aba inativa
+          } else {
+            console.log('👁️ Aba ativa novamente, busca automática funcionando normalmente')
+          }
+        })
+        console.log('🔄 Configurações de busca em segundo plano aplicadas')
+      } else {
+        console.log('⏸️ Busca em segundo plano desabilitada')
+      }
+    },
+
+    // Adiciona surebet aos relatórios
      addSurebetToReports(surebet) {
        // Encontra o ID do surebet no objeto surebets
        const surebetId = Object.keys(this.surebets).find(key => 
@@ -2463,6 +2590,101 @@ export default {
            }
            
            return false
+         },
+         // Carrega configurações de busca automática das configurações salvas
+         loadAutoSearchSettings() {
+           try {
+             const savedSettings = localStorage.getItem('app_settings')
+             console.log('🔍 DEBUG: Conteúdo completo do localStorage:', savedSettings)
+             
+             if (savedSettings) {
+               const settings = JSON.parse(savedSettings)
+               console.log('🔍 DEBUG: Configurações parseadas:', settings)
+               console.log('🔍 DEBUG: Configurações autoSearch:', settings.autoSearch)
+               
+               if (settings.autoSearch) {
+                 // Aplicar configuração de busca automática habilitada/desabilitada
+                 if (settings.autoSearch.enabled !== undefined) {
+                   this.isSearching = settings.autoSearch.enabled
+                   console.log('🔍 Configuração de busca automática carregada:', this.isSearching ? 'Habilitada' : 'Desabilitada')
+                 }
+                 
+                 // Aplicar intervalo de atualização
+                 if (settings.autoSearch.interval && !isNaN(Number(settings.autoSearch.interval))) {
+                   this.autoUpdateInterval = Number(settings.autoSearch.interval) * 1000 // Converter para milissegundos
+                   console.log('⏱️ Intervalo de atualização carregado:', this.autoUpdateInterval / 1000, 'segundos')
+                 } else {
+                   this.autoUpdateInterval = 5000 // Valor padrão: 5 segundos
+                   console.log('⏱️ Usando intervalo padrão de 5 segundos')
+                 }
+                 
+                 // Aplicar configuração de busca em segundo plano
+                 if (settings.autoSearch.background !== undefined) {
+                   this.backgroundSearch = settings.autoSearch.background
+                   console.log('🔄 Busca em segundo plano:', this.backgroundSearch ? 'Habilitada' : 'Desabilitada')
+                 }
+               } else {
+                 console.log('⚠️ Nenhuma configuração de busca automática encontrada, usando valores padrão')
+                 this.autoUpdateInterval = 5000
+                 this.backgroundSearch = true
+               }
+             } else {
+               console.log('⚠️ Nenhuma configuração salva encontrada, usando valores padrão')
+               this.autoUpdateInterval = 5000
+               this.backgroundSearch = true
+             }
+             
+             // Log final das configurações aplicadas
+             console.log('✅ Configurações de busca automática aplicadas:')
+             console.log('  - Busca habilitada:', this.isSearching)
+             console.log('  - Intervalo:', this.autoUpdateInterval / 1000, 'segundos')
+             console.log('  - Busca em segundo plano:', this.backgroundSearch)
+           } catch (error) {
+             console.log('Erro ao carregar configurações de busca automática:', error)
+             // Usar valores padrão em caso de erro
+             this.autoUpdateInterval = 5000
+             this.backgroundSearch = true
+           }
+         },
+         
+         
+         
+         // Atualiza as variáveis CSS para o grid - sempre 3 colunas
+         updateGridCSSVariables() {
+           const root = document.documentElement
+           
+           // Sempre 3 colunas para o grid principal
+           root.style.setProperty('--grid-columns', '3')
+           
+           // Configurações responsivas simplificadas
+           root.style.setProperty('--grid-columns-mobile', '1')
+           root.style.setProperty('--grid-columns-tablet', '2')
+           root.style.setProperty('--grid-columns-medium', '2')
+           
+           // Configurações específicas para sidebar - sempre 3 colunas
+           root.style.setProperty('--grid-columns-sidebar-collapsed', '3')
+           root.style.setProperty('--grid-columns-sidebar-expanded', '3')
+           root.style.setProperty('--grid-columns-sidebar-expanded-small', '2')
+           
+           // Forçar re-render do grid
+           this.$nextTick(() => {
+             // Verificar se as variáveis CSS foram aplicadas
+             const computedStyle = getComputedStyle(document.documentElement)
+             const gridColumnsValue = computedStyle.getPropertyValue('--grid-columns')
+             
+             console.log('🎨 Variáveis CSS do grid atualizadas:', {
+               gridColumns: this.gridColumns,
+               sidebarCollapsed: this.sidebarCollapsed,
+               cssVariable: gridColumnsValue,
+               cssApplied: gridColumnsValue === '3'
+             })
+             
+             // Se as variáveis CSS não foram aplicadas, tentar novamente
+             if (gridColumnsValue !== '3') {
+               console.warn('⚠️ Variáveis CSS não aplicadas corretamente, tentando novamente...')
+               setTimeout(() => this.updateGridCSSVariables(), 100)
+             }
+           })
          }
   }
 }
@@ -3244,14 +3466,14 @@ export default {
 
 .surebets-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
   gap: 16px; /* Aumentado gap para melhor espaçamento entre os cards */
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
   overflow: hidden; /* Previne overflow */
   
   /* Adiciona margin-top aos primeiros cards para evitar que o efeito hover seja cortado */
-  > *:nth-child(-n+4) {
+  > *:nth-child(-n+3) {
     margin-top: 8px;
   }
 }
@@ -3381,7 +3603,7 @@ export default {
 
 .pinned-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
   gap: 20px; /* Reduzido gap para dar mais espaço ao conteúdo dos cards */
   max-width: 100%;
   width: 100%; /* Garante que o grid ocupe toda a largura disponível */
@@ -3392,42 +3614,42 @@ export default {
 /* Responsividade para diferentes tamanhos de tela */
 @media (max-width: 1400px) {
   .surebets-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
   }
   .pinned-cards-grid {
-    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas para cards fixos */
+    grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas para cards fixos */
   }
 }
 
 @media (max-width: 1100px) {
   .surebets-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
   }
   .pinned-cards-grid {
-    grid-template-columns: repeat(2, 1fr); /* Reduz para 2 colunas para evitar corte de informações */
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
     gap: 16px; /* Reduzido gap para dar mais espaço ao conteúdo */
   }
 }
 
 /* Ajuste específico para quando a sidebar está expandida */
 .sidebar:not(.collapsed) ~ .main-content .surebets-grid {
-  grid-template-columns: repeat(3, 1fr); /* Reduz para 3 colunas quando sidebar está expandida */
+  grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
 }
 
 @media (max-width: 1200px) {
   .sidebar:not(.collapsed) ~ .main-content .surebets-grid {
-    grid-template-columns: repeat(2, 1fr); /* Reduz para 2 colunas em telas menores com sidebar expandida */
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
   }
 }
 
-/* Ajuste específico para quando a sidebar está colapsada - permite 4 colunas */
+/* Ajuste específico para quando a sidebar está colapsada */
 .sidebar.collapsed ~ .main-content .surebets-grid {
-  grid-template-columns: repeat(4, 1fr); /* Mantém 4 colunas quando sidebar está colapsada */
+  grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
 }
 
 @media (max-width: 900px) {
   .pinned-cards-grid {
-    grid-template-columns: repeat(2, 1fr); /* Mantém 2 colunas em telas médias */
+    grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas em telas médias */
     gap: 14px; /* Reduzido gap para dar mais espaço ao conteúdo */
   }
 }
@@ -3451,11 +3673,11 @@ export default {
   }
   
   .surebets-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas em mobile para melhor visualização */
     gap: 16px; /* Reduzido gap em mobile */
   }
   .pinned-cards-grid {
-    grid-template-columns: 1fr; /* Reduz para 1 coluna em mobile para evitar corte de informações */
+    grid-template-columns: repeat(2, 1fr); /* 2 colunas em mobile */
     gap: 16px; /* Aumentado gap em mobile para melhor espaçamento */
   }
   

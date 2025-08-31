@@ -668,14 +668,139 @@ export default {
   width: 80px;
 }
 
+/* Melhorias visuais para o estado colapsado */
+.sidebar.collapsed .nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tooltip para itens do menu no estado colapsado */
+.sidebar.collapsed .nav-link::before {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-left: 12px;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .nav-link:hover::before {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Indicador de item ativo mais visível */
+.sidebar.collapsed .nav-item.active .nav-link {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+}
+
+/* Melhorias para o header no estado colapsado */
+.sidebar.collapsed .sidebar-header {
+  padding: 12px 8px;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.sidebar.collapsed .logo {
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.sidebar.collapsed .logo-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  position: static;
+  margin: 0;
+  align-self: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #00ff88;
+  transform: scale(1.1);
+}
+
+/* Melhorias para o perfil do usuário no estado colapsado */
+.sidebar.collapsed .user-profile {
+  padding: 16px 8px;
+}
+
+.sidebar.collapsed .user-info {
+  justify-content: center;
+}
+
+.sidebar.collapsed .user-avatar {
+  margin: 0 auto;
+  width: 36px;
+  height: 36px;
+}
+
+.sidebar.collapsed .user-avatar svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Melhorias para os ícones de administração no estado colapsado */
+.sidebar.collapsed .admin-icons {
+  justify-content: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.sidebar.collapsed .admin-icon-link {
+  width: 28px;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .admin-icon-link:hover {
+  transform: scale(1.1);
+  background: rgba(0, 255, 136, 0.1);
+  border-color: #00ff88;
+  color: #00ff88;
+}
+
 .sidebar.collapsed .nav-link {
   justify-content: center;
   padding: 12px 8px;
   position: relative;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .nav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+  border-color: rgba(0, 255, 136, 0.3);
 }
 
 .sidebar.collapsed .nav-icon {
   margin: 0;
+  transition: all 0.3s ease;
+}
+
+.sidebar.collapsed .nav-link:hover .nav-icon {
+  transform: scale(1.1);
+  color: #00ff88;
 }
 
 .sidebar.collapsed .lock-icon {

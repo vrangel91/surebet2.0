@@ -222,6 +222,17 @@ export const MARKET_GROUPS = {
 
 // Função para categorizar um mercado
 export function categorizeMarket(marketName) {
+  // Verificar se marketName é válido
+  if (!marketName || typeof marketName !== 'string') {
+    return {
+      group: 'others',
+      groupName: MARKET_GROUPS.others.name,
+      groupColor: MARKET_GROUPS.others.color,
+      subcategory: MARKET_GROUPS.others.subcategories.misc,
+      originalName: 'Mercado Desconhecido'
+    }
+  }
+  
   const normalizedName = marketName.toLowerCase()
   
   for (const [groupKey, group] of Object.entries(MARKET_GROUPS)) {
@@ -252,36 +263,42 @@ export function categorizeMarket(marketName) {
 
 // Função para determinar a subcategoria
 function getSubcategory(marketName, subcategories) {
-  // Lógica específica para cada tipo de grupo
-  if (marketName.includes('goal') || marketName.includes('score')) {
-    return subcategories.scoring || subcategories.misc
-  }
-  if (marketName.includes('card') || marketName.includes('book')) {
-    return subcategories.cards || subcategories.misc
-  }
-  if (marketName.includes('corner')) {
-    return subcategories.corners || subcategories.misc
-  }
-  if (marketName.includes('win') || marketName.includes('victory')) {
-    return subcategories.winning || subcategories.misc
-  }
-  if (marketName.includes('assist')) {
-    return subcategories.assists || subcategories.misc
-  }
-  if (marketName.includes('half') || marketName.includes('period')) {
-    return subcategories.halves || subcategories.misc
-  }
-  if (marketName.includes('asian')) {
-    return subcategories.asian || subcategories.misc
-  }
-  if (marketName.includes('european')) {
-    return subcategories.european || subcategories.misc
-  }
-  if (marketName.includes('spread') || marketName.includes('line')) {
-    return subcategories.american || subcategories.misc
+  // Garantir que subcategories existe e tem propriedades válidas
+  if (!subcategories || typeof subcategories !== 'object') {
+    return { name: 'Diversos', color: '#95A5A6' }
   }
   
-  return subcategories.other || subcategories.misc
+  // Lógica específica para cada tipo de grupo
+  if (marketName.includes('goal') || marketName.includes('score')) {
+    return subcategories.scoring || subcategories.other || subcategories.misc || { name: 'Gols', color: '#4A90E2' }
+  }
+  if (marketName.includes('card') || marketName.includes('book')) {
+    return subcategories.cards || subcategories.other || subcategories.misc || { name: 'Cartões', color: '#9B59B6' }
+  }
+  if (marketName.includes('corner')) {
+    return subcategories.corners || subcategories.other || subcategories.misc || { name: 'Escanteios', color: '#F39C12' }
+  }
+  if (marketName.includes('win') || marketName.includes('victory')) {
+    return subcategories.winning || subcategories.other || subcategories.misc || { name: 'Vitória', color: '#50C878' }
+  }
+  if (marketName.includes('assist')) {
+    return subcategories.assists || subcategories.other || subcategories.misc || { name: 'Assistências', color: '#E74C3C' }
+  }
+  if (marketName.includes('half') || marketName.includes('period')) {
+    return subcategories.halves || subcategories.other || subcategories.misc || { name: 'Tempos', color: '#FF6B35' }
+  }
+  if (marketName.includes('asian')) {
+    return subcategories.asian || subcategories.other || subcategories.misc || { name: 'Asiático', color: '#FF6B35' }
+  }
+  if (marketName.includes('european')) {
+    return subcategories.european || subcategories.other || subcategories.misc || { name: 'Europeu', color: '#FF6B35' }
+  }
+  if (marketName.includes('spread') || marketName.includes('line')) {
+    return subcategories.american || subcategories.other || subcategories.misc || { name: 'Americano', color: '#FF6B35' }
+  }
+  
+  // Retornar uma subcategoria padrão se nada for encontrado
+  return subcategories.other || subcategories.misc || { name: 'Diversos', color: '#95A5A6' }
 }
 
 // Função para agrupar mercados por categoria
