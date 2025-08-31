@@ -8,6 +8,9 @@
     />
     
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <div class="content-header">
         <button class="sidebar-toggle" @click="toggleSidebar">
           <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
@@ -177,6 +180,7 @@
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import Chart from 'chart.js/auto'
 
@@ -184,6 +188,7 @@ export default {
   name: 'CompoundInterestView',
   components: {
     Sidebar,
+    Header,
     GlossaryModal
   },
   data() {
@@ -541,16 +546,23 @@ export default {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  padding: 20px;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 .content-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  justify-content: space-between;
+  padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .sidebar-toggle {
@@ -577,6 +589,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  padding: 0 32px 32px;
 }
 
 .main-layout {
@@ -847,8 +860,12 @@ export default {
 }
 
 @media (max-width: 768px) {
-  .main-content {
-    padding: 16px;
+  .content-header {
+    padding: 16px 20px;
+  }
+  
+  .content-main {
+    padding: 0 20px 20px;
   }
   
   .calculator-card,

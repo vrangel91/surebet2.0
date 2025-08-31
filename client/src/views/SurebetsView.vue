@@ -10,59 +10,57 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
           <h2 class="page-title">Surebets</h2>
           <p class="page-subtitle">Encontre as melhores oportunidades de arbitragem</p>
         </div>
-        
-                 <div class="header-right">
-           <!-- Controles de Busca -->
-           <div class="search-controls">
-             <button 
-               class="control-btn" 
-               :class="{ active: isSearching }"
-               @click="toggleSearch"
-             >
-               <span class="control-text">{{ isSearching ? 'Pausar' : 'Retomar' }}</span>
-             </button>
-             
-             <button 
-               class="control-btn" 
-               :class="{ active: soundEnabled }"
-               @click="toggleSound"
-             >
-               <span class="control-text">{{ soundEnabled ? 'Som On' : 'Som Off' }}</span>
-             </button>
-             
-             <button 
-               class="control-btn filter-toggle-btn"
-               @click="toggleFilterOverlay"
-             >
-               <span class="control-text">Filtros</span>
-             </button>
-             
-             <button 
-               v-if="pinnedCards.length > 0"
-               class="control-btn pinned-indicator"
-               @click="scrollToPinnedCards"
-               title="Ir para cards fixos"
-             >
-               <MapPin class="control-icon" size="16" />
-               <span class="control-text">{{ pinnedCards.length }}</span>
-             </button>
-             
-
-           </div>
-                  </div>
-       </header>
+      </header>
 
        
              
 
                      <!-- Filtros Simples -->
         <div class="filters">
+          <!-- Controles de Busca -->
+          <div class="search-controls">
+            <button 
+              class="control-btn" 
+              :class="{ active: isSearching }"
+              @click="toggleSearch"
+            >
+              <span class="control-text">{{ isSearching ? 'Pausar' : 'Retomar' }}</span>
+            </button>
+            
+            <button 
+              class="control-btn" 
+              :class="{ active: soundEnabled }"
+              @click="toggleSound"
+            >
+              <span class="control-text">{{ soundEnabled ? 'Som On' : 'Som Off' }}</span>
+            </button>
+            
+            <button 
+              class="control-btn filter-toggle-btn"
+              @click="toggleFilterOverlay"
+            >
+              <span class="control-text">Filtros</span>
+            </button>
+            
+            <button 
+              v-if="pinnedCards.length > 0"
+              class="control-btn pinned-indicator"
+              @click="scrollToPinnedCards"
+              title="Ir para cards fixos"
+            >
+              <MapPin class="control-icon" size="16" />
+              <span class="control-text">{{ pinnedCards.length }}</span>
+            </button>
+          </div>
+          
           <div class="filter-tabs">
             <button 
               class="filter-tab" 
@@ -110,8 +108,6 @@
             <div v-else-if="activeFilter === 'live'" class="games-count">
               Total de jogos encontrados: {{ liveCount }}
             </div>
-            
-
           </div>
         </div>
 
@@ -484,6 +480,7 @@
 import SurebetCard from '../components/SurebetCard.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import Header from '../components/Header.vue'
 
 import { filterOptions } from '../config/filters.js'
 import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
@@ -497,6 +494,7 @@ export default {
      SurebetCard,
      Sidebar,
      GlossaryModal,
+     Header,
  
      MapPin,
      Trash2
@@ -2987,73 +2985,32 @@ export default {
   padding: 8px 16px;
   min-height: 36px;
   min-width: 100px;
-  background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+  background: #2d2d2d;
   border: 1px solid #404040;
   border-radius: 8px;
   color: #ffffff;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
   font-size: 12px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.5s ease;
-  }
   
   &:hover {
-    background: linear-gradient(135deg, #404040 0%, #2d2d2d 100%);
+    background: #404040;
     border-color: #00ff88;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.2);
-    
-    &::before {
-      left: 100%;
-    }
-  }
-  
-  &:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
   
   &.active {
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    background: #00ff88;
     color: #1a1a1a;
     border-color: #00ff88;
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
-    
-    &:hover {
-      background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 25px rgba(0, 255, 136, 0.4);
-    }
   }
   
   &.pinned-indicator {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ff4757 100%);
+    background: #ff6b6b;
     color: #ffffff;
     border-color: #ff6b6b;
-    box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
-    animation: pinGlow 2s ease-in-out infinite;
     display: flex;
     align-items: center;
     gap: 6px;
-    
-    &:hover {
-      background: linear-gradient(135deg, #ff4757 0%, #ff6b6b 100%);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 25px rgba(255, 107, 107, 0.4);
-    }
     
     .control-icon {
       color: #ffffff;
@@ -3067,8 +3024,6 @@ export default {
 .control-text {
   font-size: 12px;
   font-weight: 500;
-  letter-spacing: 0.2px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
 }
 
@@ -3093,6 +3048,16 @@ export default {
   width: 100%; /* Garante que os filtros ocupem toda a largura disponível */
   max-width: 100%; /* Previne overflow horizontal */
   overflow: hidden; /* Previne overflow */
+}
+
+.search-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #404040;
+  margin-bottom: 16px;
 }
 
  .filter-tabs {

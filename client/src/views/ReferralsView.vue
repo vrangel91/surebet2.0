@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -139,12 +142,14 @@
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 
 export default {
   name: 'ReferralsView',
   components: {
     Sidebar,
+    Header,
     GlossaryModal
   },
   data() {
@@ -380,7 +385,8 @@ export default {
 
 /* Refer and Earn Section */
 .refer-earn-section {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
   border-radius: 16px;
   padding: 32px;
   margin-bottom: 32px;
@@ -389,6 +395,7 @@ export default {
   gap: 32px;
   position: relative;
   overflow: hidden;
+  transition: all 0.3s ease;
 }
 
 .refer-earn-section::before {
@@ -402,9 +409,15 @@ export default {
   opacity: 0.3;
 }
 
+.refer-earn-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  border-color: rgba(0, 255, 136, 0.3);
+}
+
 .refer-content {
   flex: 1;
-  color: #1a1a1a;
+  color: var(--text-primary, #ffffff);
   position: relative;
   z-index: 1;
 }
@@ -413,14 +426,14 @@ export default {
   font-size: 32px;
   font-weight: 700;
   margin: 0 0 16px 0;
-  color: #1a1a1a;
+  color: var(--text-primary, #ffffff);
 }
 
 .refer-description {
   font-size: 16px;
   line-height: 1.6;
   margin: 0 0 24px 0;
-  color: #1a1a1a;
+  color: var(--text-secondary, #cccccc);
   opacity: 0.9;
 }
 
@@ -433,10 +446,10 @@ export default {
 .affiliate-link-input {
   flex: 1;
   padding: 12px 16px;
-  background: rgba(42, 42, 42, 0.8);
-  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-primary, #1a1a1a);
+  border: 2px solid var(--border-primary, rgba(255, 255, 255, 0.2));
   border-radius: 8px;
-  color: #ffffff;
+  color: var(--text-primary, #ffffff);
   font-size: 14px;
   font-family: monospace;
   transition: all 0.2s ease;
@@ -445,7 +458,7 @@ export default {
 .affiliate-link-input:focus {
   outline: none;
   border-color: #00ff88;
-  background: rgba(42, 42, 42, 0.9);
+  background: var(--bg-secondary, #2a2a2a);
 }
 
 .copy-link-btn {
@@ -453,9 +466,9 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
-  background: rgba(42, 42, 42, 0.9);
+  background: var(--bg-primary, #1a1a1a);
   color: #00ff88;
-  border: none;
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
   border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
@@ -465,8 +478,9 @@ export default {
 }
 
 .copy-link-btn:hover {
-  background: #2a2a2a;
+  background: var(--bg-secondary, #2a2a2a);
   transform: translateY(-1px);
+  border-color: rgba(0, 255, 136, 0.3);
 }
 
 .rocket-illustration {

@@ -8,6 +8,9 @@
     />
 
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <div class="ranking-header">
         <h1 class="ranking-title">
           <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
@@ -589,6 +592,7 @@
 <script>
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import { Chart, registerables } from 'chart.js'
 import { filterOptions } from '../config/filters.js'
@@ -602,7 +606,7 @@ Chart.register(...registerables)
 
 export default {
   name: 'RankingView',
-  components: { Sidebar, GlossaryModal },
+  components: { Sidebar, Header, GlossaryModal },
   
   data() {
     return {
@@ -2410,11 +2414,12 @@ export default {
   flex: 1;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-  padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 200px;
   width: 100%;
+  max-width: 100%;
+  min-height: 0;
   box-sizing: border-box;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
@@ -2431,6 +2436,10 @@ export default {
 .ranking-header {
   text-align: center;
   margin-bottom: 32px;
+  padding: 24px 32px 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .ranking-title {
@@ -2500,6 +2509,7 @@ export default {
   margin-bottom: 32px;
   justify-content: center;
   flex-wrap: wrap;
+  padding: 0 32px;
 }
 
 .filter-group {
@@ -2557,6 +2567,7 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+  padding: 0 32px;
 }
 
 .stat-card {
@@ -2600,6 +2611,7 @@ export default {
    grid-template-columns: repeat(4, 1fr);
    gap: 24px;
    margin-bottom: 32px;
+   padding: 0 32px;
  }
 
 .chart-section {
@@ -2733,7 +2745,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 32px;
+  margin: 0 32px 32px;
 }
 
 .ranking-section h3 {
@@ -2870,7 +2882,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 32px;
+  margin: 0 32px 32px;
 }
 
 .insights-section h3 {
@@ -3234,7 +3246,7 @@ export default {
    border: 1px solid rgba(255, 255, 255, 0.1);
    border-radius: 16px;
    padding: 24px;
-   margin-bottom: 32px;
+   margin: 0 32px 32px;
    backdrop-filter: blur(10px);
    overflow: visible;
    height: auto;
@@ -3881,10 +3893,11 @@ export default {
 }
 
  @media (max-width: 768px) {
-   .main-content { padding: 16px; padding-bottom: 120px; }
-   .filters-section { flex-direction: column; align-items: center; }
-   .stats-dashboard { grid-template-columns: 1fr; }
-   .charts-grid { grid-template-columns: repeat(2, 1fr); }
+   .main-content { padding-bottom: 120px; }
+   .ranking-header { padding: 16px 20px 0; }
+   .filters-section { flex-direction: column; align-items: center; padding: 0 20px; }
+   .stats-dashboard { grid-template-columns: 1fr; padding: 0 20px; }
+   .charts-grid { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
    .insights-grid { grid-template-columns: 1fr; }
    .ranking-table { font-size: 12px; }
    .ranking-table th, .ranking-table td { padding: 8px 4px; }
@@ -3893,6 +3906,9 @@ export default {
    .modern-table { font-size: 12px; }
    .modern-table th, .modern-table td { padding: 8px 6px; }
    .markets-layout { grid-template-columns: 1fr; gap: 16px; }
+   .ranking-section { margin: 0 20px 32px; }
+   .insights-section { margin: 0 20px 32px; }
+   .markets-analysis-section { margin: 0 20px 32px; }
         .chart-wrapper, .markets-ranking { 
      min-height: 350px; 
      height: auto;

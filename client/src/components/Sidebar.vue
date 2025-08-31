@@ -15,89 +15,7 @@
       </button>
     </div>
 
-    <!-- Perfil do Usuário -->
-    <div class="user-profile">
-      <div class="user-info">
-        <div class="user-avatar">
-          <User size="20" />
-        </div>
-        <div class="user-details" v-show="!shouldBeCollapsed">
-          <p class="user-greeting">Olá, {{ currentUser?.name || 'Usuário' }}</p>
-          <div class="user-status"> 
-            <span class="status-dot" :class="accountStatusClass"></span>
-            <span class="status-text">{{ accountStatusText }}</span>
-          </div>
-          <div class="user-account-type">
-            <span class="account-type-badge" :class="userAccountTypeClass">
-              {{ userAccountTypeDisplay }}
-            </span>
-          </div>
-          
-          <!-- Informações de Expiração -->
-          <div class="account-expiration" v-if="isVIP && accountExpiration">
-            <div class="expiration-info" :class="expirationStatusClass">
-              <Clock size="12" />
-              <span class="expiration-text">{{ expirationDisplayText }}</span>
-            </div>
-          </div>
-          
-          <!-- Mensagem quando não há dados VIP -->
-          <div class="account-expiration" v-if="isVIP && !accountExpiration && userVIPData === null">
-            <div class="expiration-info warning">
-              <Clock size="12" />
-              <span class="expiration-text">Carregando dados VIP...</span>
-            </div>
-          </div>
-          
-          <!-- Mensagem quando não há dados VIP da API -->
-          <div class="account-expiration" v-if="isVIP && !accountExpiration && userVIPData === false">
-            <div class="expiration-info expired">
-              <Clock size="12" />
-              <span class="expiration-text">Dados VIP não encontrados</span>
-            </div>
-          </div>
-          
-          <!-- Alertas de Expiração -->
-          <div class="expiration-alert" v-if="isVIP && showExpirationAlert" :class="expirationAlertClass">
-            <AlertTriangle size="12" />
-            <span class="alert-text">{{ expirationAlertText }}</span>
-          </div>
-        </div>
-        
-        <!-- Tipo de conta no sidebar colapsado -->
-        <div class="user-account-type-collapsed" v-show="shouldBeCollapsed">
-          <span class="account-type-badge-collapsed" :class="userAccountTypeClass" :title="userAccountTypeDisplay">
-            {{ userAccountTypeDisplay.charAt(0) }}
-          </span>
-        </div>
-      </div>
-      
-      <!-- Ações do Perfil -->
-      <div class="profile-actions" v-show="!shouldBeCollapsed">
-        <button class="profile-action-btn renew-btn" @click="renewAccount" v-if="isVIP && showRenewButton" :title="renewButtonTitle">
-          <RefreshCw size="14" />
-          <span>Renovar</span>
-        </button>
-      </div>
-      
-      <!-- Ícones de Administração e Configurações -->
-      <div class="admin-icons" v-show="!shouldBeCollapsed">
-        <!-- Configurações (só para admins) -->
-        <router-link v-if="isAdmin" to="/settings" class="admin-icon-link" title="Configurações">
-          <Settings size="18" />
-        </router-link>
-        
-        <!-- Administração (só para admins) -->
-        <router-link v-if="isAdmin" to="/admin" class="admin-icon-link" title="Administração">
-          <Shield size="18" />
-        </router-link>
-        
-        <!-- Administração VIP (só para admins) -->
-        <router-link v-if="isAdmin" to="/vip-admin" class="admin-icon-link" title="Administração VIP">
-          <Crown size="18" />
-        </router-link>
-      </div>
-    </div>
+
 
     <!-- Menu de Navegação -->
     <nav class="sidebar-nav">
@@ -209,10 +127,6 @@
 import { 
   Menu, 
   ChevronRight, 
-  User, 
-  Settings, 
-  Shield, 
-  Crown,
   Target, 
   Lock, 
   Calculator, 
@@ -223,10 +137,7 @@ import {
   Building2, 
   HelpCircle, 
   BookOpen, 
-  LogOut,
-  Clock,
-  AlertTriangle,
-  RefreshCw
+  LogOut
 } from 'lucide-vue-next'
 
 import axios from '@/utils/axios'
@@ -237,10 +148,6 @@ export default {
 
     Menu,
     ChevronRight,
-    User,
-    Settings,
-    Shield,
-    Crown,
     Target,
     Lock,
     Calculator,
@@ -251,10 +158,7 @@ export default {
     Building2,
     HelpCircle,
     BookOpen,
-    LogOut,
-    Clock,
-    AlertTriangle,
-    RefreshCw
+    LogOut
   },
   props: {
     sidebarCollapsed: {
@@ -270,32 +174,23 @@ export default {
     }
   },
   computed: {
-    currentUser() {
-      return this.$store.getters.currentUser
-    },
-    isAdmin() {
-      return this.$store.getters.isAdmin
-    },
-    isVIP() {
-      return this.$store.getters.isVIP
-    },
-    userAccountType() {
-      return this.$store.getters.userAccountType
-    },
-    userAccountTypeDisplay() {
-      const accountTypes = {
-        basic: 'Básico',
-        premium: 'Premium',
-        vip: 'VIP'
-      }
-      return accountTypes[this.userAccountType] || 'Básico'
-    },
-    userAccountTypeClass() {
-      return `account-type-${this.userAccountType}`
-    },
+
     // Computed para determinar se a sidebar deve estar colapsada
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
+    },
+
+    // Computed para verificar permissões do usuário
+    isAdmin() {
+      return this.$store.getters.isAdmin
+    },
+
+    isVIP() {
+      return this.$store.getters.isVIP
+    },
+
+    userAccountType() {
+      return this.$store.getters.userAccountType
     },
     
     // Sistema de Expiração da Conta
@@ -443,6 +338,53 @@ export default {
         return 'Renovação urgente - Expira em breve'
       } else {
         return `Renovar conta - Expira em ${daysUntilExpiration} dias`
+      }
+    },
+
+    // Computed para a barra de progresso de expiração
+    expirationProgressClass() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (timeDiff < 0) return 'progress-expired'
+      if (daysUntilExpiration <= 7) return 'progress-warning'
+      return 'progress-active'
+    },
+
+    expirationProgressPercent() {
+      if (!this.accountExpiration) return 0
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const totalDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (totalDays <= 0) return 100
+      return ((totalDays / 7) * 100)
+    },
+
+    expirationProgressText() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
+      
+      if (timeDiff < 0) {
+        return 'Conta expirada'
+      }
+      
+      if (daysUntilExpiration <= 1) {
+        return 'Expira em breve'
+      } else if (daysUntilExpiration <= 3) {
+        return 'Renovação recomendada'
+      } else {
+        return 'Conta ativa'
       }
     }
 
@@ -1236,6 +1178,47 @@ export default {
 
 .expiration-text {
   font-weight: 500;
+}
+
+/* Barra de Progresso de Expiração */
+.expiration-progress {
+  margin-top: 8px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #00ff88, #00cc6a);
+  border-radius: 2px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.progress-fill.progress-active {
+  background: linear-gradient(90deg, #00ff88, #00cc6a);
+}
+
+.progress-fill.progress-warning {
+  background: linear-gradient(90deg, #ffc107, #e0a800);
+}
+
+.progress-fill.progress-expired {
+  background: linear-gradient(90deg, #dc3545, #c82333);
+}
+
+.progress-text {
+  font-size: 10px;
+  color: var(--text-secondary, #cccccc);
+  font-weight: 500;
+  text-align: center;
+  display: block;
 }
 
 

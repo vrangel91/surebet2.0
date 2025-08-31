@@ -5,6 +5,9 @@
     
     <!-- Conteúdo Principal -->
     <main class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Verificação de Acesso -->
       <div v-if="!isAdmin" class="access-denied">
         <div class="access-denied-content">
@@ -192,13 +195,14 @@
                     <th>Plano</th>
                     <th>Início</th>
                     <th>Expiração</th>
+                    <th>Dias Restantes</th>
                     <th>Status</th>
                     <th>Ações</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="filteredActiveVIPs.length === 0">
-                    <td colspan="6" class="no-results">
+                    <td colspan="7" class="no-results">
                       <div class="no-results-content">
                         <User size="48" class="no-results-icon" />
                         <h4>Nenhum usuário encontrado</h4>
@@ -227,6 +231,11 @@
                     <td>
                       <span :class="getExpirationClass(vip.dataFim)">
                         {{ formatDate(vip.dataFim) }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="days-remaining" :class="getDaysRemainingClass(vip.dataFim)">
+                        {{ getDaysRemaining(vip.dataFim) }} dias
                       </span>
                     </td>
                     <td>
@@ -658,6 +667,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useStore } from 'vuex'
 import axios from '@/utils/axios'
 import Sidebar from '@/components/Sidebar.vue'
+import Header from '@/components/Header.vue'
 import { 
   Crown, 
   RefreshCw, 
@@ -680,6 +690,7 @@ export default {
   name: 'VIPAdminView',
   components: {
     Sidebar,
+    Header,
     Crown,
     RefreshCw,
     Plus,
@@ -851,8 +862,12 @@ export default {
       
       if (daysRemaining <= 0) {
         return { status: 'expired', label: 'Expirado', class: 'expired' }
+      } else if (daysRemaining <= 1) {
+        return { status: 'critical', label: 'Crítico (1 dia)', class: 'critical' }
+      } else if (daysRemaining <= 3) {
+        return { status: 'urgent', label: 'Urgente (≤3 dias)', class: 'urgent' }
       } else if (daysRemaining <= 7) {
-        return { status: 'expiring', label: 'Expirando', class: 'warning' }
+        return { status: 'expiring', label: 'Expirando (≤7 dias)', class: 'warning' }
       } else {
         return { status: 'active', label: 'Ativo', class: 'active' }
       }
@@ -1359,7 +1374,9 @@ export default {
     
     const getDaysRemainingClass = (endDate) => {
       const days = getDaysRemaining(endDate)
-      if (days <= 3) return 'danger'
+      if (days <= 0) return 'expired'
+      if (days <= 1) return 'critical'
+      if (days <= 3) return 'urgent'
       if (days <= 7) return 'warning'
       return 'success'
     }
@@ -1459,7 +1476,17 @@ export default {
 .main-content {
   flex: 1;  
   transition: margin-left 0.3s ease;
-  padding: 20px;  
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
 }
 
 // Header da Página
@@ -1467,8 +1494,11 @@ export default {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 24px;
+  margin: 24px 32px 24px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
   
   .header-content {
     display: flex;
@@ -1608,6 +1638,7 @@ export default {
 // Estatísticas
 .stats-section {
   margin-bottom: 24px;
+  padding: 0 32px;
 }
 
 .loading-indicator {
@@ -1638,6 +1669,15 @@ export default {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 .stats-grid {
@@ -1713,6 +1753,7 @@ export default {
 // Tabs
 .tabs-section {
   margin-bottom: 24px;
+  padding: 0 32px;
 }
 
 .tabs-nav {
@@ -1784,6 +1825,7 @@ export default {
   border-radius: 12px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
   overflow: hidden;
+  margin: 0 32px;
 }
 
 .tab-pane {
@@ -2006,6 +2048,18 @@ export default {
     color: #212529;
   }
   
+  &.critical {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  
+  &.urgent {
+    background: linear-gradient(135deg, #fd7e14, #e55a00);
+    color: white;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
   &.cancelled {
     background: var(--bg-quaternary, #4a4a4a);
     color: var(--text-secondary, #a0a0a0);
@@ -2018,9 +2072,21 @@ export default {
   font-size: 12px;
   font-weight: 500;
   
-  &.danger {
+  &.expired {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+  }
+  
+  &.critical {
     background: linear-gradient(135deg, #dc3545, #c82333);
     color: white;
+    animation: pulse 1s ease-in-out infinite;
+  }
+  
+  &.urgent {
+    background: linear-gradient(135deg, #fd7e14, #e55a00);
+    color: white;
+    animation: pulse 2s ease-in-out infinite;
   }
   
   &.warning {
@@ -2496,9 +2562,24 @@ export default {
 
 // Responsividade
 @media (max-width: 768px) {
+  .page-header {
+    margin: 16px 20px 16px;
+  }
+  
+  .stats-section {
+    padding: 0 20px;
+  }
+  
+  .tabs-section {
+    padding: 0 20px;
+  }
+  
+  .tab-content {
+    margin: 0 20px;
+  }
+  
   .main-content {
     margin-left: 80px;
-    padding: 16px;
     
     &.sidebar-collapsed {
       margin-left: 280px;

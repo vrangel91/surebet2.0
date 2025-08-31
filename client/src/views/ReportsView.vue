@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content flex-column flex-1 min-h-0">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -350,6 +353,7 @@
 import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import { formatMarketForDisplay } from '../utils/market-translations.js'
 
@@ -360,6 +364,7 @@ export default {
     ProfitEvolutionChart,
     ROIBarChart,
     Sidebar,
+    Header,
     GlossaryModal
   },
   data() {

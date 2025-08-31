@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header -->
       <div class="admin-header">
       <h1 class="admin-title">
@@ -62,7 +65,7 @@
       <!-- Actions Bar -->
       <div class="actions-bar">
         <button @click="showCreateModal = true" class="btn-primary">
-          <span class="btn-icon">➕</span>
+          <i class="bi bi-person-plus-fill"></i>
           Novo Usuário
         </button>
         <div class="search-box">
@@ -72,7 +75,7 @@
             placeholder="Buscar usuários..."
             class="search-input"
           />
-          <span class="search-icon">🔍</span>
+          <i class="bi bi-search search-icon"></i>
         </div>
       </div>
 
@@ -116,39 +119,82 @@
             <td>{{ formatDate(user.lastLogin) }}</td>
             <td>{{ formatDate(user.createdAt) }}</td>
             <td class="actions-cell">
-              <button @click="editUser(user)" class="btn-icon" title="Editar">
-                ✏️
-              </button>
-              <button 
-                @click="changePassword(user)" 
-                class="btn-icon btn-info"
-                title="Alterar Senha"
-              >
-                🔐
-              </button>
-
-              <button 
-                @click="changeAccountType(user)" 
-                class="btn-icon btn-account"
-                title="Alterar Tipo de Conta"
-              >
-                👑
-              </button>
-              <button 
-                @click="toggleUserStatus(user)" 
-                :class="['btn-icon', user.status === 'active' ? 'btn-warning' : 'btn-success']"
-                :title="user.status === 'active' ? 'Desativar' : 'Ativar'"
-              >
-                {{ user.status === 'active' ? '⏸️' : '▶️' }}
-              </button>
-              <button 
-                @click="deleteUser(user)" 
-                class="btn-icon btn-danger"
-                title="Excluir"
-                :disabled="user.role === 'admin'"
-              >
-                🗑️
-              </button>
+              <div class="actions-dropdown">
+                <button 
+                  @click="toggleDropdown(user.id)" 
+                  class="dropdown-toggle"
+                  :class="{ 'active': openDropdown === user.id }"
+                  title="Ações"
+                >
+                  <i class="bi bi-three-dots-vertical"></i>
+                </button>
+                
+                <div 
+                  v-if="openDropdown === user.id" 
+                  class="dropdown-menu"
+                  @click.stop
+                >
+                  <button 
+                    @click="editUser(user)" 
+                    class="dropdown-item"
+                    title="Editar usuário"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                    Editar
+                  </button>
+                  
+                  <button 
+                    @click="changePassword(user)" 
+                    class="dropdown-item"
+                    title="Alterar senha"
+                  >
+                    <i class="bi bi-key"></i>
+                    Alterar Senha
+                  </button>
+                  
+                  <button 
+                    @click="changeAccountType(user)" 
+                    class="dropdown-item"
+                    title="Alterar tipo de conta"
+                  >
+                    <i class="bi bi-person-badge"></i>
+                    Alterar Tipo de Conta
+                  </button>
+                  
+                  <div class="dropdown-divider"></div>
+                  
+                  <button 
+                    @click="toggleUserStatus(user)" 
+                    class="dropdown-item"
+                    :class="user.status === 'active' ? 'text-warning' : 'text-success'"
+                    :title="user.status === 'active' ? 'Pausar usuário' : 'Ativar usuário'"
+                  >
+                    <i :class="user.status === 'active' ? 'bi bi-pause-circle' : 'bi bi-play-circle'"></i>
+                    {{ user.status === 'active' ? 'Pausar' : 'Ativar' }}
+                  </button>
+                  
+                  <div class="dropdown-divider"></div>
+                  
+                  <button 
+                    @click="viewUserDetails(user)" 
+                    class="dropdown-item"
+                    title="Ver detalhes"
+                  >
+                    <i class="bi bi-eye"></i>
+                    Ver Detalhes
+                  </button>
+                  
+                  <button 
+                    @click="deleteUser(user)" 
+                    class="dropdown-item text-danger"
+                    title="Excluir usuário"
+                    :disabled="user.role === 'admin'"
+                  >
+                    <i class="bi bi-trash3"></i>
+                    Excluir
+                  </button>
+                </div>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -202,7 +248,7 @@
             placeholder="Buscar tickets..."
             class="search-input"
           />
-          <span class="search-icon">🔍</span>
+          <i class="bi bi-search search-icon"></i>
         </div>
       </div>
 
@@ -244,8 +290,8 @@
               </td>
               <td>{{ formatDate(ticket.createdAt) }}</td>
               <td class="actions-cell">
-                <button @click="viewTicket(ticket)" class="btn-icon" title="Visualizar">
-                  👁️
+                <button @click="viewTicket(ticket)" class="btn-icon btn-info" title="Visualizar">
+                  <i class="bi bi-eye"></i>
                 </button>
                 <button 
                   @click="updateTicketStatus(ticket, 'pending')" 
@@ -253,7 +299,7 @@
                   class="btn-icon btn-warning"
                   title="Marcar como Em Andamento"
                 >
-                  ⏳
+                  <i class="bi bi-clock"></i>
                 </button>
                 <button 
                   @click="updateTicketStatus(ticket, 'closed')" 
@@ -261,7 +307,7 @@
                   class="btn-icon btn-success"
                   title="Fechar Ticket"
                 >
-                  ✅
+                  <i class="bi bi-check-circle"></i>
                 </button>
               </td>
             </tr>
@@ -276,7 +322,9 @@
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>{{ showEditModal ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
-          <button @click="closeModal" class="modal-close">✕</button>
+          <button @click="closeModal" class="modal-close">
+            <i class="bi bi-x-lg"></i>
+          </button>
         </div>
         
         <form @submit.prevent="saveUser" class="modal-form">
@@ -629,12 +677,14 @@
 <script>
 import { mapGetters, mapActions } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 
 export default {
   name: 'AdminView',
   components: {
     Sidebar,
+    Header,
     GlossaryModal
   },
   
@@ -703,6 +753,7 @@ export default {
         currentType: 'basic',
         newType: 'basic'
       },
+      openDropdown: null, // Controla qual dropdown está aberto
       toasts: [] // Array para armazenar as notificações toast
     }
   },
@@ -786,10 +837,16 @@ export default {
     
     console.log('✅ Acesso administrativo autorizado para:', this.currentUser?.email)
     
-
+    // Adicionar event listener para fechar dropdown
+    document.addEventListener('click', this.handleClickOutside)
     
     // Buscar usuários da API
     this.fetchUsersFromAPI()
+  },
+
+  beforeUnmount() {
+    // Remover event listener
+    document.removeEventListener('click', this.handleClickOutside)
   },
   
   methods: {
@@ -825,6 +882,21 @@ export default {
     
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
+    },
+
+    toggleDropdown(userId) {
+      if (this.openDropdown === userId) {
+        this.openDropdown = null
+      } else {
+        this.openDropdown = userId
+      }
+    },
+
+    handleClickOutside(event) {
+      // Fechar dropdown se clicar fora
+      if (!event.target.closest('.actions-dropdown')) {
+        this.openDropdown = null
+      }
     },
     
     openGlossary() {
@@ -1396,6 +1468,24 @@ export default {
           }
         }
       }
+    },
+
+    viewUserDetails(user) {
+      // Fechar dropdown
+      this.openDropdown = null
+      
+      // Mostrar informações do usuário em um toast
+      const details = `
+        Nome: ${user.name}
+        E-mail: ${user.email}
+        Função: ${user.role === 'admin' ? 'Administrador' : 'Usuário'}
+        Status: ${user.status === 'active' ? 'Ativo' : 'Inativo'}
+        Tipo de Conta: ${this.getAccountTypeText(user.accountType || 'basic')}
+        Criado em: ${this.formatDate(user.createdAt)}
+        Último login: ${this.formatDate(user.lastLogin)}
+      `
+      
+      this.showToast('Detalhes do Usuário', details, 'info')
     }
   }
 }
@@ -1403,6 +1493,18 @@ export default {
 
 <style scoped lang="scss">
 @import '../assets/styles/toast.scss';
+
+/* Variáveis CSS locais para o dropdown */
+:root {
+  --accent-info: #0066ff;
+  --accent-info-hover: #0056d6;
+  --accent-warning: #ffaa00;
+  --accent-warning-hover: #e69500;
+  --accent-success: #00ff88;
+  --accent-success-hover: #00cc6a;
+  --accent-danger: #ff4444;
+  --accent-danger-hover: #e63939;
+}
 .admin-container {
   display: flex;
   height: 100vh;
@@ -1970,46 +2072,142 @@ export default {
 
 .actions-cell {
   display: flex;
-  gap: 8px;
+  justify-content: center;
 }
 
-.btn-icon {
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s ease;
+/* Estilos para o dropdown de ações */
+.actions-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 16px;
 }
 
-.btn-icon:hover {
-  transform: scale(1.1);
+.dropdown-toggle:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
 }
 
-.btn-icon:disabled {
+.dropdown-toggle.active {
+  background: var(--accent-primary);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+.dropdown-toggle .bi {
+  font-size: 18px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 200px;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-primary);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  margin-top: 8px;
+  overflow: hidden;
+  animation: slideIn 0.2s ease-out;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: var(--bg-tertiary);
+  color: var(--accent-primary);
+}
+
+.dropdown-item .bi {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-primary);
+  margin: 8px 0;
+}
+
+.dropdown-item.text-warning {
+  color: var(--accent-warning);
+}
+
+.dropdown-item.text-success {
+  color: var(--accent-success);
+}
+
+.dropdown-item.text-danger {
+  color: var(--accent-danger);
+}
+
+.dropdown-item:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.btn-warning:hover {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+.dropdown-item:disabled:hover {
+  background: transparent;
+  color: var(--text-primary);
 }
 
-.btn-success:hover {
-  background: rgba(0, 255, 136, 0.2);
-  color: #00ff88;
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.btn-danger:hover {
-  background: rgba(255, 68, 68, 0.2);
-  color: #ff4444;
+/* Estilos para ícones de busca */
+.search-icon {
+  color: var(--text-secondary, #a0a0a0);
+  font-size: 18px;
+}
+
+/* Estilos para o botão Novo Usuário */
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  .bi {
+    font-size: 16px;
+  }
 }
 
 /* Modal Styles */

@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header -->
       <div class="guide-header">
         <h1 class="guide-title">
@@ -502,12 +505,14 @@
 <script>
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 
 export default {
   name: 'SurebetsGuideView',
   components: {
     Sidebar,
+    Header,
     GlossaryModal
   },
   

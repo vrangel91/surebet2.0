@@ -134,8 +134,19 @@ export default createStore({
   
   actions: {
     login({ commit }, { token, user }) {
+      // Converter dados do backend para o formato esperado pelo frontend
+      const convertedUser = {
+        ...user,
+        // Garantir que as propriedades is_admin e is_vip estejam presentes
+        is_admin: user.is_admin || user.role === 'admin' || false,
+        is_vip: user.is_vip || user.accountType === 'vip' || user.accountType === 'premium' || false,
+        // Manter propriedades existentes
+        role: user.role || 'user',
+        accountType: user.accountType || 'basic'
+      }
+      
       commit('setAuthToken', token)
-      commit('setUser', user)
+      commit('setUser', convertedUser)
     },
     
     logout({ commit }) {
@@ -149,8 +160,20 @@ export default createStore({
       if (token && user) {
         try {
           const userData = JSON.parse(user)
+          
+          // Converter dados do localStorage para o formato esperado pelo frontend
+          const convertedUser = {
+            ...userData,
+            // Garantir que as propriedades is_admin e is_vip estejam presentes
+            is_admin: userData.is_admin || userData.role === 'admin' || false,
+            is_vip: userData.is_vip || userData.accountType === 'vip' || userData.accountType === 'premium' || false,
+            // Manter propriedades existentes
+            role: userData.role || 'user',
+            accountType: userData.accountType || 'basic'
+          }
+          
           commit('setAuthToken', token)
-          commit('setUser', userData)
+          commit('setUser', convertedUser)
         } catch (error) {
           commit('logout')
         }

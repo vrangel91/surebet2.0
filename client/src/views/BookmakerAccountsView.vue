@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header -->
       <div class="accounts-header">
         <h1 class="accounts-title">
@@ -430,13 +433,15 @@
 <script>
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import { http } from '../utils/http'
 import { filterOptions } from '../config/filters.js'
 
 export default {
   name: 'BookmakerAccountsView',
   components: {
-    Sidebar
+    Sidebar,
+    Header
   },
   
   data() {
@@ -1289,18 +1294,18 @@ export default {
   flex: 1;
   margin-left: 0;
   transition: margin-left 0.3s ease;
-  min-height: 0;
-  padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
   width: 100%;
+  max-width: 100%;
+  min-height: 0;
   box-sizing: border-box;
   position: relative;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   display: flex;
   flex-direction: column;
-  /* Remover height: 100vh fixo para permitir crescimento natural */
+  max-height: 100vh;
 }
 
 /* Custom scrollbar para webkit browsers */
@@ -1326,6 +1331,10 @@ export default {
   text-align: center;
   margin-bottom: 32px;
   flex-shrink: 0;
+  padding: 24px 32px 0;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .accounts-title {
@@ -1357,6 +1366,7 @@ export default {
   justify-content: center;
   margin-bottom: 32px;
   flex-shrink: 0;
+  padding: 0 32px;
 }
 
 .add-account-btn {
@@ -1387,6 +1397,7 @@ export default {
   gap: 20px;
   margin-bottom: 32px;
   flex-shrink: 0;
+  padding: 0 32px;
 }
 
 .stat-card {
@@ -1422,7 +1433,7 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   padding: 24px;
-  margin-bottom: 32px;
+  margin: 0 32px 32px;
   flex: 1;
   min-height: 0;
   overflow: visible;
@@ -2502,8 +2513,20 @@ export default {
   }
 
    @media (max-width: 768px) {
-    .main-content {
-      padding: 16px;
+    .accounts-header {
+      padding: 16px 20px 0;
+    }
+    
+    .actions-section {
+      padding: 0 20px;
+    }
+    
+    .stats-section {
+      padding: 0 20px;
+    }
+    
+    .accounts-section {
+      margin: 0 20px 20px;
     }
     
     .accounts-grid {

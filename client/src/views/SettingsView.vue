@@ -10,6 +10,9 @@
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
+      <!-- Header Global -->
+      <Header />
+      
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -472,12 +475,14 @@
 <script>
 import { useTheme } from '../composables/useTheme'
 import Sidebar from '../components/Sidebar.vue'
+import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 
 export default {
   name: 'SettingsView',
   components: {
     Sidebar,
+    Header,
     GlossaryModal
   },
   setup() {
