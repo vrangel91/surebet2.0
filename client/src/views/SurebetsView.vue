@@ -1,12 +1,13 @@
 <template>
-  <div class="surebets-container">
-    <!-- Sidebar Reutilizável -->
-    <Sidebar 
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
-    />
+  <RouteGuard :requiresVIP="true">
+    <div class="surebets-container">
+      <!-- Sidebar Reutilizável -->
+      <Sidebar 
+        :sidebarCollapsed="sidebarCollapsed"
+        @toggle-sidebar="handleSidebarToggle"
+        @sidebar-state-loaded="handleSidebarStateLoaded"
+        @open-glossary="openGlossary"
+      />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
@@ -473,14 +474,16 @@
           </div>
         </div>
       </div>
-   </div>
- </template>
+    </div>
+  </RouteGuard>
+</template>
 
 <script>
 import SurebetCard from '../components/SurebetCard.vue'
 import Sidebar from '../components/Sidebar.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
 import Header from '../components/Header.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 
 import { filterOptions } from '../config/filters.js'
 import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
@@ -495,6 +498,7 @@ export default {
      Sidebar,
      GlossaryModal,
      Header,
+     RouteGuard,
  
      MapPin,
      Trash2

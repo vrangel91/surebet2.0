@@ -1,5 +1,6 @@
 <template>
-  <div class="support-container">
+  <RouteGuard :requiresAuth="true">
+    <div class="support-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -29,57 +30,92 @@
 
       <!-- Main Content -->
       <div class="support-main">
-        <!-- Stats Cards -->
-        <div class="stats-cards">
-          <div class="stat-card">
-            <div class="stat-icon open-icon">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-                <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ openTickets.length }}</div>
-              <div class="stat-label">Tickets Abertos</div>
-            </div>
+              <!-- Stats Cards -->
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="stat-icon open-icon">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+            </svg>
           </div>
-
-          <div class="stat-card">
-            <div class="stat-icon pending-icon">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ pendingTickets.length }}</div>
-              <div class="stat-label">Em Andamento</div>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon closed-icon">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-              </svg>
-            </div>
-            <div class="stat-content">
-              <div class="stat-value">{{ closedTickets.length }}</div>
-              <div class="stat-label">Fechados</div>
-            </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ ticketsStats.open }}</div>
+            <div class="stat-label">Tickets Abertos</div>
           </div>
         </div>
+
+        <div class="stat-card">
+          <div class="stat-icon pending-icon">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ ticketsStats.pending }}</div>
+            <div class="stat-label">Em Andamento</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon closed-icon">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ ticketsStats.closed }}</div>
+            <div class="stat-label">Fechados</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon time-icon">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+            </svg>
+          </div>
+          <div class="stat-content">
+            <div class="stat-value">{{ ticketsStats.avgResponseTime }}</div>
+            <div class="stat-label">Tempo Médio Resposta</div>
+          </div>
+        </div>
+      </div>
 
         <!-- Tickets List -->
         <div class="tickets-section">
           <div class="section-header">
             <h3 class="section-title">Meus Tickets</h3>
             <div class="filter-controls">
+              <input 
+                v-model="searchQuery" 
+                type="text" 
+                placeholder="Buscar por ID ou título..."
+                class="search-input"
+              >
               <select v-model="statusFilter" class="status-filter">
                 <option value="">Todos os Status</option>
                 <option value="open">Abertos</option>
                 <option value="pending">Em Andamento</option>
                 <option value="closed">Fechados</option>
+              </select>
+              <select v-model="priorityFilter" class="priority-filter">
+                <option value="">Todas as Prioridades</option>
+                <option value="low">Baixa</option>
+                <option value="medium">Média</option>
+                <option value="high">Alta</option>
+                <option value="urgent">Urgente</option>
+              </select>
+              <select v-model="categoryFilter" class="category-filter">
+                <option value="">Todas as Categorias</option>
+                <option value="financial">Financeiro</option>
+                <option value="technical">Técnico</option>
+                <option value="support">Suporte</option>
+                <option value="billing">Cobrança</option>
+                <option value="feature">Sugestão</option>
+                <option value="other">Outro</option>
               </select>
             </div>
           </div>
@@ -133,7 +169,7 @@
         </div>
         
         <div class="modal-body">
-          <form @submit.prevent="createTicket">
+          <form @submit.prevent="createNewTicket">
             <div class="form-group">
               <label for="ticket-title">Título</label>
               <input 
@@ -151,9 +187,10 @@
                 <label for="ticket-category">Categoria</label>
                 <select id="ticket-category" v-model="newTicket.category" class="form-select" required>
                   <option value="">Selecione uma categoria</option>
-                  <option value="technical">Problema Técnico</option>
+                  <option value="financial">Financeiro</option>
+                  <option value="technical">Técnico</option>
+                  <option value="support">Suporte</option>
                   <option value="billing">Cobrança/Pagamento</option>
-                  <option value="account">Conta/Acesso</option>
                   <option value="feature">Sugestão/Melhoria</option>
                   <option value="other">Outro</option>
                 </select>
@@ -267,12 +304,14 @@
     <!-- Glossary Modal -->
     <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
   </div>
+    </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
@@ -280,7 +319,8 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
   data() {
     return {
@@ -289,6 +329,9 @@ export default {
       showNewTicketModal: false,
       showTicketDetailModal: false,
       statusFilter: '',
+      priorityFilter: '',
+      categoryFilter: '',
+      searchQuery: '',
       selectedTicket: null,
       newMessage: '',
       isSubmitting: false,
@@ -298,25 +341,109 @@ export default {
         category: '',
         priority: '',
         description: ''
-      }
+      },
+
+      // Dados mockados para demonstração
+      tickets: [
+        {
+          id: 1,
+          title: 'Problema com login',
+          description: 'Não consigo fazer login na minha conta',
+          category: 'technical',
+          priority: 'high',
+          status: 'open',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          userId: 1,
+          userName: 'João Silva',
+          messages: [
+            {
+              id: 1,
+              author: 'João Silva',
+              content: 'Não consigo fazer login na minha conta',
+              type: 'user',
+              createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        },
+        {
+          id: 2,
+          title: 'Dúvida sobre pagamento',
+          description: 'Como funciona o sistema de pagamento?',
+          category: 'financial',
+          priority: 'medium',
+          status: 'pending',
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          userId: 2,
+          userName: 'Maria Santos',
+          messages: [
+            {
+              id: 1,
+              author: 'Maria Santos',
+              content: 'Como funciona o sistema de pagamento?',
+              type: 'user',
+              createdAt: new Date(Date.now() - 172800000).toISOString()
+            },
+            {
+              id: 2,
+              author: 'Suporte Técnico',
+              content: 'Olá! Nossos pagamentos são processados via PIX e cartão de crédito. Posso te ajudar com algo específico?',
+              type: 'support',
+              createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        }
+      ]
     }
   },
   
   computed: {
     ...mapGetters([
       'currentUser',
-      'isAdmin',
-      'userTickets',
-      'openTickets',
-      'pendingTickets',
-      'closedTickets'
+      'isAdmin'
     ]),
     
+    ticketsStats() {
+      const open = this.tickets.filter(t => t.status === 'open').length
+      const pending = this.tickets.filter(t => t.status === 'pending').length
+      const closed = this.tickets.filter(t => t.status === 'closed').length
+      
+      // Calcular tempo médio de resposta (mockado)
+      const avgResponseTime = '2h 30m'
+      
+      return { open, pending, closed, avgResponseTime }
+    },
+    
     filteredTickets() {
-      if (!this.statusFilter) {
-        return this.userTickets
+      let filtered = this.tickets
+
+      // Filtro por status
+      if (this.statusFilter) {
+        filtered = filtered.filter(ticket => ticket.status === this.statusFilter)
       }
-      return this.userTickets.filter(ticket => ticket.status === this.statusFilter)
+
+      // Filtro por prioridade
+      if (this.priorityFilter) {
+        filtered = filtered.filter(ticket => ticket.priority === this.priorityFilter)
+      }
+
+      // Filtro por categoria
+      if (this.categoryFilter) {
+        filtered = filtered.filter(ticket => ticket.category === this.categoryFilter)
+      }
+
+      // Filtro por busca
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase()
+        filtered = filtered.filter(ticket => 
+          ticket.id.toString().includes(query) ||
+          ticket.title.toLowerCase().includes(query) ||
+          ticket.userName.toLowerCase().includes(query)
+        )
+      }
+
+      return filtered
     },
     
     isFormValid() {
@@ -329,7 +456,6 @@ export default {
   
   methods: {
     ...mapActions([
-      'createTicket',
       'updateTicketData',
       'addMessageToTicket'
     ]),
@@ -379,15 +505,44 @@ export default {
       }
     },
     
-    async createTicket() {
+    async createNewTicket() {
       this.isSubmitting = true
       
       try {
-        await this.createTicket(this.newTicket)
+        // Criar novo ticket
+        const newTicket = {
+          id: this.tickets.length + 1,
+          title: this.newTicket.title,
+          description: this.newTicket.description,
+          category: this.newTicket.category,
+          priority: this.newTicket.priority,
+          status: 'open',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          userId: this.currentUser?.id || 1,
+          userName: this.currentUser?.email || 'Usuário',
+          messages: [
+            {
+              id: 1,
+              author: this.currentUser?.email || 'Usuário',
+              content: this.newTicket.description,
+              type: 'user',
+              createdAt: new Date().toISOString()
+            }
+          ]
+        }
+        
+        // Adicionar ticket à lista
+        this.tickets.unshift(newTicket)
+        
+        // Fechar modal
         this.closeNewTicketModal()
-        alert('Ticket criado com sucesso!')
+        
+        // Mostrar notificação
+        this.showToastNotification('Ticket criado com sucesso!', 'success')
+        
       } catch (error) {
-        alert('Erro ao criar ticket. Tente novamente.')
+        this.showToastNotification('Erro ao criar ticket. Tente novamente.', 'error')
       } finally {
         this.isSubmitting = false
       }
@@ -409,10 +564,9 @@ export default {
         createdAt: new Date().toISOString()
       }
       
-      this.addMessageToTicket({
-        ticketId: this.selectedTicket.id,
-        message
-      })
+      // Adicionar mensagem ao ticket
+      this.selectedTicket.messages.push(message)
+      this.selectedTicket.updatedAt = new Date().toISOString()
       
       this.newMessage = ''
       
@@ -426,10 +580,13 @@ export default {
           createdAt: new Date().toISOString()
         }
         
-        this.addMessageToTicket({
-          ticketId: this.selectedTicket.id,
-          message: supportMessage
-        })
+        this.selectedTicket.messages.push(supportMessage)
+        this.selectedTicket.updatedAt = new Date().toISOString()
+        
+        // Atualizar status para "Em andamento" se ainda estiver aberto
+        if (this.selectedTicket.status === 'open') {
+          this.selectedTicket.status = 'pending'
+        }
       }, 2000)
     },
     
@@ -460,6 +617,18 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       }).format(new Date(date))
+    },
+
+    showToastNotification(message, type = 'info') {
+      // Sistema de notificação simples usando alert temporariamente
+      // TODO: Implementar sistema de toast mais elegante
+      if (type === 'error') {
+        alert(`❌ ${message}`)
+      } else if (type === 'success') {
+        alert(`✅ ${message}`)
+      } else {
+        alert(`ℹ️ ${message}`)
+      }
     }
   }
 }
@@ -587,6 +756,11 @@ export default {
   color: #ffffff;
 }
 
+.time-icon {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+}
+
 .stat-content {
   flex: 1;
 }
@@ -625,7 +799,17 @@ export default {
   margin: 0;
 }
 
-.status-filter {
+.filter-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input,
+.status-filter,
+.priority-filter,
+.category-filter {
   background: var(--bg-primary, #1a1a1a);
   color: var(--text-primary, #ffffff);
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
@@ -633,6 +817,19 @@ export default {
   padding: 8px 12px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.search-input {
+  min-width: 200px;
+  cursor: text;
+}
+
+.search-input:focus,
+.status-filter:focus,
+.priority-filter:focus,
+.category-filter:focus {
+  outline: none;
+  border-color: #00ff88;
 }
 
 /* Tickets List */
@@ -794,9 +991,11 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 9999;
   padding: 20px;
 }
+
+
 
 .ticket-modal,
 .ticket-detail-modal {
@@ -1136,6 +1335,20 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
+    min-width: auto;
+    width: 100%;
   }
   
   .form-row {

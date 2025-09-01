@@ -1,5 +1,6 @@
 <template>
-  <div class="accounts-container">
+  <RouteGuard :requiresVIP="true">
+    <div class="accounts-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -431,12 +432,14 @@
       </div>
     </div>
   </div>
+    </RouteGuard>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 import { http } from '../utils/http'
 import { filterOptions } from '../config/filters.js'
 
@@ -444,7 +447,8 @@ export default {
   name: 'BookmakerAccountsView',
   components: {
     Sidebar,
-    Header
+    Header,
+    RouteGuard
   },
   
   data() {

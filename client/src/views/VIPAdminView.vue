@@ -1,5 +1,6 @@
 <template>
-  <div class="vip-admin-page">
+  <RouteGuard :requiresAdmin="true">
+    <div class="vip-admin-page">
     <!-- Sidebar -->
     <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="toggleSidebar" />
     
@@ -706,6 +707,7 @@
       </div>
     </div>
   </div>
+    </RouteGuard>
 </template>
 
 <script>
@@ -714,6 +716,7 @@ import { useStore } from 'vuex'
 import axios from '@/utils/axios'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
+import RouteGuard from '@/components/RouteGuard.vue'
 import { 
   Crown, 
   RefreshCw, 
@@ -737,6 +740,7 @@ export default {
   components: {
     Sidebar,
     Header,
+    RouteGuard,
     Crown,
     RefreshCw,
     Plus,
@@ -1593,7 +1597,31 @@ export default {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
+  height: 100vh;
+  padding-bottom: 40px; /* Adiciona espaço para o scroll */
+  
+  /* Estilização da barra de scroll para Webkit (Chrome, Safari, Edge) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+  }
+  
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 // Header da Página
@@ -1931,12 +1959,14 @@ export default {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-  overflow: hidden;
+  overflow: visible;
   margin: 0 32px;
+  margin-bottom: 40px; /* Adiciona margem inferior para evitar corte */
 }
 
 .tab-pane {
   padding: 24px;
+  min-height: 400px; /* Garante altura mínima para o conteúdo */
 }
 
 // Tabelas
@@ -2022,6 +2052,26 @@ export default {
   overflow-x: auto;
   border-radius: 8px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  margin-bottom: 20px; /* Adiciona margem inferior */
+  
+  /* Estilização da barra de scroll horizontal */
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.6);
+    }
+  }
 }
 
 .data-table {
@@ -2631,6 +2681,28 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  
+  /* Estilização da barra de scroll para Webkit */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+  }
+  
+  &::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 .modal-header {
@@ -2885,5 +2957,57 @@ export default {
       font-size: 12px;
     }
   }
+}
+
+/* Estilos globais para scrollbars em toda a página */
+.vip-admin-page {
+  /* Para Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.4) rgba(255, 255, 255, 0.1);
+}
+
+/* Estilização global de scrollbars para Webkit (Chrome, Safari, Edge) */
+.vip-admin-page ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.vip-admin-page ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.vip-admin-page ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vip-admin-page ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.vip-admin-page ::-webkit-scrollbar-corner {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar para elementos específicos */
+.tab-pane,
+.table-container,
+.cron-section,
+.reports-section {
+  /* Removido scroll individual para manter apenas o scroll principal */
+}
+
+/* Scrollbar para tabelas com muitos dados */
+.data-table {
+  min-width: 900px; /* Garante que tabelas largas tenham scroll horizontal */
+  width: 100%;
+}
+
+/* Garante que o container da tabela tenha scroll horizontal */
+.table-container {
+  overflow-x: auto;
+  overflow-y: visible;
 }
 </style>

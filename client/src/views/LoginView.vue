@@ -424,17 +424,34 @@ export default {
             this.saveRememberedUser()
           }
         
-                     // Redireciona baseado no tipo de conta após 1 segundo
-           setTimeout(() => {
-             // Verifica se o usuário é VIP/Premium ou Básico
-             if (response.user.accountType === 'basic') {
-               // Usuário básico vai para página de planos
-               this.$router.push('/plans')
-             } else {
-               // Usuário VIP/Premium vai para dashboard
-               this.$router.push('/')
-             }
-           }, 1500)
+                     // Verifica se há uma rota de redirecionamento salva
+          const redirectAfterLogin = localStorage.getItem('redirectAfterLogin')
+          const redirectAfterUpgrade = localStorage.getItem('redirectAfterUpgrade')
+          
+          // Redireciona baseado no tipo de conta após 1 segundo
+          setTimeout(() => {
+            let targetRoute = '/'
+            
+            // Prioriza redirecionamento salvo
+            if (redirectAfterLogin && redirectAfterLogin !== '/login') {
+              targetRoute = redirectAfterLogin
+              localStorage.removeItem('redirectAfterLogin')
+              console.log('🔄 Redirecionando para rota salva:', targetRoute)
+            } else if (redirectAfterUpgrade && redirectAfterUpgrade !== '/plans') {
+              targetRoute = redirectAfterUpgrade
+              localStorage.removeItem('redirectAfterUpgrade')
+              console.log('🔄 Redirecionando para rota de upgrade:', targetRoute)
+            } else {
+              // Redirecionamento padrão baseado no tipo de conta
+              if (response.user.accountType === 'basic') {
+                targetRoute = '/plans'
+              } else {
+                targetRoute = '/'
+              }
+            }
+            
+            this.$router.push(targetRoute)
+          }, 1500)
         } else {
           this.handleLoginFailure(response.message)
         }

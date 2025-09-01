@@ -6,6 +6,7 @@ import { initializeApp } from './utils/initApp'
 import './assets/styles/main.scss'
 import 'bootstrap-icons/font/bootstrap-icons.css'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
+import './utils/debug-auth.js'
 
 // Inicializar aplicação e limpar dados mocados
 initializeApp()

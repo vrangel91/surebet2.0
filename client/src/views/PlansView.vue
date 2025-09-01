@@ -197,6 +197,53 @@
       </div>
     </div>
     
+    <!-- Login Required Modal -->
+    <div v-if="showLoginRequiredModal" class="modal-overlay" @click="closeLoginRequiredModal">
+      <div class="login-required-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Login Obrigatório</h3>
+          <button class="close-btn" @click="closeLoginRequiredModal">×</button>
+        </div>
+        
+        <div class="modal-body">
+          <div class="login-required-content">
+            <div class="login-icon">
+              <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+              </svg>
+            </div>
+            
+            <h4 class="login-title">Faça login para continuar</h4>
+            <p class="login-description">
+              Para comprar o plano <strong>{{ selectedPlan?.title }}</strong> por R$ {{ selectedPlan?.price }},00, 
+              você precisa estar logado em sua conta.
+            </p>
+            
+            <div class="plan-summary">
+              <div class="plan-info">
+                <span class="plan-name">{{ selectedPlan?.title }}</span>
+                <span class="plan-price">R$ {{ selectedPlan?.price }},00</span>
+              </div>
+            </div>
+            
+            <div class="login-actions">
+              <button class="btn-primary" @click="goToLogin">
+                <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Fazer Login
+              </button>
+              
+              <button class="btn-secondary" @click="closeLoginRequiredModal">
+                Continuar Navegando
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
     <!-- Payment Method Modal -->
     <div v-if="showPaymentModal" class="modal-overlay" @click="closePaymentModal">
       <div class="payment-modal" @click.stop>
@@ -630,6 +677,7 @@ export default {
       showProcessingModal: false,
       showPixModal: false,
       showRedirectModal: false,
+      showLoginRequiredModal: false,
       selectedPlan: null,
       processingText: 'Processando...',
       
@@ -675,7 +723,7 @@ export default {
             {
               id: 'pre-daily',
               duration: 'Diário',
-              title: 'SUREBET PRÉ JOGO DIÁRIO',
+              title: 'SUREBET \nPRÉ JOGO DIÁRIO',
               price: '19',
               days: 1,
               features: [
@@ -1058,6 +1106,16 @@ export default {
     
     buyPlan(plan) {
       console.log('buyPlan chamado com:', plan)
+      
+      // Verificar se o usuário está logado
+      if (!this.currentUser) {
+        // Usuário não logado - mostrar modal de login
+        this.showLoginRequiredModal = true
+        this.selectedPlan = plan
+        return
+      }
+      
+      // Usuário logado - prosseguir com a compra
       this.selectedPlan = plan
       this.showPaymentMethodModal = true
       console.log('showPaymentMethodModal definido como:', this.showPaymentMethodModal)
@@ -1094,6 +1152,22 @@ export default {
     closePaymentMethodModal() {
       this.showPaymentMethodModal = false
       this.selectedPlan = null
+    },
+    
+    // Login required modal methods
+    closeLoginRequiredModal() {
+      this.showLoginRequiredModal = false
+      this.selectedPlan = null
+    },
+    
+    goToLogin() {
+      // Salvar o plano selecionado para redirecionamento após login
+      localStorage.setItem('redirectAfterLogin', `/plans`)
+      localStorage.setItem('selectedPlanId', this.selectedPlan.id)
+      
+      // Fechar modal e redirecionar para login
+      this.closeLoginRequiredModal()
+      this.$router.push('/login')
     },
     
     selectPaymentMethod(method) {
@@ -1993,7 +2067,8 @@ export default {
   .payment-modal,
   .payment-method-modal,
   .processing-modal,
-  .pix-modal {
+  .pix-modal,
+  .login-required-modal {
     background: var(--bg-secondary, #2a2a2a);
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -2148,6 +2223,163 @@ export default {
   
   .payment-method-option:hover .method-arrow {
     color: #00ff88;
+  }
+  
+  /* Login Required Modal Specific */
+  .login-required-modal {
+    max-width: 500px;
+    text-align: center;
+  }
+  
+  .login-required-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .login-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+  }
+  
+  .login-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary, #ffffff);
+    margin: 0;
+  }
+  
+  .login-description {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-secondary, #cccccc);
+    margin: 0;
+    max-width: 400px;
+  }
+  
+  .login-description strong {
+    color: #00ff88;
+  }
+  
+  .plan-summary {
+    background: rgba(0, 255, 136, 0.1);
+    border: 1px solid rgba(0, 255, 136, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .plan-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .plan-info .plan-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #ffffff);
+    margin: 0;
+  }
+  
+  .plan-info .plan-price {
+    font-size: 20px;
+    font-weight: 700;
+    color: #00ff88;
+    margin: 0;
+  }
+  
+  .login-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    color: #1a1a1a;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 24px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
+    background: linear-gradient(135deg, #00ff9a 0%, #00dd7a 100%);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+  }
+  
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+  }
+  
+  .btn-primary:hover::before {
+    left: 100%;
+  }
+  
+  .btn-primary svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.3s ease;
+  }
+  
+  .btn-primary:hover svg {
+    transform: scale(1.1);
+  }
+  
+  .btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #cccccc);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-primary, #ffffff);
+    transform: translateY(-1px);
   }
   
   .plan-price-display {
@@ -2823,6 +3055,48 @@ export default {
     margin: 20px;
   }
   
+  /* Login Required Modal responsivo */
+  .login-required-modal {
+    max-width: 95%;
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .login-required-content {
+    gap: 20px;
+  }
+  
+  .login-icon {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .login-title {
+    font-size: 20px;
+  }
+  
+  .login-description {
+    font-size: 14px;
+  }
+  
+  .plan-summary {
+    padding: 16px;
+  }
+  
+  .login-actions {
+    max-width: 100%;
+  }
+  
+  .btn-primary {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+  
+  .btn-primary svg {
+    width: 18px;
+    height: 18px;
+  }
+  
   .form-section {
     padding: 16px;
   }
@@ -2920,6 +3194,17 @@ export default {
   .submit-payment-btn {
     padding: 12px 16px;
     font-size: 14px;
+  }
+  
+  .btn-primary {
+    padding: 12px 18px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+  
+  .btn-primary svg {
+    width: 16px;
+    height: 16px;
   }
   
   .selected-plan-info {

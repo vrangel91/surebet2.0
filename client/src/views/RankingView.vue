@@ -1,5 +1,6 @@
 <template>
-  <div class="ranking-container">
+  <RouteGuard :requiresAuth="true">
+    <div class="ranking-container">
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
@@ -587,8 +588,9 @@
       <div class="scroll-spacer"></div>
     </main>
 
-    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary"     />
   </div>
+    </RouteGuard>
 </template>
 
 <script>
@@ -596,6 +598,7 @@ import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 import { Chart, registerables } from 'chart.js'
 import { filterOptions } from '../config/filters.js'
 import { 
@@ -608,7 +611,7 @@ Chart.register(...registerables)
 
 export default {
   name: 'RankingView',
-  components: { Sidebar, Header, GlossaryModal },
+  components: { Sidebar, Header, GlossaryModal, RouteGuard },
   
   data() {
     return {

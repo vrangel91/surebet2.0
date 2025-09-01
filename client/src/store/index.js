@@ -147,9 +147,13 @@ export default createStore({
       
       commit('setAuthToken', token)
       commit('setUser', convertedUser)
+      
+      console.log('✅ Login realizado com sucesso para:', convertedUser.email, 'Tipo de conta:', convertedUser.accountType)
     },
     
-    logout({ commit }) {
+    logout({ commit, state }) {
+      const userEmail = state.user?.email || 'Usuário desconhecido'
+      console.log('🚪 Logout realizado para:', userEmail)
       commit('logout')
     },
     
@@ -174,10 +178,13 @@ export default createStore({
           
           commit('setAuthToken', token)
           commit('setUser', convertedUser)
+          console.log('✅ Usuário autenticado restaurado:', convertedUser.email, 'Tipo:', convertedUser.accountType)
         } catch (error) {
+          console.error('❌ Erro ao restaurar dados do usuário:', error)
           commit('logout')
         }
       } else {
+        console.log('ℹ️ Nenhum usuário autenticado encontrado')
         commit('logout')
       }
     },

@@ -1,12 +1,13 @@
 <template>
-  <div class="referrals-container">
-    <!-- Sidebar Reutilizável -->
-    <Sidebar 
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
-    />
+  <RouteGuard :requiresAuth="true">
+    <div class="referrals-container">
+      <!-- Sidebar Reutilizável -->
+      <Sidebar 
+        :sidebarCollapsed="sidebarCollapsed"
+        @toggle-sidebar="handleSidebarToggle"
+        @sidebar-state-loaded="handleSidebarStateLoaded"
+        @open-glossary="openGlossary"
+      />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
@@ -34,10 +35,15 @@
               </svg>
             </div>
             <div class="card-content">
-              <div class="card-value">R$ {{ commissionBalance.toFixed(2).replace('.', ',') }}</div>
-              <button class="withdraw-btn" @click="withdrawCommission">
-                + Sacar comissão
-              </button>
+              <div class="card-value">R$ {{ formattedCommissionBalance }}</div>
+                             <button 
+                 class="withdraw-btn" 
+                 :class="{ 'disabled': commissionBalance < 100 }"
+                 @click="withdrawCommission"
+                 :disabled="commissionBalance < 100"
+               >
+                 {{ commissionBalance >= 100 ? '+ Sacar comissão' : 'Mínimo R$ 100,00' }}
+               </button>
             </div>
           </div>
 
@@ -66,7 +72,7 @@
           <div class="refer-content">
             <h3 class="refer-title">Indique e ganhe!</h3>
             <p class="refer-description">
-              Divulgue seu link de afiliado abaixo e ganhe até 25% de indicação de qualquer plano contratado, e o melhor, você recebe na hora via PIX.
+              Divulgue seu link de afiliado abaixo e ganhe R$ 19,90 por cada indicação que assinar o plano mensal mínimo. Saque disponível a partir de R$ 100,00 acumulados.
             </p>
             
             <div class="affiliate-link-section">
@@ -104,11 +110,11 @@
           <div class="table-container">
             <table class="referrals-table">
               <thead>
-                <tr>
-                  <th>NOME DO INDICADO</th>
-                  <th>VALOR DO PLANO (R$)</th>
-                  <th>COMISSÃO DO PLANO (R$)</th>
-                </tr>
+                                 <tr>
+                   <th>NOME DO INDICADO</th>
+                   <th>PLANO CONTRATADO</th>
+                   <th>COMISSÃO (R$)</th>
+                 </tr>
               </thead>
               <tbody>
                 <tr v-if="referredUsers.length === 0" class="empty-row">
@@ -118,16 +124,16 @@
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
                         <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
                       </svg>
-                      <p>Nenhum usuário indicado ainda</p>
-                      <span>Compartilhe seu link de afiliado para começar a ganhar comissões!</span>
+                                           <p>Nenhum usuário indicado ainda</p>
+                     <span>Compartilhe seu link de afiliado para começar a ganhar R$ 19,90 por indicação!</span>
                     </div>
                   </td>
                 </tr>
-                <tr v-for="user in referredUsers" :key="user.id" class="user-row">
-                  <td>{{ user.name }}</td>
-                  <td>R$ {{ user.planValue.toFixed(2).replace('.', ',') }}</td>
-                  <td>R$ {{ user.commission.toFixed(2).replace('.', ',') }}</td>
-                </tr>
+                                 <tr v-for="user in referredUsers" :key="user.id" class="user-row">
+                   <td>{{ user.name }}</td>
+                   <td>{{ user.planName || 'Plano Mensal' }}</td>
+                   <td>R$ 19,90</td>
+                 </tr>
               </tbody>
             </table>
           </div>
@@ -204,20 +210,23 @@
         <button class="toast-close" @click="hideToast">×</button>
       </div>
     </div>
-  </div>
+    </div>
+  </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
   name: 'ReferralsView',
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
   data() {
     return {
@@ -227,7 +236,7 @@ export default {
       showToast: false,
       toastMessage: '',
       toastType: 'info',
-      commissionBalance: 0.00,
+      commissionBalance: 0,
       affiliateLink: 'http://localhost:3001/login?referer_id=SEU_CODIGO_AQUI',
       linkCopied: false,
       referredUsers: [], // Array vazio para simular estado inicial
@@ -241,6 +250,10 @@ export default {
     },
     isAdmin() {
       return this.$store.getters.isAdmin
+    },
+    formattedCommissionBalance() {
+      const balance = parseFloat(this.commissionBalance) || 0
+      return balance.toFixed(2).replace('.', ',')
     }
   },
   
@@ -274,7 +287,7 @@ export default {
       try {
         const response = await fetch('/api/referrals/my-status', {
           headers: {
-            'Authorization': `Bearer ${this.$store.getters.token}`
+            'Authorization': `Bearer ${this.$store.getters.authToken}`
           }
         })
         
@@ -282,7 +295,7 @@ export default {
           const data = await response.json()
           if (data.success && data.referralData) {
             this.affiliateLink = data.referralData.affiliateLink
-            this.commissionBalance = data.referralData.commissionBalance || 0
+            this.commissionBalance = parseFloat(data.referralData.commissionBalance) || 0
             this.referredUsers = data.referralData.referredUsers || []
           }
         } else {
@@ -299,10 +312,13 @@ export default {
     },
     
     withdrawCommission() {
-      if (this.commissionBalance > 0) {
-        // Simula saque de comissão
-        this.showToastNotification(`Saque de R$ ${this.commissionBalance.toFixed(2).replace('.', ',')} solicitado!`, 'success')
+      const balance = parseFloat(this.commissionBalance) || 0
+      if (balance >= 100) {
+        // Simula saque de comissão (mínimo R$ 100,00)
+        this.showToastNotification(`Saque de R$ ${balance.toFixed(2).replace('.', ',')} solicitado!`, 'success')
         this.commissionBalance = 0
+      } else if (balance > 0) {
+        this.showToastNotification(`Valor mínimo para saque é R$ 100,00. Você possui R$ ${balance.toFixed(2).replace('.', ',')}`, 'error')
       } else {
         this.showToastNotification('Você não possui comissões disponíveis para saque.', 'error')
       }
@@ -364,7 +380,8 @@ export default {
     },
 
     formatCurrency(value) {
-      return value.toFixed(2).replace('.', ',');
+      const numValue = parseFloat(value) || 0;
+      return numValue.toFixed(2).replace('.', ',');
     },
 
     getStatusText(status) {
@@ -507,10 +524,22 @@ export default {
   align-self: flex-start;
 }
 
-.withdraw-btn:hover {
-  background: #00cc6a;
-  transform: translateY(-1px);
-}
+ .withdraw-btn:hover:not(.disabled) {
+   background: #00cc6a;
+   transform: translateY(-1px);
+ }
+
+ .withdraw-btn.disabled {
+   background: #666666;
+   color: #999999;
+   cursor: not-allowed;
+   opacity: 0.6;
+ }
+
+ .withdraw-btn.disabled:hover {
+   background: #666666;
+   transform: none;
+ }
 
 .view-btn {
   background: rgba(255, 255, 255, 0.1);

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste API Referências</title>
+</head>
+<body>
+    <h1>🧪 Teste da API de Referências</h1>
+    
+    <div>
+        <h3>Token de Teste:</h3>
+        <input type="text" id="tokenInput" style="width: 500px;" placeholder="Cole o token aqui">
+        <button onclick="testAPI()">Testar API</button>
+    </div>
+    
+    <div id="result" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc; min-height: 100px;">
+        <p>Resultado aparecerá aqui...</p>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const token = document.getElementById('tokenInput').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<p style="color: red;">Por favor, insira um token</p>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<p>Testando API...</p>';
+            
+            try {
+                const response = await fetch('/api/referrals/my-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: green;">✅ API funcionando!</h3>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Dados:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: red;">❌ Erro na API</h3>
+                        <p><strong>Status:</strong> ${response.status}</p>
+                        <p><strong>Erro:</strong> ${data.error || 'Erro desconhecido'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: red;">❌ Erro na requisição</h3>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                `;
+            }
+        }
+        
+        // Token de teste pré-preenchido
+        document.getElementById('tokenInput').value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsImVtYWlsIjoidGVzdGVAdGVzdGUuY29tIiwiaXNfYWRtaW4iOmZhbHNlLCJpc192aXAiOmZhbHNlLCJpYXQiOjE3NTY3Mzg0OTYsImV4cCI6MTc1NzM0MzI5Nn0.-Y1p8QhSZHWQOzp_EsKp2OCixXhe9xlP-VAgl0jI1DY';
+    </script>
+</body>
+</html>

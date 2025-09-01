@@ -1,866 +1,794 @@
 <template>
-  <div class="admin-container">
-    <!-- Sidebar Reutilizável -->
-    <Sidebar 
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
-    />
+  <RouteGuard :requiresAuth="true" :requiresAdmin="true">
+    <div class="admin-container">
+      <!-- Sidebar Reutilizável -->
+      <Sidebar 
+        :sidebarCollapsed="sidebarCollapsed"
+        @toggle-sidebar="handleSidebarToggle"
+        @sidebar-state-loaded="handleSidebarStateLoaded"
+        @open-glossary="openGlossary"
+      />
 
-    <!-- Conteúdo Principal -->
-    <main class="main-content">
-      <!-- Header Global -->
-      <Header />
-      
-      <!-- Header -->
-      <div class="admin-header">
-      <h1 class="admin-title">
-        <span class="admin-icon">👑</span>
-        Painel de Administração
-      </h1>
-      <div class="admin-stats">
-        <div class="stat-card">
-          <span class="stat-number">{{ totalUsers }}</span>
-          <span class="stat-label">Total de Usuários</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ activeUsers }}</span>
-          <span class="stat-label">Usuários Ativos</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ adminUsers }}</span>
-          <span class="stat-label">Administradores</span>
-        </div>
-      </div>
-    </div>
+      <!-- Conteúdo Principal -->
+      <main class="main-content">
+        <!-- Header Global -->
+        <Header />
+        
+        <!-- Header do Conteúdo -->
+        <header class="content-header">
+          <div class="header-left">
+            <h2 class="page-title">Painel Administrativo</h2>
+            <p class="page-subtitle">Gerenciamento de usuários e tickets</p>
+          </div>
+          <div class="header-actions">
+            <button class="refresh-btn" @click="refreshData" title="Atualizar dados">
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 3a5 5 0 0 0-5 5H1l3.5 3.5L7.5 8H6a2 2 0 1 1 2 2v2a4 4 0 1 0-4-4H1a7 7 0 1 1 7 7v-2a5 5 0 0 0 0-10z"/>
+              </svg>
+            </button>
+            <button class="new-user-btn" @click="showCreateUserModal = true">
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+              </svg>
+              Novo Usuário
+            </button>
+          </div>
+        </header>
 
-    <!-- Admin Tabs -->
-    <div class="admin-tabs">
-      <button 
-        class="tab-btn" 
-        :class="{ active: activeTab === 'users' }"
-        @click="activeTab = 'users'"
-      >
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 0 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c3.39 0 6 2.145 6 4v1H5.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-        </svg>
-        Usuários
-      </button>
-      <button 
-        class="tab-btn" 
-        :class="{ active: activeTab === 'tickets' }"
-        @click="activeTab = 'tickets'"
-      >
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-          <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-          <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-        </svg>
-        Tickets
-      </button>
-    </div>
+        <!-- Main Content -->
+        <div class="admin-main">
+          <!-- Dashboard Stats -->
+          <div class="dashboard-stats">
+            <div class="stat-card">
+              <div class="stat-icon users-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ dashboardStats.totalUsers }}</div>
+                <div class="stat-label">Total de Usuários</div>
+              </div>
+            </div>
 
-    <!-- Users Tab Content -->
-    <div v-if="activeTab === 'users'" class="tab-content">
-      <!-- Actions Bar -->
-      <div class="actions-bar">
-        <button @click="showCreateModal = true" class="btn-primary">
-          <i class="bi bi-person-plus-fill"></i>
-          Novo Usuário
-        </button>
-        <div class="search-box">
-          <input
-            v-model="searchTerm"
-            type="text"
-            placeholder="Buscar usuários..."
-            class="search-input"
-          />
-          <i class="bi bi-search search-icon"></i>
-        </div>
-      </div>
+            <div class="stat-card">
+              <div class="stat-icon vip-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ dashboardStats.vipUsers }}</div>
+                <div class="stat-label">Usuários VIP</div>
+              </div>
+            </div>
 
-    <!-- Users Table -->
-    <div class="users-table-container">
-      <table class="users-table">
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>E-mail</th>
-            <th>Função</th>
-            <th>Status</th>
-            <th>Tipo de Conta</th>
-            <th>Último Login</th>
-            <th>Criado em</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="user in filteredUsers" :key="user.id" class="user-row">
-            <td class="user-name">
-              <span class="user-avatar">{{ user.name ? user.name.charAt(0) : '?' }}</span>
-              {{ user.name || 'Nome não informado' }}
-            </td>
-            <td>{{ user.email }}</td>
-            <td>
-              <span :class="['role-badge', user.role]">
-                {{ user.role === 'admin' ? 'Administrador' : 'Usuário' }}
-              </span>
-            </td>
-            <td>
-              <span :class="['status-badge', user.status]">
-                {{ user.status === 'active' ? 'Ativo' : 'Inativo' }}
-              </span>
-            </td>
-            <td>
-              <span :class="['account-type-badge', user.accountType || 'basic']">
-                {{ getAccountTypeText(user.accountType || 'basic') }}
-              </span>
-            </td>
-            <td>{{ formatDate(user.lastLogin) }}</td>
-            <td>{{ formatDate(user.createdAt) }}</td>
-            <td class="actions-cell">
-              <div class="actions-dropdown">
-                <button 
-                  @click="toggleDropdown(user.id)" 
-                  class="dropdown-toggle"
-                  :class="{ 'active': openDropdown === user.id }"
-                  title="Ações"
-                >
-                  <i class="bi bi-three-dots-vertical"></i>
-                </button>
+            <div class="stat-card">
+              <div class="stat-icon tickets-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ dashboardStats.totalTickets }}</div>
+                <div class="stat-label">Total de Tickets</div>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-icon open-icon">
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
+                  <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+                </svg>
+              </div>
+              <div class="stat-content">
+                <div class="stat-value">{{ dashboardStats.openTickets }}</div>
+                <div class="stat-label">Tickets Abertos</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <div class="tabs-container">
+            <div class="tabs-header">
+              <button 
+                class="tab-btn" 
+                :class="{ active: activeTab === 'users' }"
+                @click="activeTab = 'users'"
+              >
+                Usuários
+              </button>
+              <button 
+                class="tab-btn" 
+                :class="{ active: activeTab === 'tickets' }"
+                @click="activeTab = 'tickets'"
+              >
+                Tickets
+              </button>
+            </div>
+
+            <!-- Users Tab -->
+            <div v-if="activeTab === 'users'" class="tab-content">
+              <div class="section-header">
+                <h3 class="section-title">Gerenciamento de Usuários</h3>
+                <div class="filter-controls">
+                  <input 
+                    v-model="userSearchQuery" 
+                    type="text" 
+                    placeholder="Buscar por nome ou email..."
+                    class="search-input"
+                  >
+                  <select v-model="userStatusFilter" class="status-filter">
+                    <option value="">Todos os Status</option>
+                    <option value="active">Ativos</option>
+                    <option value="inactive">Inativos</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="users-list">
+                <!-- Loading State -->
+                <div v-if="loading" class="loading-users">
+                  <div class="loading-spinner"></div>
+                  <p>Carregando usuários...</p>
+                </div>
                 
-                <div 
-                  v-if="openDropdown === user.id" 
-                  class="dropdown-menu"
-                  @click.stop
-                >
-                  <button 
-                    @click="editUser(user)" 
-                    class="dropdown-item"
-                    title="Editar usuário"
-                  >
-                    <i class="bi bi-pencil-square"></i>
-                    Editar
-                  </button>
+                <!-- Empty State -->
+                <div v-else-if="filteredUsers.length === 0" class="empty-users">
+                  <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                  </svg>
+                  <h4>Nenhum usuário encontrado</h4>
+                  <p>Não há usuários que correspondam aos filtros selecionados</p>
+                </div>
+
+                <div v-for="user in filteredUsers" :key="user.id" class="user-card">
+                  <div class="user-header">
+                    <div class="user-info">
+                      <h4 class="user-name">{{ user.name }}</h4>
+                      <span class="user-email">{{ user.email }}</span>
+                      <span class="user-id">#{{ user.id }}</span>
+                    </div>
+                    <div class="user-status" :class="user.status">
+                      <span class="status-badge">{{ getUserStatusText(user.status) }}</span>
+                    </div>
+                  </div>
                   
-                  <button 
-                    @click="changePassword(user)" 
-                    class="dropdown-item"
-                    title="Alterar senha"
-                  >
-                    <i class="bi bi-key"></i>
-                    Alterar Senha
-                  </button>
+                  <div class="user-content">
+                    <div class="user-meta">
+                      <span class="user-plan">{{ user.plan || 'Sem plano' }}</span>
+                      <span class="user-created">{{ formatDate(user.createdAt) }}</span>
+                    </div>
+                  </div>
                   
-                  <button 
-                    @click="changeAccountType(user)" 
-                    class="dropdown-item"
-                    title="Alterar tipo de conta"
-                  >
-                    <i class="bi bi-person-badge"></i>
-                    Alterar Tipo de Conta
-                  </button>
-                  
-                  <div class="dropdown-divider"></div>
-                  
-                  <button 
-                    @click="toggleUserStatus(user)" 
-                    class="dropdown-item"
-                    :class="user.status === 'active' ? 'text-warning' : 'text-success'"
-                    :title="user.status === 'active' ? 'Pausar usuário' : 'Ativar usuário'"
-                  >
-                    <i :class="user.status === 'active' ? 'bi bi-pause-circle' : 'bi bi-play-circle'"></i>
-                    {{ user.status === 'active' ? 'Pausar' : 'Ativar' }}
-                  </button>
-                  
-                  <div class="dropdown-divider"></div>
-                  
-                  <button 
-                    @click="viewUserDetails(user)" 
-                    class="dropdown-item"
-                    title="Ver detalhes"
-                  >
-                    <i class="bi bi-eye"></i>
-                    Ver Detalhes
-                  </button>
-                  
-                  <button 
-                    @click="deleteUser(user)" 
-                    class="dropdown-item text-danger"
-                    title="Excluir usuário"
-                    :disabled="user.role === 'admin'"
-                  >
-                    <i class="bi bi-trash3"></i>
-                    Excluir
-                  </button>
+                  <div class="user-actions">
+                    <button 
+                      class="action-btn toggle-btn" 
+                      :class="user.status === 'active' ? 'deactivate-btn' : 'activate-btn'"
+                      @click="toggleUserStatus(user)"
+                      :title="user.status === 'active' ? 'Desativar usuário' : 'Ativar usuário'"
+                    >
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path v-if="user.status === 'active'" d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V3.5A.5.5 0 0 1 8 3zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V3.5a.5.5 0 0 1 .5-.5z"/>
+                        <path v-if="user.status === 'active'" d="M8 8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V8.5A.5.5 0 0 1 8 8zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V8.5a.5.5 0 0 1 .5-.5z"/>
+                        <path v-if="user.status === 'inactive'" d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V3.5A.5.5 0 0 1 8 3zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V3.5a.5.5 0 0 1 .5-.5z"/>
+                        <path v-if="user.status === 'inactive'" d="M8 8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V8.5A.5.5 0 0 1 8 8zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V8.5a.5.5 0 0 1 .5-.5z"/>
+                        <path v-if="user.status === 'inactive'" d="M8 13a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5v-1A.5.5 0 0 1 8 13zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11v-1a.5.5 0 0 1 .5-.5z"/>
+                      </svg>
+                      {{ user.status === 'active' ? 'Desativar' : 'Ativar' }}
+                    </button>
+                    <button class="action-btn edit-btn" @click="editUser(user)">
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.5-.5V9h-.5a.5.5 0 0 1-.5-.5V8h-.5a.5.5 0 0 1-.5-.5V7h-.5a.5.5 0 0 1-.5-.5V6h-.5a.5.5 0 0 1-.5-.5V5h-.5a.5.5 0 0 1-.5-.5V4h-.5a.5.5 0 0 1-.5-.5V3h-.5a.5.5 0 0 1-.5-.5V2h-.5a.5.5 0 0 1-.5-.5V1h-.5a.5.5 0 0 1-.5-.5V0H1a.5.5 0 0 0-.5.5v15a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5V1a.5.5 0 0 0-.5-.5H1z"/>
+                      </svg>
+                      Editar
+                    </button>
+                    <button class="action-btn delete-btn" @click="deleteUser(user)">
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                        <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                      </svg>
+                      Excluir
+                    </button>
+                  </div>
                 </div>
               </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    </div>
+            </div>
 
-    <!-- Tickets Tab Content -->
-    <div v-if="activeTab === 'tickets'" class="tab-content">
-      <!-- Tickets Stats -->
-      <div class="tickets-stats">
-        <div class="stat-card">
-          <span class="stat-number">{{ allTickets && Array.isArray(allTickets) ? allTickets.length : 0 }}</span>
-          <span class="stat-label">Total de Tickets</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ openTickets && Array.isArray(openTickets) ? openTickets.length : 0 }}</span>
-          <span class="stat-label">Tickets Abertos</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ pendingTickets && Array.isArray(pendingTickets) ? pendingTickets.length : 0 }}</span>
-          <span class="stat-label">Em Andamento</span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-number">{{ closedTickets && Array.isArray(closedTickets) ? closedTickets.length : 0 }}</span>
-          <span class="stat-label">Fechados</span>
-        </div>
-      </div>
+            <!-- Tickets Tab -->
+            <div v-if="activeTab === 'tickets'" class="tab-content">
+              <div class="section-header">
+                <h3 class="section-title">Gerenciamento de Tickets</h3>
+                <div class="filter-controls">
+                  <input 
+                    v-model="searchQuery" 
+                    type="text" 
+                    placeholder="Buscar por ID, título ou usuário..."
+                    class="search-input"
+                  >
+                  <select v-model="statusFilter" class="status-filter">
+                    <option value="">Todos os Status</option>
+                    <option value="open">Abertos</option>
+                    <option value="pending">Em Andamento</option>
+                    <option value="closed">Fechados</option>
+                  </select>
+                  <select v-model="priorityFilter" class="priority-filter">
+                    <option value="">Todas as Prioridades</option>
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </select>
+                  <select v-model="categoryFilter" class="category-filter">
+                    <option value="">Todas as Categorias</option>
+                    <option value="financial">Financeiro</option>
+                    <option value="technical">Técnico</option>
+                    <option value="support">Suporte</option>
+                    <option value="billing">Cobrança</option>
+                    <option value="feature">Sugestão</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </div>
+              </div>
 
-      <!-- Tickets Actions Bar -->
-      <div class="actions-bar">
-        <div class="filter-controls">
-          <select v-model="ticketStatusFilter" class="status-filter">
-            <option value="">Todos os Status</option>
-            <option value="open">Abertos</option>
-            <option value="pending">Em Andamento</option>
-            <option value="closed">Fechados</option>
-          </select>
-          <select v-model="ticketPriorityFilter" class="priority-filter">
-            <option value="">Todas as Prioridades</option>
-            <option value="low">Baixa</option>
-            <option value="medium">Média</option>
-            <option value="high">Alta</option>
-            <option value="urgent">Urgente</option>
-          </select>
-        </div>
-        <div class="search-box">
-          <input
-            v-model="ticketSearchTerm"
-            type="text"
-            placeholder="Buscar tickets..."
-            class="search-input"
-          />
-          <i class="bi bi-search search-icon"></i>
-        </div>
-      </div>
+              <div class="tickets-list">
+                <div v-if="filteredTickets.length === 0" class="empty-tickets">
+                  <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                  </svg>
+                  <h4>Nenhum ticket encontrado</h4>
+                  <p>Não há tickets que correspondam aos filtros selecionados</p>
+                </div>
 
-      <!-- Tickets Table -->
-      <div class="tickets-table-container">
-        <table class="tickets-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Usuário</th>
-              <th>Título</th>
-              <th>Categoria</th>
-              <th>Prioridade</th>
-              <th>Status</th>
-              <th>Criado em</th>
-              <th>Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-row">
-              <td class="ticket-id">#{{ ticket.id }}</td>
-              <td class="ticket-user">
-                <span class="user-avatar">{{ getUserName(ticket.userEmail) ? getUserName(ticket.userEmail).charAt(0) : '?' }}</span>
-                {{ getUserName(ticket.userEmail) || 'Usuário não encontrado' }}
-              </td>
-              <td class="ticket-title">{{ ticket.title }}</td>
-              <td>
-                <span class="category-badge">{{ getCategoryText(ticket.category) }}</span>
-              </td>
-              <td>
-                <span :class="['priority-badge', ticket.priority]">
-                  {{ getPriorityText(ticket.priority) }}
-                </span>
-              </td>
-              <td>
-                <span :class="['status-badge', ticket.status]">
-                  {{ getStatusText(ticket.status) }}
-                </span>
-              </td>
-              <td>{{ formatDate(ticket.createdAt) }}</td>
-              <td class="actions-cell">
-                <button @click="viewTicket(ticket)" class="btn-icon btn-info" title="Visualizar">
-                  <i class="bi bi-eye"></i>
-                </button>
-                <button 
-                  @click="updateTicketStatus(ticket, 'pending')" 
-                  v-if="ticket.status === 'open'"
-                  class="btn-icon btn-warning"
-                  title="Marcar como Em Andamento"
-                >
-                  <i class="bi bi-clock"></i>
-                </button>
-                <button 
-                  @click="updateTicketStatus(ticket, 'closed')" 
-                  v-if="ticket.status !== 'closed'"
-                  class="btn-icon btn-success"
-                  title="Fechar Ticket"
-                >
-                  <i class="bi bi-check-circle"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-    </main>
-
-    <!-- Create/Edit User Modal -->
-    <div v-if="showCreateModal || showEditModal" class="modal-overlay">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>{{ showEditModal ? 'Editar Usuário' : 'Novo Usuário' }}</h2>
-          <button @click="closeModal" class="modal-close">
-            <i class="bi bi-x-lg"></i>
-          </button>
+                <div v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card admin-ticket" @click="openTicket(ticket)">
+                  <div class="ticket-header">
+                    <div class="ticket-info">
+                      <h4 class="ticket-title">{{ ticket.title }}</h4>
+                      <span class="ticket-id">#{{ ticket.id }}</span>
+                      <span class="ticket-user">{{ ticket.userName }}</span>
+                    </div>
+                    <div class="ticket-status" :class="ticket.status">
+                      <span class="status-badge">{{ getStatusText(ticket.status) }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="ticket-content">
+                    <p class="ticket-description">{{ ticket.description.substring(0, 100) }}{{ ticket.description.length > 100 ? '...' : '' }}</p>
+                  </div>
+                  
+                  <div class="ticket-footer">
+                    <div class="ticket-meta">
+                      <span class="ticket-category">{{ getCategoryText(ticket.category) }}</span>
+                      <span class="ticket-date">{{ formatDate(ticket.createdAt) }}</span>
+                      <span class="ticket-messages">{{ ticket.messages.length }} mensagens</span>
+                    </div>
+                    <div class="ticket-priority" :class="ticket.priority">
+                      <span class="priority-badge">{{ getPriorityText(ticket.priority) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        <form @submit.prevent="saveUser" class="modal-form">
-          <div class="form-group">
-            <label>Nome</label>
-            <input
-              v-model="userForm.name"
-              type="text"
-              required
-              class="form-input"
-              placeholder="Nome completo"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>E-mail</label>
-            <input
-              v-model="userForm.email"
-              type="email"
-              required
-              class="form-input"
-              placeholder="email@exemplo.com"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Função</label>
-            <select v-model="userForm.role" class="form-select">
-              <option value="user">Usuário</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-          
-          <div class="form-group">
-            <label>Status</label>
-            <select v-model="userForm.status" class="form-select">
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
-          </div>
-          
-          <div class="form-group" v-if="!showEditModal">
-            <label>Senha</label>
-            <input
-              v-model="userForm.password"
-              type="password"
-              required
-              class="form-input"
-              placeholder="Senha temporária"
-            />
-          </div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="closeModal" class="btn-secondary">
-              Cancelar
-            </button>
-            <button type="submit" class="btn-primary">
-              {{ showEditModal ? 'Atualizar' : 'Criar' }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </main>
 
-    <!-- Change Password Modal -->
-    <div v-if="showPasswordModal" class="modal-overlay">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Alterar Senha</h2>
-          <button @click="showPasswordModal = false" class="modal-close">✕</button>
-        </div>
-        
-        <form @submit.prevent="savePassword" class="modal-form">
-          <div class="form-group">
-            <label>Usuário</label>
-            <input
-              :value="passwordForm.userName"
-              type="text"
-              disabled
-              class="form-input disabled"
-              placeholder="Nome do usuário"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Nova Senha</label>
-            <div class="password-input-group">
-              <input
-                v-model="passwordForm.newPassword"
-                :type="showPassword ? 'text' : 'password'"
-                required
-                class="form-input"
-                placeholder="Nova senha"
-                minlength="6"
-              />
+      <!-- Ticket Detail Modal -->
+      <div v-if="showTicketDetailModal" class="modal-overlay" @click="closeTicketDetailModal">
+        <div class="ticket-detail-modal admin-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Ticket #{{ selectedTicket?.id }} - {{ selectedTicket?.title }}</h3>
+            <div class="modal-actions">
               <button 
-                type="button"
-                @click="togglePasswordVisibility"
-                class="password-toggle"
-                title="Mostrar/Ocultar senha"
+                v-if="selectedTicket?.status !== 'closed'" 
+                class="close-ticket-btn" 
+                @click="closeTicket"
               >
-                <svg v-if="showPassword" class="eye-icon" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                </svg>
-                <svg v-else class="eye-icon" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="m10.79 12.912-1.614-1.615a3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588zM5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-.708-.707a3.5 3.5 0 0 0-4.474-4.474l-.707-.708z"/>
-                  <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 3.172-2.828-2.829a3.5 3.5 0 0 0-4.474-4.474L2.878 2.878a7.028 7.028 0 0 1 8.656 8.656z"/>
-                </svg>
+                Fechar Ticket
               </button>
+              <button class="close-btn" @click="closeTicketDetailModal">×</button>
             </div>
           </div>
           
-          <div class="form-group">
-            <label>Confirmar Nova Senha</label>
-            <div class="password-input-group">
-              <input
-                v-model="passwordForm.confirmPassword"
-                :type="showConfirmPassword ? 'text' : 'password'"
-                required
-                class="form-input"
-                placeholder="Confirmar nova senha"
-                minlength="6"
-              />
-              <button 
-                type="button"
-                @click="toggleConfirmPasswordVisibility"
-                class="password-toggle"
-                title="Mostrar/Ocultar senha"
-              >
-                <svg v-if="showConfirmPassword" class="eye-icon" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                  <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM8 6a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/>
-                </svg>
-                <svg v-else class="eye-icon" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="m10.79 12.912-1.614-1.615a3.3.5 3.5 0 0 1-4.474-4.474l-2.06-2.06C.938 6.278 0 8 0 8s3 5.5 8 5.5a7.029 7.029 0 0 0 2.79-.588zM5.21 3.088A7.028 7.028 0 0 1 8 2.5c5 0 8 5.5 8 5.5s-.939 1.721-2.641 3.238l-.708-.707a3.5 3.5 0 0 0-4.474-4.474l-.707-.708z"/>
-                  <path d="M5.525 7.646a2.5 2.5 0 0 0 2.829 2.829l-2.83-2.829zm4.95.708-2.829-2.83a2.5 2.5 0 0 1 2.829 2.829zm3.171 3.172-2.828-2.829a3.5 3.5 0 0 0-4.474-4.474L2.878 2.878a7.028 7.028 0 0 1 8.656 8.656z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="showPasswordModal = false" class="btn-secondary">
-              Cancelar
-            </button>
-            <button type="submit" class="btn-primary" :disabled="!isPasswordFormValid">
-              Alterar Senha
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-
-
-    <!-- Change Account Type Modal -->
-    <div v-if="showAccountTypeModal" class="modal-overlay">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h2>Alterar Tipo de Conta</h2>
-          <button @click="showAccountTypeModal = false" class="modal-close">✕</button>
-        </div>
-        
-        <form @submit.prevent="saveAccountType" class="modal-form">
-          <div class="form-group">
-            <label>Usuário</label>
-            <input
-              :value="accountTypeForm.userName"
-              type="text"
-              disabled
-              class="form-input disabled"
-              placeholder="Nome do usuário"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Tipo de Conta Atual</label>
-            <input
-              :value="getAccountTypeText(accountTypeForm.currentType)"
-              type="text"
-              disabled
-              class="form-input disabled"
-              placeholder="Tipo atual"
-            />
-          </div>
-          
-          <div class="form-group">
-            <label>Novo Tipo de Conta</label>
-            <select v-model="accountTypeForm.newType" class="form-select" required>
-              <option value="basic">Básica</option>
-              <option value="premium">Premium</option>
-              <option value="vip">VIP</option>
-            </select>
-          </div>
-          
-          <div class="modal-actions">
-            <button type="button" @click="showAccountTypeModal = false" class="btn-secondary">
-              Cancelar
-            </button>
-            <button type="submit" class="btn-primary">
-              Alterar Tipo
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="modal-overlay">
-      <div class="modal-content delete-modal" @click.stop>
-        <div class="modal-header">
-          <h2>Confirmar Exclusão</h2>
-          <button @click="showDeleteModal = false" class="modal-close">✕</button>
-        </div>
-        
-        <div class="modal-body">
-          <p>Tem certeza que deseja excluir o usuário <strong>{{ userToDelete?.name }}</strong>?</p>
-          <p class="warning-text">Esta ação não pode ser desfeita.</p>
-        </div>
-        
-        <div class="modal-actions">
-          <button @click="showDeleteModal = false" class="btn-secondary">
-            Cancelar
-          </button>
-          <button @click="confirmDelete" class="btn-danger">
-            Excluir
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Ticket Detail Modal -->
-    <div v-if="showTicketDetailModal" class="modal-overlay">
-      <div class="ticket-detail-modal" @click.stop>
-        <div class="modal-header">
-          <h3>Ticket #{{ selectedTicket?.id }}</h3>
-          <button class="close-btn" @click="closeTicketDetailModal">×</button>
-        </div>
-        
-        <div class="modal-body" v-if="selectedTicket">
-          <div class="ticket-detail-header">
-            <h4>{{ selectedTicket.title }}</h4>
-            <div class="ticket-detail-meta">
-              <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status) }}</span>
-              <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority) }}</span>
-            </div>
-          </div>
-          
-          <div class="ticket-detail-content">
-            <div class="ticket-info-grid">
-              <div class="info-item">
-                <label>Usuário:</label>
-                <span>{{ getUserName(selectedTicket.userEmail) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Categoria:</label>
-                <span>{{ getCategoryText(selectedTicket.category) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Criado em:</label>
-                <span>{{ formatDate(selectedTicket.createdAt) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Última atualização:</label>
-                <span>{{ formatDate(selectedTicket.updatedAt) }}</span>
+          <div class="modal-body" v-if="selectedTicket">
+            <div class="ticket-detail-header">
+              <div class="ticket-detail-meta">
+                <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status) }}</span>
+                <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority) }}</span>
+                <span class="category-badge">{{ getCategoryText(selectedTicket.category) }}</span>
               </div>
             </div>
             
-            <div class="ticket-description-section">
-              <h5>Descrição</h5>
-              <p>{{ selectedTicket.description }}</p>
-            </div>
-            
-            <div class="ticket-messages-section">
-              <h5>Mensagens</h5>
-              <div class="messages-list">
-                <div v-for="message in selectedTicket.messages" :key="message.id" class="message-item" :class="message.type">
-                  <div class="message-header">
-                    <span class="message-author">{{ message.author }}</span>
-                    <span class="message-date">{{ formatDate(message.createdAt) }}</span>
-                  </div>
-                  <div class="message-content">
-                    {{ message.content }}
-                  </div>
+            <div class="ticket-detail-content">
+              <div class="ticket-info-grid">
+                <div class="info-item">
+                  <label>Usuário:</label>
+                  <span>{{ selectedTicket.userName }}</span>
                 </div>
+                <div class="info-item">
+                  <label>Criado em:</label>
+                  <span>{{ formatDate(selectedTicket.createdAt) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Última atualização:</label>
+                  <span>{{ formatDate(selectedTicket.updatedAt) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Mensagens:</label>
+                  <span>{{ selectedTicket.messages.length }}</span>
+                </div>
+              </div>
+            
+              <div class="ticket-description-section">
+                <h5>Descrição</h5>
+                <p>{{ selectedTicket.description }}</p>
               </div>
               
-              <div class="new-message-section">
-                <textarea 
-                  v-model="newMessage" 
-                  class="message-input"
-                  placeholder="Digite sua resposta..."
-                  rows="3"
-                ></textarea>
-                <button class="send-message-btn" @click="sendMessage" :disabled="!newMessage.trim()">
-                  Enviar Resposta
-                </button>
+              <div class="ticket-messages-section">
+                <h5>Mensagens</h5>
+                <div class="messages-list">
+                  <div v-for="message in selectedTicket.messages" :key="message.id" class="message-item" :class="message.type">
+                    <div class="message-header">
+                      <span class="message-author">{{ message.author }}</span>
+                      <span class="message-date">{{ formatDate(message.createdAt) }}</span>
+                    </div>
+                    <div class="message-content">
+                      {{ message.content }}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="new-message-section">
+                  <textarea 
+                    v-model="newMessage" 
+                    class="message-input"
+                    placeholder="Digite sua resposta como administrador..."
+                    rows="3"
+                  ></textarea>
+                  <button class="send-message-btn" @click="sendAdminMessage" :disabled="!newMessage.trim()">
+                    Responder como Admin
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Modal do Glossário -->
-    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
-
-    <!-- Sistema de Notificações Toast Moderno -->
-    <div class="toast-container">
-      <transition-group name="toast" tag="div">
-        <div 
-          v-for="toast in toasts" 
-          :key="toast.id"
-          :data-toast-id="toast.id"
-          class="toast-notification"
-          :class="[toast.type, { 'toast-enter': toast.visible }]"
-        >
-          <div class="toast-icon">
-            <svg v-if="toast.type === 'success'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.97a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
-            </svg>
-            <svg v-else-if="toast.type === 'error'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-            </svg>
-            <svg v-else-if="toast.type === 'warning'" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
-            </svg>
-            <svg v-else width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-              <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
-            </svg>
+      <!-- Create User Modal -->
+      <div v-if="showCreateUserModal" class="modal-overlay" @click="closeCreateUserModal">
+        <div class="user-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Criar Novo Usuário</h3>
+            <button class="close-btn" @click="closeCreateUserModal">×</button>
           </div>
-          <div class="toast-content">
-            <div class="toast-title">{{ toast.title }}</div>
-            <div class="toast-message">{{ toast.message }}</div>
+          
+          <div class="modal-body">
+            <form @submit.prevent="createUser">
+              <div class="form-group">
+                <label for="user-name">Nome</label>
+                <input 
+                  id="user-name"
+                  v-model="newUser.name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Nome completo"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="user-email">Email</label>
+                <input 
+                  id="user-email"
+                  v-model="newUser.email" 
+                  type="email" 
+                  class="form-input"
+                  placeholder="email@exemplo.com"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="user-password">Senha</label>
+                <input 
+                  id="user-password"
+                  v-model="newUser.password" 
+                  type="password" 
+                  class="form-input"
+                  placeholder="Senha"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="user-plan">Plano</label>
+                <select id="user-plan" v-model="newUser.plan" class="form-select">
+                  <option value="">Sem plano</option>
+                  <option value="basic">Básico</option>
+                  <option value="premium">Premium</option>
+                  <option value="vip">VIP</option>
+                </select>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-btn" @click="closeCreateUserModal">Cancelar</button>
+                <button type="submit" class="submit-btn">Criar Usuário</button>
+              </div>
+            </form>
           </div>
-          <button @click="removeToast(toast.id)" class="toast-close" :title="'Fechar notificação'">
-            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-            </svg>
-          </button>
-          <div class="toast-progress" :style="{ width: `${toast.progress}%` }"></div>
         </div>
-      </transition-group>
+      </div>
+
+      <!-- Edit User Modal -->
+      <div v-if="showEditUserModal" class="modal-overlay" @click="closeEditUserModal">
+        <div class="user-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Editar Usuário</h3>
+            <button class="close-btn" @click="closeEditUserModal">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <form @submit.prevent="saveUser">
+              <div class="form-group">
+                <label for="edit-user-name">Nome</label>
+                <input 
+                  id="edit-user-name"
+                  v-model="editingUser.name" 
+                  type="text" 
+                  class="form-input"
+                  placeholder="Nome completo"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="edit-user-email">Email</label>
+                <input 
+                  id="edit-user-email"
+                  v-model="editingUser.email" 
+                  type="email" 
+                  class="form-input"
+                  placeholder="email@exemplo.com"
+                  required
+                >
+              </div>
+              
+              <div class="form-group">
+                <label for="edit-user-plan">Plano</label>
+                <select id="edit-user-plan" v-model="editingUser.plan" class="form-select">
+                  <option value="">Sem plano</option>
+                  <option value="basic">Básico</option>
+                  <option value="premium">Premium</option>
+                  <option value="vip">VIP</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="edit-user-status">Status</label>
+                <select id="edit-user-status" v-model="editingUser.status" class="form-select">
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </div>
+              
+              <div class="form-actions">
+                <button type="button" class="cancel-btn" @click="closeEditUserModal">Cancelar</button>
+                <button type="submit" class="submit-btn">Salvar Alterações</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delete User Confirmation Modal -->
+      <div v-if="showDeleteUserModal" class="modal-overlay" @click="closeDeleteUserModal">
+        <div class="confirmation-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Confirmar Exclusão</h3>
+            <button class="close-btn" @click="closeDeleteUserModal">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <p>Tem certeza que deseja excluir o usuário <strong>{{ userToDelete?.name }}</strong>?</p>
+            <p>Esta ação não pode ser desfeita.</p>
+            
+            <div class="form-actions">
+              <button type="button" class="cancel-btn" @click="closeDeleteUserModal">Cancelar</button>
+              <button type="button" class="delete-btn" @click="confirmDeleteUser">Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Glossary Modal -->
+      <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
     </div>
-  </div>
+  </RouteGuard>
 </template>
 
 <script>
-import { mapGetters, mapActions } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
+import { mapGetters } from 'vuex'
+import axios from '@/utils/axios'
 
 export default {
   name: 'AdminView',
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
-  
-  // Guarda de rota adicional para proteção extra
-  beforeRouteEnter(to, from, next) {
-    // Verificar se o usuário é admin antes de permitir acesso
-    // Como não temos acesso ao store aqui, vamos usar o localStorage diretamente
-    const user = localStorage.getItem('user')
-    if (user) {
-      try {
-        const userData = JSON.parse(user)
-        if (userData.role === 'admin') {
-          next()
-        } else {
-          console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Usuário não é admin')
-          next('/')
-        }
-      } catch (error) {
-        console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Erro ao verificar usuário')
-        next('/')
-      }
-    } else {
-      console.warn('🚫 Acesso administrativo bloqueado no beforeRouteEnter - Usuário não autenticado')
-      next('/')
+  mounted() {
+    console.log('🚀 Componente AdminView montado, verificando permissões...')
+    
+    // Verificar se o usuário é admin
+    if (!this.$store.getters.isAdmin) {
+      console.error('🚫 Acesso negado: Usuário não é administrador')
+      return
     }
+    
+    console.log('✅ Permissões verificadas, iniciando carregamento...')
+    
+    // Pequeno delay para garantir que o componente esteja totalmente montado
+    setTimeout(() => {
+      this.refreshData()
+    }, 100)
   },
-  
   data() {
     return {
       sidebarCollapsed: false,
       showGlossaryModal: false,
-      activeTab: 'users',
-      searchTerm: '',
-      showCreateModal: false,
-      showEditModal: false,
-      showDeleteModal: false,
-      showPasswordModal: false,
-
-      showAccountTypeModal: false,
       showTicketDetailModal: false,
-      userToDelete: null,
+      showCreateUserModal: false,
+      showEditUserModal: false,
+      showDeleteUserModal: false,
+      activeTab: 'users',
+      statusFilter: '',
+      priorityFilter: '',
+      categoryFilter: '',
+      searchQuery: '',
+      userSearchQuery: '',
+      userStatusFilter: '',
       selectedTicket: null,
-      showPassword: false,
-      showConfirmPassword: false,
       newMessage: '',
-      ticketStatusFilter: '',
-      ticketPriorityFilter: '',
-      ticketSearchTerm: '',
-      userForm: {
+      userToDelete: null,
+      
+      newUser: {
         name: '',
         email: '',
-        role: 'user',
-        status: 'active',
-        password: ''
+        password: '',
+        plan: ''
       },
-      passwordForm: {
-        userId: '',
-        userName: '',
-        newPassword: '',
-        confirmPassword: ''
+      
+      editingUser: {
+        name: '',
+        email: '',
+        plan: '',
+        status: 'active'
       },
-
-      accountTypeForm: {
-        userId: '',
-        userName: '',
-        currentType: 'basic',
-        newType: 'basic'
-      },
-      openDropdown: null, // Controla qual dropdown está aberto
-      toasts: [] // Array para armazenar as notificações toast
+      
+      // Dados dos usuários carregados do banco
+      users: [],
+      loading: false,
+      
+      tickets: [
+        {
+          id: 1,
+          title: 'Problema com login',
+          description: 'Não consigo fazer login na minha conta',
+          category: 'technical',
+          priority: 'high',
+          status: 'open',
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          userId: 1,
+          userName: 'João Silva',
+          messages: [
+            {
+              id: 1,
+              author: 'João Silva',
+              content: 'Não consigo fazer login na minha conta',
+              type: 'user',
+              createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        },
+        {
+          id: 2,
+          title: 'Dúvida sobre pagamento',
+          description: 'Como funciona o sistema de pagamento?',
+          category: 'financial',
+          priority: 'medium',
+          status: 'pending',
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+          updatedAt: new Date(Date.now() - 86400000).toISOString(),
+          userId: 2,
+          userName: 'Maria Santos',
+          messages: [
+            {
+              id: 1,
+              author: 'Maria Santos',
+              content: 'Como funciona o sistema de pagamento?',
+              type: 'user',
+              createdAt: new Date(Date.now() - 172800000).toISOString()
+            },
+            {
+              id: 2,
+              author: 'Suporte Técnico',
+              content: 'Olá! Nossos pagamentos são processados via PIX e cartão de crédito. Posso te ajudar com algo específico?',
+              type: 'support',
+              createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        },
+        {
+          id: 3,
+          title: 'Sugestão de melhoria',
+          description: 'Gostaria de sugerir uma melhoria na interface',
+          category: 'feature',
+          priority: 'low',
+          status: 'closed',
+          createdAt: new Date(Date.now() - 259200000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString(),
+          userId: 3,
+          userName: 'Pedro Costa',
+          messages: [
+            {
+              id: 1,
+              author: 'Pedro Costa',
+              content: 'Gostaria de sugerir uma melhoria na interface',
+              type: 'user',
+              createdAt: new Date(Date.now() - 259200000).toISOString()
+            },
+            {
+              id: 2,
+              author: 'Suporte Técnico',
+              content: 'Obrigado pela sugestão! Vamos analisar e implementar se possível.',
+              type: 'support',
+              createdAt: new Date(Date.now() - 172800000).toISOString()
+            }
+          ]
+        }
+      ]
     }
   },
   
   computed: {
     ...mapGetters([
-      'allUsers', 
-      'isAdmin', 
-      'allTickets', 
-      'openTickets', 
-      'pendingTickets', 
-      'closedTickets'
+      'currentUser',
+      'isAdmin'
     ]),
     
-    currentUser() {
-      return this.$store.getters.currentUser
-    },
-    
-    isPasswordFormValid() {
-      return this.passwordForm.newPassword.length >= 6 && 
-             this.passwordForm.newPassword === this.passwordForm.confirmPassword
-    },
-    
-    totalUsers() {
-      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.length : 0
-    },
-    
-    activeUsers() {
-      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.filter(user => user && user.status === 'active').length : 0
-    },
-    
-    adminUsers() {
-      return this.allUsers && Array.isArray(this.allUsers) ? this.allUsers.filter(user => user && user.role === 'admin').length : 0
-    },
-    
-    filteredUsers() {
-      if (!this.allUsers || !Array.isArray(this.allUsers)) return []
+    dashboardStats() {
+      const totalTickets = this.tickets.length
+      const openTickets = this.tickets.filter(t => t.status === 'open').length
+      const pendingTickets = this.tickets.filter(t => t.status === 'pending').length
+      const closedTickets = this.tickets.filter(t => t.status === 'closed').length
       
-      if (!this.searchTerm) return this.allUsers
+      // Mock data para demonstração
+      const avgResponseTime = '2h 30m'
+      const totalUsers = 156
+      const vipUsers = 23
       
-      const term = this.searchTerm.toLowerCase()
-      return this.allUsers.filter(user => 
-        user && user.name && user.name.toLowerCase().includes(term) ||
-        user && user.email && user.email.toLowerCase().includes(term)
-      )
+      return { 
+        totalTickets, 
+        openTickets, 
+        pendingTickets, 
+        closedTickets, 
+        avgResponseTime, 
+        totalUsers, 
+        vipUsers 
+      }
     },
     
     filteredTickets() {
-      if (!this.allTickets || !Array.isArray(this.allTickets)) return []
-      
-      let tickets = this.allTickets
-      
-      if (this.ticketStatusFilter) {
-        tickets = tickets.filter(ticket => ticket && ticket.status === this.ticketStatusFilter)
+      let filtered = this.tickets
+
+      // Filtro por status
+      if (this.statusFilter) {
+        filtered = filtered.filter(ticket => ticket.status === this.statusFilter)
       }
-      
-      if (this.ticketPriorityFilter) {
-        tickets = tickets.filter(ticket => ticket && ticket.priority === this.ticketPriorityFilter)
+
+      // Filtro por prioridade
+      if (this.priorityFilter) {
+        filtered = filtered.filter(ticket => ticket.priority === this.priorityFilter)
       }
-      
-      if (this.ticketSearchTerm) {
-        const term = this.ticketSearchTerm.toLowerCase()
-        tickets = tickets.filter(ticket => 
-          ticket && ticket.title && ticket.title.toLowerCase().includes(term) ||
-          ticket && ticket.description && ticket.description.toLowerCase().includes(term) ||
-          ticket && ticket.userEmail && ticket.userEmail.toLowerCase().includes(term)
+
+      // Filtro por categoria
+      if (this.categoryFilter) {
+        filtered = filtered.filter(ticket => ticket.category === this.categoryFilter)
+      }
+
+      // Filtro por busca
+      if (this.searchQuery) {
+        const query = this.searchQuery.toLowerCase()
+        filtered = filtered.filter(ticket => 
+          ticket.id.toString().includes(query) ||
+          ticket.title.toLowerCase().includes(query) ||
+          ticket.userName.toLowerCase().includes(query)
         )
       }
-      
-      return tickets
-    }
-  },
-  
-  mounted() {
-    // Verificação de segurança robusta
-    if (!this.isAdmin) {
-      console.warn('🚫 Tentativa de acesso administrativo negada para usuário:', this.currentUser?.email)
-      this.$router.push('/')
-      return
-    }
-    
-    console.log('✅ Acesso administrativo autorizado para:', this.currentUser?.email)
-    
-    // Adicionar event listener para fechar dropdown
-    document.addEventListener('click', this.handleClickOutside)
-    
-    // Buscar usuários da API
-    this.fetchUsersFromAPI()
-  },
 
-  beforeUnmount() {
-    // Remover event listener
-    document.removeEventListener('click', this.handleClickOutside)
+      return filtered
+    },
+    
+    filteredUsers() {
+      let filtered = this.users
+
+      // Filtro por status
+      if (this.userStatusFilter) {
+        filtered = filtered.filter(user => user.status === this.userStatusFilter)
+      }
+
+      // Filtro por busca
+      if (this.userSearchQuery) {
+        const query = this.userSearchQuery.toLowerCase()
+        filtered = filtered.filter(user => 
+          user.name.toLowerCase().includes(query) ||
+          user.email.toLowerCase().includes(query)
+        )
+      }
+
+      return filtered
+    }
   },
   
   methods: {
-    ...mapActions([
-      'createUser', 
-      'updateUserData', 
-      'deleteUserData', 
-      'updateTicketData', 
-      'addMessageToTicket',
-      'upgradeAccountType',
-      'fetchUsers'
-    ]),
+    // Carregar usuários do banco de dados
+    async loadUsers() {
+      console.log('🔍 Carregando usuários...')
+      this.loading = true
+      try {
+        // Verificar se o token está disponível
+        const token = this.$store.getters.authToken
+        console.log('🔑 Token disponível para usuários:', !!token)
+        
+        const response = await axios.get('/api/users')
+        console.log('📊 Resposta da API usuários:', response.data)
+        
+        if (response.data.success && response.data.users) {
+          this.users = response.data.users.map(user => ({
+            id: user.id,
+            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
+            email: user.email,
+            status: user.status || 'active',
+            plan: user.plan_type || user.plan || '',
+            createdAt: user.created_at || user.createdAt || new Date().toISOString()
+          }))
+          console.log('✅ Usuários carregados:', this.users.length)
+        } else {
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          this.users = []
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar usuários:', error)
+        console.error('📋 Detalhes do erro:', error.response?.data)
+        this.users = []
+      } finally {
+        this.loading = false
+      }
+    },
     
-
+    // Atualizar dados
+    async refreshData() {
+      console.log('🔄 Iniciando refreshData...')
+      try {
+        await this.loadUsers()
+        console.log('✅ refreshData concluído com sucesso')
+      } catch (error) {
+        console.error('❌ Erro ao atualizar dados:', error)
+      }
+    },
     
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
@@ -870,45 +798,19 @@ export default {
       this.sidebarCollapsed = collapsed
     },
     
-    async fetchUsersFromAPI() {
-      try {
-        console.log('🔄 Buscando usuários da API...')
-        await this.fetchUsers()
-        console.log('✅ Usuários carregados com sucesso')
-      } catch (error) {
-        console.error('❌ Erro ao carregar usuários:', error)
-      }
-    },
-    
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
-    },
-
-    toggleDropdown(userId) {
-      if (this.openDropdown === userId) {
-        this.openDropdown = null
-      } else {
-        this.openDropdown = userId
-      }
-    },
-
-    handleClickOutside(event) {
-      // Fechar dropdown se clicar fora
-      if (!event.target.closest('.actions-dropdown')) {
-        this.openDropdown = null
-      }
     },
     
     openGlossary() {
       this.showGlossaryModal = true
     },
-    
+
     closeGlossary() {
       this.showGlossaryModal = false
     },
-    
-    // Ticket Management Methods
-    viewTicket(ticket) {
+
+    openTicket(ticket) {
       this.selectedTicket = ticket
       this.showTicketDetailModal = true
     },
@@ -918,47 +820,217 @@ export default {
       this.selectedTicket = null
       this.newMessage = ''
     },
-    
-    updateTicketStatus(ticket, newStatus) {
-      this.updateTicketData({
-        id: ticket.id,
-        updates: { status: newStatus }
-      })
-    },
-    
-    async sendMessage() {
+
+    async sendAdminMessage() {
       if (!this.newMessage.trim()) return
       
       const message = {
         id: this.selectedTicket.messages.length + 1,
-        author: 'Suporte Técnico',
+        author: this.currentUser?.email || 'Administrador',
         content: this.newMessage,
-        type: 'support',
+        type: 'admin',
         createdAt: new Date().toISOString()
       }
       
-      this.addMessageToTicket({
-        ticketId: this.selectedTicket.id,
-        message
-      })
+      // Adicionar mensagem ao ticket
+      this.selectedTicket.messages.push(message)
+      this.selectedTicket.updatedAt = new Date().toISOString()
+      
+      // Atualizar status para "Em andamento" se ainda estiver aberto
+      if (this.selectedTicket.status === 'open') {
+        this.selectedTicket.status = 'pending'
+      }
       
       this.newMessage = ''
     },
-    
-    getUserName(email) {
-      const user = this.allUsers.find(u => u.email === email)
-      return user ? user.name : email
+
+    closeTicket() {
+      if (this.selectedTicket) {
+        this.selectedTicket.status = 'closed'
+        this.selectedTicket.updatedAt = new Date().toISOString()
+      }
     },
     
-    getCategoryText(category) {
-      const categoryMap = {
-        technical: 'Problema Técnico',
-        billing: 'Cobrança/Pagamento',
-        account: 'Conta/Acesso',
-        feature: 'Sugestão/Melhoria',
-        other: 'Outro'
+    // User Management Methods
+    closeCreateUserModal() {
+      this.showCreateUserModal = false
+      this.resetNewUser()
+    },
+    
+    closeEditUserModal() {
+      this.showEditUserModal = false
+      this.editingUser = {
+        name: '',
+        email: '',
+        plan: '',
+        status: 'active'
       }
-      return categoryMap[category] || category
+    },
+    
+    closeDeleteUserModal() {
+      this.showDeleteUserModal = false
+      this.userToDelete = null
+    },
+    
+    resetNewUser() {
+      this.newUser = {
+        name: '',
+        email: '',
+        password: '',
+        plan: ''
+      }
+    },
+    
+    // Formatar data para exibição
+    formatDate(date) {
+      if (!date) return 'N/A'
+      return new Date(date).toLocaleDateString('pt-BR')
+    },
+    
+    async createUser() {
+      try {
+        // Validar dados
+        if (!this.newUser.name || !this.newUser.email || !this.newUser.password) {
+          alert('Por favor, preencha todos os campos obrigatórios.')
+          return
+        }
+        
+        // Preparar dados para a API
+        const userData = {
+          first_name: this.newUser.name.split(' ')[0] || this.newUser.name,
+          last_name: this.newUser.name.split(' ').slice(1).join(' ') || '',
+          email: this.newUser.email,
+          password: this.newUser.password,
+          plan_type: this.newUser.plan || null,
+          status: 'active'
+        }
+        
+        // Chamar API para criar usuário
+        const response = await axios.post('/api/users', userData)
+        
+        if (response.data.success) {
+          // Recarregar lista de usuários
+          await this.loadUsers()
+          this.closeCreateUserModal()
+          alert('Usuário criado com sucesso!')
+        } else {
+          alert('Erro ao criar usuário: ' + (response.data.error || 'Erro desconhecido'))
+        }
+      } catch (error) {
+        console.error('Erro ao criar usuário:', error)
+        alert('Erro ao criar usuário: ' + (error.response?.data?.error || error.message))
+      }
+    },
+    
+    editUser(user) {
+      this.editingUser = { 
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        plan: user.plan,
+        status: user.status
+      }
+      this.showEditUserModal = true
+    },
+    
+    async saveUser() {
+      try {
+        // Validar dados
+        if (!this.editingUser.name || !this.editingUser.email) {
+          alert('Por favor, preencha todos os campos obrigatórios.')
+          return
+        }
+        
+        // Preparar dados para a API
+        const userData = {
+          first_name: this.editingUser.name.split(' ')[0] || this.editingUser.name,
+          last_name: this.editingUser.name.split(' ').slice(1).join(' ') || '',
+          email: this.editingUser.email,
+          plan_type: this.editingUser.plan || null,
+          status: this.editingUser.status
+        }
+        
+        // Chamar API para atualizar usuário
+        const response = await axios.put(`/api/users/${this.editingUser.id}`, userData)
+        
+        if (response.data.success) {
+          // Recarregar lista de usuários
+          await this.loadUsers()
+          this.closeEditUserModal()
+          alert('Usuário atualizado com sucesso!')
+        } else {
+          alert('Erro ao atualizar usuário: ' + (response.data.error || 'Erro desconhecido'))
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar usuário:', error)
+        alert('Erro ao atualizar usuário: ' + (error.response?.data?.error || error.message))
+      }
+    },
+    
+    deleteUser(user) {
+      this.userToDelete = user
+      this.showDeleteUserModal = true
+    },
+    
+    async confirmDeleteUser() {
+      if (this.userToDelete) {
+        try {
+          // Chamar API para excluir usuário
+          const response = await axios.delete(`/api/users/${this.userToDelete.id}`)
+          
+          if (response.data.success) {
+            // Recarregar lista de usuários
+            await this.loadUsers()
+            this.closeDeleteUserModal()
+            alert('Usuário excluído com sucesso!')
+          } else {
+            alert('Erro ao excluir usuário: ' + (response.data.error || 'Erro desconhecido'))
+          }
+        } catch (error) {
+          console.error('Erro ao excluir usuário:', error)
+          alert('Erro ao excluir usuário: ' + (error.response?.data?.error || error.message))
+        }
+      }
+    },
+    
+    async toggleUserStatus(user) {
+      try {
+        const newStatus = user.status === 'active' ? 'inactive' : 'active'
+        const statusText = newStatus === 'active' ? 'ativado' : 'desativado'
+        
+        // Chamar API para atualizar status
+        const response = await axios.patch(`/api/users/${user.id}/status`, {
+          status: newStatus
+        })
+        
+        if (response.data.success) {
+          // Atualizar status localmente
+          user.status = newStatus
+          alert(`Usuário ${statusText} com sucesso!`)
+        } else {
+          alert('Erro ao alterar status: ' + (response.data.error || 'Erro desconhecido'))
+        }
+      } catch (error) {
+        console.error('Erro ao alterar status:', error)
+        alert('Erro ao alterar status: ' + (error.response?.data?.error || error.message))
+      }
+    },
+    
+    getUserStatusText(status) {
+      const statusMap = {
+        active: 'Ativo',
+        inactive: 'Inativo'
+      }
+      return statusMap[status] || status
+    },
+    
+    getStatusText(status) {
+      const statusMap = {
+        open: 'Aberto',
+        pending: 'Em Andamento',
+        closed: 'Fechado'
+      }
+      return statusMap[status] || status
     },
     
     getPriorityText(priority) {
@@ -970,630 +1042,322 @@ export default {
       }
       return priorityMap[priority] || priority
     },
-    
-    getStatusText(status) {
-      const statusMap = {
-        open: 'Aberto',
-        pending: 'Em Andamento',
-        closed: 'Fechado'
-      }
-      return statusMap[status] || status
-    },
 
-    getAccountTypeText(accountType) {
-      const accountTypeMap = {
-        basic: 'Básica',
-        premium: 'Premium',
-        vip: 'VIP'
+    getCategoryText(category) {
+      const categoryMap = {
+        financial: 'Financeiro',
+        technical: 'Técnico',
+        support: 'Suporte',
+        billing: 'Cobrança',
+        feature: 'Sugestão',
+        other: 'Outro'
       }
-      return accountTypeMap[accountType] || accountType
+      return categoryMap[category] || category
     },
     
-    logout() {
-      this.$store.dispatch('logout')
-      this.$router.push('/login')
-    },
-    
-    changePassword(user) {
-      this.passwordForm.userId = user.id
-      this.passwordForm.userName = user.name
-      this.passwordForm.newPassword = ''
-      this.passwordForm.confirmPassword = ''
-      this.showPassword = false
-      this.showConfirmPassword = false
-      this.showPasswordModal = true
-    },
-
-
-
-    changeAccountType(user) {
-      this.accountTypeForm.userId = user.id
-      this.accountTypeForm.userName = user.name
-      this.accountTypeForm.currentType = user.accountType || 'basic'
-      this.accountTypeForm.newType = user.accountType || 'basic'
-      this.showAccountTypeModal = true
-    },
-    
-    togglePasswordVisibility() {
-      this.showPassword = !this.showPassword
-    },
-    
-    toggleConfirmPasswordVisibility() {
-      this.showConfirmPassword = !this.showConfirmPassword
-    },
-    
-         savePassword() {
-       if (!this.isPasswordFormValid) {
-         return
-       }
-       
-       const userName = this.passwordForm.userName
-       
-       // Simular alteração de senha
-       console.log(`Alterando senha do usuário ${userName} para: ${this.passwordForm.newPassword}`)
-       
-       // Aqui você pode adicionar a lógica para salvar a nova senha
-       // Por exemplo, chamar uma API ou atualizar o store
-       
-       // Fechar modal e limpar formulário
-       this.showPasswordModal = false
-       this.passwordForm = {
-         userId: '',
-         userName: '',
-         newPassword: '',
-         confirmPassword: ''
-       }
-       
-       // Mostrar toast profissional
-       this.showToast('Sucesso', `🔐 Senha atualizada com sucesso para ${userName}`, 'success')
-     },
-
-
-
-         async saveAccountType() {
-       try {
-         const newType = this.accountTypeForm.newType
-         const userName = this.accountTypeForm.userName
-         
-         await this.upgradeAccountType({
-           userId: this.accountTypeForm.userId,
-           accountType: newType
-         })
-         
-         this.showAccountTypeModal = false
-         this.accountTypeForm = {
-           userId: '',
-           userName: '',
-           currentType: 'basic',
-           newType: 'basic'
-         }
-         
-         // Recarregar usuários da API para garantir que os dados estão atualizados
-         await this.fetchUsersFromAPI()
-         
-         // Mostrar toast profissional
-         this.showToast('Sucesso', `👑 Tipo de conta atualizado para ${this.getAccountTypeText(newType)} - ${userName}`, 'success')
-       } catch (error) {
-         console.error('❌ Erro ao atualizar tipo de conta:', error)
-         this.showToast('Erro', '❌ Erro ao atualizar tipo de conta. Verifique as permissões e tente novamente.', 'error')
-       }
-     },
-    
-    formatDate(dateString) {
-      if (!dateString || dateString === 'null' || dateString === 'undefined') {
-        return 'Nunca'
-      }
-      
-      try {
-        const date = new Date(dateString)
-        if (isNaN(date.getTime())) {
-          return 'Nunca'
-        }
-        
-        return date.toLocaleDateString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })
-      } catch (error) {
-        console.warn('Erro ao formatar data:', dateString, error)
-        return 'Nunca'
-      }
-    },
-    
-    editUser(user) {
-      this.userForm = {
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-        password: '',
-        accountType: user.accountType || 'basic'
-      }
-      this.showEditModal = true
-    },
-    
-    async saveUser() {
-      try {
-        console.log('💾 Salvando usuário...', this.userForm)
-        
-        if (this.showEditModal) {
-          // Atualizar usuário existente
-          const userToUpdate = this.allUsers.find(u => u.email === this.userForm.email)
-          if (userToUpdate) {
-            await this.updateUserData({
-              id: userToUpdate.id,
-              updates: {
-                name: this.userForm.name,
-                role: this.userForm.role,
-                status: this.userForm.status,
-                accountType: this.userForm.accountType
-              }
-            })
-            this.showNotification('Usuário atualizado com sucesso!', 'success')
-          }
-        } else {
-          // Criar novo usuário
-          await this.createUser({
-            name: this.userForm.name,
-            email: this.userForm.email,
-            role: this.userForm.role,
-            status: this.userForm.status,
-            password: this.userForm.password,
-            accountType: this.userForm.accountType || 'basic'
-          })
-          
-          this.showNotification('Usuário criado com sucesso!', 'success')
-        }
-        
-        this.closeModal()
-        
-        // Recarregar usuários da API para garantir sincronização
-        await this.fetchUsersFromAPI()
-        
-      } catch (error) {
-        console.error('❌ Erro ao salvar usuário:', error)
-        
-        let errorMessage = 'Erro ao salvar usuário. Tente novamente.'
-        let errorTitle = 'Erro'
-        
-        if (error.message.includes('Token de autenticação')) {
-          errorMessage = 'Sessão expirada. Faça login novamente.'
-          errorTitle = 'Sessão Expirada'
-        } else if (error.message.includes('E-mail já cadastrado')) {
-          errorMessage = 'Este e-mail já está sendo usado por outro usuário.'
-          errorTitle = 'E-mail Duplicado'
-        } else if (error.message.includes('HTTP error')) {
-          errorMessage = 'Erro de conexão com o servidor. Verifique sua internet e tente novamente.'
-          errorTitle = 'Erro de Conexão'
-        }
-        
-        this.showNotification(errorMessage, 'error')
-      }
-    },
-    
-    toggleUserStatus(user) {
-      const newStatus = user.status === 'active' ? 'inactive' : 'active'
-      this.updateUserData({
-        id: user.id,
-        updates: { status: newStatus }
-      })
-    },
-    
-    deleteUser(user) {
-      if (user.role === 'admin') {
-        this.$toast?.error?.('Não é possível excluir administradores')
-        return
-      }
-      
-      this.userToDelete = user
-      this.showDeleteModal = true
-    },
-    
-    async confirmDelete() {
-      try {
-        console.log('🗑️ Excluindo usuário:', this.userToDelete.id)
-        
-        await this.deleteUserData(this.userToDelete.id)
-        
-        this.showDeleteModal = false
-        this.userToDelete = null
-        
-        // Recarregar usuários da API para garantir sincronização
-        await this.fetchUsersFromAPI()
-        
-        this.showNotification('Usuário excluído com sucesso!', 'success')
-        
-      } catch (error) {
-        console.error('❌ Erro ao excluir usuário:', error)
-        
-        let errorMessage = 'Erro ao excluir usuário. Tente novamente.'
-        let errorTitle = 'Erro'
-        
-        if (error.message.includes('Token de autenticação')) {
-          errorMessage = 'Sessão expirada. Faça login novamente.'
-          errorTitle = 'Sessão Expirada'
-        } else if (error.message.includes('Não é possível deletar administradores')) {
-          errorMessage = 'Não é possível excluir usuários administradores.'
-          errorTitle = 'Operação Negada'
-        }
-        
-        this.showNotification(errorMessage, 'error')
-      }
-    },
-    
-    closeModal() {
-      this.showCreateModal = false
-      this.showEditModal = false
-      this.userForm = {
-        name: '',
-        email: '',
-        role: 'user',
-        status: 'active',
-        password: '',
-        accountType: 'basic'
-      }
-    },
-
-    showNotification(message, type = 'info') {
-      console.log('Mostrando notificação:', message, type)
-      
-      // Remover notificações existentes
-      const existingNotifications = document.querySelectorAll('.admin-notification')
-      existingNotifications.forEach(notification => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification)
-        }
-      })
-
-      // Criar nova notificação
-      const notification = document.createElement('div')
-      notification.className = `admin-notification admin-notification-${type}`
-      
-      // Definir ícone baseado no tipo
-      const icons = {
-        success: '✅',
-        error: '❌',
-        warning: '⚠️',
-        info: 'ℹ️'
-      }
-      
-      // Criar estrutura da notificação
-      const notificationContent = document.createElement('div')
-      notificationContent.className = 'notification-content'
-      
-      const notificationIcon = document.createElement('span')
-      notificationIcon.className = 'notification-icon'
-      notificationIcon.textContent = icons[type] || icons.info
-      
-      const notificationMessage = document.createElement('span')
-      notificationMessage.className = 'notification-message'
-      notificationMessage.textContent = message
-      
-      const closeButton = document.createElement('button')
-      closeButton.className = 'notification-close'
-      closeButton.textContent = '×'
-      closeButton.addEventListener('click', () => {
-        if (notification.parentNode) {
-          notification.classList.remove('show')
-          setTimeout(() => {
-            if (notification.parentNode) {
-              notification.parentNode.removeChild(notification)
-            }
-          }, 300)
-        }
-      })
-      
-      // Montar estrutura
-      notificationContent.appendChild(notificationIcon)
-      notificationContent.appendChild(notificationMessage)
-      notification.appendChild(notificationContent)
-      notification.appendChild(closeButton)
-      
-      // Adicionar ao DOM
-      document.body.appendChild(notification)
-      
-      // Forçar reflow e animar entrada
-      setTimeout(() => {
-        notification.classList.add('show')
-      }, 10)
-      
-      // Auto-remover após 6 segundos
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.classList.remove('show')
-          setTimeout(() => {
-            if (notification.parentNode) {
-              notification.parentNode.removeChild(notification)
-            }
-          }, 300)
-        }
-      }, 6000)
-    },
-
-    showProfessionalNotification(message, type = 'info') {
-      // Remover notificações existentes
-      const existingNotifications = document.querySelectorAll('.professional-notification')
-      existingNotifications.forEach(notification => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification)
-        }
-      })
-
-      // Criar container de notificações se não existir
-      let notificationContainer = document.getElementById('notification-container')
-      if (!notificationContainer) {
-        notificationContainer = document.createElement('div')
-        notificationContainer.id = 'notification-container'
-        notificationContainer.className = 'notification-container'
-        document.body.appendChild(notificationContainer)
-      }
-
-      // Criar nova notificação
-      const notification = document.createElement('div')
-      notification.className = `professional-notification professional-notification-${type}`
-      
-      // Definir ícones e cores baseado no tipo
-      const notificationConfig = {
-        success: {
-          icon: '✓',
-          title: 'Sucesso',
-          color: '#00ff88'
-        },
-        error: {
-          icon: '✕',
-          title: 'Erro',
-          color: '#ff4444'
-        },
-        warning: {
-          icon: '⚠',
-          title: 'Atenção',
-          color: '#ffc107'
-        },
-        info: {
-          icon: 'ℹ',
-          title: 'Informação',
-          color: '#17a2b8'
-        }
-      }
-      
-      const config = notificationConfig[type] || notificationConfig.info
-      
-      // Criar estrutura da notificação
-      notification.innerHTML = `
-        <div class="notification-header">
-          <div class="notification-icon-wrapper" style="background: ${config.color}20; border-color: ${config.color}">
-            <span class="notification-icon" style="color: ${config.color}">${config.icon}</span>
-          </div>
-          <div class="notification-content">
-            <div class="notification-title">${config.title}</div>
-            <div class="notification-message">${message}</div>
-          </div>
-          <button class="notification-close" onclick="this.parentElement.parentElement.remove()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
-        </div>
-        <div class="notification-progress" style="background: ${config.color}"></div>
-      `
-      
-      // Adicionar ao container
-      notificationContainer.appendChild(notification)
-      
-      // Animar entrada
-      setTimeout(() => {
-        notification.classList.add('show')
-      }, 10)
-      
-      // Auto-remover após 5 segundos
-      setTimeout(() => {
-        notification.classList.remove('show')
-        setTimeout(() => {
-          if (notification.parentNode) {
-            notification.remove()
-          }
-        }, 300)
-      }, 5000)
-    },
-
-    // Sistema de Notificações Toast Moderno
-    showToast(title, message, type = 'info') {
-      const id = Date.now()
-      const toast = {
-        id,
-        title,
-        message,
-        type,
-        visible: false,
-        progress: 0
-      }
-      
-      this.toasts.push(toast)
-
-      // Animação de entrada suave
-      this.$nextTick(() => {
-        toast.visible = true
-        const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
-        if (toastElement) {
-          toastElement.classList.add('toast-enter')
-        }
-      })
-
-      this.startToastProgress(id)
-    },
-
-    startToastProgress(id) {
-      const toast = this.toasts.find(t => t.id === id)
-      if (!toast) return
-
-      const duration = 5000 // 5 segundos - aumentado para garantir visibilidade
-      const interval = 10 // 10ms interval
-      const steps = duration / interval
-
-      let currentStep = 0
-      const progressInterval = setInterval(() => {
-        currentStep++
-        toast.progress = (currentStep / steps) * 100
-        if (currentStep >= steps) {
-          clearInterval(progressInterval)
-          this.removeToast(id)
-        }
-      }, interval)
-    },
-
-    removeToast(id) {
-      const toast = this.toasts.find(t => t.id === id)
-      if (toast) {
-        toast.visible = false
-        const toastElement = document.querySelector(`[data-toast-id="${id}"]`)
-        if (toastElement) {
-          toastElement.classList.add('toast-leave')
-          
-          // Remover após a animação
-          setTimeout(() => {
-            const index = this.toasts.findIndex(t => t.id === id)
-            if (index !== -1) {
-              this.toasts.splice(index, 1)
-            }
-          }, 300)
-        } else {
-          // Fallback se o elemento não for encontrado
-          const index = this.toasts.findIndex(t => t.id === id)
-          if (index !== -1) {
-            this.toasts.splice(index, 1)
-          }
-        }
-      }
-    },
-
-    viewUserDetails(user) {
-      // Fechar dropdown
-      this.openDropdown = null
-      
-      // Mostrar informações do usuário em um toast
-      const details = `
-        Nome: ${user.name}
-        E-mail: ${user.email}
-        Função: ${user.role === 'admin' ? 'Administrador' : 'Usuário'}
-        Status: ${user.status === 'active' ? 'Ativo' : 'Inativo'}
-        Tipo de Conta: ${this.getAccountTypeText(user.accountType || 'basic')}
-        Criado em: ${this.formatDate(user.createdAt)}
-        Último login: ${this.formatDate(user.lastLogin)}
-      `
-      
-      this.showToast('Detalhes do Usuário', details, 'info')
+    formatDate(date) {
+      return new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(date))
     }
   }
 }
 </script>
 
-<style scoped lang="scss">
-@import '../assets/styles/toast.scss';
-
-/* Variáveis CSS locais para o dropdown */
-:root {
-  --accent-info: #0066ff;
-  --accent-info-hover: #0056d6;
-  --accent-warning: #ffaa00;
-  --accent-warning-hover: #e69500;
-  --accent-success: #00ff88;
-  --accent-success-hover: #00cc6a;
-  --accent-danger: #ff4444;
-  --accent-danger-hover: #e63939;
-}
+<style scoped>
 .admin-container {
   display: flex;
   height: 100vh;
-  background: var(--bg-primary);
+  overflow: hidden;
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* Sidebar Styles */
-.sidebar {
-  width: 280px;
-  background: var(--bg-secondary);
-  border-right: 1px solid var(--border-primary);
-  display: flex;
-  flex-direction: column;
-  position: fixed;
-  height: 100vh;
-  left: 0;
-  top: 0;
-  z-index: 100;
-  flex-shrink: 0;
-  transition: width 0.3s ease;
+/* Admin Main Content */
+.admin-main {
+  flex: 1;
+  padding: 32px 24px;
+  width: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
-.sidebar.collapsed {
-  width: 80px;
-}
-
-.sidebar-header {
+.content-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
-  border-bottom: 1px solid var(--border-primary);
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
 }
 
-.sidebar.collapsed .sidebar-header {
-  justify-content: center;
-}
-
-.logo {
+.header-left {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
 }
 
-.logo .logo-icon {
-  font-size: 24px;
-}
-
-.logo h1 {
-  font-size: 20px;
+.page-title {
+  font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #00ff88;
+  margin: 0;
 }
 
-.sidebar-toggle {
+.page-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary, #cccccc);
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.refresh-btn {
+  background: var(--bg-tertiary, #3a3a3a);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--bg-overlay);
+  transition: all 0.2s ease;
+}
+
+.refresh-btn:hover {
+  background: var(--bg-quaternary, #4a4a4a);
+  transform: translateY(-1px);
+}
+
+.refresh-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.new-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #00ff88;
+  color: #1a1a1a;
   border: none;
-  border-radius: 6px;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.3s ease;
+  border-radius: 8px;
+  padding: 12px 20px;
   font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.new-user-btn:hover {
+  background: #00cc6a;
+  transform: translateY(-1px);
+}
+
+/* Dashboard Stats */
+.dashboard-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.sidebar-toggle:hover {
-  background: var(--accent-primary);
-  color: var(--bg-primary);
+.tickets-icon {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  color: #1a1a1a;
 }
 
-.sidebar-toggle:active {
-  transform: scale(0.95);
+.open-icon {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  color: #1a1a1a;
 }
 
-.user-profile {
+.pending-icon {
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  color: #ffffff;
+}
+
+.time-icon {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: #ffffff;
+}
+
+.users-icon {
+  background: linear-gradient(135deg, #6f42c1, #5a32a3);
+  color: #ffffff;
+}
+
+.vip-icon {
+  background: linear-gradient(135deg, #ffc107, #e0a800);
+  color: #1a1a1a;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--text-secondary, #888888);
+}
+
+/* Tabs */
+.tabs-container {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tabs-header {
+  display: flex;
+  background: var(--bg-primary, #1a1a1a);
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888888);
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+  color: var(--text-primary, #ffffff);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+  color: #00ff88;
+  border-bottom-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.tab-content {
+  padding: 24px;
+}
+
+/* Users Management */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loading-users {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--bg-tertiary, #3a3a3a);
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-users {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary, #888888);
+}
+
+.empty-users svg {
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.empty-users h4 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+}
+
+.empty-users p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.user-card {
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
   padding: 20px;
-  border-bottom: 1px solid var(--border-primary);
+  transition: all 0.2s ease;
 }
 
-.sidebar.collapsed .user-profile {
-  padding: 20px 10px;
+.user-card:hover {
+  border-color: rgba(0, 255, 136, 0.3);
+  transform: translateY(-1px);
+}
+
+.user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
 }
 
 .user-info {
@@ -1602,452 +1366,246 @@ export default {
   gap: 12px;
 }
 
-.user-avatar {
-  width: 30px;
-  height: 30px;
-  background: var(--accent-primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
+.user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
 }
 
-.user-avatar:hover {
-  background: var(--accent-primary);
-  color: var(--bg-primary);
-  justify-content: center;
-  align-items: center;
-  display: flex;
-}
-
-.sidebar.collapsed .user-avatar {
-  margin: 0 auto;
-}
-
-.user-details {
-  flex: 1;
-}
-
-.user-greeting {
+.user-email {
   font-size: 14px;
-  color: var(--text-primary);
-  margin-bottom: 4px;
+  color: var(--text-secondary, #888888);
+}
+
+.user-id {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+  font-family: monospace;
 }
 
 .user-status {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
-.status-dot {
-  width: 8px;
-  height: 8px;
-  background: var(--accent-primary);
-  border-radius: 50%;
+.user-content {
+  margin-bottom: 16px;
 }
 
-.status-text {
+.user-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-plan,
+.user-created {
   font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 20px 0;
-}
-
-.nav-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.nav-item {
-  margin-bottom: 4px;
-}
-
-.nav-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all 0.3s ease;
-}
-
-.nav-link:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.sidebar.collapsed .nav-link {
-  justify-content: center;
-  padding: 12px 10px;
-}
-
-.nav-item.active .nav-link {
-  background: var(--accent-primary);
-  color: var(--bg-primary);
-}
-
-.glossary-btn,
-.logout-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-}
-
-.glossary-btn:hover,
-.logout-btn:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.logout-btn {
-  margin-top: 20px;
-}
-
-.logout-btn:hover {
-  background: rgba(255, 68, 68, 0.1) !important;
-  color: #ff4444 !important;
-}
-
-.nav-icon {
-  font-size: 18px;
-}
-
-.nav-text {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.main-content {
-  flex: 1;
-  margin-left: 280px;
-  transition: margin-left 0.3s ease;
-  height: 100vh;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.sidebar.collapsed ~ .main-content {
-  margin-left: 80px;
-}
-
-/* Estilizar scrollbar */
-.main-content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.main-content::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.main-content::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.main-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Estilizar scrollbar do sidebar */
-.sidebar::-webkit-scrollbar {
-  width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  transition: background 0.3s ease;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* Estilizar scrollbar das tabelas */
-.users-table-container::-webkit-scrollbar,
-.tickets-table-container::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-.users-table-container::-webkit-scrollbar-track,
-.tickets-table-container::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.users-table-container::-webkit-scrollbar-thumb,
-.tickets-table-container::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.users-table-container::-webkit-scrollbar-thumb:hover,
-.tickets-table-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Estilizar scrollbar do modal */
-.ticket-detail-modal::-webkit-scrollbar {
-  width: 8px;
-}
-
-.ticket-detail-modal::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-.ticket-detail-modal::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  transition: background 0.3s ease;
-}
-
-.ticket-detail-modal::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.5);
-}
-
-/* Admin Tabs */
-.admin-tabs {
-  display: flex;
-  gap: 8px;
-  padding: 0 32px 24px;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-secondary, #2a2a2a);
   color: var(--text-secondary, #888888);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  padding: 12px 16px;
-  font-size: 14px;
+}
+
+.user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.tab-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary, #ffffff);
+.edit-btn {
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
 }
 
-.tab-btn.active {
-  background: #00ff88;
-  color: #1a1a1a;
-  border-color: #00ff88;
+.edit-btn:hover {
+  background: rgba(0, 123, 255, 0.3);
 }
 
-.tab-btn svg {
-  width: 16px;
-  height: 16px;
+.delete-btn {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
 }
 
-.tab-content {
-  padding: 24px 32px;
-  min-height: calc(100vh - 200px);
+.delete-btn:hover {
+  background: rgba(220, 53, 69, 0.3);
 }
 
-.admin-header {
+.activate-btn {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.activate-btn:hover {
+  background: rgba(40, 167, 69, 0.3);
+}
+
+.deactivate-btn {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffc107;
+}
+
+.deactivate-btn:hover {
+  background: rgba(255, 193, 7, 0.3);
+}
+
+/* Tickets Management */
+.tickets-management {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
   padding: 24px;
-  margin-bottom: 0;
 }
 
-.admin-title {
+.section-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  font-size: 28px;
-  font-weight: 700;
-  color: #ffffff;
+  justify-content: space-between;
   margin-bottom: 24px;
 }
 
-.admin-icon {
-  font-size: 32px;
-  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
-}
-
-.admin-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.stat-card {
-  background: rgba(42, 42, 42, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  transition: transform 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-}
-
-.stat-number {
-  display: block;
-  font-size: 32px;
+.section-title {
+  font-size: 24px;
   font-weight: 700;
-  color: #00ff88;
-  margin-bottom: 8px;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
 }
 
-.stat-label {
-  color: #ffffff;
+.filter-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-input,
+.status-filter,
+.priority-filter,
+.category-filter {
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  padding: 8px 12px;
   font-size: 14px;
-  opacity: 0.8;
-}
-
-.actions-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 0 24px 24px 24px;
-  gap: 16px;
-}
-
-.btn-primary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-  color: #1a1a1a;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
-}
-
-.search-box {
-  position: relative;
-  flex: 1;
-  max-width: 300px;
 }
 
 .search-input {
-  width: 100%;
-  padding: 12px 40px 12px 16px;
-  background: rgba(42, 42, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #ffffff;
+  min-width: 200px;
+  cursor: text;
+}
+
+.search-input:focus,
+.status-filter:focus,
+.priority-filter:focus,
+.category-filter:focus {
+  outline: none;
+  border-color: #00ff88;
+}
+
+/* Tickets List */
+.tickets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.empty-tickets {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary, #888888);
+}
+
+.empty-tickets svg {
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.empty-tickets h4 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+}
+
+.empty-tickets p {
   font-size: 14px;
+  margin: 0;
 }
 
-.search-input::placeholder {
-  color: #808080;
+.ticket-card {
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.search-icon {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #808080;
+.ticket-card:hover {
+  border-color: rgba(0, 255, 136, 0.3);
+  transform: translateY(-1px);
 }
 
-.users-table-container {
-  background: rgba(42, 42, 42, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  overflow: auto;
-  margin: 0 24px;
-  max-height: calc(100vh - 300px);
+.admin-ticket {
+  border-left: 4px solid transparent;
 }
 
-.users-table {
-  width: 100%;
-  border-collapse: collapse;
+.admin-ticket.priority-urgent {
+  border-left-color: #dc3545;
 }
 
-.users-table th {
-  background: rgba(0, 0, 0, 0.3);
-  color: #ffffff;
-  font-weight: 600;
-  text-align: left;
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+.admin-ticket.priority-high {
+  border-left-color: #ff6b35;
 }
 
-.users-table td {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  color: #ffffff;
+.admin-ticket.priority-medium {
+  border-left-color: #ffc107;
 }
 
-.user-row:hover {
-  background: rgba(255, 255, 255, 0.05);
+.admin-ticket.priority-low {
+  border-left-color: #6c757d;
 }
 
-.user-name {
+.ticket-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ticket-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ticket-title {
+  font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
-  font-size: 14px;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
 }
 
-.role-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
+.ticket-id {
   font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
+  color: var(--text-secondary, #888888);
+  font-family: monospace;
 }
 
-.role-badge.admin {
-  background: rgba(255, 215, 0, 0.2);
-  color: #ffd700;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-}
-
-.role-badge.user {
-  background: rgba(0, 255, 136, 0.2);
+.ticket-user {
+  font-size: 12px;
   color: #00ff88;
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  font-weight: 600;
 }
 
 .status-badge {
@@ -2058,498 +1616,52 @@ export default {
   text-transform: uppercase;
 }
 
-.status-badge.active {
+.status-badge.open {
   background: rgba(0, 255, 136, 0.2);
   color: #00ff88;
-  border: 1px solid rgba(0, 255, 136, 0.3);
 }
 
-.status-badge.inactive {
-  background: rgba(255, 68, 68, 0.2);
-  color: #ff4444;
-  border: 1px solid rgba(255, 68, 68, 0.3);
+.status-badge.pending {
+  background: rgba(255, 107, 53, 0.2);
+  color: #ff6b35;
 }
 
-.actions-cell {
-  display: flex;
-  justify-content: center;
+.status-badge.closed {
+  background: rgba(108, 117, 125, 0.2);
+  color: #6c757d;
 }
 
-/* Estilos para o dropdown de ações */
-.actions-dropdown {
-  position: relative;
-  display: inline-block;
+.ticket-content {
+  margin-bottom: 16px;
 }
 
-.dropdown-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--border-primary);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 16px;
-}
-
-.dropdown-toggle:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--accent-primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
-}
-
-.dropdown-toggle.active {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
-}
-
-.dropdown-toggle .bi {
-  font-size: 18px;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  min-width: 200px;
-  background: var(--bg-secondary);
-  border: 2px solid var(--border-primary);
-  border-radius: 8px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  margin-top: 8px;
-  overflow: hidden;
-  animation: slideIn 0.2s ease-out;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 16px;
-  border: none;
-  background: transparent;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s ease;
+.ticket-description {
   font-size: 14px;
-  text-align: left;
-}
-
-.dropdown-item:hover {
-  background: var(--bg-tertiary);
-  color: var(--accent-primary);
-}
-
-.dropdown-item .bi {
-  font-size: 16px;
-  width: 20px;
-  text-align: center;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--border-primary);
-  margin: 8px 0;
-}
-
-.dropdown-item.text-warning {
-  color: var(--accent-warning);
-}
-
-.dropdown-item.text-success {
-  color: var(--accent-success);
-}
-
-.dropdown-item.text-danger {
-  color: var(--accent-danger);
-}
-
-.dropdown-item:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.dropdown-item:disabled:hover {
-  background: transparent;
-  color: var(--text-primary);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Estilos para ícones de busca */
-.search-icon {
-  color: var(--text-secondary, #a0a0a0);
-  font-size: 18px;
-}
-
-/* Estilos para o botão Novo Usuário */
-.btn-primary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  .bi {
-    font-size: 16px;
-  }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal-content {
-  background: rgba(42, 42, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 500px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.modal-header h2 {
-  color: #ffffff;
+  color: var(--text-secondary, #cccccc);
+  line-height: 1.5;
   margin: 0;
 }
 
-.modal-close {
-  background: none;
-  border: none;
-  color: #808080;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: color 0.3s ease;
-}
-
-.modal-close:hover {
-  color: #ffffff;
-}
-
-.modal-form {
-  padding: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  color: #ffffff;
-  margin-bottom: 8px;
-  font-weight: 500;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  padding: 12px 16px;
-  background: rgba(26, 26, 26, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 14px;
-  transition: border-color 0.3s ease;
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #00ff88;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 24px;
-}
-
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, #ff4444 0%, #cc3333 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 12px 20px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-danger:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(255, 68, 68, 0.3);
-}
-
-.delete-modal .modal-body {
-  padding: 20px;
-  color: #ffffff;
-}
-
-.warning-text {
-  color: #ff4444;
-  font-weight: 600;
-  margin-top: 8px;
-}
-
-/* Password Modal Styles */
-.password-input-group {
-  position: relative;
+.ticket-footer {
   display: flex;
   align-items: center;
+  justify-content: space-between;
 }
 
-.password-input-group .form-input {
-  padding-right: 50px;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #ffffff;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
-  transition: all 0.3s ease;
+.ticket-meta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-}
-
-.password-toggle:hover {
-  color: #00ff88;
-  background: rgba(0, 255, 136, 0.1);
-  transform: translateY(-50%) scale(1.1);
-}
-
-.eye-icon {
-  width: 18px;
-  height: 18px;
-  transition: all 0.3s ease;
-  animation: iconFade 0.2s ease-in-out;
-}
-
-@keyframes iconFade {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.form-input.disabled {
-  background: rgba(26, 26, 26, 0.4);
-  color: #888888;
-  cursor: not-allowed;
-}
-
-.btn-info {
-  /* background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); */
-  color: #ffffff;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 12px;
-}
-
-.btn-info:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
-}
-
-
-
-.btn-account:hover {
-  background: rgba(138, 43, 226, 0.2);
-  color: #8a2be2;
-}
-
-
-
-.account-type-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.account-type-badge.basic {
-  background: linear-gradient(135deg, #6c757d, #495057);
-  color: #ffffff;
-  border: 1px solid rgba(108, 117, 125, 0.3);
-}
-
-.account-type-badge.premium {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #ffffff;
-  border: 1px solid rgba(0, 123, 255, 0.3);
-}
-
-.account-type-badge.vip {
-  background: linear-gradient(135deg, #ffd700, #ffb347);
-  color: #1a1a1a;
-  border: 1px solid rgba(255, 215, 0, 0.3);
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-  animation: vipGlow 2s ease-in-out infinite alternate;
-}
-
-@keyframes vipGlow {
-  from {
-    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-  }
-  to {
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
-  }
-}
-
-/* Tickets Styles */
-.tickets-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
-  margin-bottom: 24px;
 }
 
-.filter-controls {
-  display: flex;
-  gap: 12px;
+.ticket-category,
+.ticket-date,
+.ticket-messages {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
 }
 
-.status-filter,
-.priority-filter {
-  background: var(--bg-primary, #1a1a1a);
-  color: var(--text-primary, #ffffff);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.tickets-table-container {
-  background: var(--bg-secondary, #2a2a2a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-  border-radius: 12px;
-  overflow: auto;
-  max-height: calc(100vh - 300px);
-}
-
-.tickets-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: var(--bg-primary, #1a1a1a);
-}
-
-.tickets-table th {
-  background: rgba(0, 255, 136, 0.1);
-  color: #00ff88;
-  font-weight: 600;
-  padding: 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-}
-
-.tickets-table td {
-  padding: 16px;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.05));
-  color: var(--text-primary, #ffffff);
-}
-
-.tickets-table tr:hover {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.ticket-row {
-  transition: all 0.2s ease;
-}
-
-.ticket-id {
-  font-family: monospace;
-  font-weight: 600;
-  color: #00ff88;
-}
-
-.ticket-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.ticket-title {
-  font-weight: 600;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.category-badge {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+.priority-badge {
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -2577,22 +1689,21 @@ export default {
   color: #dc3545;
 }
 
-.status-badge.open {
-  background: rgba(0, 255, 136, 0.2);
-  color: #00ff88;
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
 }
 
-.status-badge.pending {
-  background: rgba(255, 107, 53, 0.2);
-  color: #ff6b35;
-}
-
-.status-badge.closed {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
-}
-
-/* Ticket Detail Modal Styles */
 .ticket-detail-modal {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
@@ -2600,24 +1711,111 @@ export default {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  overflow-x: hidden;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
-.ticket-detail-header {
-  margin-bottom: 24px;
+.admin-modal {
+  max-width: 1000px;
 }
 
-.ticket-detail-header h4 {
-  font-size: 18px;
+.user-modal {
+  background: var(--bg-secondary, #2a2a2a);
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.confirmation-modal {
+  background: var(--bg-secondary, #2a2a2a);
+  border-radius: 12px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.modal-header h3 {
+  font-size: 20px;
   font-weight: 700;
   color: var(--text-primary, #ffffff);
-  margin: 0 0 12px 0;
+  margin: 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.close-ticket-btn {
+  background: #dc3545;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.close-ticket-btn:hover {
+  background: #c82333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888888);
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #ffffff);
+}
+
+.modal-body {
+  padding: 24px;
+}
+
+/* Ticket Detail Styles */
+.ticket-detail-header {
+  margin-bottom: 24px;
 }
 
 .ticket-detail-meta {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.category-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0, 123, 255, 0.2);
+  color: #007bff;
 }
 
 .ticket-info-grid {
@@ -2690,7 +1888,8 @@ export default {
   border-left-color: #00ff88;
 }
 
-.message-item.support {
+.message-item.support,
+.message-item.admin {
   background: rgba(255, 107, 53, 0.1);
   border-left-color: #ff6b35;
 }
@@ -2764,356 +1963,198 @@ export default {
   cursor: not-allowed;
 }
 
-/* Notificações Profissionais */
-.admin-notification {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: rgba(42, 42, 42, 0.98);
-  backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 16px;
-  padding: 20px 24px;
-  min-width: 350px;
-  max-width: 500px;
-  z-index: 999999;
-  transform: translateX(120%);
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  pointer-events: auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+/* Form Styles */
+.form-group {
+  margin-bottom: 20px;
 }
 
-.admin-notification.show {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.notification-content {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex: 1;
-}
-
-.notification-icon {
-  font-size: 20px;
-  flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.notification-message {
-  color: #ffffff;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.5;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.notification-close {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #cccccc;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(5px);
-}
-
-.notification-close:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.1);
-}
-
-/* Tipos de Notificação */
-.admin-notification-success {
-  border-left: 5px solid #00ff88;
-  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(42, 42, 42, 0.98));
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(0, 255, 136, 0.1);
-}
-
-.admin-notification-error {
-  border-left: 5px solid #ff4444;
-  background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(42, 42, 42, 0.98));
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(255, 68, 68, 0.1);
-}
-
-.admin-notification-warning {
-  border-left: 5px solid #ffc107;
-  background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(42, 42, 42, 0.98));
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(255, 193, 7, 0.1);
-}
-
-.admin-notification-info {
-  border-left: 5px solid #17a2b8;
-  background: linear-gradient(135deg, rgba(23, 162, 184, 0.15), rgba(42, 42, 42, 0.98));
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 4px 20px rgba(23, 162, 184, 0.1);
-}
-
-/* Notificações Profissionais */
-.notification-container {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  z-index: 999999;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  pointer-events: none;
-}
-
-.professional-notification {
-  background: rgba(42, 42, 42, 0.98);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  min-width: 380px;
-  max-width: 450px;
-  transform: translateX(120%);
-  opacity: 0;
-  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  pointer-events: auto;
-  position: relative;
-}
-
-.professional-notification.show {
-  transform: translateX(0);
-  opacity: 1;
-}
-
-.notification-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 20px 24px 16px;
-}
-
-.notification-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid;
-  flex-shrink: 0;
-  backdrop-filter: blur(10px);
-}
-
-.notification-icon {
-  font-size: 20px;
-  font-weight: bold;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-}
-
-.notification-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.notification-title {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  line-height: 1.3;
-}
-
-.notification-message {
-  color: #cccccc;
+.form-group label {
+  display: block;
   font-size: 14px;
-  line-height: 1.5;
-  word-wrap: break-word;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin-bottom: 8px;
 }
 
-.notification-close {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #888888;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
-  backdrop-filter: blur(5px);
-}
-
-.notification-close:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  transform: scale(1.1);
-}
-
-.notification-progress {
-  height: 3px;
+.form-input,
+.form-select {
   width: 100%;
-  animation: progressShrink 5s linear forwards;
+  padding: 12px;
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  color: var(--text-primary, #ffffff);
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
 
-@keyframes progressShrink {
-  from {
-    width: 100%;
-  }
-  to {
-    width: 0%;
-  }
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: rgba(0, 255, 136, 0.05);
 }
 
-/* Tipos de Notificação Profissionais */
-.professional-notification-success {
-  border-left: 4px solid #00ff88;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(0, 255, 136, 0.1);
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
-.professional-notification-error {
-  border-left: 4px solid #ff4444;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(255, 68, 68, 0.1);
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary, #ffffff);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.professional-notification-warning {
-  border-left: 4px solid #ffc107;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(255, 193, 7, 0.1);
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
-.professional-notification-info {
-  border-left: 4px solid #17a2b8;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3), 0 8px 32px rgba(23, 162, 184, 0.1);
+.submit-btn {
+  background: #00ff88;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #00cc6a;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
+  background: #c82333;
 }
 
 /* Responsividade */
 @media (max-width: 768px) {
-  .admin-container {
-    padding: 0;
-    height: 100vh;
+  .admin-main {
+    padding: 24px 16px;
   }
   
-  .main-content {
-    margin-left: 0;
-    height: 100vh;
-  }
-  
-  .sidebar {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-  
-  .sidebar.show {
-    transform: translateX(0);
-  }
-  
-  .actions-bar {
+  .content-header {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 16px;
   }
   
-  .search-box {
-    max-width: none;
+  .page-title {
+    font-size: 24px;
   }
   
-  .users-table {
-    font-size: 12px;
-  }
-  
-  .users-table th,
-  .users-table td {
-    padding: 8px;
-  }
-  
-  .users-table-container,
-  .tickets-table-container {
-    max-height: calc(100vh - 200px);
-    margin: 0 12px;
-  }
-  
-  .admin-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .admin-notification {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    min-width: auto;
-    max-width: none;
-    padding: 16px 20px;
-    border-radius: 12px;
-  }
-  
-  .notification-message {
+  .page-subtitle {
     font-size: 14px;
   }
   
-  .notification-icon {
-    font-size: 18px;
+  .dashboard-stats {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
   
-  .notification-close {
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
+  .stat-card {
+    padding: 20px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
 
-  /* Responsividade para Notificações Profissionais */
-  .notification-container {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-  }
-
-  .professional-notification {
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
     min-width: auto;
-    max-width: none;
-    border-radius: 12px;
+    width: 100%;
   }
+  
+  .ticket-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .ticket-detail-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
 
-  .notification-header {
-    padding: 16px 20px 12px;
+@media (max-width: 480px) {
+  .admin-main {
+    padding: 16px 12px;
+  }
+  
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .stat-card {
+    padding: 16px;
     gap: 12px;
   }
-
-  .notification-icon-wrapper {
+  
+  .stat-icon {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
   }
-
-  .notification-icon {
-    font-size: 18px;
+  
+  .stat-value {
+    font-size: 24px;
   }
-
-  .notification-title {
-    font-size: 15px;
+  
+  .ticket-card {
+    padding: 16px;
   }
-
-  .notification-message {
-    font-size: 13px;
+  
+  .ticket-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-
-  .notification-close {
-    width: 28px;
-    height: 28px;
+  
+  .ticket-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-
-
+  
+  .modal-body {
+    padding: 16px;
+  }
 }
 </style>

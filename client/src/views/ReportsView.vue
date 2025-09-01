@@ -1,5 +1,6 @@
 <template>
-  <div class="reports-container flex-container">
+  <RouteGuard :requiresVIP="true">
+    <div class="reports-container flex-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -347,6 +348,7 @@
       </div>
     </div>
   </div>
+    </RouteGuard>
 </template>
 
 <script>
@@ -355,6 +357,7 @@ import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 
@@ -365,7 +368,8 @@ export default {
     ROIBarChart,
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
   data() {
     return {

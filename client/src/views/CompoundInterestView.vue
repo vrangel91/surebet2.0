@@ -1,5 +1,6 @@
 <template>
-  <div class="compound-interest-container">
+  <RouteGuard :requiresVIP="true">
+    <div class="compound-interest-container">
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
       @sidebar-state-loaded="handleSidebarStateLoaded"
@@ -173,12 +174,14 @@
       @close="closeGlossary"
     />
   </div>
+    </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 import Chart from 'chart.js/auto'
 
 export default {
@@ -186,7 +189,8 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
   data() {
     return {

@@ -1,5 +1,6 @@
 <template>
-  <div class="settings-container">
+  <RouteGuard :requiresAdmin="true">
+    <div class="settings-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -470,6 +471,7 @@
       @close="closeGlossary"
     />
   </div>
+    </RouteGuard>
 </template>
 
 <script>
@@ -477,13 +479,15 @@ import { useTheme } from '../composables/useTheme'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 import GlossaryModal from '../components/GlossaryModal.vue'
+import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
   name: 'SettingsView',
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+    GlossaryModal,
+    RouteGuard
   },
   setup() {
     const { setTheme } = useTheme()
