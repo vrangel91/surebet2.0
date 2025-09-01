@@ -138,16 +138,17 @@ router.post('/register', async (req, res) => {
     // Verificar se o referer_id é válido (se fornecido)
     let referrerUser = null;
     if (referer_id) {
+      console.log(`🔍 Verificando código de referência: ${referer_id}`);
       referrerUser = await User.findOne({
-        where: { id: referer_id },
+        where: { referral_code: referer_id },
         attributes: ['id', 'username', 'email']
       });
       
       if (!referrerUser) {
-        console.log(`⚠️ Referer ID inválido: ${referer_id}`);
+        console.log(`⚠️ Código de referência inválido: ${referer_id}`);
         // Não falha o registro, apenas ignora o referer_id inválido
       } else {
-        console.log(`✅ Referer válido encontrado: ${referrerUser.username} (${referrerUser.email})`);
+        console.log(`✅ Referenciador válido encontrado: ${referrerUser.username} (${referrerUser.email}) - ID: ${referrerUser.id}`);
       }
     }
 
@@ -163,6 +164,12 @@ router.post('/register', async (req, res) => {
       is_vip: false,
       referred_by: referrerUser ? referrerUser.id : null // Inclui o ID do referenciador se válido
     });
+
+    if (referrerUser) {
+      console.log(`✅ Usuário criado com sucesso e vinculado ao referenciador: ${referrerUser.username} (ID: ${referrerUser.id})`);
+    } else {
+      console.log(`✅ Usuário criado com sucesso sem referenciador`);
+    }
 
     // Gerar token
     const token = generateToken(user);

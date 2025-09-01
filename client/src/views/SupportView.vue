@@ -53,7 +53,7 @@
             </svg>
           </div>
           <div class="stat-content">
-            <div class="stat-value">{{ ticketsStats.pending }}</div>
+            <div class="stat-value">{{ ticketsStats.in_progress }}</div>
             <div class="stat-label">Em Andamento</div>
           </div>
         </div>
@@ -133,7 +133,7 @@
             <div v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card" @click="openTicket(ticket)">
               <div class="ticket-header">
                 <div class="ticket-info">
-                  <h4 class="ticket-title">{{ ticket.title }}</h4>
+                  <h4 class="ticket-title">{{ ticket.subject }}</h4>
                   <span class="ticket-id">#{{ ticket.id }}</span>
                 </div>
                 <div class="ticket-status" :class="ticket.status">
@@ -142,7 +142,7 @@
               </div>
               
               <div class="ticket-content">
-                <p class="ticket-description">{{ ticket.description.substring(0, 100) }}{{ ticket.description.length > 100 ? '...' : '' }}</p>
+                <p class="ticket-description">{{ ticket.messages && ticket.messages[0] ? ticket.messages[0].content.substring(0, 100) + (ticket.messages[0].content.length > 100 ? '...' : '') : 'Sem descrição' }}</p>
               </div>
               
               <div class="ticket-footer">
@@ -171,10 +171,10 @@
         <div class="modal-body">
           <form @submit.prevent="createNewTicket">
             <div class="form-group">
-              <label for="ticket-title">Título</label>
+              <label for="ticket-title">Assunto</label>
               <input 
                 id="ticket-title"
-                v-model="newTicket.title" 
+                v-model="newTicket.subject" 
                 type="text" 
                 class="form-input"
                 placeholder="Descreva brevemente o problema"
@@ -209,10 +209,10 @@
             </div>
             
             <div class="form-group">
-              <label for="ticket-description">Descrição</label>
+              <label for="ticket-description">Mensagem</label>
               <textarea 
                 id="ticket-description"
-                v-model="newTicket.description" 
+                v-model="newTicket.message" 
                 class="form-textarea"
                 placeholder="Descreva detalhadamente o problema ou solicitação..."
                 rows="6"
@@ -242,7 +242,7 @@
         
         <div class="modal-body" v-if="selectedTicket">
           <div class="ticket-detail-header">
-            <h4>{{ selectedTicket.title }}</h4>
+            <h4>{{ selectedTicket.subject }}</h4>
             <div class="ticket-detail-meta">
               <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status) }}</span>
               <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority) }}</span>
@@ -267,7 +267,7 @@
             
             <div class="ticket-description-section">
               <h5>Descrição</h5>
-              <p>{{ selectedTicket.description }}</p>
+              <p>{{ selectedTicket.messages && selectedTicket.messages[0] ? selectedTicket.messages[0].content : 'Sem descrição' }}</p>
             </div>
             
             <div class="ticket-messages-section">
@@ -409,7 +409,7 @@ export default {
       const pending = this.tickets.filter(t => t.status === 'pending').length
       const closed = this.tickets.filter(t => t.status === 'closed').length
       
-      // Calcular tempo médio de resposta (mockado)
+      // Calcular tempo médio de resposta (mockado - será implementado com API real)
       const avgResponseTime = '2h 30m'
       
       return { open, pending, closed, avgResponseTime }
@@ -438,7 +438,7 @@ export default {
         const query = this.searchQuery.toLowerCase()
         filtered = filtered.filter(ticket => 
           ticket.id.toString().includes(query) ||
-          ticket.title.toLowerCase().includes(query) ||
+          ticket.subject.toLowerCase().includes(query) ||
           ticket.userName.toLowerCase().includes(query)
         )
       }
@@ -447,11 +447,16 @@ export default {
     },
     
     isFormValid() {
-      return this.newTicket.title && 
+              return this.newTicket.subject && 
              this.newTicket.category && 
              this.newTicket.priority && 
-             this.newTicket.description
+             this.newTicket.message
     }
+  },
+  
+  async mounted() {
+    // Carregar tickets do usuário
+    await this.loadUserTickets()
   },
   
   methods: {
@@ -498,10 +503,10 @@ export default {
     
     resetNewTicket() {
       this.newTicket = {
-        title: '',
+        subject: '',
         category: '',
         priority: '',
-        description: ''
+        message: ''
       }
     },
     
@@ -509,31 +514,16 @@ export default {
       this.isSubmitting = true
       
       try {
-        // Criar novo ticket
-        const newTicket = {
-          id: this.tickets.length + 1,
-          title: this.newTicket.title,
-          description: this.newTicket.description,
+        // Chamar API para criar ticket
+        const response = await this.$store.dispatch('createTicket', {
+          subject: this.newTicket.subject,
+          message: this.newTicket.message,
           category: this.newTicket.category,
-          priority: this.newTicket.priority,
-          status: 'open',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          userId: this.currentUser?.id || 1,
-          userName: this.currentUser?.email || 'Usuário',
-          messages: [
-            {
-              id: 1,
-              author: this.currentUser?.email || 'Usuário',
-              content: this.newTicket.description,
-              type: 'user',
-              createdAt: new Date().toISOString()
-            }
-          ]
-        }
+          priority: this.newTicket.priority
+        })
         
         // Adicionar ticket à lista
-        this.tickets.unshift(newTicket)
+        this.tickets.unshift(response)
         
         // Fechar modal
         this.closeNewTicketModal()
@@ -542,6 +532,7 @@ export default {
         this.showToastNotification('Ticket criado com sucesso!', 'success')
         
       } catch (error) {
+        console.error('Erro ao criar ticket:', error)
         this.showToastNotification('Erro ao criar ticket. Tente novamente.', 'error')
       } finally {
         this.isSubmitting = false
@@ -556,44 +547,34 @@ export default {
     async sendMessage() {
       if (!this.newMessage.trim()) return
       
-      const message = {
-        id: this.selectedTicket.messages.length + 1,
-        author: this.currentUser?.email || 'Usuário',
-        content: this.newMessage,
-        type: 'user',
-        createdAt: new Date().toISOString()
-      }
-      
-      // Adicionar mensagem ao ticket
-      this.selectedTicket.messages.push(message)
-      this.selectedTicket.updatedAt = new Date().toISOString()
-      
-      this.newMessage = ''
-      
-      // Simula resposta do suporte após 2 segundos
-      setTimeout(() => {
-        const supportMessage = {
-          id: this.selectedTicket.messages.length + 1,
-          author: 'Suporte Técnico',
-          content: 'Recebemos sua mensagem. Nossa equipe irá analisar e responder em breve.',
-          type: 'support',
-          createdAt: new Date().toISOString()
-        }
+      try {
+        // Chamar API para adicionar mensagem
+        const response = await this.$store.dispatch('addMessageToTicket', {
+          ticketId: this.selectedTicket.id,
+          message: this.newMessage
+        })
         
-        this.selectedTicket.messages.push(supportMessage)
+        // Adicionar mensagem ao ticket
+        this.selectedTicket.messages.push(response)
         this.selectedTicket.updatedAt = new Date().toISOString()
         
         // Atualizar status para "Em andamento" se ainda estiver aberto
         if (this.selectedTicket.status === 'open') {
-          this.selectedTicket.status = 'pending'
+          this.selectedTicket.status = 'in_progress'
         }
-      }, 2000)
+        
+        this.newMessage = ''
+        
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error)
+        this.showToastNotification('Erro ao enviar mensagem. Tente novamente.', 'error')
+      }
     },
     
     getStatusText(status) {
       const statusMap = {
         open: 'Aberto',
-        pending: 'Em Andamento',
+        in_progress: 'Em Andamento',
         closed: 'Fechado'
       }
       return statusMap[status] || status
@@ -628,6 +609,27 @@ export default {
         alert(`✅ ${message}`)
       } else {
         alert(`ℹ️ ${message}`)
+      }
+    },
+
+    // Carregar tickets do usuário da API
+    async loadUserTickets() {
+      try {
+        const response = await fetch('/api/tickets', {
+          headers: {
+            'Authorization': `Bearer ${this.$store.getters.authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.tickets) {
+            this.tickets = data.tickets
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar tickets:', error)
       }
     }
   }

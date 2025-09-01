@@ -397,35 +397,76 @@ export default createStore({
       commit('updateUserLastLogin', email)
     },
     
-    createTicket({ commit, state }, ticketData) {
-      const newTicket = {
-        id: String(state.tickets.length + 1).padStart(3, '0'),
-        userId: state.user.id,
-        userEmail: state.user.email,
-        ...ticketData,
-        status: 'open',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        messages: [
-          {
-            id: 1,
-            author: state.user.email,
-            content: ticketData.description,
-            type: 'user',
-            createdAt: new Date().toISOString()
-          }
-        ]
+    async createTicket({ commit, state }, ticketData) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch('/api/tickets', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(ticketData)
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao criar ticket')
+        }
+
+        const result = await response.json()
+        const newTicket = result.ticket
+        
+        // Adicionar ticket ao estado local
+        commit('addTicket', newTicket)
+        
+        return newTicket
+      } catch (error) {
+        console.error('Erro ao criar ticket:', error)
+        throw error
       }
-      commit('addTicket', newTicket)
-      return newTicket
     },
     
     updateTicketData({ commit }, { id, updates }) {
       commit('updateTicket', { id, updates })
     },
     
-    addMessageToTicket({ commit }, { ticketId, message }) {
-      commit('addTicketMessage', { ticketId, message })
+    async addMessageToTicket({ commit, state }, { ticketId, message }) {
+      try {
+        const token = state.authToken
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        const response = await fetch(`/api/tickets/${ticketId}/messages`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ message })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Erro ao adicionar mensagem')
+        }
+
+        const result = await response.json()
+        const newMessage = result.data
+        
+        // Adicionar mensagem ao ticket local
+        commit('addTicketMessage', { ticketId, message: newMessage })
+        
+        return newMessage
+      } catch (error) {
+        console.error('Erro ao adicionar mensagem:', error)
+        throw error
+      }
     },
     
 

@@ -8,6 +8,8 @@ const BookmakerAccount = require('./BookmakerAccount')(sequelize);
 const TransactionHistory = require('./TransactionHistory')(sequelize);
 const SurebetStats = require('./SurebetStats')(sequelize);
 const SurebetAnalytics = require('./SurebetAnalytics')(sequelize);
+const Ticket = require('./Ticket')(sequelize);
+const TicketMessage = require('./TicketMessage')(sequelize);
 
 // Definir associações
 User.hasMany(UserSession, {
@@ -24,6 +26,11 @@ UserSession.belongsTo(User, {
 User.hasMany(UserVIP, {
   foreignKey: 'user_id',
   as: 'vipSubscriptions'
+});
+
+User.hasMany(UserVIP, {
+  foreignKey: 'user_id',
+  as: 'vipPlans'
 });
 
 UserVIP.belongsTo(User, {
@@ -63,6 +70,32 @@ TransactionHistory.belongsTo(BookmakerAccount, {
   as: 'bookmakerAccount'
 });
 
+// Associações para tickets
+User.hasMany(Ticket, {
+  foreignKey: 'user_id',
+  as: 'tickets'
+});
+
+Ticket.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
+Ticket.hasMany(TicketMessage, {
+  foreignKey: 'ticket_id',
+  as: 'messages'
+});
+
+TicketMessage.belongsTo(Ticket, {
+  foreignKey: 'ticket_id',
+  as: 'ticket'
+});
+
+TicketMessage.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
 // Função para sincronizar modelos com o banco
 async function syncModels() {
   try {
@@ -90,5 +123,7 @@ module.exports = {
   TransactionHistory,
   SurebetStats,
   SurebetAnalytics,
+  Ticket,
+  TicketMessage,
   syncModels
 };

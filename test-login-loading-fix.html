@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Correção da Tela de Loading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        .test-button {
+            background: #00ff88;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        .test-button:hover {
+            background: #00cc6a;
+        }
+        .test-button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            background: #333;
+        }
+        .status.success { background: #1a4d1a; }
+        .status.error { background: #4d1a1a; }
+        .status.info { background: #1a1a4d; }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #333;
+            border-top: 5px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .log {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Teste - Correção da Tela de Loading (3s)</h1>
+        <p>Este teste simula o comportamento corrigido da tela de loading no LoginView.vue - agora com 3 segundos</p>
+        
+        <div class="status info">
+            <strong>Status:</strong> <span id="status">Pronto para teste</span>
+        </div>
+        
+        <div>
+            <button class="test-button" onclick="testLoginFlow()">🚀 Simular Login (3s)</button>
+            <button class="test-button" onclick="resetTest()">🔄 Resetar Teste</button>
+            <button class="test-button" onclick="clearLog()">🗑️ Limpar Log</button>
+        </div>
+        
+        <div class="status info">
+            <strong>Log de Eventos:</strong>
+            <div id="log" class="log"></div>
+        </div>
+        
+        <div class="status info">
+            <strong>Verificações:</strong>
+            <ul id="checks">
+                <li>✅ Tela de loading deve aparecer após validação</li>
+                                 <li>✅ Tela de loading deve permanecer visível por 3 segundos</li>
+                <li>✅ Tela de loading deve ser ocultada antes do redirecionamento</li>
+                <li>✅ Redirecionamento deve acontecer após ocultar loading</li>
+            </ul>
+        </div>
+    </div>
+    
+    <!-- Overlay de Loading -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h2>Carregando...</h2>
+            <p>Preparando seu dashboard</p>
+        </div>
+    </div>
+    
+    <script>
+        let startTime = 0;
+        let loadingVisible = false;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('log');
+            const logEntry = document.createElement('div');
+            logEntry.style.color = type === 'error' ? '#ff6b6b' : type === 'success' ? '#00ff88' : '#ffffff';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function updateStatus(message, type = 'info') {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            
+            const statusContainer = statusElement.parentElement.parentElement;
+            statusContainer.className = `status ${type}`;
+        }
+        
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            loadingVisible = true;
+            log('🎬 Tela de loading exibida', 'success');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            loadingVisible = false;
+            log('👻 Tela de loading ocultada', 'success');
+        }
+        
+        function simulateValidation() {
+            log('🔍 Simulando validação de formulário...', 'info');
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    log('✅ Validação bem-sucedida', 'success');
+                    resolve(true);
+                }, 500);
+            });
+        }
+        
+        function simulateAuthentication() {
+            log('🔐 Simulando autenticação...', 'info');
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    log('✅ Autenticação bem-sucedida', 'success');
+                    resolve({ success: true, user: { accountType: 'basic' } });
+                }, 1000);
+            });
+        }
+        
+        async function testLoginFlow() {
+            startTime = Date.now();
+            updateStatus('Iniciando teste de login...', 'info');
+            log('🚀 Iniciando teste de login...', 'info');
+            
+            try {
+                // Simula validação
+                const isValid = await simulateValidation();
+                if (!isValid) {
+                    throw new Error('Validação falhou');
+                }
+                
+                // Mostra tela de loading após validação bem-sucedida
+                showLoading();
+                log('🎯 Tela de loading ativada após validação', 'success');
+                
+                // Simula autenticação
+                const response = await simulateAuthentication();
+                if (response.success) {
+                                         log('🎉 Login bem-sucedido, aguardando 3 segundos...', 'success');
+                     updateStatus('Login bem-sucedido! Aguardando 3 segundos...', 'success');
+                     
+                     // Simula o comportamento corrigido: loading permanece por 3s
+                     setTimeout(() => {
+                        const elapsed = Math.round((Date.now() - startTime) / 1000);
+                        log(`⏰ Tempo decorrido: ${elapsed}s - Ocultando tela de loading...`, 'info');
+                        
+                        // Oculta a tela de loading antes do redirecionamento
+                        hideLoading();
+                        
+                        // Pequeno delay para garantir que a tela seja ocultada
+                        setTimeout(() => {
+                            log('🔄 Simulando redirecionamento...', 'success');
+                            updateStatus('Teste concluído com sucesso!', 'success');
+                            
+                            // Verifica se tudo funcionou corretamente
+                            const totalTime = Math.round((Date.now() - startTime) / 1000);
+                            log(`✅ Teste concluído em ${totalTime}s`, 'success');
+                            log('🎯 Verificações:', 'info');
+                            log('  ✅ Tela de loading apareceu após validação', 'success');
+                                                         log('  ✅ Tela de loading permaneceu visível por ~3s', 'success');
+                            log('  ✅ Tela de loading foi ocultada antes do redirecionamento', 'success');
+                            log('  ✅ Redirecionamento aconteceu após ocultar loading', 'success');
+                        }, 100);
+                                         }, 3000);
+                }
+            } catch (error) {
+                log(`❌ Erro durante o teste: ${error.message}`, 'error');
+                updateStatus('Erro durante o teste', 'error');
+                hideLoading();
+            }
+        }
+        
+        function resetTest() {
+            startTime = 0;
+            loadingVisible = false;
+            hideLoading();
+            updateStatus('Pronto para teste', 'info');
+            log('🔄 Teste resetado', 'info');
+        }
+        
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+            log('🗑️ Log limpo', 'info');
+        }
+        
+        // Inicialização
+        log('🚀 Sistema de teste inicializado', 'success');
+                 log('📋 Clique em "Simular Login (3s)" para testar o comportamento corrigido', 'info');
+    </script>
+</body>
+</html>

@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { User } = require('../models');
+const { User, UserVIP } = require('../models');
 const { authenticateToken } = require('../utils/auth');
+const { Op } = require('sequelize');
 
 // Middleware de autenticação
 router.use(authenticateToken);
@@ -29,20 +30,64 @@ router.get('/my-status', async (req, res) => {
       console.log('✅ Código gerado:', user.referral_code);
     }
     
-    // Buscar usuários referidos (versão simplificada)
+        // Buscar usuários referidos com informações de planos VIP
     console.log('🔍 Buscando usuários referidos...');
     const referredUsers = await User.findAll({
       where: { referred_by: userId },
-      attributes: ['id', 'username', 'first_name', 'last_name', 'account_type', 'created_at']
+      attributes: ['id', 'username', 'first_name', 'last_name', 'account_type', 'created_at'],
+      include: [{
+        model: UserVIP,
+        as: 'vipPlans',
+        where: { 
+          status: 'ativo',
+          data_fim: { [Op.gt]: new Date() }
+        },
+        required: false,
+        attributes: ['plan_name', 'plan_days', 'amount', 'data_inicio', 'data_fim']
+      }]
     });
     console.log('👥 Usuários referidos encontrados:', referredUsers.length);
     
-    // Calcular comissões simuladas
+    // Log detalhado de cada usuário referido
+    referredUsers.forEach((refUser, index) => {
+      console.log(`👤 Usuário ${index + 1}: ${refUser.username || refUser.first_name}`);
+      if (refUser.vipPlans && refUser.vipPlans.length > 0) {
+        refUser.vipPlans.forEach((plan, planIndex) => {
+          console.log(`  📋 Plano ${planIndex + 1}: ${plan.plan_name} - ${plan.plan_days} dias - R$ ${plan.amount}`);
+        });
+      } else {
+        console.log(`  ❌ Sem planos VIP ativos`);
+      }
+    });
+    
+    // Calcular comissões baseadas em planos VIP ativos
     let totalCommission = 0;
     const referredUsersWithCommission = referredUsers.map(refUser => {
-      const planValue = refUser.account_type === 'vip' ? 100.00 : 50.00;
-      const commission = planValue * 0.25;
-      totalCommission += commission;
+      let planValue = 0;
+      let commission = 0;
+      let planInfo = null;
+      let status = 'pending'; // pending, active, no-plan
+      
+      // Verificar se tem plano VIP ativo
+      if (refUser.vipPlans && refUser.vipPlans.length > 0) {
+        const activePlan = refUser.vipPlans[0]; // Pegar o primeiro plano ativo
+        planValue = activePlan.amount || 0;
+        
+        // Só calcular comissão se o plano for de pelo menos 30 dias (mensal ou anual)
+        if (activePlan.plan_days >= 30 && planValue >= 19.90) {
+          commission = planValue * 0.25; // 25% de comissão
+          status = 'active';
+          planInfo = {
+            name: activePlan.plan_name,
+            days: activePlan.plan_days,
+            amount: planValue
+          };
+        } else {
+          status = 'pending';
+        }
+      } else {
+        status = 'no-plan';
+      }
       
       return {
         id: refUser.id,
@@ -51,9 +96,23 @@ router.get('/my-status', async (req, res) => {
           : refUser.username || 'Usuário',
         planValue: planValue,
         commission: commission,
+        hasActivePlan: planValue > 0,
+        planInfo: planInfo,
+        status: status,
         joinedAt: refUser.created_at
       };
     });
+    
+    // Calcular total de comissões apenas com usuários que têm planos ativos
+    totalCommission = referredUsersWithCommission
+      .filter(user => user.status === 'active')
+      .reduce((total, user) => total + user.commission, 0);
+    
+    console.log('💰 Comissões calculadas:');
+    referredUsersWithCommission.forEach((user, index) => {
+      console.log(`  💵 ${user.name}: R$ ${user.planValue} → Comissão: R$ ${user.commission}`);
+    });
+    console.log(`  🎯 Total de comissões: R$ ${totalCommission}`);
     
     const responseData = {
       success: true,

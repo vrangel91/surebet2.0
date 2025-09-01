@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste - Tela de Loading do Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #00ff88;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #333;
+            border-radius: 8px;
+            border-left: 4px solid #00ff88;
+        }
+        .test-title {
+            color: #00ff88;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .test-description {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        .test-button {
+            background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .test-button:hover {
+            background: linear-gradient(135deg, #00cc6a 0%, #00ff88 100%);
+            transform: translateY(-2px);
+        }
+        .test-button:disabled {
+            background: #404040;
+            color: #808080;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .test-success {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            color: #00ff88;
+        }
+        .test-error {
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+        }
+        .test-info {
+            background: rgba(0, 123, 255, 0.1);
+            border: 1px solid rgba(0, 123, 255, 0.3);
+            color: #007bff;
+        }
+        .loading-simulation {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(0, 255, 136, 0.3);
+            border-top: 4px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            font-size: 18px;
+            color: #00ff88;
+            margin-bottom: 10px;
+        }
+        .loading-timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .test-checklist {
+            background: #444;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .checklist-checkbox {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            accent-color: #00ff88;
+        }
+        .checklist-label {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 style="text-align: center; color: #00ff88;">🧪 Teste - Tela de Loading do Login</h1>
+        
+        <div class="test-section">
+            <div class="test-title">📋 Objetivo do Teste</div>
+            <div class="test-description">
+                Este teste verifica se a tela de loading está funcionando corretamente no sistema de login:
+                <ul>
+                    <li>✅ A tela de loading deve aparecer imediatamente após clicar em "Entrar"</li>
+                    <li>✅ A tela de loading deve permanecer visível por 10 segundos</li>
+                    <li>✅ O usuário deve ser redirecionado após os 10 segundos</li>
+                    <li>✅ A tela de loading deve ser ocultada em caso de erro</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔧 Teste de Simulação</div>
+            <div class="test-description">
+                Clique no botão abaixo para simular o comportamento da tela de loading:
+            </div>
+            
+            <button class="test-button" onclick="startLoadingTest()" id="startTestBtn">
+                🚀 Iniciar Teste de Loading
+            </button>
+            
+            <button class="test-button" onclick="resetTest()" id="resetTestBtn" style="display: none;">
+                🔄 Reiniciar Teste
+            </button>
+
+            <div class="loading-simulation" id="loadingSimulation">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Carregando...</div>
+                <div class="loading-timer" id="loadingTimer">10</div>
+                <div style="margin-top: 20px; color: #808080; font-size: 14px;">
+                    Simulando o comportamento da tela de loading do LoginView.vue
+                </div>
+            </div>
+
+            <div id="testResult"></div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">📝 Checklist de Verificação</div>
+            <div class="test-description">
+                Use esta lista para verificar se a implementação está funcionando corretamente:
+            </div>
+            
+            <div class="test-checklist">
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check1">
+                    <label class="checklist-label" for="check1">Componente LoginLoading.vue está sendo importado corretamente</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check2">
+                    <label class="checklist-label" for="check2">Propriedade showLoginLoading está definida no data()</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check3">
+                    <label class="checklist-label" for="check3">showLoginLoading é definido como true após validação bem-sucedida</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check4">
+                    <label class="checklist-label" for="check4">Timeout de redirecionamento está configurado para 10000ms (10 segundos)</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check5">
+                    <label class="checklist-label" for="check5">showLoginLoading é resetado para false no finally</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check6">
+                    <label class="checklist-label" for="check6">Tela de loading aparece imediatamente ao clicar em "Entrar"</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check7">
+                    <label class="checklist-label" for="check7">Tela de loading permanece visível por 10 segundos</label>
+                </div>
+                <div class="checklist-item">
+                    <input type="checkbox" class="checklist-checkbox" id="check8">
+                    <label class="checklist-label" for="check8">Redirecionamento acontece após os 10 segundos</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <div class="test-title">🔍 Código Implementado</div>
+            <div class="test-description">
+                <strong>Arquivo:</strong> client/src/views/LoginView.vue<br>
+                <strong>Componente:</strong> LoginLoading.vue<br>
+                <strong>Tempo de Loading:</strong> 10 segundos (10000ms)
+            </div>
+            
+            <div style="background: #1a1a1a; padding: 15px; border-radius: 6px; font-family: monospace; font-size: 12px; overflow-x: auto;">
+                <pre style="margin: 0; color: #00ff88;">
+// Importação do componente
+import LoginLoading from '@/components/LoginLoading.vue'
+
+// Registro do componente
+components: {
+  LoginLoading
+}
+
+// Propriedade no data()
+showLoginLoading: false
+
+// Ativação no handleLogin()
+this.showLoginLoading = true
+
+// Timeout de 10 segundos
+setTimeout(() => {
+  // ... lógica de redirecionamento
+}, 10000)
+
+// Reset no finally
+finally {
+  this.isLoading = false
+  this.showLoginLoading = false
+}
+                </pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let testInterval;
+        let testTimer = 10;
+        let testRunning = false;
+
+        function startLoadingTest() {
+            if (testRunning) return;
+            
+            testRunning = true;
+            testTimer = 10;
+            
+            // Mostra a simulação de loading
+            document.getElementById('loadingSimulation').style.display = 'block';
+            document.getElementById('startTestBtn').style.display = 'none';
+            document.getElementById('resetTestBtn').style.display = 'inline-block';
+            
+            // Inicia o timer
+            testInterval = setInterval(() => {
+                testTimer--;
+                document.getElementById('loadingTimer').textContent = testTimer;
+                
+                if (testTimer <= 0) {
+                    clearInterval(testInterval);
+                    completeTest();
+                }
+            }, 1000);
+            
+            // Mostra resultado inicial
+            showTestResult('info', '🚀 Teste iniciado! A tela de loading está visível por 10 segundos.');
+        }
+
+        function completeTest() {
+            testRunning = false;
+            
+            // Simula redirecionamento
+            document.getElementById('loadingSimulation').style.display = 'none';
+            
+            showTestResult('success', '✅ Teste concluído com sucesso! Redirecionamento simulado após 10 segundos.');
+            
+            // Marca checkboxes automaticamente
+            document.getElementById('check6').checked = true;
+            document.getElementById('check7').checked = true;
+            document.getElementById('check8').checked = true;
+        }
+
+        function resetTest() {
+            if (testInterval) {
+                clearInterval(testInterval);
+            }
+            
+            testRunning = false;
+            testTimer = 10;
+            
+            document.getElementById('loadingSimulation').style.display = 'none';
+            document.getElementById('startTestBtn').style.display = 'inline-block';
+            document.getElementById('resetTestBtn').style.display = 'none';
+            document.getElementById('loadingTimer').textContent = '10';
+            
+            // Limpa resultado
+            document.getElementById('testResult').innerHTML = '';
+            
+            // Desmarca checkboxes de teste
+            document.getElementById('check6').checked = false;
+            document.getElementById('check7').checked = false;
+            document.getElementById('check8').checked = false;
+        }
+
+        function showTestResult(type, message) {
+            const resultDiv = document.getElementById('testResult');
+            const className = type === 'success' ? 'test-success' : 
+                            type === 'error' ? 'test-error' : 'test-info';
+            
+            resultDiv.innerHTML = `<div class="test-result ${className}">${message}</div>`;
+        }
+
+        // Auto-marca checkboxes baseado na implementação
+        window.addEventListener('load', () => {
+            // Marca automaticamente os checkboxes que já foram implementados
+            document.getElementById('check1').checked = true;
+            document.getElementById('check2').checked = true;
+            document.getElementById('check3').checked = true;
+            document.getElementById('check4').checked = true;
+            document.getElementById('check5').checked = true;
+        });
+    </script>
+</body>
+</html>

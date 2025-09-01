@@ -248,7 +248,7 @@
                 <div v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card admin-ticket" @click="openTicket(ticket)">
                   <div class="ticket-header">
                     <div class="ticket-info">
-                      <h4 class="ticket-title">{{ ticket.title }}</h4>
+                      <h4 class="ticket-title">{{ ticket.subject }}</h4>
                       <span class="ticket-id">#{{ ticket.id }}</span>
                       <span class="ticket-user">{{ ticket.userName }}</span>
                     </div>
@@ -258,7 +258,7 @@
                   </div>
                   
                   <div class="ticket-content">
-                    <p class="ticket-description">{{ ticket.description.substring(0, 100) }}{{ ticket.description.length > 100 ? '...' : '' }}</p>
+                    <p class="ticket-description">{{ ticket.messages && ticket.messages[0] ? ticket.messages[0].content.substring(0, 100) + (ticket.messages[0].content.length > 100 ? '...' : '') : 'Sem descrição' }}</p>
                   </div>
                   
                   <div class="ticket-footer">
@@ -326,7 +326,7 @@
             
               <div class="ticket-description-section">
                 <h5>Descrição</h5>
-                <p>{{ selectedTicket.description }}</p>
+                <p>{{ selectedTicket.messages && selectedTicket.messages[0] ? selectedTicket.messages[0].content : 'Sem descrição' }}</p>
               </div>
               
               <div class="ticket-messages-section">
@@ -581,85 +581,7 @@ export default {
       users: [],
       loading: false,
       
-      tickets: [
-        {
-          id: 1,
-          title: 'Problema com login',
-          description: 'Não consigo fazer login na minha conta',
-          category: 'technical',
-          priority: 'high',
-          status: 'open',
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString(),
-          userId: 1,
-          userName: 'João Silva',
-          messages: [
-            {
-              id: 1,
-              author: 'João Silva',
-              content: 'Não consigo fazer login na minha conta',
-              type: 'user',
-              createdAt: new Date(Date.now() - 86400000).toISOString()
-            }
-          ]
-        },
-        {
-          id: 2,
-          title: 'Dúvida sobre pagamento',
-          description: 'Como funciona o sistema de pagamento?',
-          category: 'financial',
-          priority: 'medium',
-          status: 'pending',
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-          updatedAt: new Date(Date.now() - 86400000).toISOString(),
-          userId: 2,
-          userName: 'Maria Santos',
-          messages: [
-            {
-              id: 1,
-              author: 'Maria Santos',
-              content: 'Como funciona o sistema de pagamento?',
-              type: 'user',
-              createdAt: new Date(Date.now() - 172800000).toISOString()
-            },
-            {
-              id: 2,
-              author: 'Suporte Técnico',
-              content: 'Olá! Nossos pagamentos são processados via PIX e cartão de crédito. Posso te ajudar com algo específico?',
-              type: 'support',
-              createdAt: new Date(Date.now() - 86400000).toISOString()
-            }
-          ]
-        },
-        {
-          id: 3,
-          title: 'Sugestão de melhoria',
-          description: 'Gostaria de sugerir uma melhoria na interface',
-          category: 'feature',
-          priority: 'low',
-          status: 'closed',
-          createdAt: new Date(Date.now() - 259200000).toISOString(),
-          updatedAt: new Date(Date.now() - 172800000).toISOString(),
-          userId: 3,
-          userName: 'Pedro Costa',
-          messages: [
-            {
-              id: 1,
-              author: 'Pedro Costa',
-              content: 'Gostaria de sugerir uma melhoria na interface',
-              type: 'user',
-              createdAt: new Date(Date.now() - 259200000).toISOString()
-            },
-            {
-              id: 2,
-              author: 'Suporte Técnico',
-              content: 'Obrigado pela sugestão! Vamos analisar e implementar se possível.',
-              type: 'support',
-              createdAt: new Date(Date.now() - 172800000).toISOString()
-            }
-          ]
-        }
-      ]
+      tickets: []
     }
   },
   
@@ -675,10 +597,10 @@ export default {
       const pendingTickets = this.tickets.filter(t => t.status === 'pending').length
       const closedTickets = this.tickets.filter(t => t.status === 'closed').length
       
-      // Mock data para demonstração
+      // Mock data para demonstração (será substituído por API real)
       const avgResponseTime = '2h 30m'
-      const totalUsers = 156
-      const vipUsers = 23
+      const totalUsers = this.users.length
+      const vipUsers = this.users.filter(u => u.plan === 'vip').length
       
       return { 
         totalTickets, 
@@ -714,7 +636,7 @@ export default {
         const query = this.searchQuery.toLowerCase()
         filtered = filtered.filter(ticket => 
           ticket.id.toString().includes(query) ||
-          ticket.title.toLowerCase().includes(query) ||
+          ticket.subject.toLowerCase().includes(query) ||
           ticket.userName.toLowerCase().includes(query)
         )
       }
@@ -778,12 +700,36 @@ export default {
         this.loading = false
       }
     },
+
+    // Carregar tickets do banco de dados
+    async loadTickets() {
+      console.log('🔍 Carregando tickets...')
+      try {
+        const response = await axios.get('/api/tickets')
+        console.log('📊 Resposta da API tickets:', response.data)
+        
+        if (response.data.success && response.data.tickets) {
+          this.tickets = response.data.tickets
+          console.log('✅ Tickets carregados:', this.tickets.length)
+        } else {
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          this.tickets = []
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar tickets:', error)
+        console.error('📋 Detalhes do erro:', error.response?.data)
+        this.tickets = []
+      }
+    },
     
     // Atualizar dados
     async refreshData() {
       console.log('🔄 Iniciando refreshData...')
       try {
-        await this.loadUsers()
+        await Promise.all([
+          this.loadUsers(),
+          this.loadTickets()
+        ])
         console.log('✅ refreshData concluído com sucesso')
       } catch (error) {
         console.error('❌ Erro ao atualizar dados:', error)
@@ -824,30 +770,51 @@ export default {
     async sendAdminMessage() {
       if (!this.newMessage.trim()) return
       
-      const message = {
-        id: this.selectedTicket.messages.length + 1,
-        author: this.currentUser?.email || 'Administrador',
-        content: this.newMessage,
-        type: 'admin',
-        createdAt: new Date().toISOString()
+      try {
+        // Chamar API para adicionar mensagem
+        const response = await axios.post(`/api/tickets/${this.selectedTicket.id}/messages`, {
+          content: this.newMessage
+        })
+        
+        if (response.data.success) {
+          // Adicionar mensagem ao ticket
+          this.selectedTicket.messages.push(response.data.data)
+          this.selectedTicket.updatedAt = new Date().toISOString()
+          
+          // Atualizar status para "Em andamento" se ainda estiver aberto
+          if (this.selectedTicket.status === 'open') {
+            this.selectedTicket.status = 'pending'
+          }
+          
+          this.newMessage = ''
+          this.showToastNotification('Mensagem enviada com sucesso!', 'success')
+        } else {
+          this.showToastNotification('Erro ao enviar mensagem', 'error')
+        }
+      } catch (error) {
+        console.error('Erro ao enviar mensagem:', error)
+        this.showToastNotification('Erro ao enviar mensagem', 'error')
       }
-      
-      // Adicionar mensagem ao ticket
-      this.selectedTicket.messages.push(message)
-      this.selectedTicket.updatedAt = new Date().toISOString()
-      
-      // Atualizar status para "Em andamento" se ainda estiver aberto
-      if (this.selectedTicket.status === 'open') {
-        this.selectedTicket.status = 'pending'
-      }
-      
-      this.newMessage = ''
     },
 
-    closeTicket() {
+    async closeTicket() {
       if (this.selectedTicket) {
-        this.selectedTicket.status = 'closed'
-        this.selectedTicket.updatedAt = new Date().toISOString()
+        try {
+          const response = await axios.patch(`/api/tickets/${this.selectedTicket.id}/status`, {
+            status: 'closed'
+          })
+          
+          if (response.data.success) {
+            this.selectedTicket.status = 'closed'
+            this.selectedTicket.updatedAt = new Date().toISOString()
+            this.showToastNotification('Ticket fechado com sucesso!', 'success')
+          } else {
+            this.showToastNotification('Erro ao fechar ticket', 'error')
+          }
+        } catch (error) {
+          console.error('Erro ao fechar ticket:', error)
+          this.showToastNotification('Erro ao fechar ticket', 'error')
+        }
       }
     },
     
@@ -1063,6 +1030,18 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       }).format(new Date(date))
+    },
+
+    showToastNotification(message, type = 'info') {
+      // Sistema de notificação simples usando alert temporariamente
+      // TODO: Implementar sistema de toast mais elegante
+      if (type === 'error') {
+        alert(`❌ ${message}`)
+      } else if (type === 'success') {
+        alert(`✅ ${message}`)
+      } else {
+        alert(`ℹ️ ${message}`)
+      }
     }
   }
 }

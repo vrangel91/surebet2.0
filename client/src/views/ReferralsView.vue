@@ -26,26 +26,29 @@
       <div class="referrals-main">
         <!-- Information Cards -->
         <div class="info-cards">
-          <!-- Comissões Card -->
-          <div class="info-card">
-            <div class="card-icon commission-icon">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2z"/>
-                <path d="M0 7v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7H0zm3 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5V9z"/>
-              </svg>
-            </div>
-            <div class="card-content">
-              <div class="card-value">R$ {{ formattedCommissionBalance }}</div>
-                             <button 
-                 class="withdraw-btn" 
-                 :class="{ 'disabled': commissionBalance < 100 }"
-                 @click="withdrawCommission"
-                 :disabled="commissionBalance < 100"
-               >
-                 {{ commissionBalance >= 100 ? '+ Sacar comissão' : 'Mínimo R$ 100,00' }}
-               </button>
-            </div>
-          </div>
+                     <!-- Comissões Card -->
+           <div class="info-card">
+             <div class="card-icon commission-icon">
+               <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                 <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2z"/>
+                 <path d="M0 7v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V7H0zm3 2a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5V9z"/>
+               </svg>
+             </div>
+             <div class="card-content">
+               <div class="card-value">R$ {{ formattedCommissionBalance }}</div>
+               <div class="card-subtitle">
+                 {{ referredUsers.length }} usuário{{ referredUsers.length !== 1 ? 's' : '' }} indicado{{ referredUsers.length !== 1 ? 's' : '' }}
+               </div>
+                              <button 
+                  class="withdraw-btn" 
+                  :class="{ 'disabled': commissionBalance < 100 }"
+                  @click="withdrawCommission"
+                  :disabled="commissionBalance < 100"
+                >
+                  {{ commissionBalance >= 100 ? '+ Sacar comissão' : 'Mínimo R$ 100,00' }}
+                </button>
+             </div>
+           </div>
 
           <!-- Histórico Card -->
           <div class="info-card">
@@ -71,9 +74,9 @@
         <div class="refer-earn-section">
           <div class="refer-content">
             <h3 class="refer-title">Indique e ganhe!</h3>
-            <p class="refer-description">
-              Divulgue seu link de afiliado abaixo e ganhe R$ 19,90 por cada indicação que assinar o plano mensal mínimo. Saque disponível a partir de R$ 100,00 acumulados.
-            </p>
+                         <p class="refer-description">
+               Divulgue seu link de afiliado abaixo e ganhe R$ 19,90 por cada usuário indicado que contratar um plano mensal ou anual. Usuários aparecem na lista assim que se cadastram, mas a comissão só é liberada após a contratação do plano. Saque disponível a partir de R$ 100,00 acumulados.
+             </p>
             
             <div class="affiliate-link-section">
               <input 
@@ -125,14 +128,33 @@
                         <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
                       </svg>
                                            <p>Nenhum usuário indicado ainda</p>
-                     <span>Compartilhe seu link de afiliado para começar a ganhar R$ 19,90 por indicação!</span>
+                     <span>Compartilhe seu link de afiliado! Usuários cadastrados aparecerão aqui e você ganhará R$ 19,90 quando eles contratarem planos mensais ou anuais.</span>
                     </div>
                   </td>
                 </tr>
-                                 <tr v-for="user in referredUsers" :key="user.id" class="user-row">
-                   <td>{{ user.name }}</td>
-                   <td>{{ user.planName || 'Plano Mensal' }}</td>
-                   <td>R$ 19,90</td>
+                                 <tr v-for="user in referredUsers" :key="user.id" class="user-row" :class="getUserRowClass(user.status)">
+                   <td>
+                     <div class="user-info">
+                       <span class="user-name">{{ user.name }}</span>
+                       <span v-if="user.status === 'pending'" class="status-badge status-pending">Aguardando plano</span>
+                       <span v-else-if="user.status === 'active'" class="status-badge status-active">Plano ativo</span>
+                       <span v-else class="status-badge status-no-plan">Sem plano</span>
+                     </div>
+                   </td>
+                   <td>
+                     <span v-if="user.planInfo" class="plan-info">
+                       {{ user.planInfo.name }} ({{ user.planInfo.days }} dias)
+                     </span>
+                     <span v-else class="no-plan">Aguardando contratação</span>
+                   </td>
+                   <td>
+                     <span v-if="user.commission > 0" class="commission-amount">
+                       R$ {{ formatCurrency(user.commission) }}
+                     </span>
+                     <span v-else class="commission-pending">
+                       R$ 19,90 <small>(quando ativar plano)</small>
+                     </span>
+                   </td>
                  </tr>
               </tbody>
             </table>
@@ -384,18 +406,31 @@ export default {
       return numValue.toFixed(2).replace('.', ',');
     },
 
-    getStatusText(status) {
-      switch (status) {
-        case 'pending':
-          return 'Pendente';
-        case 'completed':
-          return 'Completado';
-        case 'failed':
-          return 'Falhou';
-        default:
-          return 'Desconhecido';
-      }
-    },
+         getStatusText(status) {
+       switch (status) {
+         case 'pending':
+           return 'Pendente';
+         case 'completed':
+           return 'Completado';
+         case 'failed':
+           return 'Falhou';
+         default:
+           return 'Desconhecido';
+       }
+     },
+
+     getUserRowClass(status) {
+       switch (status) {
+         case 'active':
+           return 'user-row-active';
+         case 'pending':
+           return 'user-row-pending';
+         case 'no-plan':
+           return 'user-row-no-plan';
+         default:
+           return '';
+       }
+     },
   }
 }
 </script>
@@ -461,6 +496,85 @@ export default {
   margin-bottom: 32px;
 }
 
+/* Commission and Plan Status Styles */
+.commission-amount {
+  color: #00ff88;
+  font-weight: 600;
+}
+
+.commission-pending {
+  color: #ffd700;
+  font-weight: 500;
+}
+
+.commission-pending small {
+  font-size: 12px;
+  opacity: 0.7;
+  font-weight: normal;
+}
+
+.no-plan {
+  color: #ff6b35;
+  font-style: italic;
+}
+
+.plan-info {
+  color: #00ff88;
+  font-weight: 500;
+}
+
+/* User Row Status Styles */
+.user-row-active {
+  background: rgba(0, 255, 136, 0.05);
+  border-left: 4px solid #00ff88;
+}
+
+.user-row-pending {
+  background: rgba(255, 215, 0, 0.05);
+  border-left: 4px solid #ffd700;
+}
+
+.user-row-no-plan {
+  background: rgba(255, 107, 53, 0.05);
+  border-left: 4px solid #ff6b35;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-active {
+  background-color: rgba(0, 255, 136, 0.2);
+  color: #00ff88;
+}
+
+.status-pending {
+  background-color: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.status-no-plan {
+  background-color: rgba(255, 107, 53, 0.2);
+  color: #ff6b35;
+}
+
 .info-card {
   background: var(--bg-secondary, #2a2a2a);
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
@@ -509,6 +623,12 @@ export default {
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary, #ffffff);
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #cccccc);
+  opacity: 0.8;
 }
 
 .withdraw-btn {
