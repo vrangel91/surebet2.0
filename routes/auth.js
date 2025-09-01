@@ -108,7 +108,7 @@ router.post('/login', async (req, res) => {
 // Rota de registro
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, referer_id } = req.body;
 
     // Validações
     if (!name || !email || !password) {
@@ -135,6 +135,22 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // Verificar se o referer_id é válido (se fornecido)
+    let referrerUser = null;
+    if (referer_id) {
+      referrerUser = await User.findOne({
+        where: { id: referer_id },
+        attributes: ['id', 'username', 'email']
+      });
+      
+      if (!referrerUser) {
+        console.log(`⚠️ Referer ID inválido: ${referer_id}`);
+        // Não falha o registro, apenas ignora o referer_id inválido
+      } else {
+        console.log(`✅ Referer válido encontrado: ${referrerUser.username} (${referrerUser.email})`);
+      }
+    }
+
     // Criar usuário
     const user = await User.create({
       username: name, // Usar o nome como username para evitar constraint NOT NULL
@@ -144,7 +160,8 @@ router.post('/register', async (req, res) => {
       password_hash: password, // Será hasheada automaticamente
       account_type: 'basic', // Usuário ganha privilégio BÁSICO automaticamente
       is_admin: false,
-      is_vip: false
+      is_vip: false,
+      referred_by: referrerUser ? referrerUser.id : null // Inclui o ID do referenciador se válido
     });
 
     // Gerar token

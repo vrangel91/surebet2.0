@@ -16,6 +16,7 @@ const vipRoutes = require('./routes/vip');
 const bookmakerAccountsRoutes = require('./routes/bookmakerAccounts');
 const surebetStatsRoutes = require('./routes/surebetStats');
 const ordersRoutes = require('./routes/orders');
+const referralsRoutes = require('./routes/referrals');
 
 // Importar cron jobs VIP
 const vipCronJobs = require('./utils/vipCronJobs');
@@ -61,7 +62,7 @@ app.use((req, res, next) => {
   const isForceRefresh = req.get('Cache-Control') === 'no-cache' || req.get('Pragma') === 'no-cache';
   
   // Se for uma requisição para uma rota da API que não existe, tratar como 404
-  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
+  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
     console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}${isForceRefresh ? ' (Refresh forçado detectado)' : ''}`);
     return res.status(404).json({
       error: 'Endpoint não encontrado',
@@ -83,6 +84,7 @@ app.use('/api/vip', vipRoutes);
 app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
 app.use('/api/surebet-stats', surebetStatsRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/referrals', referralsRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });

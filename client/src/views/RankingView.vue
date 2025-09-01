@@ -11,14 +11,16 @@
       <!-- Header Global -->
       <Header />
       
-      <div class="ranking-header">
-        <h1 class="ranking-title">
-          <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
-          </svg>
-          Insights de Surebets
-        </h1>
-        <p class="ranking-subtitle">Análise completa de padrões, casas, mercados e oportunidades</p>
+      <header class="content-header">
+        <div class="header-left">
+          <h2 class="page-title">
+            <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
+            </svg>
+            Insights de Surebets
+          </h2>
+          <p class="page-subtitle">Análise completa de padrões, casas, mercados e oportunidades</p>
+        </div>
         
         <!-- Indicador de status dos dados -->
         <div class="data-status-indicator" v-if="dataSource">
@@ -32,7 +34,7 @@
             • Atualizado: {{ formatDateTime(lastDataUpdate) }}
           </span>
         </div>
-      </div>
+      </header>
 
       <div class="filters-section">
         <div class="filter-group">
@@ -2433,24 +2435,29 @@ export default {
 .main-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
 .scroll-spacer { height: 200px; flex-shrink: 0; }
 
-.ranking-header {
-  text-align: center;
-  margin-bottom: 32px;
-  padding: 24px 32px 0;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
+      .content-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+        margin-bottom: 32px;
+      }
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.ranking-title {
+.page-title {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 16px;
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 8px;
+  color: #00ff88;
+  margin: 0;
 }
 
 .ranking-icon {
@@ -2460,12 +2467,11 @@ export default {
   filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
 }
 
- .ranking-subtitle {
-   color: #cccccc;
-   font-size: 16px;
-   margin: 0;
-   margin-bottom: 16px;
- }
+.page-subtitle {
+  color: var(--text-secondary, #cccccc);
+  font-size: 16px;
+  margin: 0;
+}
 
  .data-status-indicator {
    display: flex;
@@ -2524,14 +2530,280 @@ export default {
   font-size: 14px;
 }
 
+/* ===== SISTEMA COMPLETO DE PERSONALIZAÇÃO DO FILTER-SELECT ===== */
+
+/* 1. IDENTIFICAÇÃO E SELEÇÃO ESPECÍFICA */
 .filter-select {
-  background: rgba(42, 42, 42, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 12px 16px;
+  /* Estilos base */
+  background: linear-gradient(135deg, rgba(42, 42, 42, 0.95), rgba(26, 26, 26, 0.95));
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 14px 18px;
   color: #ffffff;
   font-size: 14px;
-  min-width: 120px;
+  font-weight: 500;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  
+  /* Remover aparência padrão do navegador */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  
+  /* Ícone personalizado de seta */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 48px;
+  
+  /* Garantir que o texto não sobreponha o ícone */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 2. ESTADOS INTERATIVOS E VISUAIS */
+.filter-select:hover {
+  background: linear-gradient(135deg, rgba(52, 52, 52, 0.98), rgba(36, 36, 36, 0.98));
+  border-color: rgba(0, 255, 136, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 255, 136, 0.1);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #00ff88;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 106, 0.1));
+  box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.3), 0 8px 25px rgba(0, 0, 0, 0.5);
+  transform: translateY(-1px);
+}
+
+.filter-select:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 3. ESTADOS DESABILITADOS */
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: rgba(42, 42, 42, 0.5);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 4. PERSONALIZAÇÃO DAS OPÇÕES DO DROPDOWN */
+.filter-select option {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  margin: 2px 0 !important;
+}
+
+/* 5. ESTADOS DAS OPÇÕES */
+.filter-select option:hover {
+  background-color: #2a2a2a !important;
+  color: #00ff88 !important;
+  transform: translateX(4px);
+}
+
+.filter-select option:checked {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 106, 0.2)) !important;
+  color: #00ff88 !important;
+  font-weight: 700 !important;
+  border-left: 3px solid #00ff88 !important;
+  padding-left: 20px !important;
+}
+
+.filter-select option:selected {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 204, 106, 0.15)) !important;
+  color: #00ff88 !important;
+}
+
+/* 6. SUPORTE CROSS-BROWSER */
+.filter-select::-ms-expand {
+  display: none;
+}
+
+.filter-select::-webkit-select-placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-style: italic;
+}
+
+/* 7. ANIMAÇÕES E TRANSITIONS */
+.filter-select {
+  animation: filterSelectFadeIn 0.3s ease-out;
+}
+
+@keyframes filterSelectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 8. ESTADOS ESPECIAIS */
+.filter-select.has-value {
+  border-color: rgba(0, 255, 136, 0.6);
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 204, 106, 0.05));
+}
+
+.filter-select.is-loading {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M21 12a9 9 0 11-6.219-8.56'/%3e%3c/svg%3e");
+  animation: filterSelectSpin 1s linear infinite;
+}
+
+@keyframes filterSelectSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* 9. ESTILOS PARA DROPDOWN ABERTO */
+.filter-select:focus {
+  background-color: #1a1a1a;
+}
+
+/* 10. GARANTIR VISIBILIDADE DAS OPÇÕES */
+.filter-select option {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.filter-select option:last-child {
+  border-bottom: none !important;
+}
+
+/* 11. ESTILOS PARA OPÇÕES GRUPADAS */
+.filter-select optgroup {
+  background-color: #2a2a2a !important;
+  color: #00ff88 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 16px !important;
+  border-bottom: 2px solid rgba(0, 255, 136, 0.3) !important;
+}
+
+.filter-select optgroup option {
+  padding-left: 24px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+/* 12. ESTILOS PARA OPÇÕES DESTACADAS */
+.filter-select option[data-highlight="true"] {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2)) !important;
+  color: #ffc107 !important;
+  font-weight: 600 !important;
+  border-left: 3px solid #ffc107 !important;
+}
+
+/* 13. ESTILOS PARA OPÇÕES DESABILITADAS */
+.filter-select option:disabled {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-style: italic !important;
+  cursor: not-allowed !important;
+}
+
+/* 14. MELHORIAS DE ACESSIBILIDADE */
+.filter-select:focus-visible {
+  outline: 3px solid #00ff88;
+  outline-offset: 2px;
+}
+
+.filter-select:focus-within {
+  border-color: #00ff88;
+  box-shadow: 0 0 0 4px rgba(0, 255, 136, 0.2);
+}
+
+/* 15. ESTILOS PARA ESTADOS DE CARREGAMENTO E ERRO */
+.filter-select.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.filter-select.has-error {
+  border-color: #ff4444;
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.1), rgba(220, 53, 69, 0.1));
+  box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
+}
+
+.filter-select.has-error:focus {
+  border-color: #ff4444;
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.3);
+}
+
+/* 16. ESTILOS PARA ESTADOS DE SUCESSO */
+.filter-select.has-success {
+  border-color: #00ff88;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(0, 204, 106, 0.05));
+  box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.1);
+}
+
+/* 17. ANIMAÇÕES AVANÇADAS */
+.filter-select {
+  transform-origin: center;
+}
+
+/* 18. ESTILOS PARA DARK MODE E ALTO CONTRASTE */
+@media (prefers-color-scheme: dark) {
+  .filter-select {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(26, 26, 26, 0.95));
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@media (prefers-contrast: high) {
+  .filter-select {
+    border-width: 3px;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+  }
+  
+  .filter-select option {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+  }
+}
+
+/* 19. ESTILOS PARA REDUÇÃO DE MOVIMENTO */
+@media (prefers-reduced-motion: reduce) {
+  .filter-select,
+  .filter-select option {
+    transition: none;
+    animation: none;
+    transform: none;
+  }
+}
+
+/* 20. ESTILOS PARA IMPRESSÃO */
+@media print {
+  .filter-select {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+  }
+  
+  .filter-select option {
+    background: white !important;
+    color: black !important;
+  }
 }
 
 .filter-select:focus {
@@ -3893,22 +4165,27 @@ export default {
 }
 
  @media (max-width: 768px) {
-   .main-content { padding-bottom: 120px; }
-   .ranking-header { padding: 16px 20px 0; }
-   .filters-section { flex-direction: column; align-items: center; padding: 0 20px; }
-   .stats-dashboard { grid-template-columns: 1fr; padding: 0 20px; }
-   .charts-grid { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
-   .insights-grid { grid-template-columns: 1fr; }
-   .ranking-table { font-size: 12px; }
-   .ranking-table th, .ranking-table td { padding: 8px 4px; }
-   .markets-improved-section { padding: 16px; }
-   .section-header h3 { font-size: 20px; }
-   .modern-table { font-size: 12px; }
-   .modern-table th, .modern-table td { padding: 8px 6px; }
-   .markets-layout { grid-template-columns: 1fr; gap: 16px; }
-   .ranking-section { margin: 0 20px 32px; }
-   .insights-section { margin: 0 20px 32px; }
-   .markets-analysis-section { margin: 0 20px 32px; }
+  .main-content { padding-bottom: 120px; }
+  .content-header { 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 16px; 
+    padding: 16px 20px; 
+  }
+  .filters-section { flex-direction: column; align-items: center; padding: 0 20px; }
+  .stats-dashboard { grid-template-columns: 1fr; padding: 0 20px; }
+  .charts-grid { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
+  .insights-grid { grid-template-columns: 1fr; }
+  .ranking-table { font-size: 12px; }
+  .ranking-table th, .ranking-table td { padding: 8px 4px; }
+  .markets-improved-section { padding: 16px; }
+  .section-header h3 { font-size: 20px; }
+  .modern-table { font-size: 12px; }
+  .modern-table th, .modern-table td { padding: 8px 6px; }
+  .markets-layout { grid-template-columns: 1fr; gap: 16px; }
+  .ranking-section { margin: 0 20px 32px; }
+  .insights-section { margin: 0 20px 32px; }
+  .markets-analysis-section { margin: 0 20px 32px; }
         .chart-wrapper, .markets-ranking { 
      min-height: 350px; 
      height: auto;
@@ -4001,7 +4278,7 @@ export default {
      padding: 6px 10px;
      border-radius: 6px;
      text-align: center;
-     font-weight: 700;
+      font-weight: 700;
    }
    .chart-wrapper h4 { font-size: 16px; }
  .chart-wrapper .chart-container { 
@@ -4009,6 +4286,34 @@ export default {
    min-height: 250px;
  }
    .chart-description { font-size: 12px; }
+   
+   .page-title {
+     font-size: 24px;
+   }
+   
+   .page-subtitle {
+     font-size: 14px;
+   }
+   
+   /* Melhorias para filtros em dispositivos móveis */
+   .filter-select {
+     min-width: 100%;
+     font-size: 16px; /* Evita zoom em iOS */
+     padding: 16px 20px;
+     border-radius: 16px;
+     margin-bottom: 8px;
+   }
+   
+   .filter-select option {
+     font-size: 16px;
+     padding: 14px 20px;
+   }
+   
+   /* Ajustes para telas muito pequenas */
+   .filter-select {
+     background-size: 20px;
+     padding-right: 56px;
+   }
  }
 
 @media (max-width: 600px) {
@@ -4022,6 +4327,58 @@ export default {
   .chart-container {
     height: 220px;
     min-height: 220px;
+  }
+  
+  /* Ajustes para filtros em telas pequenas */
+  .filter-select {
+    min-width: 100%;
+    font-size: 15px;
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+  
+  .filter-select option {
+    font-size: 15px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+  }
+  
+  /* Otimizações para dispositivos muito pequenos */
+  .filter-select {
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .filter-select option {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+  
+  /* Ajustar tamanho do ícone para telas pequenas */
+  .filter-select {
+    background-size: 16px;
+    padding-right: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
   }
 }
 </style>

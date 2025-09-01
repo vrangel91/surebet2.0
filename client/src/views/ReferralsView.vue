@@ -137,6 +137,73 @@
 
     <!-- Glossary Modal -->
     <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+
+    <!-- History Modal -->
+    <div v-if="showHistoryModal" class="modal-overlay" @click="closeHistoryModal">
+      <div class="modal-content history-modal" @click.stop>
+        <div class="modal-header">
+          <h3>Histórico de Saques</h3>
+          <button class="close-btn" @click="closeHistoryModal">×</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="withdrawalHistory.length === 0" class="empty-history">
+            <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+            </svg>
+            <p>Nenhum saque realizado ainda</p>
+            <span>Seus saques aparecerão aqui quando você fizer solicitações</span>
+          </div>
+          
+          <div v-else class="history-table-container">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Método</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="withdrawal in withdrawalHistory" :key="withdrawal.id" class="history-row">
+                  <td>{{ formatDate(withdrawal.date) }}</td>
+                  <td class="amount-cell">R$ {{ formatCurrency(withdrawal.amount) }}</td>
+                  <td>
+                    <span :class="['status-badge', `status-${withdrawal.status}`]">
+                      {{ getStatusText(withdrawal.status) }}
+                    </span>
+                  </td>
+                  <td>{{ withdrawal.method }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-primary" @click="closeHistoryModal">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div v-if="showToast" class="toast-container" :class="toastType">
+      <div class="toast-content">
+        <div class="toast-icon">
+          <svg v-if="toastType === 'success'" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+          </svg>
+          <svg v-else-if="toastType === 'error'" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
+          </svg>
+          <svg v-else width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm.93-9.412-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+          </svg>
+        </div>
+        <div class="toast-message">{{ toastMessage }}</div>
+        <button class="toast-close" @click="hideToast">×</button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -156,10 +223,15 @@ export default {
     return {
       sidebarCollapsed: false,
       showGlossaryModal: false,
+      showHistoryModal: false,
+      showToast: false,
+      toastMessage: '',
+      toastType: 'info',
       commissionBalance: 0.00,
-      affiliateLink: 'http://surestake.net.br/registro?referer_id=dee5be63-2d5c-4ecc-851b-089e67ec692f',
+      affiliateLink: 'http://localhost:3001/login?referer_id=SEU_CODIGO_AQUI',
       linkCopied: false,
-      referredUsers: [] // Array vazio para simular estado inicial
+      referredUsers: [], // Array vazio para simular estado inicial
+      withdrawalHistory: [] // Array para histórico de saques
     }
   },
   
@@ -170,6 +242,11 @@ export default {
     isAdmin() {
       return this.$store.getters.isAdmin
     }
+  },
+  
+  mounted() {
+    // Buscar dados de referências da API
+    this.fetchReferralData()
   },
   
   methods: {
@@ -193,6 +270,29 @@ export default {
       this.showGlossaryModal = false
     },
 
+    async fetchReferralData() {
+      try {
+        const response = await fetch('/api/referrals/my-status', {
+          headers: {
+            'Authorization': `Bearer ${this.$store.getters.token}`
+          }
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          if (data.success && data.referralData) {
+            this.affiliateLink = data.referralData.affiliateLink
+            this.commissionBalance = data.referralData.commissionBalance || 0
+            this.referredUsers = data.referralData.referredUsers || []
+          }
+        } else {
+          console.error('Erro ao buscar dados de referências:', response.status)
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados de referências:', error)
+      }
+    },
+
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
@@ -201,15 +301,15 @@ export default {
     withdrawCommission() {
       if (this.commissionBalance > 0) {
         // Simula saque de comissão
-        alert(`Saque de R$ ${this.commissionBalance.toFixed(2).replace('.', ',')} solicitado!`)
+        this.showToastNotification(`Saque de R$ ${this.commissionBalance.toFixed(2).replace('.', ',')} solicitado!`, 'success')
         this.commissionBalance = 0
       } else {
-        alert('Você não possui comissões disponíveis para saque.')
+        this.showToastNotification('Você não possui comissões disponíveis para saque.', 'error')
       }
     },
     
     viewHistory() {
-      alert('Histórico de saques - Funcionalidade em desenvolvimento')
+      this.showHistoryModal = true
     },
     
     async copyAffiliateLink() {
@@ -228,7 +328,57 @@ export default {
           this.linkCopied = false
         }, 2000)
       }
-    }
+    },
+
+    showToastNotification(message, type = 'info') {
+      this.toastMessage = message;
+      this.toastType = type;
+      this.showToast = true;
+      setTimeout(() => {
+        this.hideToast();
+      }, 3000); // 3 segundos de duração
+    },
+
+    hideToast() {
+      this.showToast = false;
+      this.toastMessage = '';
+      this.toastType = 'info';
+    },
+
+    openHistoryModal() {
+      this.showHistoryModal = true;
+    },
+
+    closeHistoryModal() {
+      this.showHistoryModal = false;
+    },
+
+    formatDate(timestamp) {
+      const date = new Date(timestamp);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    },
+
+    formatCurrency(value) {
+      return value.toFixed(2).replace('.', ',');
+    },
+
+    getStatusText(status) {
+      switch (status) {
+        case 'pending':
+          return 'Pendente';
+        case 'completed':
+          return 'Completado';
+        case 'failed':
+          return 'Falhou';
+        default:
+          return 'Desconhecido';
+      }
+    },
   }
 }
 </script>
@@ -580,6 +730,277 @@ export default {
   line-height: 1.5;
 }
 
+/* History Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.history-modal {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.modal-header h3 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: var(--text-primary, #ffffff);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close-btn:hover {
+  color: #00ff88;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 24px 32px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.empty-history {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--text-secondary, #888888);
+}
+
+.empty-history svg {
+  opacity: 0.5;
+}
+
+.empty-history p {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.empty-history span {
+  font-size: 16px;
+  text-align: center;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.history-table-container {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary, #1a1a1a);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.history-table th {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  font-weight: 600;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.history-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.05));
+  color: var(--text-primary, #ffffff);
+}
+
+.history-table tr:last-child td {
+  border-bottom: none;
+}
+
+.history-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.amount-cell {
+  font-weight: 700;
+  color: #00ff88;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.status-pending {
+  background-color: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+}
+
+.status-completed {
+  background-color: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+.status-failed {
+  background-color: rgba(255, 107, 53, 0.1);
+  color: #ff6b35;
+}
+
+.modal-footer {
+  padding: 24px 32px;
+  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: #00ff88;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.btn-primary:hover {
+  background: #00cc6a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+/* Toast Notifications */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.toast-content {
+  background: var(--bg-secondary, #2a2a2a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.toast-container.success .toast-content {
+  border-left: 4px solid #00ff88;
+}
+
+.toast-container.error .toast-content {
+  border-left: 4px solid #ff6b35;
+}
+
+.toast-container.info .toast-content {
+  border-left: 4px solid #007bff;
+}
+
+.toast-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #00ff88;
+}
+
+.toast-container.error .toast-icon {
+  color: #ff6b35;
+}
+
+.toast-container.info .toast-icon {
+  color: #007bff;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 15px;
+  color: var(--text-primary, #ffffff);
+  font-weight: 500;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: var(--text-primary, #ffffff);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.toast-close:hover {
+  color: #00ff88;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Responsividade */
 @media (max-width: 768px) {
   .referrals-main {
@@ -632,11 +1053,67 @@ export default {
     order: -1;
   }
   
-  .welcome-banner-img {
-    width: 80px;
-    height: 80px;
+      .welcome-banner-img {
+      width: 80px;
+      height: 80px;
+    }
+
+    .history-modal {
+      width: 95%;
+      max-width: 95%;
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+    }
+
+    .modal-header h3 {
+      font-size: 24px;
+    }
+
+    .close-btn {
+      font-size: 24px;
+    }
+
+    .modal-body {
+      padding: 16px 20px;
+    }
+
+    .empty-history {
+      padding: 32px 16px;
+    }
+
+    .history-table-container {
+      overflow-x: auto;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 12px 8px;
+      font-size: 14px;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+    }
+
+    .btn-primary {
+      padding: 12px 24px;
+      font-size: 14px;
+    }
+
+    .toast-container {
+      top: 10px;
+      right: 10px;
+      left: 10px;
+      width: auto;
+    }
+
+    .toast-content {
+      min-width: auto;
+      max-width: none;
+    }
   }
-}
 
 @media (max-width: 480px) {
   .referrals-main {

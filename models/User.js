@@ -1,6 +1,16 @@
 const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
 
+// Função para gerar código de referência único
+function generateReferralCode() {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 module.exports = (sequelize) => {
   const User = sequelize.define('User', {
     id: {
@@ -61,6 +71,25 @@ module.exports = (sequelize) => {
     last_login: {
       type: DataTypes.DATE,
       allowNull: true
+    },
+    // Campos para sistema de referências
+    referral_code: {
+      type: DataTypes.STRING(8),
+      allowNull: true,
+      unique: true
+    },
+    referred_by: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    commission_balance: {
+      type: DataTypes.DECIMAL(10, 2),
+      defaultValue: 0.00,
+      allowNull: false
     }
     // Colunas removidas pois não existem no banco surestake
     // role, credits, status, login_attempts, locked_until, last_credit_consumption
@@ -73,6 +102,11 @@ module.exports = (sequelize) => {
       beforeCreate: async (user) => {
         if (user.password_hash) {
           user.password_hash = await bcrypt.hash(user.password_hash, 10);
+        }
+        
+        // Gerar referral_code único automaticamente
+        if (!user.referral_code) {
+          user.referral_code = generateReferralCode();
         }
       },
       beforeUpdate: async (user) => {
@@ -91,6 +125,21 @@ module.exports = (sequelize) => {
   // Método para verificar se pode usar o sistema
   User.prototype.canUseSystem = function() {
     return this.is_admin || this.is_vip;
+  };
+
+  // Associações para referências
+  User.associate = (models) => {
+    // Usuário que foi referido por outro
+    User.belongsTo(models.User, {
+      foreignKey: 'referred_by',
+      as: 'referrer'
+    });
+    
+    // Usuários que foram referidos por este usuário
+    User.hasMany(models.User, {
+      foreignKey: 'referred_by',
+      as: 'referredUsers'
+    });
   };
 
   return User;

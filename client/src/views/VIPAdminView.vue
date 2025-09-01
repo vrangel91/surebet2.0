@@ -484,55 +484,101 @@
         <div v-if="activeTab === 'reports'" class="tab-pane">
           <div class="reports-section">
             <div class="reports-header">
-              <h3>Relatórios e Métricas</h3>
+              <div class="header-left">
+                <h3>Relatórios e Métricas</h3>
+                <div v-if="hasReportsData" class="last-generated">
+                  <Clock size="14" />
+                  <span>Última atualização: {{ formatLastGenerated() }}</span>
+                </div>
+              </div>
               <div class="date-filters">
                 <input v-model="reportStartDate" type="date" class="date-input" />
                 <span>até</span>
                 <input v-model="reportEndDate" type="date" class="date-input" />
-                <button @click="generateReports" class="btn btn-primary">
+                <button @click="generateReports" class="btn btn-primary" :disabled="reportsLoading">
                   <BarChart3 class="btn-icon" size="16" />
-                  Gerar Relatórios
+                  {{ reportsLoading ? 'Gerando...' : 'Gerar Relatórios' }}
                 </button>
               </div>
             </div>
             
-            <div class="reports-grid">
+            <!-- Loading State -->
+            <div v-if="reportsLoading" class="reports-loading">
+              <div class="loading-spinner"></div>
+              <p>Gerando relatórios...</p>
+            </div>
+            
+            <!-- Error State -->
+            <div v-else-if="reportsError" class="reports-error">
+              <div class="error-icon">
+                <AlertTriangle size="48" />
+              </div>
+              <h4>Erro ao gerar relatórios</h4>
+              <p>{{ reportsError }}</p>
+              <button @click="generateReports" class="btn btn-secondary">
+                Tentar Novamente
+              </button>
+            </div>
+            
+            <!-- Reports Content -->
+            <div v-else-if="hasReportsData" class="reports-grid">
               <div class="report-card">
                 <h4>Relatório de Receita</h4>
                 <div class="report-content">
-                  <p><strong>Receita Total:</strong> R$ {{ formatCurrency(reports.revenue?.total || 0) }}</p>
-                  <p><strong>Média Diária:</strong> R$ {{ formatCurrency(reports.revenue?.dailyAverage || 0) }}</p>
-                  <p><strong>VIPs Ativos:</strong> {{ reports.revenue?.activeVIPs || 0 }}</p>
+                  <p><strong>Receita Total:</strong> R$ {{ formatCurrency(reports.revenue?.summary?.totalRevenue || 0) }}</p>
+                  <p><strong>Média por Transação:</strong> R$ {{ formatCurrency(reports.revenue?.summary?.avgRevenue || 0) }}</p>
+                  <p><strong>Total de Transações:</strong> {{ reports.revenue?.summary?.totalTransactions || 0 }}</p>
+                  <p><strong>Usuários Únicos:</strong> {{ reports.revenue?.summary?.uniqueUsers || 0 }}</p>
                 </div>
               </div>
               
               <div class="report-card">
                 <h4>Relatório de Conversão</h4>
                 <div class="report-content">
-                  <p><strong>Taxa de Conversão:</strong> {{ reports.conversion?.rate || 0 }}%</p>
-                  <p><strong>Novos VIPs:</strong> {{ reports.conversion?.newVIPs || 0 }}</p>
-                  <p><strong>Renovações:</strong> {{ reports.conversion?.renewals || 0 }}</p>
+                  <p><strong>Taxa de Conversão:</strong> {{ formatPercentage(reports.conversion?.metrics?.conversionRate || 0) }}%</p>
+                  <p><strong>Primeira vez VIP:</strong> {{ reports.conversion?.metrics?.firstTimeVIPs || 0 }}</p>
+                  <p><strong>Renovações:</strong> {{ reports.conversion?.metrics?.renewals || 0 }}</p>
+                  <p><strong>Total de Usuários:</strong> {{ reports.conversion?.metrics?.totalUsers || 0 }}</p>
                 </div>
               </div>
               
               <div class="report-card">
                 <h4>Relatório de Retenção</h4>
                 <div class="report-content">
-                  <p><strong>Taxa de Retenção:</strong> {{ reports.retention?.rate || 0 }}%</p>
-                  <p><strong>VIPs Expirados:</strong> {{ reports.retention?.expired || 0 }}</p>
-                  <p><strong>Renovações Automáticas:</strong> {{ reports.retention?.autoRenewals || 0 }}</p>
+                  <p><strong>Taxa de Retenção:</strong> {{ formatPercentage(reports.retention?.metrics?.retentionRate || 0) }}%</p>
+                  <p><strong>VIPs Expirados:</strong> {{ reports.retention?.metrics?.totalExpired || 0 }}</p>
+                  <p><strong>Renovados após Expiração:</strong> {{ reports.retention?.metrics?.renewedAfterExpiry || 0 }}</p>
+                  <p><strong>Renovados antes da Expiração:</strong> {{ reports.retention?.metrics?.renewedBeforeExpiry || 0 }}</p>
                 </div>
               </div>
               
               <div class="report-card">
                 <h4>Relatório por Planos</h4>
                 <div class="report-content">
-                  <div v-for="plan in reports.plans" :key="plan.type" class="plan-stat">
-                    <span class="plan-name">{{ plan.type }}</span>
-                    <span class="plan-count">{{ plan.count }}</span>
+                  <div v-if="reports.plans && reports.plans.length > 0">
+                    <div v-for="plan in reports.plans" :key="plan.planId" class="plan-stat">
+                      <span class="plan-name">{{ plan.planName }}</span>
+                      <span class="plan-count">{{ plan.activations }}</span>
+                    </div>
+                    <div class="plan-summary">
+                      <p><strong>Total de Ativações:</strong> {{ reports.plans?.summary?.totalActivations || 0 }}</p>
+                      <p><strong>Receita Total:</strong> R$ {{ formatCurrency(reports.plans?.summary?.totalRevenue || 0) }}</p>
+                    </div>
+                  </div>
+                  <div v-else class="no-data">
+                    <p>Nenhum dado disponível para planos</p>
                   </div>
                 </div>
               </div>
+            </div>
+            
+            <!-- No Data State -->
+            <div v-else class="reports-no-data">
+              <div class="no-data-icon">
+                <BarChart3 size="64" />
+              </div>
+              <h4>Nenhum relatório gerado</h4>
+              <p>Clique em "Gerar Relatórios" para visualizar as métricas do período selecionado.</p>
             </div>
           </div>
         </div>
@@ -663,7 +709,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted } from 'vue'
+ import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import axios from '@/utils/axios'
 import Sidebar from '@/components/Sidebar.vue'
@@ -729,9 +775,11 @@ export default {
     const vipHistory = ref([])
     const availableUsers = ref([])
     const cronStatus = ref({ isRunning: false })
-    const reports = ref({})
-    const searchTerm = ref('')
-    const historySearchTerm = ref('')
+         const reports = ref({})
+     const reportsLoading = ref(false)
+     const reportsError = ref('')
+     const searchTerm = ref('')
+     const historySearchTerm = ref('')
     
     // Filtros adicionais
     const statusFilter = ref('all')
@@ -891,13 +939,19 @@ export default {
       return count
     })
     
-    const historyFiltersCount = computed(() => {
-      let count = 0
-      if (historySearchTerm.value) count++
-      if (planFilter.value !== 'all') count++
-      if (dateRangeFilter.value !== 'all') count++
-      return count
-    })
+         const historyFiltersCount = computed(() => {
+       let count = 0
+       if (historySearchTerm.value) count++
+       if (planFilter.value !== 'all') count++
+       if (dateRangeFilter.value !== 'all') count++
+       return count
+     })
+     
+     // Verificar se há dados de relatórios
+     const hasReportsData = computed(() => {
+       return reports.value && Object.keys(reports.value).length > 0 && 
+              (reports.value.revenue || reports.value.conversion || reports.value.retention || reports.value.plans)
+     })
     
     // Computed para validação
     const canActivateVIP = computed(() => {
@@ -1314,28 +1368,54 @@ export default {
       }
     }
     
-    const generateReports = async () => {
-      try {
-        const startDate = reportStartDate.value || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        const endDate = reportEndDate.value || new Date().toISOString().split('T')[0]
-        
-        const [revenueRes, conversionRes, retentionRes, plansRes] = await Promise.all([
-          axios.get(`/api/vip/reports/revenue?startDate=${startDate}&endDate=${endDate}`),
-          axios.get(`/api/vip/reports/conversion?startDate=${startDate}&endDate=${endDate}`),
-          axios.get(`/api/vip/reports/retention?startDate=${startDate}&endDate=${endDate}`),
-          axios.get(`/api/vip/reports/plans?startDate=${startDate}&endDate=${endDate}`)
-        ])
-        
-        reports.value = {
-          revenue: revenueRes.data.report,
-          conversion: conversionRes.data.report,
-          retention: retentionRes.data.report,
-          plans: plansRes.data.report
-        }
-      } catch (error) {
-        console.error('Erro ao gerar relatórios:', error)
-      }
-    }
+         const generateReports = async () => {
+       try {
+         reportsLoading.value = true
+         reportsError.value = ''
+         
+         const startDate = reportStartDate.value || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+         const endDate = reportEndDate.value || new Date().toISOString().split('T')[0]
+         
+         console.log('📊 Gerando relatórios para o período:', { startDate, endDate })
+         
+         const [revenueRes, conversionRes, retentionRes, plansRes] = await Promise.all([
+           axios.get(`/api/vip/reports/revenue?startDate=${startDate}&endDate=${endDate}`),
+           axios.get(`/api/vip/reports/conversion?startDate=${startDate}&endDate=${endDate}`),
+           axios.get(`/api/vip/reports/retention?startDate=${startDate}&endDate=${endDate}`),
+           axios.get(`/api/vip/reports/plans?startDate=${startDate}&endDate=${endDate}`)
+         ])
+         
+         console.log('📊 Respostas dos relatórios:', {
+           revenue: revenueRes.data,
+           conversion: conversionRes.data,
+           retention: retentionRes.data,
+           plans: plansRes.data
+         })
+         
+         reports.value = {
+           revenue: revenueRes.data.report || revenueRes.data,
+           conversion: conversionRes.data.report || conversionRes.data,
+           retention: retentionRes.data.report || retentionRes.data,
+           plans: plansRes.data.report || plansRes.data
+         }
+         
+         // Log detalhado dos dados para debug
+         console.log('📊 Dados dos relatórios processados:', {
+           revenue: reports.value.revenue,
+           conversion: reports.value.conversion,
+           retention: reports.value.retention,
+           plans: reports.value.plans
+         })
+         
+         console.log('✅ Relatórios gerados com sucesso:', reports.value)
+         
+       } catch (error) {
+         console.error('❌ Erro ao gerar relatórios:', error)
+         reportsError.value = error.response?.data?.error || error.message || 'Erro desconhecido ao gerar relatórios'
+       } finally {
+         reportsLoading.value = false
+       }
+     }
     
     // Utility methods
     const formatDate = (date) => {
@@ -1343,9 +1423,20 @@ export default {
       return new Date(date).toLocaleDateString('pt-BR')
     }
     
-    const formatCurrency = (value) => {
-      return parseFloat(value || 0).toFixed(2)
-    }
+         const formatCurrency = (value) => {
+       return parseFloat(value || 0).toFixed(2)
+     }
+     
+     const formatPercentage = (value) => {
+       return parseFloat(value || 0).toFixed(2)
+     }
+     
+     const formatLastGenerated = () => {
+       if (!reports.value || !reports.value.revenue?.generatedAt) {
+         return 'Nunca'
+       }
+       return new Date(reports.value.revenue.generatedAt).toLocaleString('pt-BR')
+     }
     
     const formatCronDate = (date) => {
       if (!date) return 'N/A'
@@ -1381,28 +1472,39 @@ export default {
       return 'success'
     }
     
-    // Lifecycle
-    onMounted(() => {
-      console.log('🚀 Componente VIPAdminView montado, verificando permissões...')
-      
-      // Verificar se o usuário é admin
-      if (!store.getters.isAdmin) {
-        console.error('🚫 Acesso negado: Usuário não é administrador')
-        return
-      }
-      
-      console.log('✅ Permissões verificadas, iniciando carregamento...')
-      
-      // Pequeno delay para garantir que o componente esteja totalmente montado
-      setTimeout(() => {
-        refreshData()
-      }, 100)
-      
-      // Set default date range for reports
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-      reportStartDate.value = thirtyDaysAgo.toISOString().split('T')[0]
-      reportEndDate.value = new Date().toISOString().split('T')[0]
-    })
+         // Lifecycle
+     onMounted(() => {
+       console.log('🚀 Componente VIPAdminView montado, verificando permissões...')
+       
+       // Verificar se o usuário é admin
+       if (!store.getters.isAdmin) {
+         console.error('🚫 Acesso negado: Usuário não é administrador')
+         return
+       }
+       
+       console.log('✅ Permissões verificadas, iniciando carregamento...')
+       
+       // Pequeno delay para garantir que o componente esteja totalmente montado
+       setTimeout(() => {
+         refreshData()
+       }, 100)
+       
+       // Set default date range for reports
+       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+       reportStartDate.value = thirtyDaysAgo.toISOString().split('T')[0]
+       reportEndDate.value = new Date().toISOString().split('T')[0]
+     })
+     
+     // Watch para gerar relatórios automaticamente quando a aba for alterada
+     watch(activeTab, (newTab) => {
+       if (newTab === 'reports' && !hasReportsData.value) {
+         console.log('📊 Aba de relatórios aberta, gerando relatórios automaticamente...')
+         // Pequeno delay para garantir que a aba esteja renderizada
+         setTimeout(() => {
+           generateReports()
+         }, 300)
+       }
+     })
     
     return {
       isAdmin: store.getters.isAdmin,
@@ -1417,9 +1519,12 @@ export default {
       vipHistory,
       availableUsers,
       cronStatus,
-      reports,
-      searchTerm,
-      historySearchTerm,
+             reports,
+       reportsLoading,
+       reportsError,
+       hasReportsData,
+       searchTerm,
+       historySearchTerm,
       statusFilter,
       planFilter,
       dateRangeFilter,
@@ -1454,9 +1559,11 @@ export default {
       processExpiredVIPs,
       generateWeeklyReport,
       generateReports,
-      formatDate,
-      formatCurrency,
-      formatCronDate,
+             formatDate,
+       formatCurrency,
+       formatPercentage,
+       formatLastGenerated,
+       formatCronDate,
       getExpirationClass,
       getDaysRemaining,
       getDaysRemainingClass
@@ -1494,10 +1601,10 @@ export default {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
   padding: 24px;
-  margin: 24px 32px 24px;
+  margin: 24px 32px 24px 32px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% - 64px);
+  max-width: calc(100% - 64px);
   overflow: hidden;
   
   .header-content {
@@ -2269,7 +2376,7 @@ export default {
   .reports-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 24px;
     
     @media (max-width: 768px) {
@@ -2278,11 +2385,25 @@ export default {
       align-items: stretch;
     }
     
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--text-primary, #ffffff);
+    .header-left {
+      h3 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary, #ffffff);
+      }
+      
+      .last-generated {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary, #a0a0a0);
+        font-size: 12px;
+        
+        span {
+          font-style: italic;
+        }
+      }
     }
   }
   
@@ -2313,6 +2434,94 @@ export default {
       outline: none;
       border-color: #007bff;
       box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+  }
+  
+  // Loading State
+  .reports-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--bg-tertiary, #3a3a3a);
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+    
+    p {
+      color: var(--text-secondary, #a0a0a0);
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+  
+  // Error State
+  .reports-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    
+    .error-icon {
+      color: #dc3545;
+      margin-bottom: 16px;
+      opacity: 0.8;
+    }
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary, #ffffff);
+    }
+    
+    p {
+      margin: 0 0 20px 0;
+      color: var(--text-secondary, #a0a0a0);
+      font-size: 14px;
+      max-width: 400px;
+      line-height: 1.5;
+    }
+  }
+  
+  // No Data State
+  .reports-no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    
+    .no-data-icon {
+      color: var(--text-secondary, #a0a0a0);
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    h4 {
+      margin: 0 0 12px 0;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary, #ffffff);
+    }
+    
+    p {
+      margin: 0;
+      color: var(--text-secondary, #a0a0a0);
+      font-size: 14px;
+      max-width: 400px;
+      line-height: 1.5;
     }
   }
 }
@@ -2347,27 +2556,55 @@ export default {
       }
     }
     
-    .plan-stat {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-      
-      &:last-child {
-        border-bottom: none;
-      }
-      
-      .plan-name {
-        color: var(--text-primary, #ffffff);
-        font-weight: 500;
-      }
-      
-      .plan-count {
-        color: var(--text-secondary, #a0a0a0);
-        font-weight: 600;
-      }
-    }
+         .plan-stat {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       padding: 8px 0;
+       border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+       
+       &:last-child {
+         border-bottom: none;
+       }
+       
+       .plan-name {
+         color: var(--text-primary, #ffffff);
+         font-weight: 500;
+       }
+       
+       .plan-count {
+         color: var(--text-secondary, #a0a0a0);
+         font-weight: 600;
+       }
+     }
+     
+     .no-data {
+       text-align: center;
+       padding: 20px;
+       
+       p {
+         margin: 0;
+         color: var(--text-secondary, #a0a0a0);
+         font-size: 14px;
+         font-style: italic;
+       }
+     }
+     
+     .plan-summary {
+       margin-top: 16px;
+       padding-top: 16px;
+       border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+       
+       p {
+         margin: 8px 0;
+         color: var(--text-secondary, #a0a0a0);
+         font-size: 13px;
+         
+         strong {
+           color: var(--text-primary, #ffffff);
+         }
+       }
+     }
   }
 }
 
@@ -2563,7 +2800,9 @@ export default {
 // Responsividade
 @media (max-width: 768px) {
   .page-header {
-    margin: 16px 20px 16px;
+    margin: 16px 20px 16px 20px;
+    width: calc(100% - 40px);
+    max-width: calc(100% - 40px);
   }
   
   .stats-section {

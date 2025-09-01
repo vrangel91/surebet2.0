@@ -952,8 +952,7 @@ export default {
 }
 
 /* NOVO LAYOUT - DIV INTEIRA COM SEÇÕES SEPARADAS */
-.settings-layout {
-  max-width: 1400px;
+.settings-layout {  
   margin: 0 auto;
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);

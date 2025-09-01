@@ -13,26 +13,29 @@
       <!-- Header Global -->
       <Header />
       
-      <!-- Header -->
-      <div class="accounts-header">
-        <h1 class="accounts-title">
-          <svg class="accounts-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383l-4.708 2.825L15 11.105V5.383zm-.034 6.876l-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
-          </svg>
-          Gerenciamento de Contas
-        </h1>
-        <p class="accounts-subtitle">Gerencie suas contas de casas de apostas e saldos</p>
-      </div>
+      <header class="content-header">
+        <div class="header-left">
+          <h2 class="page-title">
+            <svg class="accounts-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2zm13 2.383l-4.708 2.825L15 11.105V5.383zm-.034 6.876l-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741zM1 11.105l4.708-2.897L1 5.383v5.722z"/>
+            </svg>
+            Gerenciamento de Contas
+          </h2>
+          <p class="page-subtitle">Gerencie suas contas de casas de apostas e saldos</p>
+        </div>
+        
+        <!-- Botão Adicionar Conta -->
+        <div class="header-actions">
+          <button @click="showAddModal = true" class="add-account-btn">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            </svg>
+            Adicionar Conta
+          </button>
+        </div>
+      </header>
 
-      <!-- Botão Adicionar Conta -->
-      <div class="actions-section">
-        <button @click="showAddModal = true" class="add-account-btn">
-          <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
-          </svg>
-          Adicionar Conta
-        </button>
-      </div>
+
 
       <!-- Estatísticas Gerais -->
       <div class="stats-section">
@@ -1327,25 +1330,30 @@ export default {
   background: rgba(255, 255, 255, 0.5);
 }
 
-.accounts-header {
-  text-align: center;
-  margin-bottom: 32px;
-  flex-shrink: 0;
-  padding: 24px 32px 0;
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
-}
-
-.accounts-title {
+.content-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  margin-bottom: 32px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
   gap: 16px;
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
-  margin-bottom: 8px;
+  color: #00ff88;
+  margin: 0;
 }
 
 .accounts-icon {
@@ -1355,10 +1363,16 @@ export default {
   filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
 }
 
-.accounts-subtitle {
-  color: #cccccc;
+.page-subtitle {
+  color: var(--text-secondary, #cccccc);
   font-size: 16px;
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .actions-section {
@@ -2513,8 +2527,11 @@ export default {
   }
 
    @media (max-width: 768px) {
-    .accounts-header {
-      padding: 16px 20px 0;
+    .content-header { 
+      flex-direction: column; 
+      align-items: flex-start; 
+      gap: 16px; 
+      padding: 16px 20px; 
     }
     
     .actions-section {
@@ -2594,10 +2611,14 @@ export default {
    }
    
    /* Ajustes para telas muito pequenas */
-   .accounts-title {
+   .page-title {
      font-size: 24px;
      flex-direction: column;
      gap: 8px;
+   }
+   
+   .page-subtitle {
+     font-size: 14px;
    }
    
    .accounts-icon {
@@ -2613,4 +2634,14 @@ export default {
      font-size: 24px;
    }
  }
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+  }
+}
 </style>

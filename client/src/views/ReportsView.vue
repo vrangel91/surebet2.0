@@ -1090,17 +1090,22 @@ export default {
 }
 
 .header-left {
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-  }
-  
-  .page-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #00ff88;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--text-secondary, #cccccc);
+  font-size: 16px;
+  margin: 0;
 }
 
 .header-controls {
@@ -1884,6 +1889,14 @@ export default {
 }
 
 @media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+  }
+  
   .bets-table {
     min-width: 600px; /* Largura mínima ainda menor para telas muito pequenas */
     font-size: 11px;

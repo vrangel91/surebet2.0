@@ -2,7 +2,6 @@
   <div class="compound-interest-container">
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
       @open-glossary="openGlossary"
     />
@@ -11,14 +10,12 @@
       <!-- Header Global -->
       <Header />
       
-      <div class="content-header">
-        <button class="sidebar-toggle" @click="toggleSidebar">
-          <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-          </svg>
-        </button>
-        <h1>Calculadora de Juros Compostos</h1>
-      </div>
+      <header class="content-header">
+        <div class="header-left">
+          <h2 class="page-title">Calculadora de Juros Compostos</h2>
+          <p class="page-subtitle">Calcule o crescimento do seu investimento com juros compostos</p>
+        </div>
+      </header>
 
              <div class="content-main">
          <div class="main-layout">
@@ -263,9 +260,7 @@ export default {
         }, 300)
       }, 3000)
     },
-    handleSidebarToggle(collapsed) {
-      this.sidebarCollapsed = collapsed
-    },
+
     
     handleSidebarStateLoaded(collapsed) {
       this.sidebarCollapsed = collapsed
@@ -279,9 +274,7 @@ export default {
       this.showGlossaryModal = false
     },
     
-    toggleSidebar() {
-      this.sidebarCollapsed = !this.sidebarCollapsed
-    },
+
 
     debouncedCalculate() {
       // Limpar timer anterior se existir
@@ -554,35 +547,34 @@ export default {
   scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
-.content-header {
+      .content-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+        margin-bottom: 32px;
+      }
+
+
+
+.header-left {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 24px 32px;
-  border-bottom: 1px solid var(--border-primary);
-  width: 100%;
-  max-width: 100%;
-  overflow: hidden;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.sidebar-toggle {
-  background: none;
-  border: none;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-  
-  &:hover {
-    background: var(--bg-overlay);
-  }
-}
-
-.content-header h1 {
-  font-size: 24px;
+.page-title {
+  font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #00ff88;
+  margin: 0;
+}
+
+.page-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary, #cccccc);
+  margin: 0;
 }
 
 .content-main {
@@ -861,7 +853,18 @@ export default {
 
 @media (max-width: 768px) {
   .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
     padding: 16px 20px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .page-subtitle {
+    font-size: 14px;
   }
   
   .content-main {
@@ -886,6 +889,16 @@ export default {
   .evolution-table th,
   .evolution-table td {
     padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
   }
 }
 

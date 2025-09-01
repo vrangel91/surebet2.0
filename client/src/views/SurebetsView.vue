@@ -2953,17 +2953,22 @@ export default {
 }
 
 .header-left {
-  .page-title {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-  }
-  
-  .page-subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #00ff88;
+  margin: 0;
+}
+
+.page-subtitle {
+  color: var(--text-secondary, #cccccc);
+  font-size: 16px;
+  margin: 0;
 }
 
 .search-controls {
@@ -2998,11 +3003,7 @@ export default {
     border-color: #00ff88;
   }
   
-  &.active {
-    background: #00ff88;
-    color: #1a1a1a;
-    border-color: #00ff88;
-  }
+
   
   &.pinned-indicator {
     background: #ff6b6b;
@@ -3040,6 +3041,14 @@ export default {
 
 .filter-toggle-btn {
   position: relative;
+  background: #2d2d2d !important;
+  border: 1px solid #404040 !important;
+  color: #ffffff !important;
+  
+  &:hover {
+    background: #404040 !important;
+    border-color: #00ff88 !important;
+  }
 }
 
 .filters {
@@ -3692,11 +3701,30 @@ export default {
     flex-direction: column;
     gap: 16px;
     align-items: flex-start;
+    padding: 16px 20px;
+  }
+  
+  .page-title {
+    font-size: 24px;
+  }
+  
+  .page-subtitle {
+    font-size: 14px;
   }
   
   .search-controls {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
   }
 }
 

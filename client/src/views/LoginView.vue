@@ -274,7 +274,8 @@ export default {
       showRegisterPassword: false,
       showConfirmPassword: false,
       registerError: '',
-      registerSuccess: ''
+      registerSuccess: '',
+      refererId: null // Para armazenar o ID do referenciador
     }
   },
   computed: {
@@ -302,6 +303,9 @@ export default {
     
     // Verifica se há bloqueio ativo
     this.checkLockout()
+    
+    // Captura o referer_id da URL se existir
+    this.captureRefererId()
   },
   methods: {
     validateEmail() {
@@ -511,7 +515,8 @@ export default {
           body: JSON.stringify({
             name: this.registerForm.name,
             email: this.registerForm.email,
-            password: this.registerForm.password
+            password: this.registerForm.password,
+            referer_id: this.refererId // Inclui o ID do referenciador se existir
           })
         })
 
@@ -574,6 +579,25 @@ export default {
           this.lockoutUntil = null
           this.loginAttempts = 0
         }
+      }
+    },
+
+    captureRefererId() {
+      // Captura o referer_id da URL se existir
+      const urlParams = new URLSearchParams(window.location.search)
+      const refererId = urlParams.get('referer_id')
+      if (refererId) {
+        this.refererId = refererId
+        console.log('Referer ID capturado:', refererId)
+        // Opcional: mostrar uma mensagem informativa
+        this.showRefererInfo()
+      }
+    },
+
+    showRefererInfo() {
+      // Mostra informação sobre o referenciador
+      if (this.refererId) {
+        this.registerSuccess = `Você foi indicado por um usuário! Seu cadastro será vinculado ao referenciador.`
       }
     },
     
