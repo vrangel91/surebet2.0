@@ -110,6 +110,39 @@
               Total de jogos encontrados: {{ liveCount }}
             </div>
           </div>
+          
+          <!-- Campo de busca por tipo de mercado -->
+          <div class="market-search-section">
+            <div class="market-search-container">
+              <div class="search-input-wrapper">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input 
+                  v-model="marketSearchTerm"
+                  type="text" 
+                  placeholder="Pesquisar tipo de mercado (ex: Resultado, Handicap, Over, Under...)" 
+                  class="market-search-input"
+                  @input="onMarketSearchInput"
+                />
+                <button 
+                  v-if="marketSearchTerm"
+                  @click="clearMarketSearch"
+                  class="clear-search-btn"
+                  title="Limpar pesquisa de mercado"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <!-- Indicador de resultados da pesquisa de mercado -->
+              <div v-if="marketSearchTerm" class="market-search-results-info">
+                <span class="search-results-text">
+                  {{ filteredSurebetsByMarket.length }} de {{ filteredSurebets.length }} surebets encontradas
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
               <!-- Cards Fixos -->
@@ -184,7 +217,7 @@
           <p>Carregando surebets...</p>
         </div>
         
-        <div v-else-if="filteredSurebets.length === 0" class="empty-state">
+        <div v-else-if="filteredSurebetsByMarket.length === 0" class="empty-state">
           <div class="animated-container">
             <!-- Mensagem principal animada -->
             <div class="main-message">
@@ -211,7 +244,7 @@
         
         <div v-else class="surebets-grid">
           <SurebetCard 
-            v-for="(surebet, index) in filteredSurebets" 
+            v-for="(surebet, index) in filteredSurebetsByMarket" 
             :key="index"
             :surebet="surebet"
             :isPinned="isPinned(surebet)"
@@ -545,10 +578,13 @@ export default {
          activeFilter: 'prelive',
          minProfit: 0,
          maxProfit: 1000,
-         houseSearchTerm: ''
+         houseSearchTerm: '',
+         marketSearchTerm: ''
        },
        // Termo de pesquisa para casas de apostas
        houseSearchTerm: '',
+       // Termo de pesquisa para tipos de mercado
+       marketSearchTerm: '',
        // Timestamp da última vez que o usuário desmarcou todos os filtros
        lastDeselectAllTime: 0,
 
@@ -785,6 +821,28 @@ export default {
       console.log('✅ Total final:', surebetsArray.length)
       console.log('---')
       return surebetsArray
+    },
+    
+    // Surebets filtradas por tipo de mercado
+    filteredSurebetsByMarket() {
+      if (!this.marketSearchTerm.trim()) {
+        return this.filteredSurebets
+      }
+      
+      const searchTerm = this.marketSearchTerm.toLowerCase().trim()
+      return this.filteredSurebets.filter(surebet => {
+        if (!surebet || surebet.length === 0) return false
+        
+        // Buscar no campo market de todas as apostas do surebet
+        return surebet.some(bet => {
+          const market = bet.market || ''
+          const translatedMarket = formatMarketForDisplay(market)
+          
+          // Buscar tanto no texto original quanto na tradução
+          return market.toLowerCase().includes(searchTerm) || 
+                 translatedMarket.toLowerCase().includes(searchTerm)
+        })
+      })
     },
     
 
@@ -1033,6 +1091,18 @@ export default {
        console.log('🧹 Pesquisa de casas limpa')
      },
      
+     // Métodos para pesquisa de tipos de mercado
+     onMarketSearchInput() {
+       // Método chamado quando o usuário digita no campo de pesquisa de mercado
+       // A filtragem é feita automaticamente pela propriedade computada filteredSurebetsByMarket
+       console.log('🔍 Pesquisando mercados:', this.marketSearchTerm)
+     },
+     
+     clearMarketSearch() {
+       this.marketSearchTerm = ''
+       console.log('🧹 Pesquisa de mercados limpa')
+     },
+     
      // Carrega filtros das configurações (não atualiza automaticamente com dados)
      loadFiltersFromSettings() {
       try {
@@ -1168,6 +1238,17 @@ export default {
               console.log('✅ Filtro ativo carregado:', this.activeFilter)
             }
             
+            // Carrega termos de busca salvos
+            if (settings.filters.houseSearchTerm) {
+              this.houseSearchTerm = settings.filters.houseSearchTerm
+              console.log('✅ Termo de busca de casas carregado:', this.houseSearchTerm)
+            }
+            
+            if (settings.filters.marketSearchTerm) {
+              this.marketSearchTerm = settings.filters.marketSearchTerm
+              console.log('✅ Termo de busca de mercados carregado:', this.marketSearchTerm)
+            }
+            
             // Salva as configurações atualizadas
             localStorage.setItem('app_settings', JSON.stringify(settings))
             console.log('💾 Filtros salvos no localStorage')
@@ -1204,6 +1285,8 @@ export default {
         settings.filters.selectedCurrencies = this.selectedCurrencies
         settings.filters.selectedDate = this.selectedDate
         settings.filters.activeFilter = this.activeFilter
+        settings.filters.houseSearchTerm = this.houseSearchTerm
+        settings.filters.marketSearchTerm = this.marketSearchTerm
         
         localStorage.setItem('app_settings', JSON.stringify(settings))
       } catch (error) {
@@ -1230,7 +1313,8 @@ export default {
         activeFilter: this.activeFilter,
         minProfit: this.minProfit,
         maxProfit: this.maxProfit,
-        houseSearchTerm: this.houseSearchTerm
+        houseSearchTerm: this.houseSearchTerm,
+        marketSearchTerm: this.marketSearchTerm
       }
     },
     
@@ -1332,6 +1416,13 @@ export default {
       if (this.filtersCache.houseSearchTerm !== undefined && this.houseSearchTerm !== this.filtersCache.houseSearchTerm) {
         this.houseSearchTerm = this.filtersCache.houseSearchTerm
         console.log('🔄 Restaurando termo de pesquisa de casas do cache:', this.houseSearchTerm)
+        restoredCount++
+        changesDetected = true
+      }
+      
+      if (this.filtersCache.marketSearchTerm !== undefined && this.marketSearchTerm !== this.filtersCache.marketSearchTerm) {
+        this.marketSearchTerm = this.filtersCache.marketSearchTerm
+        console.log('🔄 Restaurando termo de pesquisa de mercados do cache:', this.marketSearchTerm)
         restoredCount++
         changesDetected = true
       }
@@ -1593,6 +1684,15 @@ export default {
         this.activeFilter = settings.defaultFilters.activeFilter
       }
       
+      // Aplicar termos de busca padrão
+      if (settings.defaultFilters.houseSearchTerm) {
+        this.houseSearchTerm = settings.defaultFilters.houseSearchTerm
+      }
+      
+      if (settings.defaultFilters.marketSearchTerm) {
+        this.marketSearchTerm = settings.defaultFilters.marketSearchTerm
+      }
+      
       // CORREÇÃO: Se os valores ainda estiverem inválidos, forçar valores padrão
       if (this.minProfit < 0 || this.maxProfit <= this.minProfit) {
         console.warn('⚠️ Valores de lucro ainda inválidos após correção, forçando valores padrão')
@@ -1626,6 +1726,8 @@ export default {
         settings.defaultFilters.minProfit = this.minProfit
         settings.defaultFilters.maxProfit = this.maxProfit
         settings.defaultFilters.activeFilter = this.activeFilter
+        settings.defaultFilters.houseSearchTerm = this.houseSearchTerm
+        settings.defaultFilters.marketSearchTerm = this.marketSearchTerm
         
         localStorage.setItem('app_settings', JSON.stringify(settings))
         
@@ -1900,6 +2002,8 @@ export default {
       this.minProfit = 0
       this.maxProfit = 1000
       this.activeFilter = 'prelive'
+      this.houseSearchTerm = ''
+      this.marketSearchTerm = ''
       
       // Salvar filtros nas configurações
       this.saveFiltersToSettings()
@@ -3089,6 +3193,100 @@ export default {
    font-weight: 500;
    padding: 8px 0;
    border-bottom: 1px solid #404040;
+ }
+ 
+ /* Campo de busca por tipo de mercado */
+ .market-search-section {
+   margin-bottom: 20px;
+ }
+ 
+ .market-search-container {
+   display: flex;
+   flex-direction: column;
+   gap: 8px;
+ }
+ 
+ .market-search-container .search-input-wrapper {
+   position: relative;
+   display: flex;
+   align-items: center;
+   max-width: 500px;
+ }
+ 
+ .market-search-container .search-icon {
+   position: absolute;
+   left: 12px;
+   width: 20px;
+   height: 20px;
+   color: #b0b0b0;
+   z-index: 2;
+ }
+ 
+ .market-search-input {
+   width: 100%;
+   padding: 12px 40px 12px 40px;
+   border: 2px solid #404040;
+   background: #2d2d2d;
+   color: #ffffff;
+   border-radius: 8px;
+   font-size: 14px;
+   transition: all 0.3s ease;
+   
+   &::placeholder {
+     color: #808080;
+   }
+   
+   &:focus {
+     outline: none;
+     border-color: #00ff88;
+     box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+   }
+   
+   &:hover {
+     border-color: #606060;
+   }
+ }
+ 
+ .market-search-container .clear-search-btn {
+   position: absolute;
+   right: 8px;
+   top: 50%;
+   transform: translateY(-50%);
+   width: 24px;
+   height: 24px;
+   border: none;
+   background: #ff4757;
+   color: white;
+   border-radius: 50%;
+   cursor: pointer;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-size: 16px;
+   font-weight: bold;
+   transition: all 0.3s ease;
+   
+   &:hover {
+     background: #ff3742;
+     transform: translateY(-50%) scale(1.1);
+   }
+   
+   &:active {
+     transform: translateY(-50%) scale(0.95);
+   }
+ }
+ 
+ .market-search-results-info {
+   padding: 8px 12px;
+   background: rgba(0, 255, 136, 0.1);
+   border: 1px solid rgba(0, 255, 136, 0.3);
+   border-radius: 6px;
+   font-size: 13px;
+   color: #00ff88;
+ }
+ 
+ .search-results-text {
+   font-weight: 500;
  }
 
 
