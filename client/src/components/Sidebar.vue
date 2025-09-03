@@ -2,13 +2,13 @@
   <aside class="sidebar" :class="{ collapsed: shouldBeCollapsed }">
     <!-- Logo e Header -->
     <div class="sidebar-header">
-      <div class="logo">
-        <img class="logo-icon" v-show="!shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
-        <img class="logo-icon" v-show="shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
-        <h1 v-show="!shouldBeCollapsed">
-          <span class="sure-text">Sure</span><span class="stake-text">Stake</span>
-        </h1>
-      </div>
+              <div class="logo">
+          <img class="logo-icon" v-show="!shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
+          <img class="logo-icon" v-show="shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
+                      <h1 v-show="!shouldBeCollapsed">
+              <span class="sure-text">Sure</span><span class="stake-text">Stake</span>
+            </h1>
+        </div>
       <button class="sidebar-toggle" @click="toggleSidebar" :title="shouldBeCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'">
         <Menu v-if="!shouldBeCollapsed" size="16" />
         <ChevronRight v-else size="16" />
@@ -171,7 +171,8 @@ export default {
     return {
       internalCollapsed: false,
       countdownTimer: null,
-      userVIPData: null
+      userVIPData: null,
+
     }
   },
   computed: {
@@ -180,6 +181,10 @@ export default {
     shouldBeCollapsed() {
       return this.sidebarCollapsed || this.internalCollapsed
     },
+
+
+
+
 
     // Computed para verificar permissões do usuário
     isAdmin() {
@@ -399,6 +404,8 @@ export default {
       },
       immediate: true
     },
+
+
     
     // Observar mudanças no usuário atual para recarregar dados VIP
     currentUser: {
@@ -423,10 +430,12 @@ export default {
         this.loadSidebarState()
       }
     })
+
   },
   beforeUnmount() {
     window.removeEventListener('storage', this.handleStorageChange)
     this.stopCountdownTimer()
+    
   },
   methods: {
     handleDashboardClick() {
@@ -558,6 +567,8 @@ export default {
         console.warn('Erro ao carregar estado da sidebar:', error)
       }
     },
+
+
     
     // Salvar estado da sidebar nas configurações
     saveSidebarState(collapsed) {
@@ -1045,8 +1056,9 @@ export default {
 }
 
 .sure-text {
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 700;
+  transition: color 0.3s ease;
 }
 
 .stake-text {

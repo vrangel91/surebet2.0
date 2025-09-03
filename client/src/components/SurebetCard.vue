@@ -1006,7 +1006,7 @@ export default {
 .bankroll-value {
   font-size: 16px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .expected-profit {
