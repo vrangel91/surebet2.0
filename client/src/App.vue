@@ -6,6 +6,9 @@
     <router-view />
     <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->
     <FloatingGuideButton />
+    
+    <!-- Componentes PWA -->
+    <PWAUpdateNotification />
   </div>
 </template>
 
@@ -14,11 +17,14 @@ import { useTheme } from './composables/useTheme'
 import LoginLoading from './components/LoginLoading.vue'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
 
+import PWAUpdateNotification from './components/PWAUpdateNotification.vue'
+
 export default {
   name: 'App',
   components: {
     LoginLoading,
-    FloatingGuideButton
+    FloatingGuideButton,
+    PWAUpdateNotification
   },
   data() {
     return {

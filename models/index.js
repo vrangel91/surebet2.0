@@ -10,6 +10,7 @@ const SurebetStats = require('./SurebetStats')(sequelize);
 const SurebetAnalytics = require('./SurebetAnalytics')(sequelize);
 const Ticket = require('./Ticket')(sequelize);
 const TicketMessage = require('./TicketMessage')(sequelize);
+const Notification = require('./Notification');
 
 // Definir associações
 User.hasMany(UserSession, {
@@ -96,13 +97,42 @@ TicketMessage.belongsTo(User, {
   as: 'user'
 });
 
+// Associações para notificações
+User.hasMany(Notification, {
+  foreignKey: 'created_by',
+  as: 'createdNotifications'
+});
+
+Notification.belongsTo(User, {
+  foreignKey: 'created_by',
+  as: 'creator'
+});
+
 // Função para sincronizar modelos com o banco
 async function syncModels() {
   try {
-    // Usar force: false para não alterar tabelas existentes
-    // Usar alter: false para não modificar estrutura existente
+    // Primeiro, sincronizar todos os modelos existentes
     await sequelize.sync({ force: false, alter: false });
-    console.log('✅ Modelos sincronizados com o banco de dados');
+    console.log('✅ Modelos existentes sincronizados com o banco de dados');
+    
+    // Depois, sincronizar especificamente o modelo Notification com alter: true
+    // para garantir que a tabela e colunas sejam criadas corretamente
+    try {
+      await Notification.sync({ alter: true });
+      console.log('✅ Modelo Notification sincronizado com alterações');
+    } catch (notificationError) {
+      console.error('⚠️ Erro ao sincronizar Notification:', notificationError.message);
+      // Tentar criar a tabela do zero se houver erro
+      try {
+        await Notification.sync({ force: true });
+        console.log('✅ Tabela Notification criada do zero');
+      } catch (forceError) {
+        console.error('❌ Erro ao criar tabela Notification:', forceError.message);
+        throw forceError;
+      }
+    }
+    
+    console.log('✅ Todos os modelos sincronizados com sucesso');
   } catch (error) {
     // Se houver erro de índice duplicado, apenas logar e continuar
     if (error.name === 'SequelizeDatabaseError' && error.message.includes('já existe')) {
@@ -125,5 +155,6 @@ module.exports = {
   SurebetAnalytics,
   Ticket,
   TicketMessage,
+  Notification,
   syncModels
 };

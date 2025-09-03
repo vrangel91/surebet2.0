@@ -6,15 +6,153 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     <meta http-equiv="Content-Language" content="pt-BR">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#00ff88">
+    <meta name="theme-color-media" content="(prefers-color-scheme: light)">
+    <meta name="theme-color-media" content="(prefers-color-scheme: dark)" media="(prefers-color-scheme: dark)">
+    
+    <!-- Apple PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SureStake">
+    
+    <!-- Android PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="SureStake">
+    
+    <!-- Windows PWA -->
+    <meta name="msapplication-TileColor" content="#00ff88">
+    <meta name="msapplication-TileImage" content="/img/logo-150x150.png">
+    <meta name="msapplication-config" content="/browserconfig.xml">
+    
+    <!-- PWA Status Bar -->
+    <meta name="status-bar-style" content="black-translucent">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="<%= BASE_URL %>manifest.json">
+    
+    <!-- PWA Icons -->
     <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="<%= BASE_URL %>img/logo-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="<%= BASE_URL %>img/logo-16x16.png">
+    <link rel="apple-touch-icon" href="<%= BASE_URL %>img/logo-192x192.png">
+    <link rel="mask-icon" href="<%= BASE_URL %>img/logo.svg" color="#00ff88">
+    
     <title>SureStake - Apostas inteligentes</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+         <!-- CSS Personalizado para Barra do PWA -->
+     <link rel="stylesheet" href="<%= BASE_URL %>css/pwa-titlebar.css">
+     
+     <!-- CSS Personalizado para Instalador PWA -->
+     <link rel="stylesheet" href="<%= BASE_URL %>css/pwa-installer.css">
+     
+     <!-- Script de Configuração do PWA -->
+     <script src="<%= BASE_URL %>pwa-config.js"></script>
+     
+     <!-- Script do Instalador PWA Personalizado -->
+     <script src="<%= BASE_URL %>js/pwa-installer.js"></script>
+    
+         <!-- Script de Configuração do PWA -->
+     <script>
+       // 🚀 Configuração do PWA - SureStake
+       window.addEventListener('load', () => {
+         // Verificar se o service worker foi registrado pelo Vue CLI
+         if ('serviceWorker' in navigator) {
+           navigator.serviceWorker.ready.then(registration => {
+             console.log('✅ Service Worker do Vue CLI ativo:', registration);
+             
+             // Verificar se há atualizações
+             registration.addEventListener('updatefound', () => {
+               console.log('🔄 Nova versão do Service Worker encontrada');
+               
+               const newWorker = registration.installing;
+               newWorker.addEventListener('statechange', () => {
+                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                   console.log('🔄 Nova versão disponível, atualizando...');
+                   
+                   // Mostrar notificação de atualização
+                   if (confirm('Uma nova versão do SureStake está disponível. Deseja atualizar agora?')) {
+                     newWorker.postMessage({ type: 'SKIP_WAITING' });
+                     window.location.reload();
+                   }
+                 }
+               });
+             });
+           });
+         }
+       });
+     </script>
   </head>
   <body>
     <noscript>
       <strong>Desculpe, mas este site não funciona sem JavaScript habilitado. Por favor, habilite-o para continuar.</strong>
     </noscript>
     <div id="app"></div>
+    
+    <!-- Indicador de Carregamento do PWA -->
+    <div id="pwa-loading-indicator" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    ">
+      <div style="text-align: center; color: white;">
+        <div style="
+          width: 60px;
+          height: 60px;
+          background: linear-gradient(135deg, #00ff88, #00cc6a);
+          border-radius: 50%;
+          margin: 0 auto 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          color: #1a1a1a;
+          font-weight: bold;
+          animation: pulse 2s infinite;
+        ">S</div>
+        <h2 style="color: #00ff88; margin-bottom: 10px;">SureStake</h2>
+        <p style="color: #cccccc;">Carregando aplicação...</p>
+      </div>
+    </div>
+    
     <!-- built files will be auto injected -->
+    
+    <script>
+      // 🚀 Ocultar indicador de carregamento quando a aplicação estiver pronta
+      function hideLoadingIndicator() {
+        const indicator = document.getElementById('pwa-loading-indicator');
+        if (indicator) {
+          indicator.style.opacity = '0';
+          setTimeout(() => {
+            indicator.remove();
+          }, 300);
+        }
+      }
+      
+      // Ocultar indicador quando a aplicação carregar
+      if (document.readyState === 'complete') {
+        setTimeout(hideLoadingIndicator, 1000);
+      } else {
+        window.addEventListener('load', () => {
+          setTimeout(hideLoadingIndicator, 1000);
+        });
+      }
+      
+      // Ocultar indicador se a aplicação já estiver carregada
+      const appElement = document.getElementById('app');
+      if (appElement && appElement.children.length > 0) {
+        setTimeout(hideLoadingIndicator, 500);
+      }
+    </script>
   </body>
 </html>

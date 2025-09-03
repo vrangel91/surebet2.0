@@ -118,6 +118,24 @@
             <span class="nav-text" v-show="!shouldBeCollapsed">Sair</span>
           </button>
         </li>
+        
+        <!-- Instalar PWA -->
+        <li v-if="showPWAInstall" class="nav-item pwa-install-item">
+          <button 
+            class="nav-link pwa-install-btn" 
+            @click="installPWA" 
+            :disabled="installingPWA"
+            :title="shouldBeCollapsed ? 'Instalar App' : ''"
+          >
+            <Download class="nav-icon" size="18" />
+            <span class="nav-text" v-show="!shouldBeCollapsed">
+              {{ installingPWA ? 'Instalando...' : 'Instalar App' }}
+            </span>
+            <div v-if="shouldBeCollapsed" class="pwa-badge">
+              📱
+            </div>
+          </button>
+        </li>
       </ul>
     </nav>
   </aside>
@@ -138,7 +156,8 @@ import {
   Building2, 
   HelpCircle, 
   BookOpen, 
-  LogOut
+  LogOut,
+  Download
 } from 'lucide-vue-next'
 
 import axios from '@/utils/axios'
@@ -159,7 +178,8 @@ export default {
     Building2,
     HelpCircle,
     BookOpen,
-    LogOut
+    LogOut,
+    Download
   },
   props: {
     sidebarCollapsed: {
@@ -172,7 +192,8 @@ export default {
       internalCollapsed: false,
       countdownTimer: null,
       userVIPData: null,
-
+      installingPWA: false,
+      pwaInstallable: false
     }
   },
   computed: {
@@ -392,6 +413,13 @@ export default {
       } else {
         return 'Conta ativa'
       }
+    },
+    
+    // Computed para mostrar botão de instalação PWA
+    showPWAInstall() {
+      return this.pwaInstallable && 
+             !this.isPWAInstalled() && 
+             !this.isMobileDevice();
     }
 
   },
@@ -430,10 +458,19 @@ export default {
         this.loadSidebarState()
       }
     })
+    
+    // Event listener para PWA
+    window.addEventListener('beforeinstallprompt', this.capturePWAInstallPrompt);
+    
+    // Verificar se já está instalado
+    if (this.isPWAInstalled()) {
+      this.pwaInstallable = false;
+    }
 
   },
   beforeUnmount() {
     window.removeEventListener('storage', this.handleStorageChange)
+    window.removeEventListener('beforeinstallprompt', this.capturePWAInstallPrompt)
     this.stopCountdownTimer()
     
   },
@@ -595,6 +632,58 @@ export default {
       if (event.key === 'app_settings') {
         this.loadSidebarState()
       }
+    },
+    
+    // Métodos PWA
+    isPWAInstalled() {
+      return window.matchMedia('(display-mode: standalone)').matches || 
+             window.navigator.standalone === true;
+    },
+    
+    isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    },
+    
+    async installPWA() {
+      if (this.installingPWA) return;
+      
+      this.installingPWA = true;
+      
+      try {
+        // Verificar se o evento beforeinstallprompt foi capturado
+        if (window.deferredPrompt) {
+          console.log('[Sidebar] Executando prompt de instalação PWA...');
+          window.deferredPrompt.prompt();
+          const { outcome } = await window.deferredPrompt.userChoice;
+          
+          if (outcome === 'accepted') {
+            console.log('[Sidebar] PWA instalado com sucesso!');
+            this.showNotification('PWA instalado com sucesso!', 'success');
+            // O botão será ocultado automaticamente pelo computed
+          } else {
+            console.log('[Sidebar] Usuário recusou a instalação');
+            this.showNotification('Instalação cancelada pelo usuário', 'info');
+          }
+          
+          window.deferredPrompt = null;
+        } else {
+          console.log('[Sidebar] Prompt de instalação não disponível');
+          this.showNotification('Instalação não disponível no momento', 'warning');
+        }
+      } catch (error) {
+        console.error('[Sidebar] Erro ao instalar PWA:', error);
+        this.showNotification('Erro ao instalar PWA', 'error');
+      } finally {
+        this.installingPWA = false;
+      }
+    },
+    
+    // Capturar evento de instalação PWA
+    capturePWAInstallPrompt(event) {
+      console.log('[Sidebar] Evento beforeinstallprompt capturado!');
+      event.preventDefault();
+      window.deferredPrompt = event;
+      this.pwaInstallable = true;
     }
   }
 }
@@ -1717,5 +1806,112 @@ export default {
 
 .sidebar.collapsed .sidebar-toggle:hover svg {
   transform: rotate(0deg) scale(1.1);
+}
+
+/* Estilos para o botão PWA */
+.pwa-install-item {
+  margin-top: 8px;
+  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  padding-top: 8px;
+}
+
+.pwa-install-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  color: white !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.pwa-install-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.pwa-install-btn:hover::before {
+  left: 100%;
+}
+
+.pwa-install-btn:hover {
+  background: linear-gradient(135deg, #5b5eea, #7c3aed) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.pwa-install-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.pwa-install-btn:disabled::before {
+  display: none;
+}
+
+/* Badge PWA para sidebar colapsada */
+.pwa-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 10px;
+  animation: pwaPulse 2s ease-in-out infinite;
+}
+
+@keyframes pwaPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Estilos específicos para o botão PWA no sidebar colapsado */
+.sidebar.collapsed .pwa-install-btn {
+  justify-content: center;
+  padding: 12px 8px;
+  position: relative;
+}
+
+.sidebar.collapsed .pwa-install-btn .nav-icon {
+  margin: 0;
+}
+
+.sidebar.collapsed .pwa-install-btn .pwa-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 8px;
+}
+
+/* Responsividade para o botão PWA */
+@media (max-width: 768px) {
+  .pwa-install-item {
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+  
+  .pwa-install-btn {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pwa-install-btn {
+    padding: 8px 10px;
+  }
+  
+  .pwa-install-btn .nav-text {
+    font-size: 12px;
+  }
 }
 </style>

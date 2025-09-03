@@ -90,9 +90,17 @@ module.exports = (sequelize) => {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0.00,
       allowNull: false
+    },
+    status: {
+      type: DataTypes.STRING,
+      defaultValue: 'active',
+      allowNull: false,
+      validate: {
+        isIn: [['active', 'inactive']]
+      }
     }
     // Colunas removidas pois não existem no banco surestake
-    // role, credits, status, login_attempts, locked_until, last_credit_consumption
+    // role, credits, login_attempts, locked_until, last_credit_consumption
   }, {
     tableName: 'users',
     timestamps: true,
@@ -139,6 +147,12 @@ module.exports = (sequelize) => {
     User.hasMany(models.User, {
       foreignKey: 'referred_by',
       as: 'referredUsers'
+    });
+    
+    // Notificações criadas pelo usuário
+    User.hasMany(models.Notification, {
+      foreignKey: 'created_by',
+      as: 'createdNotifications'
     });
   };
 

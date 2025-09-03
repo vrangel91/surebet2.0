@@ -1,0 +1,250 @@
+/* 🎨 Instalador PWA Personalizado - SureStake */
+
+/* Container principal do instalador */
+.pwa-installer {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border: 2px solid #00ff88;
+  border-radius: 16px;
+  padding: 24px;
+  width: 320px;
+  box-shadow: 0 8px 32px rgba(0, 255, 136, 0.3);
+  z-index: 10000;
+  font-family: 'Inter', sans-serif;
+  animation: slideInLeft 0.5s ease-out;
+}
+
+/* Animação de entrada */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(-100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Cabeçalho do instalador */
+.pwa-installer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.pwa-installer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwa-installer-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1a1a1a;
+}
+
+.pwa-installer-title {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Botão de fechar */
+.pwa-installer-close {
+  background: none;
+  border: none;
+  color: #cccccc;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwa-installer-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Descrição */
+.pwa-installer-description {
+  color: #cccccc;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+/* Botões de ação */
+.pwa-installer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pwa-installer-btn {
+  padding: 14px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pwa-installer-btn.primary {
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  color: #1a1a1a;
+}
+
+.pwa-installer-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+.pwa-installer-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pwa-installer-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Ícones dos botões */
+.pwa-installer-btn-icon {
+  font-size: 16px;
+}
+
+/* Indicador de carregamento */
+.pwa-installer-loading {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #00ff88;
+  font-size: 14px;
+}
+
+.pwa-installer-loading.active {
+  display: flex;
+}
+
+.pwa-installer-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(0, 255, 136, 0.3);
+  border-top: 2px solid #00ff88;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estados do instalador */
+.pwa-installer.installing .pwa-installer-actions {
+  display: none;
+}
+
+.pwa-installer.installing .pwa-installer-loading {
+  display: flex;
+}
+
+.pwa-installer.success {
+  border-color: #00ff88;
+  background: linear-gradient(135deg, #1a1a1a 0%, #1f2a1f 100%);
+}
+
+.pwa-installer.success .pwa-installer-description {
+  color: #00ff88;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .pwa-installer {
+    left: 10px;
+    right: 10px;
+    width: auto;
+    max-width: 320px;
+  }
+}
+
+/* Variantes de posição */
+.pwa-installer.left {
+  left: 20px;
+  right: auto;
+}
+
+.pwa-installer.right {
+  left: auto;
+  right: 20px;
+  animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+}
+
+/* Tema claro (opcional) */
+.pwa-installer.light {
+  background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
+  border-color: #00cc6a;
+  color: #1a1a1a;
+}
+
+.pwa-installer.light .pwa-installer-title {
+  color: #1a1a1a;
+}
+
+.pwa-installer.light .pwa-installer-description {
+  color: #666666;
+}
+
+.pwa-installer.light .pwa-installer-btn.secondary {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.pwa-installer.light .pwa-installer-btn.secondary:hover {
+  background: rgba(0, 0, 0, 0.15);
+}

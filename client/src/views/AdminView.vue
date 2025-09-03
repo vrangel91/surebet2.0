@@ -25,6 +25,20 @@
                 <path d="M8 3a5 5 0 0 0-5 5H1l3.5 3.5L7.5 8H6a2 2 0 1 1 2 2v2a4 4 0 1 0-4-4H1a7 7 0 1 1 7 7v-2a5 5 0 0 0 0-10z"/>
               </svg>
             </button>
+            
+            <!-- Botão de Forçar Atualização PWA -->
+            <button 
+              class="force-update-btn" 
+              @click="forcePWAUpdate" 
+              :disabled="updatingPWA"
+              :title="updatingPWA ? 'Atualizando...' : 'Forçar atualização PWA para todos os usuários'"
+            >
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 3a5 5 0 0 0-5 5H1l3.5 3.5L7.5 8H6a2 2 0 1 1 2 2v2a4 4 0 1 0-4-4H1a7 7 0 1 1 7 7v-2a5 5 0 0 0 0-10z"/>
+              </svg>
+              {{ updatingPWA ? 'Atualizando...' : 'Forçar Atualização PWA' }}
+            </button>
+            
             <button class="new-user-btn" @click="showCreateUserModal = true">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                 <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
@@ -106,6 +120,13 @@
                 @click="activeTab = 'tickets'"
               >
                 Tickets
+              </button>
+              <button 
+                class="tab-btn" 
+                :class="{ active: activeTab === 'notifications' }"
+                @click="activeTab = 'notifications'"
+              >
+                📢 Notificações
               </button>
             </div>
 
@@ -273,6 +294,11 @@
                 </div>
               </div>
             </div>
+
+            <!-- Notifications Tab -->
+            <div v-if="activeTab === 'notifications'" class="tab-content">
+              <AdminNotificationPanel />
+            </div>
           </div>
         </div>
       </main>
@@ -358,6 +384,8 @@
           </div>
         </div>
       </div>
+
+
 
       <!-- Create User Modal -->
       <div v-if="showCreateUserModal" class="modal-overlay" @click="closeCreateUserModal">
@@ -505,6 +533,13 @@
         </div>
       </div>
 
+      <!-- PWA Force Update Modal -->
+      <PWAForceUpdateModal 
+        :show="showPWAForceUpdateModal"
+        @close="closePWAForceUpdateModal"
+        @confirm="handlePWAForceUpdate"
+      />
+
       <!-- Glossary Modal -->
 
     </div>
@@ -514,9 +549,12 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
+import PWAForceUpdateModal from '../components/PWAForceUpdateModal.vue'
+import AdminNotificationPanel from '../components/AdminNotificationPanel.vue'
 
 import RouteGuard from '../components/RouteGuard.vue'
 import { mapGetters } from 'vuex'
+import { adminAPI } from '@/api/admin'
 import axios from '@/utils/axios'
 
 export default {
@@ -524,7 +562,8 @@ export default {
   components: {
     Sidebar,
     Header,
-
+    PWAForceUpdateModal,
+    AdminNotificationPanel,
     RouteGuard
   },
   mounted() {
@@ -551,6 +590,7 @@ export default {
       showCreateUserModal: false,
       showEditUserModal: false,
       showDeleteUserModal: false,
+      showPWAForceUpdateModal: false,
       activeTab: 'users',
       statusFilter: '',
       priorityFilter: '',
@@ -580,7 +620,10 @@ export default {
       users: [],
       loading: false,
       
-      tickets: []
+      tickets: [],
+      
+      // Estado da atualização PWA
+      updatingPWA: false
     }
   },
   
@@ -599,7 +642,7 @@ export default {
       // Mock data para demonstração (será substituído por API real)
       const avgResponseTime = '2h 30m'
       const totalUsers = this.users.length
-      const vipUsers = this.users.filter(u => u.plan === 'vip').length
+      const vipUsers = this.users.filter(u => u.plan === 'vip' || u.plan === 'premium').length
       
       return { 
         totalTickets, 
@@ -676,19 +719,24 @@ export default {
         
         const response = await axios.get('/api/users')
         console.log('📊 Resposta da API usuários:', response.data)
+        console.log('📊 Tipo da resposta:', typeof response.data)
+        console.log('📊 Propriedades da resposta:', Object.keys(response.data))
         
-        if (response.data.success && response.data.users) {
+        // Verificar se a resposta tem a estrutura esperada
+        if (response.data && response.data.success && Array.isArray(response.data.users)) {
           this.users = response.data.users.map(user => ({
             id: user.id,
-            name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
+            name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
             email: user.email,
             status: user.status || 'active',
-            plan: user.plan_type || user.plan || '',
+            plan: user.account_type || user.plan || '',
             createdAt: user.created_at || user.createdAt || new Date().toISOString()
           }))
           console.log('✅ Usuários carregados:', this.users.length)
         } else {
           console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          console.warn('⚠️ Estrutura esperada: { success: true, users: [...] }')
+          console.warn('⚠️ Estrutura recebida:', response.data)
           this.users = []
         }
       } catch (error) {
@@ -706,12 +754,17 @@ export default {
       try {
         const response = await axios.get('/api/tickets')
         console.log('📊 Resposta da API tickets:', response.data)
+        console.log('📊 Tipo da resposta tickets:', typeof response.data)
+        console.log('📊 Propriedades da resposta tickets:', Object.keys(response.data))
         
-        if (response.data.success && response.data.tickets) {
+        // Verificar se a resposta tem a estrutura esperada
+        if (response.data && response.data.success && Array.isArray(response.data.tickets)) {
           this.tickets = response.data.tickets
           console.log('✅ Tickets carregados:', this.tickets.length)
         } else {
           console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          console.warn('⚠️ Estrutura esperada: { success: true, tickets: [...] }')
+          console.warn('⚠️ Estrutura recebida:', response.data)
           this.tickets = []
         }
       } catch (error) {
@@ -857,11 +910,12 @@ export default {
         
         // Preparar dados para a API
         const userData = {
+          username: this.newUser.name.split(' ')[0] || this.newUser.name,
           first_name: this.newUser.name.split(' ')[0] || this.newUser.name,
           last_name: this.newUser.name.split(' ').slice(1).join(' ') || '',
           email: this.newUser.email,
           password: this.newUser.password,
-          plan_type: this.newUser.plan || null,
+          account_type: this.newUser.plan || 'basic',
           status: 'active'
         }
         
@@ -903,10 +957,9 @@ export default {
         
         // Preparar dados para a API
         const userData = {
-          first_name: this.editingUser.name.split(' ')[0] || this.editingUser.name,
-          last_name: this.editingUser.name.split(' ').slice(1).join(' ') || '',
+          name: this.editingUser.name,
           email: this.editingUser.email,
-          plan_type: this.editingUser.plan || null,
+          account_type: this.editingUser.plan || 'basic',
           status: this.editingUser.status
         }
         
@@ -1035,6 +1088,58 @@ export default {
       } else {
         alert(`ℹ️ ${message}`)
       }
+    },
+    
+    // Forçar atualização PWA para todos os usuários
+    forcePWAUpdate() {
+      this.showPWAForceUpdateModal = true
+    },
+    
+    // Fechar modal de atualização PWA
+    closePWAForceUpdateModal() {
+      this.showPWAForceUpdateModal = false
+    },
+    
+    // Manipular confirmação de atualização PWA
+    async handlePWAForceUpdate(data) {
+      if (this.updatingPWA) return
+      
+      try {
+        this.updatingPWA = true
+        
+        // Chamar API para forçar atualização
+        const response = await adminAPI.forcePWAUpdate({
+          reason: data.reason,
+          timestamp: data.timestamp,
+          admin: this.currentUser?.email || 'Unknown'
+        })
+        
+        if (response.success) {
+          this.showToastNotification(
+            '✅ Atualização PWA forçada com sucesso! Todos os usuários serão atualizados.',
+            'success'
+          )
+          
+          // Log da ação
+          console.log('🔄 [ADMIN] Atualização PWA forçada:', {
+            admin: this.currentUser?.email || 'Unknown',
+            timestamp: data.timestamp,
+            reason: data.reason,
+            affectedUsers: response.affectedUsers || 'Unknown'
+          })
+        } else {
+          throw new Error(response.error || 'Erro desconhecido')
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao forçar atualização PWA:', error)
+        this.showToastNotification(
+          `❌ Erro ao forçar atualização PWA: ${error.response?.data?.error || error.message}`,
+          'error'
+        )
+      } finally {
+        this.updatingPWA = false
+      }
     }
   }
 }
@@ -1140,6 +1245,58 @@ export default {
 .new-user-btn:hover {
   background: #00cc6a;
   transform: translateY(-1px);
+}
+
+.force-update-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.force-update-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #e55a2b, #e57a3a);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+}
+
+.force-update-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.force-update-btn:disabled:hover {
+  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Animação de loading para o botão */
+.force-update-btn:disabled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
 }
 
 /* Dashboard Stats */

@@ -1,0 +1,20 @@
+
+<svg width="150" height="150" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Fundo circular -->
+  <circle cx="256" cy="256" r="240" fill="url(#grad1)" stroke="#1a1a1a" stroke-width="8"/>
+  
+  <!-- Símbolo S estilizado -->
+  <path d="M 180 120 Q 180 100 200 100 L 280 100 Q 300 100 300 120 L 300 160 Q 300 180 280 180 L 220 180 Q 200 180 200 200 L 200 240 Q 200 260 220 260 L 300 260 Q 320 260 320 280 L 320 320 Q 320 340 300 340 L 220 340 Q 200 340 200 320 L 200 280 Q 200 260 180 260 L 120 260 Q 100 260 100 240 L 100 200 Q 100 180 120 180 L 180 180 Q 200 180 200 160 L 200 120 Q 200 100 180 120 Z" 
+        fill="#1a1a1a" opacity="0.9"/>
+  
+  <!-- Destaque -->
+  <circle cx="200" cy="200" r="20" fill="#1a1a1a" opacity="0.3"/>
+  <circle cx="280" cy="280" r="15" fill="#1a1a1a" opacity="0.2"/>
+</svg>

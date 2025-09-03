@@ -1,0 +1,9 @@
+# Placeholder para logo-72x72.png
+# Este arquivo deve ser substituído por uma imagem PNG real de 72x72 pixels
+# Você pode usar ferramentas online como:
+# - https://convertio.co/svg-png/
+# - https://cloudconvert.com/svg-to-png
+# - https://www.icoconverter.com/
+# 
+# Ou usar o comando ImageMagick:
+# magick logo.svg -resize 72x72 logo-72x72.png

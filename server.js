@@ -18,6 +18,8 @@ const surebetStatsRoutes = require('./routes/surebetStats');
 const ordersRoutes = require('./routes/orders');
 const referralsRoutes = require('./routes/referrals');
 const ticketsRoutes = require('./routes/tickets');
+const adminRoutes = require('./routes/admin');
+const notificationRoutes = require('./routes/notifications');
 
 // Importar cron jobs VIP
 const vipCronJobs = require('./utils/vipCronJobs');
@@ -63,7 +65,7 @@ app.use((req, res, next) => {
   const isForceRefresh = req.get('Cache-Control') === 'no-cache' || req.get('Pragma') === 'no-cache';
   
   // Se for uma requisição para uma rota da API que não existe, tratar como 404
-  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
+  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/admin|api\/notifications|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
     console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}${isForceRefresh ? ' (Refresh forçado detectado)' : ''}`);
     return res.status(404).json({
       error: 'Endpoint não encontrado',
@@ -87,12 +89,14 @@ app.use('/api/surebet-stats', surebetStatsRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/referrals', referralsRoutes);
 app.use('/api/tickets', ticketsRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // WebSocket server
 const wss = new WebSocket.Server({ port: 3002 });
 
 // Estado global
-let surebets = [];
+let surebets = {};
 let isSearching = true;
 let soundEnabled = true;
 let lastSurebetCount = 0;
@@ -100,7 +104,7 @@ let lastSurebetCount = 0;
 console.log('🚀 Estado inicial do servidor:');
 console.log(`   - isSearching: ${isSearching}`);
 console.log(`   - soundEnabled: ${soundEnabled}`);
-console.log(`   - surebets: ${Object.keys(surebets).length} registros`);
+console.log(`   - surebets: ${surebets && typeof surebets === 'object' ? Object.keys(surebets).length : 0} registros`);
 
 // Função para buscar surebets da API
 async function fetchSurebets() {
@@ -140,11 +144,19 @@ async function fetchSurebets() {
       console.log(`Surebets atualizados: ${currentSurebetCount} encontrados`);
     } else {
       console.log('API retornou dados vazios ou inválidos, mantendo dados anteriores');
+      // Garantir que surebets seja sempre um objeto válido
+      if (!surebets || typeof surebets !== 'object') {
+        surebets = {};
+      }
     }
   } catch (error) {
     console.error('Erro ao buscar surebets:', error.message);
     // Manter os dados anteriores em caso de erro
     console.log('Mantendo dados anteriores devido ao erro na API externa');
+    // Garantir que surebets seja sempre um objeto válido
+    if (!surebets || typeof surebets !== 'object') {
+      surebets = {};
+    }
   }
 }
 
@@ -164,9 +176,12 @@ wss.on('connection', (ws) => {
   
   // Enviar estado atual para o novo cliente
   try {
+    // Garantir que surebets seja sempre um objeto válido
+    const safeSurebets = surebets && typeof surebets === 'object' ? surebets : {};
+    
     ws.send(JSON.stringify({
       type: 'initial_state',
-      surebets: surebets,
+      surebets: safeSurebets,
       isSearching: isSearching,
       soundEnabled: soundEnabled
     }));
@@ -222,7 +237,7 @@ app.get('/api/status', (req, res) => {
   res.json({
     isSearching,
     soundEnabled,
-    surebetCount: Object.keys(surebets).length
+    surebetCount: surebets && typeof surebets === 'object' ? Object.keys(surebets).length : 0
   });
 });
 

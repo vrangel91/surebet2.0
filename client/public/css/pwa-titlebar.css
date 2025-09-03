@@ -1,0 +1,168 @@
+/* 🎨 Personalização da Barra do PWA - SureStake */
+
+/* Barra de título personalizada para PWA */
+.pwa-titlebar {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  color: #ffffff;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  border-bottom: 1px solid #00ff88;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+}
+
+/* Logo e título */
+.pwa-titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pwa-titlebar-logo {
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #1a1a1a;
+  font-size: 12px;
+}
+
+.pwa-titlebar-title {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Controles da janela */
+.pwa-titlebar-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.pwa-titlebar-button {
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.pwa-titlebar-button:hover {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+}
+
+.pwa-titlebar-button:active {
+  background: rgba(0, 255, 136, 0.2);
+  transform: scale(0.95);
+}
+
+/* Botões específicos */
+.pwa-titlebar-button.minimize:hover {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+}
+
+.pwa-titlebar-button.maximize:hover {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+}
+
+.pwa-titlebar-button.close:hover {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+}
+
+/* Ícones dos botões */
+.pwa-titlebar-button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* Responsividade */
+@media (max-width: 480px) {
+  .pwa-titlebar {
+    height: 40px;
+    padding: 0 12px;
+  }
+  
+  .pwa-titlebar-title {
+    font-size: 13px;
+  }
+  
+  .pwa-titlebar-button {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Tema escuro (padrão) */
+.pwa-titlebar.dark {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom-color: #00ff88;
+}
+
+/* Tema claro (se implementado) */
+.pwa-titlebar.light {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  color: #1a1a1a;
+  border-bottom-color: #00cc6a;
+}
+
+.pwa-titlebar.light .pwa-titlebar-title {
+  color: #1a1a1a;
+}
+
+.pwa-titlebar.light .pwa-titlebar-button {
+  color: #1a1a1a;
+}
+
+.pwa-titlebar.light .pwa-titlebar-button:hover {
+  background: rgba(0, 204, 102, 0.1);
+  color: #00cc6a;
+}
+
+/* Animações */
+@keyframes titlebar-glow {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(0, 255, 136, 0.4);
+  }
+}
+
+.pwa-titlebar.animated {
+  animation: titlebar-glow 3s ease-in-out infinite;
+}
+
+/* Estados especiais */
+.pwa-titlebar.loading {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom-color: #ffc107;
+}
+
+.pwa-titlebar.error {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom-color: #dc3545;
+}
+
+.pwa-titlebar.success {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+  border-bottom-color: #28a745;
+}

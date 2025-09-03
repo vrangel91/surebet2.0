@@ -1,9 +1,10 @@
 import axios from 'axios'
 import store from '@/store'
+import { getApiUrl } from '@/config/production.js'
 
 // Criar instância do axios
 const axiosInstance = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' ? '' : '',
+  baseURL: getApiUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'

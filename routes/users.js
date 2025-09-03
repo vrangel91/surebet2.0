@@ -857,4 +857,44 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
+// Alterar status do usuário
+router.patch('/:id/status', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    if (!status || !['active', 'inactive'].includes(status)) {
+      return res.status(400).json({
+        error: 'Status inválido. Deve ser "active" ou "inactive"'
+      });
+    }
+    
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({
+        error: 'Usuário não encontrado'
+      });
+    }
+    
+    // Atualizar status
+    user.status = status;
+    await user.save();
+    
+    res.json({
+      success: true,
+      message: `Status do usuário alterado para ${status}`,
+      user: {
+        id: user.id,
+        status: user.status
+      }
+    });
+    
+  } catch (error) {
+    console.error('Erro ao alterar status do usuário:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
 module.exports = router;

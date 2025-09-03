@@ -5,6 +5,12 @@
 @import './themes.scss';
 
 // ========================================
+// IMPORTAÇÃO PWA
+// ========================================
+// Estilos para a barra de título do PWA
+@import './pwa-titlebar.css';
+
+// ========================================
 // VARIÁVEIS LEGADAS (mantidas para compatibilidade)
 // ========================================
 // Estas variáveis são mantidas para não quebrar código existente

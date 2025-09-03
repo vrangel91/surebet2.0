@@ -17,6 +17,16 @@
           <i :class="themeIconClass"></i>
         </button>
         
+        <!-- Notificações -->
+        <button 
+          class="notifications-btn"
+          @click="toggleNotificationsModal"
+          :title="`Notificações (${unreadCount} não lidas)`"
+        >
+          <i class="bi bi-bell-fill"></i>
+          <span v-if="unreadCount > 0" class="notifications-badge">{{ unreadCount }}</span>
+        </button>
+        
         <!-- Ícone de usuário -->
         <button 
           class="user-button"
@@ -130,6 +140,122 @@
         </div>
       </div>
     </div>
+    
+    <!-- Modal de Notificações -->
+    <div 
+      v-if="showNotificationsModal" 
+      class="notifications-modal-overlay"
+      @click="closeNotificationsModal"
+    >
+      <div class="notifications-modal">
+        <!-- Cabeçalho do modal -->
+        <div class="modal-header">
+          <h3>Notificações</h3>
+          <div class="notifications-actions">
+            <button 
+              v-if="unreadCount > 0"
+              class="mark-all-read-btn" 
+              @click="markAllAsRead"
+              :disabled="markingAllAsRead"
+            >
+              {{ markingAllAsRead ? 'Marcando...' : 'Marcar todas como lidas' }}
+            </button>
+            <button class="close-btn" @click="closeNotificationsModal">×</button>
+          </div>
+        </div>
+        
+        <!-- Conteúdo do modal -->
+        <div class="modal-content">
+          <!-- Loading State -->
+          <div v-if="loadingNotifications" class="loading-notifications">
+            <div class="loading-spinner"></div>
+            <p>Carregando notificações...</p>
+          </div>
+          
+          <!-- Empty State -->
+          <div v-else-if="notifications.length === 0" class="empty-notifications">
+            <i class="bi bi-bell-slash"></i>
+            <h4>Nenhuma notificação</h4>
+            <p>Você está em dia com suas notificações!</p>
+          </div>
+          
+          <!-- Lista de Notificações -->
+          <div v-else class="notifications-list">
+            <div 
+              v-for="notification in notifications" 
+              :key="notification.id" 
+              class="notification-item"
+              :class="{
+                'unread': !notification.is_read,
+                'dismissed': notification.is_dismissed,
+                [`priority-${notification.priority}`]: notification.priority,
+                [`type-${notification.type}`]: notification.type
+              }"
+            >
+              <div class="notification-header">
+                <div class="notification-type-icon">
+                  <i :class="getNotificationIcon(notification.type)"></i>
+                </div>
+                <div class="notification-content">
+                  <h5 class="notification-title">{{ notification.title }}</h5>
+                  <p class="notification-message">{{ notification.message }}</p>
+                  <div class="notification-meta">
+                    <span class="notification-date">{{ formatDate(notification.created_at) }}</span>
+                    <span class="notification-priority" :class="notification.priority">
+                      {{ getPriorityText(notification.priority) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="notification-actions">
+                  <button 
+                    v-if="!notification.is_read"
+                    class="mark-read-btn" 
+                    @click="markAsRead(notification.id)"
+                    title="Marcar como lida"
+                  >
+                    <i class="bi bi-check2"></i>
+                  </button>
+                  <button 
+                    class="dismiss-btn" 
+                    @click="dismissNotification(notification.id)"
+                    title="Descartar"
+                  >
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Sistema de Toast para Notificações -->
+    <div class="toast-container">
+      <div 
+        v-for="toast in activeToasts" 
+        :key="toast.id"
+        class="toast-notification"
+        :class="[
+          `toast-${toast.type}`,
+          `toast-${toast.priority}`,
+          { 'toast-showing': toast.showing, 'toast-hiding': toast.hiding }
+        ]"
+      >
+        <div class="toast-header">
+          <div class="toast-type-icon">
+            <i :class="getNotificationIcon(toast.type)"></i>
+          </div>
+          <div class="toast-content">
+            <h6 class="toast-title">{{ toast.title }}</h6>
+            <p class="toast-message">{{ toast.message }}</p>
+          </div>
+          <button class="toast-close" @click="closeToast(toast.id)">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+    </div>
   </header>
 </template>
 
@@ -141,9 +267,23 @@ export default {
   data() {
     return {
       showUserModal: false,
+      showNotificationsModal: false,
       userVIPData: null,
       countdownTimer: null,
-      currentTheme: 'dark' // Tema padrão
+      currentTheme: 'dark', // Tema padrão
+      
+      // Sistema de notificações
+      notifications: [],
+      loadingNotifications: false,
+      markingAllAsRead: false,
+      unreadCount: 0,
+      
+      // Sistema de toast
+      activeToasts: [],
+      toastCounter: 0,
+      
+      // Polling de notificações
+      notificationsPolling: null
     }
   },
   computed: {
@@ -371,6 +511,184 @@ export default {
       }
     },
     
+    // Métodos de Notificações
+    toggleNotificationsModal() {
+      this.showNotificationsModal = !this.showNotificationsModal
+      if (this.showNotificationsModal) {
+        this.loadNotifications()
+      }
+    },
+    
+    closeNotificationsModal() {
+      this.showNotificationsModal = false
+    },
+    
+    async loadNotifications() {
+      if (this.loadingNotifications) return
+      
+      this.loadingNotifications = true
+      try {
+        const response = await axios.get('/api/notifications')
+        if (response.data.success) {
+          this.notifications = response.data.notifications || []
+          this.updateUnreadCount()
+        }
+      } catch (error) {
+        console.error('Erro ao carregar notificações:', error)
+      } finally {
+        this.loadingNotifications = false
+      }
+    },
+    
+    async markAsRead(notificationId) {
+      try {
+        await axios.patch(`/api/notifications/${notificationId}/read`)
+        const notification = this.notifications.find(n => n.id === notificationId)
+        if (notification) {
+          notification.is_read = true
+          this.updateUnreadCount()
+        }
+      } catch (error) {
+        console.error('Erro ao marcar notificação como lida:', error)
+      }
+    },
+    
+    async dismissNotification(notificationId) {
+      try {
+        await axios.patch(`/api/notifications/${notificationId}/dismiss`)
+        const notification = this.notifications.find(n => n.id === notificationId)
+        if (notification) {
+          notification.is_dismissed = true
+          this.updateUnreadCount()
+        }
+      } catch (error) {
+        console.error('Erro ao descartar notificação:', error)
+      }
+    },
+    
+    async markAllAsRead() {
+      if (this.markingAllAsRead) return
+      
+      this.markingAllAsRead = true
+      try {
+        await axios.patch('/api/notifications/read-all')
+        this.notifications.forEach(n => n.is_read = true)
+        this.updateUnreadCount()
+      } catch (error) {
+        console.error('Erro ao marcar todas como lidas:', error)
+      } finally {
+        this.markingAllAsRead = false
+      }
+    },
+    
+    updateUnreadCount() {
+      this.unreadCount = this.notifications.filter(n => !n.is_read && !n.is_dismissed).length
+    },
+    
+    getNotificationIcon(type) {
+      const icons = {
+        info: 'bi bi-info-circle-fill',
+        success: 'bi bi-check-circle-fill',
+        warning: 'bi bi-exclamation-triangle-fill',
+        error: 'bi bi-x-circle-fill',
+        update: 'bi bi-arrow-clockwise'
+      }
+      return icons[type] || 'bi bi-bell-fill'
+    },
+    
+    getPriorityText(priority) {
+      const priorities = {
+        low: 'Baixa',
+        normal: 'Normal',
+        high: 'Alta',
+        urgent: 'Urgente'
+      }
+      return priorities[priority] || priority
+    },
+    
+    formatDate(date) {
+      if (!date) return ''
+      const now = new Date()
+      const notificationDate = new Date(date)
+      const diffMs = now - notificationDate
+      const diffMins = Math.floor(diffMs / 60000)
+      const diffHours = Math.floor(diffMs / 3600000)
+      const diffDays = Math.floor(diffMs / 86400000)
+      
+      if (diffMins < 1) return 'Agora'
+      if (diffMins < 60) return `${diffMins}min atrás`
+      if (diffHours < 24) return `${diffHours}h atrás`
+      if (diffDays < 7) return `${diffDays}d atrás`
+      
+      return notificationDate.toLocaleDateString('pt-BR')
+    },
+    
+    // Sistema de Toast
+    showToast(notification) {
+      const toast = {
+        id: ++this.toastCounter,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        priority: notification.priority,
+        showing: false,
+        hiding: false
+      }
+      
+      this.activeToasts.push(toast)
+      
+      // Animar entrada
+      setTimeout(() => {
+        toast.showing = true
+      }, 100)
+      
+      // Auto-remover após 5 segundos
+      setTimeout(() => {
+        this.closeToast(toast.id)
+      }, 5000)
+    },
+    
+    closeToast(toastId) {
+      const toast = this.activeToasts.find(t => t.id === toastId)
+      if (toast) {
+        toast.hiding = true
+        setTimeout(() => {
+          const index = this.activeToasts.findIndex(t => t.id === toastId)
+          if (index > -1) {
+            this.activeToasts.splice(index, 1)
+          }
+        }, 300)
+      }
+    },
+    
+    // Polling de notificações
+    startNotificationsPolling() {
+      this.notificationsPolling = setInterval(async () => {
+        try {
+          const response = await axios.get('/api/notifications/unread-count')
+          if (response.data.success) {
+            const newCount = response.data.count || 0
+            if (newCount > this.unreadCount) {
+              // Nova notificação, carregar e mostrar toast
+              await this.loadNotifications()
+              const newNotifications = this.notifications.filter(n => !n.is_read && !n.is_dismissed)
+              newNotifications.forEach(n => this.showToast(n))
+            }
+            this.unreadCount = newCount
+          }
+        } catch (error) {
+          console.error('Erro no polling de notificações:', error)
+        }
+      }, 30000) // Verificar a cada 30 segundos
+    },
+    
+    stopNotificationsPolling() {
+      if (this.notificationsPolling) {
+        clearInterval(this.notificationsPolling)
+        this.notificationsPolling = null
+      }
+    },
+    
     toggleTheme() {
       console.log('🔄 Toggle de tema chamado!')
       console.log('Tema atual:', this.currentTheme)
@@ -417,9 +735,16 @@ export default {
     this.loadUserVIPData()
     this.startCountdownTimer()
     
+    // Inicializar sistema de notificações
+    this.loadNotifications()
+    this.startNotificationsPolling()
+    
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.showUserModal) {
         this.closeUserModal()
+      }
+      if (e.key === 'Escape' && this.showNotificationsModal) {
+        this.closeNotificationsModal()
       }
     })
   },
@@ -427,6 +752,7 @@ export default {
   beforeUnmount() {
     document.removeEventListener('keydown', this.closeUserModal)
     this.stopCountdownTimer()
+    this.stopNotificationsPolling()
   }
 }
 </script>
@@ -498,6 +824,50 @@ export default {
   &:active {
     transform: scale(0.95);
   }
+}
+
+.notifications-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 18px;
+  position: relative;
+
+  &:hover {
+    background: var(--bg-overlay);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.notifications-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--accent-error);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .user-button {
@@ -955,6 +1325,433 @@ export default {
   
   .modal-content {
     padding: 16px;
+  }
+}
+
+/* Modal de Notificações */
+.notifications-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 10px 0;
+  z-index: 10000;
+}
+
+.notifications-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+  margin-right: 20px;
+  margin-top: 70px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.notifications-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mark-all-read-btn {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--accent-secondary);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.loading-notifications {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--bg-tertiary);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.empty-notifications {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+
+  i {
+    font-size: 48px;
+    opacity: 0.5;
+    margin-bottom: 16px;
+  }
+
+  h4 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.notifications-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.notification-item {
+  padding: 16px;
+  border-bottom: 1px solid var(--border-primary);
+  transition: all 0.3s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--bg-overlay);
+  }
+
+  &.unread {
+    background: rgba(0, 123, 255, 0.05);
+    border-left: 3px solid var(--accent-primary);
+  }
+
+  &.dismissed {
+    opacity: 0.6;
+  }
+
+  &.priority-urgent {
+    border-left-color: #dc3545;
+  }
+
+  &.priority-high {
+    border-left-color: #ff6b35;
+  }
+
+  &.priority-normal {
+    border-left-color: #ffc107;
+  }
+
+  &.priority-low {
+    border-left-color: #6c757d;
+  }
+}
+
+.notification-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.notification-type-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
+
+  .bi-info-circle-fill {
+    color: #007bff;
+  }
+
+  .bi-check-circle-fill {
+    color: #28a745;
+  }
+
+  .bi-exclamation-triangle-fill {
+    color: #ffc107;
+  }
+
+  .bi-x-circle-fill {
+    color: #dc3545;
+  }
+
+  .bi-arrow-clockwise {
+    color: #6f42c1;
+  }
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.notification-message {
+  margin: 0 0 8px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.notification-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+}
+
+.notification-date {
+  color: var(--text-tertiary);
+}
+
+.notification-priority {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+
+  &.urgent {
+    background: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+  }
+
+  &.high {
+    background: rgba(255, 107, 53, 0.2);
+    color: #ff6b35;
+  }
+
+  &.normal {
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+  }
+
+  &.low {
+    background: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+  }
+}
+
+.notification-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.mark-read-btn,
+.dismiss-btn {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+
+  &:hover {
+    background: var(--bg-overlay);
+  }
+}
+
+.mark-read-btn {
+  color: #28a745;
+
+  &:hover {
+    color: #20c997;
+  }
+}
+
+.dismiss-btn {
+  color: #6c757d;
+
+  &:hover {
+    color: #dc3545;
+  }
+}
+
+/* Sistema de Toast */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.toast-notification {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transform: translateX(100%);
+  opacity: 0;
+  transition: all 0.3s ease;
+  border-left: 4px solid;
+
+  &.toast-showing {
+    transform: translateX(0);
+    opacity: 1;
+  }
+
+  &.toast-hiding {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+
+  &.toast-info {
+    border-left-color: #007bff;
+  }
+
+  &.toast-success {
+    border-left-color: #28a745;
+  }
+
+  &.toast-warning {
+    border-left-color: #ffc107;
+  }
+
+  &.toast-error {
+    border-left-color: #dc3545;
+  }
+
+  &.toast-update {
+    border-left-color: #6f42c1;
+  }
+
+  &.toast-urgent {
+    border-left-color: #dc3545;
+    animation: urgentPulse 1s infinite;
+  }
+
+  &.toast-high {
+    border-left-color: #ff6b35;
+  }
+
+  &.toast-normal {
+    border-left-color: #ffc107;
+  }
+
+  &.toast-low {
+    border-left-color: #6c757d;
+  }
+}
+
+@keyframes urgentPulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+
+.toast-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.toast-type-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.toast-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.toast-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: var(--text-secondary);
+  font-size: 14px;
+
+  &:hover {
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+  }
+}
+
+/* Responsividade para notificações */
+@media (max-width: 768px) {
+  .notifications-modal {
+    width: 320px;
+    margin-right: 10px;
+  }
+
+  .toast-container {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+
+  .toast-notification {
+    padding: 12px;
   }
 }
 </style>

@@ -1,0 +1,9 @@
+# Placeholder para logo-512x512.png
+# Este arquivo deve ser substituído por uma imagem PNG real de 512x512 pixels
+# Você pode usar ferramentas online como:
+# - https://convertio.co/svg-png/
+# - https://cloudconvert.com/svg-to-png
+# - https://www.icoconverter.com/
+# 
+# Ou usar o comando ImageMagick:
+# magick logo.svg -resize 512x512 logo-512x512.png

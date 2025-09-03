@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SureStake - Modo Offline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+            background: rgba(42, 42, 42, 0.8);
+            padding: 40px;
+            border-radius: 16px;
+            border: 2px solid #00ff88;
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.3);
+        }
+
+        .offline-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 32px;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .offline-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #00ff88;
+        }
+
+        .offline-message {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+            color: #cccccc;
+        }
+
+        .offline-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .offline-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .offline-btn.primary {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #1a1a1a;
+        }
+
+        .offline-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 255, 136, 0.4);
+        }
+
+        .offline-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-status {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            color: #888888;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ff6b6b;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .retry-count {
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        @media (max-width: 480px) {
+            .offline-container {
+                padding: 24px;
+            }
+            
+            .offline-title {
+                font-size: 24px;
+            }
+            
+            .offline-actions {
+                flex-direction: column;
+            }
+            
+            .offline-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📱</div>
+        
+        <h1 class="offline-title">Modo Offline</h1>
+        
+        <p class="offline-message">
+            Parece que você está offline ou há um problema de conexão. 
+            O SureStake está tentando se reconectar automaticamente.
+        </p>
+        
+        <div class="offline-actions">
+            <button class="offline-btn primary" onclick="retryConnection()">
+                🔄 Tentar Novamente
+            </button>
+            
+            <button class="offline-btn secondary" onclick="goHome()">
+                🏠 Ir para Início
+            </button>
+        </div>
+        
+        <div class="offline-status">
+            <span class="status-indicator"></span>
+            <span>Status: <span id="connection-status">Desconectado</span></span>
+            <br>
+            <span>Tentativas: <span class="retry-count" id="retry-count">0</span></span>
+        </div>
+    </div>
+
+    <script>
+        // 🚀 Script de Recuperação Offline - SureStake
+        
+        let retryCount = 0;
+        let isRetrying = false;
+        let retryInterval;
+        
+        // Elementos DOM
+        const connectionStatus = document.getElementById('connection-status');
+        const retryCountElement = document.getElementById('retry-count');
+        
+        // Verificar conexão
+        function checkConnection() {
+            return navigator.onLine;
+        }
+        
+        // Atualizar status da conexão
+        function updateConnectionStatus() {
+            if (checkConnection()) {
+                connectionStatus.textContent = 'Conectado';
+                connectionStatus.style.color = '#00ff88';
+                
+                // Se conectou, tentar redirecionar
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            } else {
+                connectionStatus.textContent = 'Desconectado';
+                connectionStatus.style.color = '#ff6b6b';
+            }
+        }
+        
+        // Tentar reconexão
+        async function retryConnection() {
+            if (isRetrying) return;
+            
+            isRetrying = true;
+            retryCount++;
+            retryCountElement.textContent = retryCount;
+            
+            console.log(`🔄 Tentativa de reconexão ${retryCount}...`);
+            
+            try {
+                // Tentar fazer uma requisição de teste
+                const response = await fetch('/api/health', { 
+                    method: 'GET',
+                    cache: 'no-cache'
+                });
+                
+                if (response.ok) {
+                    console.log('✅ Conexão restaurada!');
+                    connectionStatus.textContent = 'Conectado';
+                    connectionStatus.style.color = '#00ff88';
+                    
+                    // Redirecionar para a aplicação
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1500);
+                } else {
+                    throw new Error('Resposta inválida');
+                }
+                
+            } catch (error) {
+                console.log('❌ Falha na reconexão:', error.message);
+                connectionStatus.textContent = 'Falha na conexão';
+                connectionStatus.style.color = '#ff6b6b';
+                
+                // Tentar novamente em 5 segundos
+                setTimeout(() => {
+                    isRetrying = false;
+                }, 5000);
+            }
+        }
+        
+        // Ir para página inicial
+        function goHome() {
+            window.location.href = '/';
+        }
+        
+        // Verificar conexão periodicamente
+        function startConnectionCheck() {
+            // Verificar a cada 3 segundos
+            retryInterval = setInterval(() => {
+                updateConnectionStatus();
+                
+                // Se conectou, parar verificação
+                if (checkConnection()) {
+                    clearInterval(retryInterval);
+                }
+            }, 3000);
+        }
+        
+        // Verificar se o service worker está funcionando
+        async function checkServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    
+                    if (registration && registration.active) {
+                        console.log('✅ Service Worker ativo');
+                        
+                        // Verificar se há nova versão
+                        registration.addEventListener('updatefound', () => {
+                            console.log('🔄 Nova versão do Service Worker encontrada');
+                        });
+                        
+                    } else {
+                        console.log('⚠️ Service Worker não encontrado');
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao verificar Service Worker:', error);
+                }
+            }
+        }
+        
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Página offline carregada');
+            
+            // Verificar conexão inicial
+            updateConnectionStatus();
+            
+            // Iniciar verificação periódica
+            startConnectionCheck();
+            
+            // Verificar service worker
+            checkServiceWorker();
+            
+            // Escutar mudanças de conectividade
+            window.addEventListener('online', () => {
+                console.log('🌐 Conexão restaurada');
+                updateConnectionStatus();
+            });
+            
+            window.addEventListener('offline', () => {
+                console.log('📴 Conexão perdida');
+                updateConnectionStatus();
+            });
+        });
+        
+        // Tentar reconexão automática a cada 10 segundos
+        setInterval(() => {
+            if (!checkConnection() && !isRetrying) {
+                retryConnection();
+            }
+        }, 10000);
+        
+        // Limpar intervalo quando a página for fechada
+        window.addEventListener('beforeunload', () => {
+            if (retryInterval) {
+                clearInterval(retryInterval);
+            }
+        });
+    </script>
+</body>
+</html>
