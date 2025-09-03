@@ -556,6 +556,67 @@ router.get('/vip-statistics', requireAdmin, async (req, res) => {
   }
 });
 
+// 🔒 Rota para verificar status VIP do usuário
+router.get('/vip-status', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔒 [VIP Status] Verificando status VIP para usuário:', req.user.id);
+    
+    // Buscar dados do usuário
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['id', 'is_vip', 'vip_expires_at', 'status']
+    });
+    
+    if (!user) {
+      console.log('❌ [VIP Status] Usuário não encontrado');
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+    
+    // Verificar se o usuário está ativo
+    if (user.status !== 'active') {
+      console.log('❌ [VIP Status] Usuário inativo:', user.status);
+      return res.status(403).json({
+        success: false,
+        message: 'Usuário inativo',
+        isVIP: false,
+        expiration: null
+      });
+    }
+    
+    // Verificar se o VIP expirou
+    const now = new Date();
+    const vipExpiresAt = user.vip_expires_at ? new Date(user.vip_expires_at) : null;
+    const isVIP = user.is_vip && vipExpiresAt && vipExpiresAt > now;
+    
+    console.log('✅ [VIP Status] Status VIP verificado:', {
+      userId: user.id,
+      isVIP,
+      vipExpiresAt,
+      now
+    });
+    
+    // Retornar status VIP
+    res.json({
+      success: true,
+      isVIP,
+      expiration: vipExpiresAt ? vipExpiresAt.toISOString() : null,
+      lastValidation: now.toISOString(),
+      userStatus: user.status
+    });
+    
+  } catch (error) {
+    console.error('❌ [VIP Status] Erro ao verificar status VIP:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      isVIP: false,
+      expiration: null
+    });
+  }
+});
+
 // ===== ROTAS DE USUÁRIOS =====
 
 // Listar todos os usuários

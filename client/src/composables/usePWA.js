@@ -100,30 +100,28 @@ export function usePWA() {
       
       console.log('Service Worker registrado:', registration);
 
-      // Verificar atualizações
-      registration.addEventListener('updatefound', () => {
-        const newWorker = registration.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            hasUpdate.value = true;
-            console.log('Nova versão disponível!');
-          }
-        });
-      });
+      // DESABILITADO: Verificação automática de atualizações que causava loop infinito
+      // registration.addEventListener('updatefound', () => {
+      //   const newWorker = registration.installing;
+      //   newWorker.addEventListener('statechange', () => {
+      //     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+      //       hasUpdate.value = true;
+      //       console.log('Nova versão disponível!');
+      //     }
+      //   });
+      // });
 
-      // Atualizar quando nova versão estiver pronta
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('Nova versão ativada!');
-        hasUpdate.value = false;
-        window.location.reload();
-      });
+      // DESABILITADO: Atualização automática que causava reload infinito
+      // navigator.serviceWorker.addEventListener('controllerchange', () => {
+      //   console.log('Nova versão ativada!');
+      //   hasUpdate.value = false;
+      //   window.location.reload();
+      // });
 
     } catch (error) {
       console.error('Erro ao registrar Service Worker:', error);
     }
   };
-
-
 
   // Verificar status de conexão
   const checkConnectionStatus = () => {
@@ -190,11 +188,13 @@ export function usePWA() {
     };
   };
 
-  // Verificar atualizações do Service Worker
+  // Verificar atualizações do Service Worker (DESABILITADO - causava loop)
   const checkForUpdates = () => {
-    if (swRegistration.value && swRegistration.value.updateViaCache !== 'none') {
-      swRegistration.value.update();
-    }
+    // DESABILITADO: Verificação automática que causava loop infinito
+    // if (swRegistration.value && swRegistration.value.updateViaCache !== 'none') {
+    //   swRegistration.value.update();
+    // }
+    console.log('[PWA] Verificação automática de atualizações desabilitada para evitar loop infinito');
   };
 
   // Atualizar PWA
@@ -281,12 +281,12 @@ export function usePWA() {
       isInstallable.value = true;
     }
 
-    // Verificar atualizações periodicamente
-    const updateInterval = setInterval(checkForUpdates, 300000); // A cada 5 minutos
+    // DESABILITADO: Verificação automática de atualizações que causava loop infinito
+    // const updateInterval = setInterval(checkForUpdates, 300000); // A cada 5 minutos
     
     // Cleanup no unmount
     onUnmounted(() => {
-      clearInterval(updateInterval);
+      // clearInterval(updateInterval); // DESABILITADO
     });
   });
 

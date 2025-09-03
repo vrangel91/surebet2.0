@@ -1,8 +1,7 @@
 // 🎨 Configuração Personalizada do PWA - SureStake
 
-// Configurações da barra de título
+// Configurações do PWA (título removido - gerenciado pelo vue.config.js)
 window.PWA_CONFIG = {
-  title: 'SureStake - Apostas Inteligentes',
   theme: 'dark', // 'dark' ou 'light'
   animated: true,
   colors: {
@@ -43,75 +42,10 @@ function applyCustomTheme() {
 // Função para configurar a barra de título
 function setupTitleBar() {
   if (isPWA()) {
-    // Criar barra de título personalizada se não existir
-    if (!document.querySelector('.pwa-titlebar')) {
-      const titleBar = document.createElement('div');
-      titleBar.className = 'pwa-titlebar dark';
-      titleBar.innerHTML = `
-        <div class="pwa-titlebar-brand">
-          <div class="pwa-titlebar-logo">S</div>
-          <span class="pwa-titlebar-title">${PWA_CONFIG.title}</span>
-        </div>
-        <div class="pwa-titlebar-controls">
-          <button class="pwa-titlebar-button minimize" title="Minimizar">
-            <svg viewBox="0 0 24 24"><path d="M20 14H4v-2h16v2z"/></svg>
-          </button>
-          <button class="pwa-titlebar-button maximize" title="Maximizar">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-          </button>
-          <button class="pwa-titlebar-button close" title="Fechar">
-            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-          </button>
-        </div>
-      `;
-      
-      // Inserir no início do body
-      document.body.insertBefore(titleBar, document.body.firstChild);
-      
-      // Adicionar eventos aos botões
-      setupTitleBarEvents(titleBar);
-      
-      console.log('🎨 Barra de título PWA criada');
-    }
+    // Não criar barra de título aqui - será gerenciada pelo componente Vue
+    // Apenas aplicar estilos e configurações necessárias
+    console.log('🎨 Configuração PWA aplicada - barra de título será gerenciada pelo Vue');
   }
-}
-
-// Função para configurar eventos da barra de título
-function setupTitleBarEvents(titleBar) {
-  const minimizeBtn = titleBar.querySelector('.minimize');
-  const maximizeBtn = titleBar.querySelector('.maximize');
-  const closeBtn = titleBar.querySelector('.close');
-  
-  // Minimizar
-  minimizeBtn.addEventListener('click', () => {
-    if (window.electronAPI) {
-      window.electronAPI.minimize();
-    } else {
-      window.minimize();
-    }
-  });
-  
-  // Maximizar/Restaurar
-  maximizeBtn.addEventListener('click', () => {
-    if (window.electronAPI) {
-      window.electronAPI.toggleMaximize();
-    } else {
-      if (window.innerHeight === screen.height) {
-        window.restore();
-      } else {
-        window.maximize();
-      }
-    }
-  });
-  
-  // Fechar
-  closeBtn.addEventListener('click', () => {
-    if (window.electronAPI) {
-      window.electronAPI.close();
-    } else {
-      window.close();
-    }
-  });
 }
 
 // Função para alternar tema
@@ -126,22 +60,6 @@ function toggleTheme() {
   localStorage.setItem('pwa-theme', PWA_CONFIG.theme);
   
   console.log(`🎨 Tema alterado para: ${PWA_CONFIG.theme}`);
-}
-
-// Função para alternar animação
-function toggleAnimation() {
-  PWA_CONFIG.animated = !PWA_CONFIG.animated;
-  
-  // Aplicar animação
-  const titleBar = document.querySelector('.pwa-titlebar');
-  if (titleBar) {
-    titleBar.classList.toggle('animated', PWA_CONFIG.animated);
-  }
-  
-  // Salvar preferência
-  localStorage.setItem('pwa-animated', PWA_CONFIG.animated);
-  
-  console.log(`🎨 Animação ${PWA_CONFIG.animated ? 'ativada' : 'desativada'}`);
 }
 
 // Função para carregar preferências salvas
@@ -168,15 +86,14 @@ function initPWA() {
   // Aplicar tema
   applyCustomTheme();
   
-  // Configurar barra de título
-  setupTitleBar();
+  // Não configurar barra de título - será gerenciada pelo Vue
+  // setupTitleBar(); // Removido para evitar duplicação
   
-  // Configurar recuperação automática
-  setupAutoRecovery();
+  // DESABILITADO: Sistema de recuperação automática que causava loop infinito
+  // setupAutoRecovery();
   
   // Adicionar funções globais
   window.togglePWATheme = toggleTheme;
-  window.togglePWAAnimation = toggleAnimation;
   window.forcePWAUpdate = forcePWAUpdate;
   
   console.log('✅ PWA personalizado inicializado com sucesso!');
@@ -189,142 +106,13 @@ if (document.readyState === 'loading') {
   initPWA();
 }
 
-// 🚀 FUNÇÕES DE RECUPERAÇÃO AUTOMÁTICA
+// 🚀 FUNÇÕES DE RECUPERAÇÃO MANUAL (DESABILITADAS AUTOMÁTICAS)
 
-// Função para configurar recuperação automática
-function setupAutoRecovery() {
-  console.log('🔄 Configurando recuperação automática...');
-  
-  // Verificar se a aplicação carregou corretamente
-  let appLoadTimeout;
-  let recoveryAttempts = 0;
-  const maxRecoveryAttempts = 3;
-  
-  // Função para verificar se a aplicação está funcionando
-  function checkAppHealth() {
-    // Verificar se o elemento #app tem conteúdo
-    const appElement = document.getElementById('app');
-    if (!appElement || appElement.children.length === 0) {
-      console.warn('⚠️ Aplicação não carregou corretamente');
-      
-      if (recoveryAttempts < maxRecoveryAttempts) {
-        recoveryAttempts++;
-        console.log(`🔄 Tentativa de recuperação ${recoveryAttempts}/${maxRecoveryAttempts}`);
-        
-        // Tentar recarregar a aplicação
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
-      } else {
-        console.error('❌ Máximo de tentativas de recuperação atingido');
-        showRecoveryMessage();
-      }
-    } else {
-      console.log('✅ Aplicação carregada corretamente');
-      clearTimeout(appLoadTimeout);
-    }
-  }
-  
-  // Função para mostrar mensagem de recuperação
-  function showRecoveryMessage() {
-    const recoveryDiv = document.createElement('div');
-    recoveryDiv.id = 'pwa-recovery-message';
-    recoveryDiv.innerHTML = `
-      <div style="
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(26, 26, 26, 0.95);
-        color: white;
-        padding: 30px;
-        border-radius: 16px;
-        border: 2px solid #00ff88;
-        text-align: center;
-        z-index: 10000;
-        max-width: 400px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-      ">
-        <h3 style="color: #00ff88; margin-bottom: 20px;">🔄 Recuperação Necessária</h3>
-        <p style="margin-bottom: 20px; line-height: 1.6;">
-          A aplicação não conseguiu carregar automaticamente. 
-          Clique no botão abaixo para tentar novamente.
-        </p>
-        <button onclick="forcePWAUpdate()" style="
-          background: linear-gradient(135deg, #00ff88, #00cc6a);
-          color: #1a1a1a;
-          border: none;
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          margin: 0 8px;
-        ">🔄 Tentar Novamente</button>
-        <button onclick="window.location.reload()" style="
-          background: rgba(255, 255, 255, 0.1);
-          color: white;
-          border: 1px solid rgba(255, 255, 255, 0.2);
-          padding: 12px 24px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          margin: 0 8px;
-        ">🔄 Recarregar Página</button>
-      </div>
-    `;
-    
-    document.body.appendChild(recoveryDiv);
-  }
-  
-  // Configurar timeout para verificar carregamento da aplicação
-  appLoadTimeout = setTimeout(() => {
-    checkAppHealth();
-  }, 5000); // Verificar após 5 segundos
-  
-  // Verificar novamente após 10 segundos
-  setTimeout(() => {
-    checkAppHealth();
-  }, 10000);
-  
-  // Verificar quando a página terminar de carregar
-  if (document.readyState === 'complete') {
-    setTimeout(checkAppHealth, 1000);
-  } else {
-    window.addEventListener('load', () => {
-      setTimeout(checkAppHealth, 1000);
-    });
-  }
-  
-  // Verificar se há problemas de roteamento
-  window.addEventListener('popstate', () => {
-    console.log('🔄 Mudança de rota detectada, verificando aplicação...');
-    setTimeout(checkAppHealth, 500);
-  });
-  
-  // Verificar se há erros JavaScript
-  window.addEventListener('error', (event) => {
-    console.error('❌ Erro JavaScript detectado:', event.error);
-    if (recoveryAttempts < maxRecoveryAttempts) {
-      recoveryAttempts++;
-      setTimeout(() => {
-        console.log('🔄 Tentando recuperar após erro JavaScript...');
-        window.location.reload();
-      }, 3000);
-    }
-  });
-}
-
-// Função para forçar atualização do PWA
+// Função para forçar atualização do PWA (manual)
 function forcePWAUpdate() {
   console.log('🔄 Forçando atualização do PWA...');
   
-  // Remover mensagem de recuperação se existir
-  const recoveryMessage = document.getElementById('pwa-recovery-message');
-  if (recoveryMessage) {
-    recoveryMessage.remove();
-  }
-  
-  // Limpar todos os caches
+  // Limpar caches se disponível
   if ('caches' in window) {
     caches.keys().then(cacheNames => {
       return Promise.all(
@@ -347,7 +135,7 @@ function forcePWAUpdate() {
   }
 }
 
-// Função para verificar integridade do PWA
+// Função para verificar integridade do PWA (manual)
 function checkPWIntegrity() {
   console.log('🔍 Verificando integridade do PWA...');
   

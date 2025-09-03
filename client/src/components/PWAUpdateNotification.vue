@@ -83,11 +83,11 @@ export default {
       checkDismissedStatus();
       checkForUpdates();
       
-      // Verificar a cada 30 segundos
-      const interval = setInterval(checkForUpdates, 30000);
+      // DESABILITADO: Verificação automática que pode causar problemas
+      // const interval = setInterval(checkForUpdates, 30000);
       
       onUnmounted(() => {
-        clearInterval(interval);
+        // clearInterval(interval); // DESABILITADO
       });
     });
     

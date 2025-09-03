@@ -83,34 +83,21 @@
           </div>
           
           <!-- Status VIP -->
-          <div v-if="isVIP" class="vip-status">
-            <!-- Texto de expiração em linha única -->
-            <div class="vip-info">
-              <i class="bi bi-clock"></i>
-              <span v-if="accountExpiration" class="expiration-text">
-                {{ expirationDisplayText }}
-              </span>
-              <span v-else-if="userVIPData === null" class="expiration-text loading">
-                Carregando dados VIP...
-              </span>
-              <span v-else class="expiration-text error">
-                Dados VIP não encontrados
+          <div v-if="isVIP && !isVIPExpired" class="vip-status">
+            <div class="vip-badge">
+              <span class="vip-icon">⭐</span>
+              <span class="vip-text">VIP</span>
+              <span v-if="vipDaysRemaining > 0" class="vip-days">
+                {{ vipDaysRemaining }}d
               </span>
             </div>
-            
-            <!-- Barra de progresso em linha separada -->
-            <div v-if="accountExpiration" class="expiration-progress">
-              <div class="progress-info">
-                <span class="progress-label">Status da Conta:</span>
-                <span class="progress-percentage">{{ Math.round(expirationProgressPercent) }}%</span>
-              </div>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill" 
-                  :class="expirationProgressClass"
-                  :style="{ width: expirationProgressPercent + '%' }"
-                ></div>
-              </div>
+          </div>
+          
+          <!-- Status Básico -->
+          <div v-else class="basic-status">
+            <div class="basic-badge">
+              <span class="basic-icon">👤</span>
+              <span class="basic-text">BÁSICO</span>
             </div>
           </div>
           
@@ -412,6 +399,21 @@ export default {
       
       const progressPercent = (remainingTime / totalPlanTime) * 100
       return Math.min(100, Math.max(0, progressPercent))
+    },
+
+    vipDaysRemaining() {
+      if (!this.accountExpiration) return 0;
+      const now = new Date();
+      const expiration = new Date(this.accountExpiration);
+      const timeDiff = expiration - now;
+      return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    },
+
+    isVIPExpired() {
+      if (!this.accountExpiration) return false;
+      const now = new Date();
+      const expiration = new Date(this.accountExpiration);
+      return now > expiration;
     }
   },
   
@@ -1111,6 +1113,66 @@ export default {
   
   i {
     font-size: 12px;
+  }
+}
+
+.vip-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 107, 107, 0.2);
+    border-color: rgba(255, 107, 107, 0.3);
+  }
+
+  .vip-icon {
+    font-size: 16px;
+    color: #ff6b6b;
+  }
+
+  .vip-text {
+    color: #ff6b6b;
+  }
+
+  .vip-days {
+    font-weight: 700;
+    color: #ff6b6b;
+  }
+}
+
+.basic-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #6c757d;
+  background: rgba(108, 117, 125, 0.1);
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(108, 117, 125, 0.2);
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(108, 117, 125, 0.2);
+    border-color: rgba(108, 117, 125, 0.3);
+  }
+
+  .basic-icon {
+    font-size: 16px;
+    color: #6c757d;
+  }
+
+  .basic-text {
+    color: #6c757d;
   }
 }
 

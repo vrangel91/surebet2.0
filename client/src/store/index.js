@@ -19,7 +19,13 @@ export default createStore({
     user: JSON.parse(localStorage.getItem('user')) || null,
     isAuthenticated: !!localStorage.getItem('authToken'),
     users: JSON.parse(localStorage.getItem('users')) || [],
-    tickets: JSON.parse(localStorage.getItem('tickets')) || []
+    tickets: JSON.parse(localStorage.getItem('tickets')) || [],
+    // 🔒 Estado VIP para controle de acesso
+    vipStatus: JSON.parse(localStorage.getItem('vipStatus')) || {
+      isVIP: false,
+      expiration: null,
+      lastValidation: null
+    }
   },
   
   mutations: {
@@ -42,12 +48,40 @@ export default createStore({
       }
     },
     
+    // 🔒 Mutação para definir status VIP
+    setVIPStatus(state, vipData) {
+      state.vipStatus = {
+        isVIP: vipData.isVIP || false,
+        expiration: vipData.expiration || null,
+        lastValidation: vipData.lastValidation || null
+      }
+      
+      // Salvar no localStorage para persistência
+      localStorage.setItem('vipStatus', JSON.stringify(state.vipStatus))
+      
+      console.log('🔒 [Store] Status VIP atualizado:', state.vipStatus)
+    },
+    
+    // 🔒 Limpar status VIP (logout)
+    clearVIPStatus(state) {
+      state.vipStatus = {
+        isVIP: false,
+        expiration: null,
+        lastValidation: null
+      }
+      localStorage.removeItem('vipStatus')
+      console.log('🔒 [Store] Status VIP limpo')
+    },
+    
     logout(state) {
       state.authToken = null
       state.user = null
       state.isAuthenticated = false
       localStorage.removeItem('authToken')
       localStorage.removeItem('user')
+      
+      // 🔒 Limpar status VIP ao fazer logout
+      this.commit('clearVIPStatus')
     },
     
     // Limpar dados mocados do localStorage
@@ -707,10 +741,49 @@ export default createStore({
     allUsers: state => state.users,
     isAdmin: state => state.user?.is_admin === true,
     isVIP: state => {
+      // Priorizar o status VIP do sistema de segurança
+      if (state.vipStatus.isVIP) return true
+      
+      // Fallback para dados do usuário
       if (!state.user) return false
       if (state.user.is_admin === true) return true
       if (state.user.is_vip === true) return true
       return ['premium', 'vip'].includes(state.user.accountType)
+    },
+    
+    // 🔒 Status VIP completo
+    vipStatus: state => state.vipStatus,
+    
+    // 🔒 Verificar se VIP expirou
+    isVIPExpired: state => {
+      if (!state.vipStatus.isVIP || !state.vipStatus.expiration) return false
+      
+      const now = new Date()
+      const expiration = new Date(state.vipStatus.expiration)
+      return expiration <= now
+    },
+    
+    // 🔒 Dias restantes do VIP
+    vipDaysRemaining: state => {
+      if (!state.vipStatus.isVIP || !state.vipStatus.expiration) return 0
+      
+      const now = new Date()
+      const expiration = new Date(state.vipStatus.expiration)
+      const diffTime = expiration - now
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      return Math.max(0, diffDays)
+    },
+    
+    // 🔒 Verificar se pode usar recursos VIP
+    canUseVIPFeatures: state => {
+      if (!state.vipStatus.isVIP) return false
+      if (state.vipStatus.expiration) {
+        const now = new Date()
+        const expiration = new Date(state.vipStatus.expiration)
+        return expiration > now
+      }
+      return true
     },
     activeUsers: state => state.users.filter(user => user.status === 'active'),
     inactiveUsers: state => state.users.filter(user => user.status === 'inactive'),

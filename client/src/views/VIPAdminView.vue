@@ -1479,10 +1479,39 @@ export default {
          // Lifecycle
      onMounted(() => {
        console.log('🚀 Componente VIPAdminView montado, verificando permissões...')
+       console.log('🔑 Token no store:', !!store.getters.authToken)
+       console.log('👤 Usuário atual:', store.getters.currentUser)
+       console.log('👑 É admin?', store.getters.isAdmin)
+       console.log('🔐 Está autenticado?', store.getters.isAuthenticated)
+       
+       // Debug detalhado do usuário
+       const currentUser = store.getters.currentUser
+       if (currentUser) {
+         console.log('🔍 Detalhes completos do usuário:', {
+           id: currentUser.id,
+           email: currentUser.email,
+           is_admin: currentUser.is_admin,
+           role: currentUser.role,
+           accountType: currentUser.accountType,
+           rawUser: currentUser
+         })
+       }
        
        // Verificar se o usuário é admin
        if (!store.getters.isAdmin) {
          console.error('🚫 Acesso negado: Usuário não é administrador')
+         console.error('🔍 Detalhes do usuário:', {
+           user: store.getters.currentUser,
+           isAdmin: store.getters.isAdmin,
+           isAuthenticated: store.getters.isAuthenticated,
+           token: !!store.getters.authToken
+         })
+         
+         // Tentar carregar dados mesmo assim para debug
+         console.log('⚠️ Tentando carregar dados mesmo sem ser admin para debug...')
+         setTimeout(() => {
+           refreshData()
+         }, 100)
          return
        }
        
@@ -1490,6 +1519,7 @@ export default {
        
        // Pequeno delay para garantir que o componente esteja totalmente montado
        setTimeout(() => {
+         console.log('⏰ Executando refreshData após delay...')
          refreshData()
        }, 100)
        

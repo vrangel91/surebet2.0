@@ -1,6 +1,6 @@
 // Configurações para produção
 export const PRODUCTION_CONFIG = {
-  API_BASE_URL: 'http://localhost:3000',
+  API_BASE_URL: 'http://localhost:3001',
   WS_BASE_URL: 'ws://localhost:3002',
   ENVIRONMENT: 'production'
 };
@@ -10,7 +10,7 @@ export function getApiUrl() {
   if (process.env.NODE_ENV === 'production') {
     return PRODUCTION_CONFIG.API_BASE_URL;
   }
-  return '/api'; // Proxy em desenvolvimento
+  return ''; // Usar proxy em desenvolvimento
 }
 
 // Função para obter URL do WebSocket baseada no ambiente

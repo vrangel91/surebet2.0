@@ -1,6 +1,7 @@
 import axios from 'axios'
 import store from '@/store'
 import { getApiUrl } from '@/config/production.js'
+import apiErrorHandler from './apiErrorHandler'
 
 // Criar instância do axios
 const axiosInstance = axios.create({
@@ -34,11 +35,22 @@ axiosInstance.interceptors.response.use(
     return response
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Token expirado ou inválido
+    // Usar o novo sistema de tratamento de erros
+    const errorInfo = apiErrorHandler.handleError(error, 'axios_interceptor')
+    
+    // Log do erro para debugging
+    apiErrorHandler.logErrorForDebugging(error, 'axios_interceptor')
+    
+    // Tratar erros de autenticação
+    if (errorInfo.type === 'http' && error.response?.status === 401) {
+      console.log('🔑 Token expirado, fazendo logout...')
       store.dispatch('logout')
       window.location.href = '/login'
     }
+    
+    // Adicionar informações de erro ao objeto de erro
+    error.apiErrorInfo = errorInfo
+    
     return Promise.reject(error)
   }
 )

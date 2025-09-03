@@ -53,7 +53,7 @@ export default {
   props: {
     title: {
       type: String,
-      default: 'SureStake - Apostas Inteligentes'
+      default: 'SureStake'
     },
     theme: {
       type: String,

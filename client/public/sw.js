@@ -66,15 +66,15 @@ self.addEventListener('activate', (event) => {
       .then(() => {
         console.log('[SW] Service Worker ativado e caches limpos');
         
-        // Notificar clientes sobre a nova versão
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'SW_UPDATED',
-              data: { version: CACHE_NAME }
-            });
-          });
-        });
+        // DESABILITADO: Notificação automática que pode causar loop
+        // self.clients.matchAll().then(clients => {
+        //   clients.forEach(client => {
+        //     client.postMessage({
+        //       type: 'SW_UPDATED',
+        //       data: { version: CACHE_NAME }
+        //     });
+        //   });
+        // });
         
         return self.clients.claim();
       })
@@ -214,22 +214,22 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Sincronização em background
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync') {
-    event.waitUntil(doBackgroundSync());
-  }
-});
+// DESABILITADO: Sincronização em background que pode causar problemas
+// self.addEventListener('sync', (event) => {
+//   if (event.tag === 'background-sync') {
+//     event.waitUntil(doBackgroundSync());
+//   }
+// });
 
-async function doBackgroundSync() {
-  try {
-    console.log('[SW] Executando sincronização em background...');
-    // Aqui você pode implementar lógica para sincronizar dados offline
-    // como envio de formulários, atualizações de perfil, etc.
-  } catch (error) {
-    console.error('[SW] Erro na sincronização em background:', error);
-  }
-}
+// async function doBackgroundSync() {
+//   try {
+//     console.log('[SW] Executando sincronização em background...');
+//     // Aqui você pode implementar lógica para sincronizar dados offline
+//     // como envio de formulários, atualizações de perfil, etc.
+//   } catch (error) {
+//     console.error('[SW] Erro na sincronização em background:', error);
+//   }
+// }
 
 // Notificações push (para futuras implementações)
 self.addEventListener('push', (event) => {

@@ -415,13 +415,13 @@ export default {
         
         // Mostra a tela de loading após validação bem-sucedida
         this.showLoginLoading = true
-  
+
         
         try {
           const response = await this.authenticateUser()
           
           if (response.success) {
-  
+
             
             // Salva o token e dados do usuário
             this.$store.dispatch('login', {
@@ -436,12 +436,15 @@ export default {
             if (this.rememberMe) {
               this.saveRememberedUser()
             }
+            
+            // 🔒 VERIFICAÇÃO AUTOMÁTICA DE VIP APÓS LOGIN
+            await this.verifyVIPStatusAfterLogin(response.user)
           
-                       // Verifica se há uma rota de redirecionamento salva
+            // Verifica se há uma rota de redirecionamento salva
             const redirectAfterLogin = localStorage.getItem('redirectAfterLogin')
             const redirectAfterUpgrade = localStorage.getItem('redirectAfterUpgrade')
             
-                         // Redireciona baseado no tipo de conta após 3 segundos
+            // Redireciona baseado no tipo de conta após 3 segundos
              setTimeout(() => {
                let targetRoute = '/'
                
@@ -666,6 +669,53 @@ export default {
         // Define o tempo inicial do vídeo para 6 segundos
         if (this.$refs.videoElement) {
           this.$refs.videoElement.currentTime = 6
+        }
+      },
+
+      // 🔒 Verificar status VIP automaticamente após login
+      async verifyVIPStatusAfterLogin(user) {
+        try {
+          console.log('🔒 [Login] Verificando status VIP após login...');
+          
+          // Importar o VIPSecurityManager dinamicamente
+          const { default: vipSecurityManager } = await import('@/utils/vipSecurityManager');
+          
+          // Verificar se o usuário é VIP
+          if (user.is_vip) {
+            console.log('⭐ [Login] Usuário é VIP - verificando status...');
+            
+            // Forçar validação online para atualizar cache
+            const vipStatus = await vipSecurityManager.validateVIPOnline();
+            
+            if (vipStatus.isValid) {
+              console.log('✅ [Login] Status VIP validado e cache atualizado:', {
+                isVIP: vipStatus.isValid,
+                expiration: vipStatus.expiration,
+                source: 'login'
+              });
+              
+              // Salvar dados VIP no store para uso imediato
+              this.$store.commit('setVIPStatus', {
+                isVIP: true,
+                expiration: vipStatus.expiration,
+                lastValidation: Date.now()
+              });
+              
+            } else {
+              console.log('❌ [Login] Status VIP inválido - usuário pode ter expirado');
+              this.$store.commit('setVIPStatus', { isVIP: false });
+            }
+            
+          } else {
+            console.log('👤 [Login] Usuário não é VIP - status básico');
+            this.$store.commit('setVIPStatus', { isVIP: false });
+          }
+          
+        } catch (error) {
+          console.error('❌ [Login] Erro ao verificar status VIP:', error);
+          
+          // Em caso de erro, definir status básico
+          this.$store.commit('setVIPStatus', { isVIP: false });
         }
       }
     }

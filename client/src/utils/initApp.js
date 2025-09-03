@@ -6,10 +6,12 @@ import store from '@/store'
 export function initializeApp() {
   console.log('🚀 Inicializando aplicação...')
   
+  // Verificar autenticação existente
+  console.log('🔐 Verificando autenticação existente...')
+  store.dispatch('checkAuth')
+  
   // Não limpar dados de usuários automaticamente - agora usamos API real
   // store.dispatch('clearMockDataOnInit')
-  
-
   
   console.log('✅ Aplicação inicializada com sucesso')
 }

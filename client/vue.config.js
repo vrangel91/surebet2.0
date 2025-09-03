@@ -173,7 +173,7 @@ module.exports = defineConfig({
     port: 3001,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3001',
         changeOrigin: true,
         headers: {
           'Content-Type': 'application/json; charset=utf-8'

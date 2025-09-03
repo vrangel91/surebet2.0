@@ -161,6 +161,7 @@ import {
 } from 'lucide-vue-next'
 
 import axios from '@/utils/axios'
+import vipSecurityManager from '@/utils/vipSecurityManager';
 
 export default {
   name: 'Sidebar',
@@ -533,32 +534,54 @@ export default {
       this.showNotification('Redirecionando para renovação da conta...', 'info')
     },
     
+    // 🔒 Verificar acesso VIP com sistema de segurança
+    async checkVIPAccess() {
+      try {
+        console.log('🔒 [Sidebar] Verificando acesso VIP...');
+        
+        const result = await vipSecurityManager.checkVIPAccess();
+        
+        if (result.access) {
+          console.log('✅ [Sidebar] Acesso VIP autorizado:', result.source);
+          this.userVIP = {
+            isVIP: result.data.isValid,
+            expiresAt: result.data.expiration
+          };
+          return true;
+        } else {
+          console.log('❌ [Sidebar] Acesso VIP bloqueado:', result.reason);
+          this.userVIP = { isVIP: false, expiresAt: null };
+          return false;
+        }
+        
+      } catch (error) {
+        console.error('❌ [Sidebar] Erro ao verificar acesso VIP:', error);
+        this.userVIP = { isVIP: false, expiresAt: null };
+        return false;
+      }
+    },
+    
+    // 🔄 Carregar dados VIP com sistema de segurança
     async loadUserVIPData() {
       try {
-        // Verificar se o usuário está logado
-        if (!this.currentUser || !this.currentUser.id) {
-          console.log('👤 Usuário não logado, não carregando dados VIP')
-          return
+        console.log('🔄 [Sidebar] Carregando dados VIP...');
+        
+        // Verificar acesso VIP primeiro
+        const hasAccess = await this.checkVIPAccess();
+        
+        if (!hasAccess) {
+          console.log('❌ [Sidebar] Sem acesso VIP');
+          return;
         }
         
-        // Verificar se o usuário é VIP
-        if (!this.isVIP) {
-          console.log('👤 Usuário não é VIP, não carregando dados VIP')
-          return
+        // Se tem acesso, carregar dados adicionais se necessário
+        if (this.userVIP?.isVIP) {
+          console.log('✅ [Sidebar] Dados VIP carregados com sucesso');
         }
         
-        // Fazer chamada para a API para obter dados do VIP do usuário atual
-        const response = await axios.get('/api/vip/my-status')
-        
-        if (response.data && response.data.success && response.data.vipStatus) {
-          this.userVIPData = response.data.vipStatus
-        } else {
-          this.userVIPData = false // false indica que a API foi chamada mas não retornou dados
-        }
-              } catch (error) {
-          console.error('Erro ao carregar dados VIP:', error)
-          this.userVIPData = false // false indica que houve erro na API
-        }
+      } catch (error) {
+        console.error('❌ [Sidebar] Erro ao carregar dados VIP:', error);
+      }
     },
     
 
