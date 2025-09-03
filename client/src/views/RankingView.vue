@@ -653,7 +653,11 @@
             minCount: 2,
             minPercentage: 1
           },
-          showDetailedTable: false
+          showDetailedTable: false,
+          chartsInitialized: false,
+          _forceChartColorsRunning: false,
+        _updatingCharts: false,
+          _forceChartBackgroundRunning: false
       }
     },
     
@@ -697,15 +701,25 @@
     },
     
     async mounted() {
-      await this.loadSurebetsData()
-      this.$nextTick(() => {
-        setTimeout(() => {
-          this.setupCharts()
-        }, 1000)
-      })
-      
-      // Iniciar busca automática de novos dados
-      this.startAutoRefresh()
+      try {
+        await this.loadSurebetsData()
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.setupCharts()
+          }, 1000)
+        })
+        
+        // Iniciar busca automática de novos dados
+        this.startAutoRefresh()
+      } catch (error) {
+        console.error('Erro no mounted:', error)
+        // Tentar configurar gráficos mesmo com erro
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.setupCharts()
+          }, 1000)
+        })
+      }
     },
     
     beforeUnmount() {
@@ -973,37 +987,50 @@
       },
   
       processAnalytics() {
-        const filtered = this.filteredSurebets
-        this.totalSurebets = new Set(filtered.map(s => s.surebet_id)).size
-        this.uniqueHouses = new Set(filtered.map(s => s.house)).size
-        this.uniqueMarkets = new Set(filtered.map(s => s.market)).size
-        this.availableSports = [...new Set(this.surebets.map(s => s.sport))].sort()
-        
-        const surebetProfits = {}
-        filtered.forEach(item => {
-          if (!surebetProfits[item.surebet_id]) {
-            surebetProfits[item.surebet_id] = item.profit
+        try {
+          const filtered = this.filteredSurebets
+          if (!filtered || !Array.isArray(filtered)) {
+            console.warn('⚠️ Dados filtrados inválidos para análise')
+            return
           }
-        })
-        
-        const profits = Object.values(surebetProfits)
-        this.averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
-  
-        this.processHousesRanking(filtered)
-        this.processHousePairsRanking(filtered)
-        this.processMarketsRanking(filtered)
-        this.processInsights(filtered)
-        this.updateCharts()
-        
-        // Log das estatísticas das casas
-        console.log(`📊 Estatísticas das Casas:`)
-        console.log(`Total disponíveis: ${this.totalAvailableHouses}`)
-        console.log(`Ativas no período: ${this.activeHousesCount}`)
-        console.log(`Inativas no período: ${this.inactiveHousesCount}`)
-        console.log(`Taxa de atividade: ${((this.activeHousesCount / this.totalAvailableHouses) * 100).toFixed(1)}%`)
-        
-        // Salvar análises no banco
-        this.saveAnalyticsToDatabase(filtered)
+          
+          this.totalSurebets = new Set(filtered.map(s => s.surebet_id)).size
+          this.uniqueHouses = new Set(filtered.map(s => s.house)).size
+          this.uniqueMarkets = new Set(filtered.map(s => s.market)).size
+          this.availableSports = [...new Set(this.surebets.map(s => s.sport))].sort()
+          
+          const surebetProfits = {}
+          filtered.forEach(item => {
+            if (!surebetProfits[item.surebet_id]) {
+              surebetProfits[item.surebet_id] = item.profit
+            }
+          })
+          
+          const profits = Object.values(surebetProfits)
+          this.averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
+      
+          this.processHousesRanking(filtered)
+          this.processHousePairsRanking(filtered)
+          this.processMarketsRanking(filtered)
+          this.processInsights(filtered)
+          
+          // Só atualizar gráficos se estiverem inicializados
+          if (this.chartsInitialized) {
+            this.updateCharts()
+          }
+          
+          // Log das estatísticas das casas
+          console.log(`📊 Estatísticas das Casas:`)
+          console.log(`Total disponíveis: ${this.totalAvailableHouses}`)
+          console.log(`Ativas no período: ${this.activeHousesCount}`)
+          console.log(`Inativas no período: ${this.inactiveHousesCount}`)
+          console.log(`Taxa de atividade: ${((this.activeHousesCount / this.totalAvailableHouses) * 100).toFixed(1)}%`)
+          
+          // Salvar análises no banco
+          this.saveAnalyticsToDatabase(filtered)
+        } catch (error) {
+          console.error('Erro ao processar análises:', error)
+        }
       },
   
       processHousesRanking(data) {
@@ -1159,20 +1186,24 @@
       },
   
       setupCharts() {
-        this.$nextTick(() => {
-          setTimeout(() => {
-                    this.setupHousesChart()
-          this.setupMarketsChart()
-          this.setupTimeChart()
-          this.setupSportsChart()
-          this.setupProfitFrequencyChart()
-          
-          // Aplicar cores verdes após todos os gráficos serem criados
-          setTimeout(() => {
-            this.forceChartColors()
-          }, 200)
-          }, 500)
-        })
+        try {
+          this.$nextTick(() => {
+            setTimeout(() => {
+              this.setupHousesChart()
+              this.setupMarketsChart()
+              this.setupTimeChart()
+              this.setupSportsChart()
+              this.setupProfitFrequencyChart()
+              
+              // Marcar gráficos como inicializados
+              this.chartsInitialized = true
+              // Remover chamada automática de forceChartColors para evitar recursão
+            }, 500)
+          })
+        } catch (error) {
+          console.error('Erro ao configurar gráficos:', error)
+          this.chartsInitialized = false
+        }
       },
   
       setupHousesChart() {
@@ -1230,12 +1261,7 @@
           }
         })
         
-        // Forçar cores verdes após criação
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.forceChartColors()
-          }, 100)
-        })
+        // Remover chamada automática de forceChartColors para evitar recursão
       },
 
       setupMarketsChart() {
@@ -1367,12 +1393,7 @@
           }
         })
         
-        // Forçar cores verdes após criação
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.forceChartColors()
-          }, 100)
-        })
+        // Remover chamada automática de forceChartColors para evitar recursão
       },
 
       setupSportsChart() {
@@ -1427,12 +1448,7 @@
           }
         })
         
-        // Forçar cores verdes após criação
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.forceChartColors()
-          }, 100)
-        })
+        // Remover chamada automática de forceChartColors para evitar recursão
       },
 
       setupProfitFrequencyChart() {
@@ -1626,6 +1642,8 @@
       },
   
       updateCharts() {
+        if (!this.chartsInitialized) return
+        
         this.$nextTick(() => setTimeout(() => {
           if (this.housesChart) this.updateHousesChart()
           if (this.marketsChart) this.updateMarketsChart()
@@ -1640,8 +1658,7 @@
         this.$nextTick(() => {
           setTimeout(() => {
             this.observeThemeChanges()
-            this.forceChartBackground()
-            this.forceChartColors()
+            // Não chamar forceChartBackground e forceChartColors aqui, pois os gráficos ainda não foram criados
           }, 500)
         })
       },
@@ -1856,14 +1873,19 @@
       },
   
       updateHousesChart() {
+        if (!this.housesChart || !this.housesChart.data || !this.housesChart.data.datasets || !this.housesChart.data.datasets[0]) return
+        
         const data = this.topHouses.slice(0, 12)
         this.housesChart.data.labels = data.map(h => h.name)
         this.housesChart.data.datasets[0].data = data.map(h => h.count)
-        this.housesChart.update('none')
+        
+        if (typeof this.housesChart.update === 'function') {
+          this.housesChart.update('none')
+        }
       },
   
       updateMarketsChart() {
-        if (!this.marketsChart) return
+        if (!this.marketsChart || !this.marketsChart.data || !this.marketsChart.data.datasets || !this.marketsChart.data.datasets[0]) return
         
         const { chartData, colors, labels } = createChartData(
           this.groupedMarkets, 
@@ -1875,19 +1897,29 @@
         this.marketsChart.data.datasets[0].data = chartData
         this.marketsChart.data.datasets[0].backgroundColor = colors
         this.marketsChart.data.datasets[0].borderColor = colors.map(color => color.replace('0.8', '1'))
-        this.marketsChart.update('none')
+        
+        if (typeof this.marketsChart.update === 'function') {
+          this.marketsChart.update('none')
+        }
       },
   
       updateTimeChart() {
+        if (!this.timeChart || !this.timeChart.data || !this.timeChart.data.datasets || !this.timeChart.data.datasets[0]) return
+        
         const hourStats = {}
         this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
         const hours = Array.from({length: 24}, (_, i) => i)
         const counts = hours.map(hour => hourStats[hour] || 0)
         this.timeChart.data.datasets[0].data = counts
-        this.timeChart.update('none')
+        
+        if (typeof this.timeChart.update === 'function') {
+          this.timeChart.update('none')
+        }
       },
   
       updateSportsChart() {
+        if (!this.sportsChart || !this.sportsChart.data || !this.sportsChart.data.datasets || !this.sportsChart.data.datasets[0]) return
+        
         const sportStats = {}
         const surebetGroups = {}
         this.filteredSurebets.forEach(item => {
@@ -1904,7 +1936,10 @@
         
         this.sportsChart.data.labels = sportsData.map(s => s.sport)
         this.sportsChart.data.datasets[0].data = sportsData.map(s => s.averageProfit)
-        this.sportsChart.update('none')
+        
+        if (typeof this.sportsChart.update === 'function') {
+          this.sportsChart.update('none')
+        }
       },
   
       updateProfitFrequencyChart() {
@@ -1973,23 +2008,30 @@
         this.profitFrequencyChart.options.scales.y.min = Math.max(0, profitStats.q1 - (profitStats.q3 - profitStats.q1) * 0.5)
         this.profitFrequencyChart.options.scales.y.max = profitStats.q3 + (profitStats.q3 - profitStats.q1) * 1.5
         
-        this.profitFrequencyChart.update('none')
+        if (typeof this.profitFrequencyChart.update === 'function') {
+          this.profitFrequencyChart.update('none')
+        }
       },
   
   
   
       calculateVariation(values) {
-        // Verificar se values é um array válido
-        if (!Array.isArray(values) || values.length <= 1) return 0
-        
-        // Filtrar valores válidos (números)
-        const validValues = values.filter(val => typeof val === 'number' && !isNaN(val))
-        if (validValues.length <= 1) return 0
-        
-        const mean = validValues.reduce((sum, val) => sum + val, 0) / validValues.length
-        const variance = validValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validValues.length
-        const stdDev = Math.sqrt(variance)
-        return mean > 0 ? (stdDev / mean) * 100 : 0
+        try {
+          // Verificar se values é um array válido
+          if (!Array.isArray(values) || values.length <= 1) return 0
+          
+          // Filtrar valores válidos (números)
+          const validValues = values.filter(val => typeof val === 'number' && !isNaN(val))
+          if (validValues.length <= 1) return 0
+          
+          const mean = validValues.reduce((sum, val) => sum + val, 0) / validValues.length
+          const variance = validValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validValues.length
+          const stdDev = Math.sqrt(variance)
+          return mean > 0 ? (stdDev / mean) * 100 : 0
+        } catch (error) {
+          console.warn('Erro ao calcular variação:', error)
+          return 0
+        }
       },
   
       calculateStats(values) {
@@ -2008,11 +2050,26 @@
   
       // Método auxiliar para selecionar casas aleatórias únicas
       getRandomHouses(houses, count) {
-        const shuffled = [...houses].sort(() => 0.5 - Math.random())
-        return shuffled.slice(0, count)
+        try {
+          if (!houses || !Array.isArray(houses) || houses.length === 0 || !count || count <= 0) {
+            return []
+          }
+          
+          const shuffled = [...houses].sort(() => 0.5 - Math.random())
+          return shuffled.slice(0, Math.min(count, houses.length))
+        } catch (error) {
+          console.warn('Erro ao selecionar casas aleatórias:', error)
+          return []
+        }
       },
   
-      updateAnalysis() { this.processAnalytics() },
+      updateAnalysis() { 
+        try {
+          this.processAnalytics() 
+        } catch (error) {
+          console.warn('Erro ao atualizar análise:', error)
+        }
+      },
       
       // Métodos para busca automática de dados
       startAutoRefresh() {
@@ -2033,18 +2090,27 @@
       },
       
       stopAutoRefresh() {
-        if (this.autoRefreshInterval) {
-          clearInterval(this.autoRefreshInterval)
+        try {
+          if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval)
+            this.autoRefreshInterval = null
+            console.log('⏹️ Busca automática parada')
+          }
+        } catch (error) {
+          console.warn('Erro ao parar busca automática:', error)
           this.autoRefreshInterval = null
-          console.log('⏹️ Busca automática parada')
         }
       },
   
       toggleAutoRefresh() {
-        if (this.autoRefreshInterval) {
-          this.stopAutoRefresh()
-        } else {
-          this.startAutoRefresh()
+        try {
+          if (this.autoRefreshInterval) {
+            this.stopAutoRefresh()
+          } else {
+            this.startAutoRefresh()
+          }
+        } catch (error) {
+          console.warn('Erro ao alternar busca automática:', error)
         }
       },
       
@@ -2077,8 +2143,10 @@
                 // Continuar mesmo se falhar ao salvar
               }
               
-              // Atualizar gráficos
-              this.updateCharts()
+              // Atualizar gráficos se estiverem inicializados
+              if (this.chartsInitialized) {
+                this.updateCharts()
+              }
               
               console.log('✅ Dados atualizados com sucesso')
             } else {
@@ -2091,25 +2159,58 @@
       },
       
       hasNewSurebets(newData) {
-        // Verificar se há surebets com IDs que não existem nos dados atuais
-        const currentIds = new Set(this.surebets.map(s => s.surebet_id))
-        const newIds = new Set(newData.map(s => s.surebet_id))
-        
-        for (const newId of newIds) {
-          if (!currentIds.has(newId)) {
-            return true
+        try {
+          // Verificar se há surebets com IDs que não existem nos dados atuais
+          if (!newData || !Array.isArray(newData) || !this.surebets || !Array.isArray(this.surebets)) {
+            return false
           }
+          
+          const currentIds = new Set(this.surebets.map(s => s.surebet_id))
+          const newIds = new Set(newData.map(s => s.surebet_id))
+          
+          for (const newId of newIds) {
+            if (!currentIds.has(newId)) {
+              return true
+            }
+          }
+          
+          return false
+        } catch (error) {
+          console.warn('Erro ao verificar novos surebets:', error)
+          return false
         }
-        
-        return false
       },
   
       destroyCharts() {
-        if (this.housesChart) this.housesChart.destroy()
-        if (this.marketsChart) this.marketsChart.destroy()
-        if (this.timeChart) this.timeChart.destroy()
-        if (this.sportsChart) this.sportsChart.destroy()
-        if (this.profitFrequencyChart) this.profitFrequencyChart.destroy()
+        try {
+          if (this.housesChart && typeof this.housesChart.destroy === 'function') {
+            this.housesChart.destroy()
+            this.housesChart = null
+          }
+          if (this.marketsChart && typeof this.marketsChart.destroy === 'function') {
+            this.marketsChart.destroy()
+            this.marketsChart = null
+          }
+          if (this.timeChart && typeof this.timeChart.destroy === 'function') {
+            this.timeChart.destroy()
+            this.timeChart = null
+          }
+          if (this.sportsChart && typeof this.sportsChart.destroy === 'function') {
+            this.sportsChart.destroy()
+            this.sportsChart = null
+          }
+          if (this.profitFrequencyChart && typeof this.profitFrequencyChart.destroy === 'function') {
+            this.profitFrequencyChart.destroy()
+            this.profitFrequencyChart = null
+          }
+          
+          // Resetar flags
+          this.chartsInitialized = false
+          this._forceChartColorsRunning = false
+          this._forceChartBackgroundRunning = false
+        } catch (error) {
+          console.warn('Erro ao destruir gráficos:', error)
+        }
       },
   
       formatCurrency(value) {
@@ -2511,6 +2612,9 @@
         // Método para obter cores do tema dinamicamente
         getThemeColor(cssVariable, fallback) {
           try {
+            // Verificar se document está disponível (para SSR)
+            if (typeof document === 'undefined') return fallback
+            
             const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable)
             return value.trim() || fallback
           } catch (error) {
@@ -2521,6 +2625,16 @@
 
         // Forçar o fundo dos gráficos
         forceChartBackground() {
+          if (!this.chartsInitialized) return
+          
+          // Evitar múltiplas execuções simultâneas
+          if (this._forceChartBackgroundRunning) return
+          
+          // Evitar execução durante atualização dos gráficos
+          if (this._updatingCharts) return
+          
+          this._forceChartBackgroundRunning = true
+          
           const charts = [
             this.housesChart,
             this.marketsChart,
@@ -2538,93 +2652,129 @@
               canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
               canvas.style.setProperty('background', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
               
-              // Forçar redraw do gráfico
-              chart.update('none')
-              
               // Aplicar fundo diretamente no contexto 2D após um delay
               setTimeout(() => {
                 if (ctx && chart.chartArea) {
-                  ctx.save()
-                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                  ctx.fillRect(0, 0, canvas.width, canvas.height)
-                  ctx.restore()
+                  try {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, canvas.width, canvas.height)
+                    ctx.restore()
+                  } catch (error) {
+                    console.warn('Erro ao aplicar fundo no gráfico:', error)
+                  }
                 }
               }, 200)
             }
           })
+          
+          // Resetar flag após um delay
+          setTimeout(() => {
+            this._forceChartBackgroundRunning = false
+          }, 500)
         },
 
-        // Forçar cores verdes dos gráficos
+        // Forçar cores verdes dos gráficos - VERSÃO SEGURA
         forceChartColors() {
-          // Atualizar cores do gráfico de casas
-          if (this.housesChart && this.housesChart.data.datasets[0]) {
-            this.housesChart.data.datasets[0].backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
-            this.housesChart.data.datasets[0].borderColor = this.getThemeColor('--accent-primary', '#00ff88')
+          if (!this.chartsInitialized) return
+          
+          // Evitar múltiplas execuções simultâneas
+          if (this._forceChartColorsRunning) return
+          
+          // Evitar execução durante atualização dos gráficos
+          if (this._updatingCharts) return
+          
+          console.log('🎨 Atualizando cores dos gráficos (versão segura)...')
+          this._forceChartColorsRunning = true
+          
+          try {
+            // Aplicar cores de forma segura usando try-catch individual
+            this.safeUpdateChartColors('housesChart', this.housesChart)
+            this.safeUpdateChartColors('timeChart', this.timeChart)
+            this.safeUpdateChartColors('sportsChart', this.sportsChart)
+            this.safeUpdateChartColors('marketsChart', this.marketsChart)
+            this.safeUpdateChartColors('profitFrequencyChart', this.profitFrequencyChart)
             
-            // Atualizar cores dos textos
-            if (this.housesChart.options.scales) {
-              if (this.housesChart.options.scales.y) {
-                this.housesChart.options.scales.y.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.housesChart.options.scales.y.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
-              if (this.housesChart.options.scales.x) {
-                this.housesChart.options.scales.x.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.housesChart.options.scales.x.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
-            }
-            this.housesChart.update('none')
+            console.log('✅ Cores dos gráficos atualizadas com segurança')
+            
+          } catch (error) {
+            console.warn('Erro ao atualizar cores dos gráficos:', error)
+          } finally {
+            // Resetar flag após um delay para evitar chamadas muito frequentes
+            setTimeout(() => {
+              this._forceChartColorsRunning = false
+            }, 1000)
+          }
+        },
+
+        // Método seguro para atualizar cores de um gráfico específico
+        safeUpdateChartColors(chartName, chart) {
+          if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) {
+            return
           }
 
-          // Atualizar cores do gráfico de tempo
-          if (this.timeChart && this.timeChart.data.datasets[0]) {
-            this.timeChart.data.datasets[0].backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
-            this.timeChart.data.datasets[0].borderColor = this.getThemeColor('--accent-primary', '#00ff88')
+          try {
+            const dataset = chart.data.datasets[0]
             
-            // Atualizar cores dos textos
-            if (this.timeChart.options.scales) {
-              if (this.timeChart.options.scales.y) {
-                this.timeChart.options.scales.y.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.timeChart.options.scales.y.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
-              if (this.timeChart.options.scales.x) {
-                this.timeChart.options.scales.x.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.timeChart.options.scales.x.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
+            // Aplicar cores de forma segura
+            if (dataset.backgroundColor !== undefined) {
+              dataset.backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
             }
-            this.timeChart.update('none')
+            if (dataset.borderColor !== undefined) {
+              dataset.borderColor = this.getThemeColor('--accent-primary', '#00ff88')
+            }
+            
+            // Atualizar cores dos textos de forma segura
+            if (chart.options && chart.options.scales) {
+              this.safeUpdateScaleColors(chart.options.scales.y, 'y')
+              this.safeUpdateScaleColors(chart.options.scales.x, 'x')
+            }
+            
+          } catch (error) {
+            console.warn(`Erro ao atualizar cores do gráfico ${chartName}:`, error)
           }
+        },
 
-          // Atualizar cores do gráfico de esportes
-          if (this.sportsChart && this.sportsChart.data.datasets[0]) {
-            this.sportsChart.data.datasets[0].backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
-            
-            // Atualizar cores dos textos
-            if (this.sportsChart.options.scales) {
-              if (this.sportsChart.options.scales.y) {
-                this.sportsChart.options.scales.y.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.sportsChart.options.scales.y.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
-              if (this.sportsChart.options.scales.x) {
-                this.sportsChart.options.scales.x.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-                this.sportsChart.options.scales.x.grid.color = this.getThemeColor('--border-primary', '#666666')
-              }
+        // Método seguro para atualizar cores das escalas
+        safeUpdateScaleColors(scale, scaleName) {
+          if (!scale) return
+          
+          try {
+            if (scale.ticks && scale.ticks.color !== undefined) {
+              scale.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
             }
-            this.sportsChart.update('none')
+            if (scale.grid && scale.grid.color !== undefined) {
+              scale.grid.color = this.getThemeColor('--border-primary', '#666666')
+            }
+          } catch (error) {
+            console.warn(`Erro ao atualizar cores da escala ${scaleName}:`, error)
           }
         },
 
         // Observar mudanças de tema
         observeThemeChanges() {
+          let themeChangeTimeout = null
+          
           const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
               if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                // Debounce para evitar múltiplas chamadas
+                if (themeChangeTimeout) {
+                  clearTimeout(themeChangeTimeout)
+                }
+                
                 console.log('🎨 Tema alterado detectado, atualizando gráficos...')
-                this.$nextTick(() => {
-                  setTimeout(() => {
-                    this.forceChartBackground()
-                    this.forceChartColors()
-                  }, 100)
-                })
+                themeChangeTimeout = setTimeout(() => {
+                  this.$nextTick(() => {
+                    if (!this._forceChartBackgroundRunning && !this._updatingCharts) {
+                      this.forceChartBackground()
+                      // Desabilitar forceChartColors temporariamente para evitar recursão
+                      // if (this.chartsInitialized) {
+                      //   this.forceChartColors()
+                      // }
+                    }
+                  })
+                }, 300)
               }
             })
           })
@@ -2634,14 +2784,16 @@
             attributeFilter: ['data-theme']
           })
           
-          // Verificação periódica do fundo
-          const backgroundCheckInterval = setInterval(() => {
-            this.forceChartBackground()
-          }, 2000)
+          // Verificação periódica do fundo - DESABILITADA para evitar problemas
+          // const backgroundCheckInterval = setInterval(() => {
+          //   if (this.chartsInitialized && !this._forceChartBackgroundRunning && !this._updatingCharts) {
+          //     this.forceChartBackground()
+          //   }
+          // }, 5000) // Aumentar intervalo para 5 segundos
           
-          // Limpar intervalo quando componente for destruído
+          // Limpar observer quando componente for destruído
           this.$once('hook:beforeDestroy', () => {
-            clearInterval(backgroundCheckInterval)
+            // clearInterval(backgroundCheckInterval) // Intervalo desabilitado
             observer.disconnect()
           })
         },
@@ -3953,7 +4105,7 @@
   
    .ranking-position {
      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-     color: #ffffff;
+     color: var(--text-primary);
      font-weight: 800;
      font-size: 14px;
      width: 32px;
