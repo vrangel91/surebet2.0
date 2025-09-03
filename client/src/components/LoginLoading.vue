@@ -2,7 +2,7 @@
     <div class="login-loading-overlay" v-if="isVisible">
       <div class="loading-container">
         <div class="logo-container">
-          <img class="loading-logo" src="@/assets/img/logo.png" alt="SureStake Logo" width="150" height="150">
+          <img class="loading-logo" src="@/assets/img/logo_loading.png" alt="SureStake Logo" width="150" height="150">
           <div class="logo-glow"></div>
         </div>
         <div class="loading-text">

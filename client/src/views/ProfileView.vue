@@ -181,6 +181,7 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
+import { http } from '../utils/http.js'
 
 export default {
   name: 'ProfileView',
@@ -213,8 +214,8 @@ export default {
              this.password.newPassword.length >= 6
     }
   },
-  mounted() {
-    this.loadProfileData()
+  async mounted() {
+    await this.loadProfileData()
     // Carregar estado da sidebar das configurações
     const savedSettings = localStorage.getItem('app_settings')
     if (savedSettings) {
@@ -249,11 +250,36 @@ export default {
       this.sidebarCollapsed = collapsed
     },
 
-    loadProfileData() {
-      // Carregar dados do perfil do localStorage ou da API
-      const savedProfile = localStorage.getItem('userProfile')
-      if (savedProfile) {
-        this.profile = { ...this.profile, ...JSON.parse(savedProfile) }
+    async loadProfileData() {
+      try {
+        // Primeiro, tentar carregar da API
+        const response = await http.get('/api/users/profile')
+        
+        if (response.data.success && response.data.user) {
+          const userData = response.data.user
+          
+          // Formatar nome completo (first_name + last_name)
+          const fullName = [userData.first_name, userData.last_name]
+            .filter(Boolean)
+            .join(' ')
+          
+          this.profile = {
+            fullName: fullName || 'Usuário',
+            email: userData.email || ''
+          }
+          
+          console.log('✅ Perfil carregado da API:', this.profile)
+        } else {
+          throw new Error('Resposta da API inválida')
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao carregar perfil da API, usando localStorage:', error)
+        
+        // Fallback: carregar do localStorage
+        const savedProfile = localStorage.getItem('userProfile')
+        if (savedProfile) {
+          this.profile = { ...this.profile, ...JSON.parse(savedProfile) }
+        }
       }
 
       // Carregar configurações de segurança
@@ -267,13 +293,50 @@ export default {
         this.profile.email = this.$store.state.user.email
       }
     },
-    saveProfile() {
-      // Salvar perfil no localStorage
-      localStorage.setItem('userProfile', JSON.stringify(this.profile))
-      
-      // Aqui você pode adicionar uma chamada para a API para salvar no servidor
-      console.log('Perfil salvo:', this.profile)
-      this.showNotification('Perfil salvo com sucesso!')
+    async saveProfile() {
+      try {
+        // Validar dados
+        if (!this.profile.fullName || !this.profile.email) {
+          this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error')
+          return
+        }
+        
+        // Preparar dados para a API (seguindo o mesmo padrão do AdminView)
+        const userData = {
+          first_name: this.profile.fullName.split(' ')[0] || this.profile.fullName,
+          last_name: this.profile.fullName.split(' ').slice(1).join(' ') || '',
+          email: this.profile.email
+        }
+        
+        // Chamar API para atualizar usuário
+        const response = await http.put('/api/users/profile', userData)
+        
+        if (response.data.success) {
+          // Salvar também no localStorage como backup
+          localStorage.setItem('userProfile', JSON.stringify(this.profile))
+          
+          // Mostrar mensagem de sucesso
+          this.showNotification('Perfil atualizado com sucesso!', 'success')
+          
+          // Emitir evento para atualizar o store se necessário
+          this.$emit('profile-updated', this.profile)
+          
+          console.log('✅ Perfil atualizado via API:', response.data)
+        } else {
+          this.showNotification('Erro ao atualizar perfil: ' + (response.data.error || 'Erro desconhecido'), 'error')
+        }
+      } catch (error) {
+        console.error('❌ Erro ao atualizar perfil:', error)
+        
+        // Fallback: salvar apenas no localStorage
+        localStorage.setItem('userProfile', JSON.stringify(this.profile))
+        
+        this.showNotification(
+          'Erro ao atualizar perfil no servidor. Dados salvos localmente. ' + 
+          (error.response?.data?.error || error.message), 
+          'warning'
+        )
+      }
     },
     changePassword() {
       if (!this.canChangePassword) {

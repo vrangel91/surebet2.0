@@ -206,32 +206,7 @@
             </div>
           </div>
 
-          <!-- Interface -->
-          <div class="settings-section">
-            <div class="section-header">
-              <div class="section-icon">🎨</div>
-              <div class="section-title">
-                <h3>Interface</h3>
-                <p>Personalize a aparência da aplicação</p>
-              </div>
-            </div>
-            <div class="section-content">
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Sidebar Colapsada</label>
-                  <p class="setting-description">Inicia com a sidebar minimizada</p>
-                </div>
-                <div class="setting-control">
-                  <label class="enhanced-toggle">
-                    <input type="checkbox" v-model="settings.interface.sidebarCollapsed" @change="saveSettings">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
 
-
-            </div>
-          </div>
 
           <!-- Relatórios e Ações -->
           <div class="settings-section">
