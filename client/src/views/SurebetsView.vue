@@ -71,10 +71,14 @@
               Pré-live ({{ preliveCount }})
             </button>
             <button 
-              class="filter-tab" 
+              class="filter-tab live-tab-locked" 
               :class="{ active: activeFilter === 'live' }"
-              @click="setFilter('live')"
+              @click="showLiveRestrictedMessage"
+              title="Acesso restrito - Funcionalidade em manutenção"
             >
+              <svg class="lock-icon" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
               Live ({{ liveCount }})
             </button>
           </div>
@@ -1960,6 +1964,10 @@ export default {
       this.updateFiltersCache()
     },
     
+    showLiveRestrictedMessage() {
+      this.showNotification('A aba Live está temporariamente indisponível para manutenção', 'warning')
+    },
+    
 
     
     applyFilters() {
@@ -3355,6 +3363,9 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   
   &:hover {
     background: var(--bg-hover);
@@ -3367,7 +3378,26 @@ export default {
     border-color: var(--accent-primary);
   }
   
+  &.live-tab-locked {
+    background: rgba(var(--warning-color-rgb), 0.1);
+    border-color: var(--warning-color);
+    color: var(--warning-color);
+    cursor: not-allowed;
+    position: relative;
+    
+    &:hover {
+      background: rgba(var(--warning-color-rgb), 0.2);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(var(--warning-color-rgb), 0.3);
+    }
+    
+    .lock-icon {
+      color: var(--warning-color);
+      animation: lockPulse 2s ease-in-out infinite;
+    }
+    
 
+  }
 }
 
 
@@ -3402,6 +3432,28 @@ export default {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@keyframes lockPulse {
+  0%, 100% { 
+    transform: scale(1); 
+    filter: drop-shadow(0 0 5px var(--warning-color));
+  }
+  50% { 
+    transform: scale(1.1); 
+    filter: drop-shadow(0 0 10px var(--warning-color));
+  }
+}
+
+@keyframes lockGlow {
+  0%, 100% { 
+    opacity: 1; 
+    text-shadow: 0 0 5px var(--warning-color);
+  }
+  50% { 
+    opacity: 0.7; 
+    text-shadow: 0 0 10px var(--warning-color);
+  }
 }
 
 @keyframes slideIn {

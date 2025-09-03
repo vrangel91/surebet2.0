@@ -82,12 +82,13 @@
 
         <!-- Contas de Casas de Apostas -->
         <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
-          <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleBookmakerAccountsClick" :title="shouldBeCollapsed ? 'Contas' : ''">
+          <div class="nav-link accounts-locked" @click="showAccountsRestrictedMessage" :title="shouldBeCollapsed ? 'Contas' : ''">
             <Building2 class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Contas</span>
-            <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-              <Lock class="vip-icon" size="14" />
-              <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+            <div class="lock-indicator" :title="shouldBeCollapsed ? 'Acesso Restrito' : 'Funcionalidade em manutenção'">
+              <svg class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+              </svg>
             </div>
           </div>
         </li>
@@ -462,13 +463,8 @@ export default {
     
 
     
-    handleBookmakerAccountsClick() {
-      if (this.isVIP) {
-        this.$router.push('/bookmaker-accounts')
-      } else {
-        this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
-        this.$router.push('/plans')
-      }
+    showAccountsRestrictedMessage() {
+      this.showNotification('A funcionalidade de Contas está temporariamente indisponível para manutenção', 'warning')
     },
     
 
@@ -785,6 +781,35 @@ export default {
   animation: vipPulse 2s ease-in-out infinite;
 }
 
+/* Estilos específicos para o indicador de bloqueio no sidebar colapsado */
+.sidebar.collapsed .lock-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  margin: 0;
+  padding: 2px;
+  border-radius: 50%;
+  font-size: 8px;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: rgba(255, 165, 0, 0.2);
+  box-shadow: 0 1px 4px rgba(255, 165, 0, 0.3);
+  border: 1px solid rgba(255, 165, 0, 0.4);
+  animation: lockPulse 2s ease-in-out infinite;
+}
+
+.sidebar.collapsed .lock-indicator .lock-icon {
+  width: 6px;
+  height: 6px;
+  color: #ffa500;
+}
+
+
+
 @keyframes vipPulse {
   0%, 100% {
     transform: scale(1);
@@ -850,6 +875,47 @@ export default {
 
 .sidebar.collapsed .vip-indicator:hover::before,
 .sidebar.collapsed .vip-indicator:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Tooltip para o indicador de bloqueio no sidebar colapsado */
+.sidebar.collapsed .lock-indicator::before {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: 4px;
+}
+
+.sidebar.collapsed .lock-indicator::after {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.9);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-bottom: -4px;
+}
+
+.sidebar.collapsed .lock-indicator:hover::before,
+.sidebar.collapsed .lock-indicator:hover::after {
   opacity: 1;
   visibility: visible;
 }
@@ -1488,6 +1554,82 @@ export default {
   letter-spacing: 0.5px;
   box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
   animation: vipGlow 2s ease-in-out infinite alternate;
+}
+
+/* Indicador de bloqueio para Contas */
+.lock-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 6px;
+  background: rgba(var(--warning-color-rgb, 255, 165, 0), 0.1);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--warning-color, #ffa500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+  animation: lockGlow 2s ease-in-out infinite alternate;
+}
+
+.lock-indicator .lock-icon {
+  width: 12px;
+  height: 12px;
+  color: var(--warning-color, #ffa500);
+  stroke-width: 1.5;
+  animation: lockPulse 2s ease-in-out infinite;
+}
+
+
+
+/* Estilos para o item Contas bloqueado */
+.nav-link.accounts-locked {
+  background: rgba(var(--warning-color-rgb, 255, 165, 0), 0.05);
+  border-color: var(--warning-color, #ffa500);
+  color: var(--warning-color, #ffa500);
+  cursor: not-allowed;
+  position: relative;
+  opacity: 0.8;
+}
+
+.nav-link.accounts-locked:hover {
+  background: rgba(var(--warning-color-rgb, 255, 165, 0), 0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(255, 165, 0, 0.2);
+}
+
+.nav-link.accounts-locked .nav-icon {
+  color: var(--warning-color, #ffa500);
+  animation: lockPulse 2s ease-in-out infinite;
+}
+
+.nav-link.accounts-locked .nav-text {
+  color: var(--warning-color, #ffa500);
+}
+
+/* Animações para o cadeado */
+@keyframes lockPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 5px var(--warning-color, #ffa500));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 10px var(--warning-color, #ffa500));
+  }
+}
+
+@keyframes lockGlow {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 5px var(--warning-color, #ffa500);
+  }
+  50% {
+    opacity: 0.7;
+    text-shadow: 0 0 10px var(--warning-color, #ffa500);
+  }
 }
 
 @keyframes vipGlow {
