@@ -103,11 +103,11 @@
         </li>
 
         <!-- Glosário -->
-        <li class="nav-item">
-          <button class="nav-link glossary-btn" @click="openGlossary" :title="shouldBeCollapsed ? 'Glosário' : ''">
+        <li class="nav-item" :class="{ active: $route.path === '/glossary' }">
+          <router-link to="/glossary" class="nav-link" :title="shouldBeCollapsed ? 'Glosário' : ''">
             <BookOpen class="nav-icon" size="18" />
             <span class="nav-text" v-show="!shouldBeCollapsed">Glosário</span>
-          </button>
+          </router-link>
         </li>
 
         <!-- Sair -->
@@ -480,9 +480,7 @@ export default {
       this.saveSidebarState(this.internalCollapsed)
       this.$emit('toggle-sidebar', this.internalCollapsed)
     },
-    openGlossary() {
-      this.$emit('open-glossary')
-    },
+
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
@@ -596,6 +594,15 @@ export default {
 </script>
 
 <style scoped>
+/* Transições globais para mudanças de tema */
+* {
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
 .sidebar {
   width: 280px;
   background: var(--bg-secondary, #2a2a2a);
@@ -603,7 +610,10 @@ export default {
   flex-direction: column;
   border-right: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
   flex-shrink: 0;
-  transition: width 0.3s ease;
+  transition: 
+    width 0.3s ease,
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .sidebar.collapsed {
@@ -644,8 +654,8 @@ export default {
 
 /* Indicador de item ativo mais visível */
 .sidebar.collapsed .nav-item.active .nav-link {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow: 0 2px 8px rgba(var(--accent-primary-rgb), 0.4);
 }
 
 /* Melhorias para o header no estado colapsado */
@@ -678,7 +688,7 @@ export default {
 
 .sidebar.collapsed .sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.15);
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
   transform: scale(1.1);
 }
 
@@ -717,9 +727,9 @@ export default {
 
 .sidebar.collapsed .admin-icon-link:hover {
   transform: scale(1.1);
-  background: rgba(0, 255, 136, 0.1);
-  border-color: #00ff88;
-  color: #00ff88;
+  background: rgba(var(--accent-primary-rgb), 0.1);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .sidebar.collapsed .nav-link {
@@ -732,7 +742,7 @@ export default {
 .sidebar.collapsed .nav-link:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateX(4px);
-  border-color: rgba(0, 255, 136, 0.3);
+  border-color: rgba(var(--accent-primary-rgb), 0.3);
 }
 
 .sidebar.collapsed .nav-icon {
@@ -742,7 +752,7 @@ export default {
 
 .sidebar.collapsed .nav-link:hover .nav-icon {
   transform: scale(1.1);
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .sidebar.collapsed .lock-icon {
@@ -901,7 +911,7 @@ export default {
 
 .sidebar.collapsed .sidebar-toggle:hover {
   background: rgba(255, 255, 255, 0.15);
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
 .sidebar-header {
@@ -974,10 +984,10 @@ export default {
 }
 
 .stake-text {
-  color: #00ff88;
+  color: var(--accent-primary);
   font-style: italic;
   font-weight: 700;
-  text-shadow: 0 0 8px rgba(0, 255, 136, 0.4);
+  text-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.4);
 }
 
 .user-profile {
@@ -994,7 +1004,7 @@ export default {
 .user-avatar {
   width: 30px;
   height: 30px;
-  background: var(--accent-primary, #00ff88);
+  background: var(--accent-primary, #198754);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1029,12 +1039,12 @@ export default {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #00ff88;
+  background-color: var(--accent-primary);
   transition: background-color 0.3s ease;
 }
 
 .status-dot.status-active {
-  background-color: #00ff88;
+  background-color: var(--accent-primary);
 }
 
 .status-dot.status-warning {
@@ -1159,7 +1169,7 @@ export default {
 }
 
 .expiration-info.normal {
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .expiration-info.warning {
@@ -1196,13 +1206,13 @@ export default {
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #00ff88, #00cc6a);
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
   border-radius: 2px;
   transition: width 0.3s ease, background 0.3s ease;
 }
 
 .progress-fill.progress-active {
-  background: linear-gradient(90deg, #00ff88, #00cc6a);
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
 }
 
 .progress-fill.progress-warning {
@@ -1299,13 +1309,13 @@ export default {
 }
 
 .profile-action-btn.renew-btn {
-  color: #00ff88;
-  border-color: rgba(0, 255, 136, 0.3);
+  color: var(--accent-primary);
+  border-color: rgba(var(--accent-primary-rgb), 0.3);
 }
 
 .profile-action-btn.renew-btn:hover {
-  background: rgba(0, 255, 136, 0.1);
-  border-color: #00ff88;
+  background: rgba(var(--accent-primary-rgb), 0.1);
+  border-color: var(--accent-primary);
 }
 
 .profile-action-btn.logout-btn {
@@ -1350,8 +1360,8 @@ export default {
 
 .admin-icon-link:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #00ff88;
-  color: #00ff88;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
   transform: translateY(-1px);
 }
 
@@ -1398,23 +1408,16 @@ export default {
 
 .nav-link:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
 .nav-item.active .nav-link {
-  background: #00ff88;
+  background: var(--accent-primary);
   color: #1a1a1a;
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
-.nav-link.glossary-btn {
-  color: #00ff88;
-}
 
-.nav-link.glossary-btn:hover {
-  background: rgba(0, 255, 136, 0.1);
-  border-color: #00ff88;
-}
 
 .nav-link.logout-btn {
   color: #ff4444;

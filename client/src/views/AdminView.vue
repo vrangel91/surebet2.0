@@ -6,7 +6,6 @@
         :sidebarCollapsed="sidebarCollapsed"
         @toggle-sidebar="handleSidebarToggle"
         @sidebar-state-loaded="handleSidebarStateLoaded"
-        @open-glossary="openGlossary"
       />
 
       <!-- Conteúdo Principal -->
@@ -507,7 +506,7 @@
       </div>
 
       <!-- Glossary Modal -->
-      <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+
     </div>
   </RouteGuard>
 </template>
@@ -515,7 +514,7 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
+
 import RouteGuard from '../components/RouteGuard.vue'
 import { mapGetters } from 'vuex'
 import axios from '@/utils/axios'
@@ -525,7 +524,7 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal,
+
     RouteGuard
   },
   mounted() {
@@ -547,7 +546,7 @@ export default {
   data() {
     return {
       sidebarCollapsed: false,
-      showGlossaryModal: false,
+
       showTicketDetailModal: false,
       showCreateUserModal: false,
       showEditUserModal: false,
@@ -748,13 +747,7 @@ export default {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
     
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
 
-    closeGlossary() {
-      this.showGlossaryModal = false
-    },
 
     openTicket(ticket) {
       this.selectedTicket = ticket

@@ -8,6 +8,15 @@
       
       <!-- Área direita com usuário -->
       <div class="header-right">
+        <!-- Toggle de Tema -->
+        <button 
+          class="theme-toggle-btn"
+          @click="toggleTheme"
+          :title="currentTheme === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+        >
+          <i :class="themeIconClass"></i>
+        </button>
+        
         <!-- Ícone de usuário -->
         <button 
           class="user-button"
@@ -63,61 +72,61 @@
             </span>
           </div>
           
-                     <!-- Status VIP -->
-           <div v-if="isVIP" class="vip-status">
-             <!-- Texto de expiração em linha única -->
-             <div class="vip-info">
-               <i class="bi bi-clock"></i>
-               <span v-if="accountExpiration" class="expiration-text">
-                 {{ expirationDisplayText }}
-               </span>
-               <span v-else-if="userVIPData === null" class="expiration-text loading">
-                 Carregando dados VIP...
-               </span>
-               <span v-else class="expiration-text error">
-                 Dados VIP não encontrados
-               </span>
-             </div>
-             
-             <!-- Barra de progresso em linha separada -->
-             <div v-if="accountExpiration" class="expiration-progress">
-               <div class="progress-info">
-                 <span class="progress-label">Status da Conta:</span>
-                 <span class="progress-percentage">{{ Math.round(expirationProgressPercent) }}%</span>
-               </div>
-               <div class="progress-bar">
-                 <div 
-                   class="progress-fill" 
-                   :class="expirationProgressClass"
-                   :style="{ width: expirationProgressPercent + '%' }"
-                 ></div>
-               </div>
-             </div>
-           </div>
+          <!-- Status VIP -->
+          <div v-if="isVIP" class="vip-status">
+            <!-- Texto de expiração em linha única -->
+            <div class="vip-info">
+              <i class="bi bi-clock"></i>
+              <span v-if="accountExpiration" class="expiration-text">
+                {{ expirationDisplayText }}
+              </span>
+              <span v-else-if="userVIPData === null" class="expiration-text loading">
+                Carregando dados VIP...
+              </span>
+              <span v-else class="expiration-text error">
+                Dados VIP não encontrados
+              </span>
+            </div>
+            
+            <!-- Barra de progresso em linha separada -->
+            <div v-if="accountExpiration" class="expiration-progress">
+              <div class="progress-info">
+                <span class="progress-label">Status da Conta:</span>
+                <span class="progress-percentage">{{ Math.round(expirationProgressPercent) }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div 
+                  class="progress-fill" 
+                  :class="expirationProgressClass"
+                  :style="{ width: expirationProgressPercent + '%' }"
+                ></div>
+              </div>
+            </div>
+          </div>
           
-                     <!-- Ações do usuário -->
-           <div class="user-actions" @click.stop>
-             <button class="action-btn profile-btn" @click="goToProfile">
-               <i class="bi bi-person"></i>
-               Perfil
-             </button>
-             <button class="action-btn settings-btn" @click="goToSettings">
-               <i class="bi bi-gear"></i>
-               Configurações
-             </button>
-             <button v-if="isAdmin" class="action-btn vip-admin-btn" @click="goToVIPAdmin">
-               <i class="bi bi-crown"></i>
-               Administração VIP
-             </button>
-             <button v-if="isAdmin" class="action-btn admin-btn" @click="goToAdmin">
-               <i class="bi bi-gear"></i>
-               Administração
-             </button>
-             <button class="action-btn logout-btn" @click="logout">
-               <i class="bi bi-box-arrow-right"></i>
-               Sair
-             </button>
-           </div>
+          <!-- Ações do usuário -->
+          <div class="user-actions" @click.stop>
+            <button class="action-btn profile-btn" @click="goToProfile">
+              <i class="bi bi-person"></i>
+              Perfil
+            </button>
+            <button class="action-btn settings-btn" @click="goToSettings">
+              <i class="bi bi-gear"></i>
+              Configurações
+            </button>
+            <button v-if="isAdmin" class="action-btn vip-admin-btn" @click="goToVIPAdmin">
+              <i class="bi bi-crown"></i>
+              Administração VIP
+            </button>
+            <button v-if="isAdmin" class="action-btn admin-btn" @click="goToAdmin">
+              <i class="bi bi-gear"></i>
+              Administração
+            </button>
+            <button class="action-btn logout-btn" @click="logout">
+              <i class="bi bi-box-arrow-right"></i>
+              Sair
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -129,19 +138,22 @@ import axios from '@/utils/axios'
 
 export default {
   name: 'Header',
-     data() {
-     return {
-       showUserModal: false,
-       userVIPData: null,
-       countdownTimer: null
-     }
-   },
+  data() {
+    return {
+      showUserModal: false,
+      userVIPData: null,
+      countdownTimer: null,
+      currentTheme: 'dark' // Tema padrão
+    }
+  },
   computed: {
     currentUser() {
       return this.$store.getters.currentUser
     },
+    themeIconClass() {
+      return this.currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill'
+    },
     isPremium() {
-      // Lógica para verificar se o usuário é premium
       return this.currentUser?.isPremium || false
     },
     isVIP() {
@@ -165,9 +177,7 @@ export default {
       return `account-type-${this.userAccountType}`
     },
     
-    // Sistema de Expiração da Conta (mesmo do Sidebar)
     accountExpiration() {
-      // Retornar apenas dados reais da API
       return this.userVIPData?.dataFim || null
     },
     
@@ -195,40 +205,38 @@ export default {
       return 'Ativo'
     },
     
-         expirationDisplayText() {
-       if (!this.accountExpiration) return ''
-       
-       const now = new Date()
-       const expiration = new Date(this.accountExpiration)
-       const timeDiff = expiration - now
-       
-       if (timeDiff < 0) {
-         return 'Conta expirada'
-       }
-       
-       // Calcular dias, horas, minutos e segundos restantes
-       const totalHours = Math.floor(timeDiff / (1000 * 60 * 60))
-       const days = Math.floor(totalHours / 24)
-       const hours = totalHours % 24
-       const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-       const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
-       
-       if (days === 0) {
-         if (hours === 0) {
-           if (minutes === 0) {
-             return `Expira em ${seconds}s`
-           }
-           return `Expira em ${minutes}min ${seconds}s`
-         }
-         return `Expira em ${hours}h ${minutes}min`
-       } else if (days === 1) {
-         return `Expira em ${days}d ${hours}h ${minutes}min`
-       } else {
-         return `Expira em ${days}d ${hours}h ${minutes}min`
-       }
-     },
+    expirationDisplayText() {
+      if (!this.accountExpiration) return ''
+      
+      const now = new Date()
+      const expiration = new Date(this.accountExpiration)
+      const timeDiff = expiration - now
+      
+      if (timeDiff < 0) {
+        return 'Conta expirada'
+      }
+      
+      const totalHours = Math.floor(timeDiff / (1000 * 60 * 60))
+      const days = Math.floor(totalHours / 24)
+      const hours = totalHours % 24
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000)
+      
+      if (days === 0) {
+        if (hours === 0) {
+          if (minutes === 0) {
+            return `Expira em ${seconds}s`
+          }
+          return `Expira em ${minutes}min ${seconds}s`
+        }
+        return `Expira em ${hours}h ${minutes}min`
+      } else if (days === 1) {
+        return `Expira em ${days}d ${hours}h ${minutes}min`
+      } else {
+        return `Expira em ${days}d ${hours}h ${minutes}min`
+      }
+    },
     
-    // Computed para a barra de progresso de expiração
     expirationProgressClass() {
       if (!this.accountExpiration || !this.userVIPData?.dataInicio) return ''
       
@@ -236,15 +244,12 @@ export default {
       const startDate = new Date(this.userVIPData.dataInicio)
       const endDate = new Date(this.accountExpiration)
       
-      // Calcular tempo total do plano
       const totalPlanTime = endDate - startDate
-      // Calcular tempo restante
       const remainingTime = endDate - now
       
       if (totalPlanTime <= 0) return 'progress-expired'
       if (remainingTime <= 0) return 'progress-expired'
       
-      // Calcular porcentagem baseada no tempo total do plano
       const progressPercent = (remainingTime / totalPlanTime) * 100
       
       if (progressPercent <= 25) return 'progress-expired'
@@ -259,22 +264,18 @@ export default {
       const startDate = new Date(this.userVIPData.dataInicio)
       const endDate = new Date(this.accountExpiration)
       
-      // Calcular tempo total do plano
       const totalPlanTime = endDate - startDate
-      // Calcular tempo restante
       const remainingTime = endDate - now
       
       if (totalPlanTime <= 0) return 0
       if (remainingTime <= 0) return 100
       
-      // Calcular porcentagem baseada no tempo total do plano
       const progressPercent = (remainingTime / totalPlanTime) * 100
       return Math.min(100, Math.max(0, progressPercent))
     }
   },
   
   watch: {
-    // Observar mudanças no usuário atual para recarregar dados VIP
     currentUser: {
       handler(newUser) {
         if (newUser && newUser.id) {
@@ -290,46 +291,39 @@ export default {
   methods: {
     async loadUserVIPData() {
       try {
-        // Verificar se o usuário está logado
         if (!this.currentUser || !this.currentUser.id) {
           console.log('👤 Usuário não logado, não carregando dados VIP')
           return
         }
         
-        // Verificar se o usuário é VIP
         if (!this.isVIP) {
           console.log('👤 Usuário não é VIP, não carregando dados VIP')
           return
         }
         
-        // Fazer chamada para a API para obter dados do VIP do usuário atual
         const response = await axios.get('/api/vip/my-status')
         
         if (response.data && response.data.success && response.data.vipStatus) {
           this.userVIPData = response.data.vipStatus
         } else {
-          this.userVIPData = false // false indica que a API foi chamada mas não retornou dados
+          this.userVIPData = false
         }
       } catch (error) {
         console.error('Erro ao carregar dados VIP:', error)
-        this.userVIPData = false // false indica que houve erro na API
+        this.userVIPData = false
       }
     },
     
     startCountdownTimer() {
-      // Limpa timer anterior se existir
       this.stopCountdownTimer()
       
-      // Inicia timer para atualizar countdown a cada 30 segundos
       this.countdownTimer = setInterval(() => {
-        // Força re-render dos computed properties
         this.$forceUpdate()
         
-        // Recarregar dados do VIP a cada 5 minutos
         if (this.isVIP && this.currentUser) {
           this.loadUserVIPData()
         }
-      }, 30000) // Atualiza a cada 30 segundos
+      }, 30000)
     },
     
     stopCountdownTimer() {
@@ -339,9 +333,9 @@ export default {
       }
     },
     
-         toggleUserModal() {
-       this.showUserModal = !this.showUserModal
-     },
+    toggleUserModal() {
+      this.showUserModal = !this.showUserModal
+    },
     
     closeUserModal() {
       this.showUserModal = false
@@ -377,11 +371,49 @@ export default {
       }
     },
     
-    
+    toggleTheme() {
+      console.log('🔄 Toggle de tema chamado!')
+      console.log('Tema atual:', this.currentTheme)
+      
+      const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark'
+      console.log('Novo tema:', newTheme)
+      
+      // Aplicar tema diretamente
+      const html = document.documentElement
+      const body = document.body
+      
+      html.classList.remove('theme-dark', 'theme-light')
+      body.classList.remove('theme-dark', 'theme-light')
+      
+      if (newTheme === 'light') {
+        html.setAttribute('data-theme', 'light')
+        html.classList.add('theme-light')
+        body.classList.add('theme-light')
+      } else {
+        html.setAttribute('data-theme', 'dark')
+        html.classList.add('theme-dark')
+        body.classList.add('theme-dark')
+      }
+      
+      // Atualizar estado local
+      this.currentTheme = newTheme
+      
+      // Salvar no localStorage
+      localStorage.setItem('app_theme', newTheme)
+      
+      console.log('Tema alterado para:', newTheme)
+    }
   },
   
-  // Fechar modal ao pressionar ESC
   mounted() {
+    console.log('🔧 Header.vue mounted')
+    
+    // Carregar tema do localStorage
+    const savedTheme = localStorage.getItem('app_theme')
+    if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
+      this.currentTheme = savedTheme
+    }
+    
     this.loadUserVIPData()
     this.startCountdownTimer()
     
@@ -400,6 +432,15 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+/* Transições globais para mudanças de tema */
+* {
+  transition: 
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
 .app-header {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-primary);
@@ -408,6 +449,9 @@ export default {
   top: 0;
   z-index: 1000;
   backdrop-filter: blur(10px);
+  transition: 
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 .header-content {
@@ -426,6 +470,7 @@ export default {
     font-weight: 700;
     color: var(--accent-primary);
     margin: 0;
+    transition: color 0.3s ease;
   }
 }
 
@@ -433,6 +478,26 @@ export default {
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+  font-size: 18px;
+
+  &:hover {
+    background: var(--bg-overlay);
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
 }
 
 .user-button {
@@ -463,9 +528,9 @@ export default {
   justify-content: center;
   color: var(--bg-primary);
   font-size: 16px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Modal de usuário */
 .user-modal-overlay {
   position: fixed;
   top: 0;
@@ -490,6 +555,7 @@ export default {
   animation: slideIn 0.3s ease;
   margin-right: 20px;
   margin-top: 70px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 @keyframes slideIn {
@@ -509,12 +575,14 @@ export default {
   justify-content: space-between;
   padding: 20px 20px 16px;
   border-bottom: 1px solid var(--border-primary);
+  transition: border-color 0.3s ease;
   
   h3 {
     margin: 0;
     font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
+    transition: color 0.3s ease;
   }
 }
 
@@ -555,6 +623,7 @@ export default {
   justify-content: center;
   color: var(--bg-primary);
   font-size: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .user-details {
@@ -566,6 +635,7 @@ export default {
   font-size: 18px;
   font-weight: 600;
   color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
 .user-status {
@@ -574,6 +644,7 @@ export default {
   gap: 6px;
   font-size: 14px;
   color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 .status-dot {
@@ -666,6 +737,7 @@ export default {
   flex-direction: column;
   gap: 12px;
   border: 1px solid rgba(255, 107, 107, 0.2);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
   
   i {
     font-size: 12px;
@@ -679,11 +751,13 @@ export default {
   font-size: 14px;
   color: var(--text-secondary);
   justify-content: flex-start;
+  transition: color 0.3s ease;
 }
 
 .expiration-text {
   font-weight: 500;
   color: var(--text-primary);
+  transition: color 0.3s ease;
   
   &.loading {
     color: var(--text-secondary);
@@ -709,12 +783,14 @@ export default {
 .progress-label {
   color: var(--text-secondary);
   font-weight: 500;
+  transition: color 0.3s ease;
 }
 
 .progress-percentage {
   color: var(--text-primary);
   font-weight: 600;
   font-size: 14px;
+  transition: color 0.3s ease;
 }
 
 .progress-bar {
@@ -726,6 +802,7 @@ export default {
   position: relative;
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .progress-fill {
@@ -808,6 +885,7 @@ export default {
   i {
     font-size: 14px;
     color: var(--text-secondary);
+    transition: color 0.3s ease;
   }
   
   &.logout-btn {
@@ -855,7 +933,6 @@ export default {
   }
 }
 
-/* Responsividade */
 @media (max-width: 768px) {
   .header-content {
     padding: 0 16px;

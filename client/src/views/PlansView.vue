@@ -5,7 +5,6 @@
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
 
     <!-- Conteúdo Principal -->
@@ -133,7 +132,7 @@
     </main>
 
     <!-- Glossary Modal -->
-    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+    
     
     <!-- Payment Method Selection Modal -->
     <div v-if="showPaymentMethodModal" class="modal-overlay" @click="closePaymentMethodModal">
@@ -650,19 +649,19 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
+
 
 export default {
   name: 'PlansView',
   components: {
     Sidebar,
     Header,
-    GlossaryModal
+
   },
   data() {
     return {
       sidebarCollapsed: false,
-      showGlossaryModal: false,
+
       selectedCategory: 'pre-game',
       
       // Mercado Pago Configuration
@@ -1084,13 +1083,7 @@ export default {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
     
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
 
-    closeGlossary() {
-      this.showGlossaryModal = false
-    },
 
     logout() {
       this.$store.dispatch('logout')
@@ -1723,12 +1716,10 @@ export default {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--bg-primary, #1a1a1a);
-  color: var(--text-primary, #ffffff);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
-
-
 
 /* Main Content */
 .main-content {
@@ -1751,7 +1742,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 24px 32px;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--border-primary);
+  transition: border-color 0.3s ease;
 }
 
 .header-left {
@@ -1763,14 +1755,16 @@ export default {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 /* Plans Title */
@@ -1785,8 +1779,9 @@ export default {
 .plans-title h1 {
   font-size: 36px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0 0 8px 0;
+  transition: color 0.3s ease;
 }
 
 .title-icon {
@@ -1807,7 +1802,7 @@ export default {
   overflow-x: auto;
   padding: 0 16px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  scrollbar-color: var(--border-primary) transparent;
 }
 
 .plan-categories::-webkit-scrollbar {
@@ -1819,12 +1814,12 @@ export default {
 }
 
 .plan-categories::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--border-primary);
   border-radius: 3px;
 }
 
 .plan-categories::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--accent-primary);
 }
 
 .category-btn {
@@ -1832,10 +1827,10 @@ export default {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: var(--bg-secondary, #2a2a2a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 25px;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
@@ -1846,25 +1841,26 @@ export default {
 }
 
 .category-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-overlay);
+  border-color: var(--accent-primary);
 }
 
 .category-btn.active {
-  background: #00ff88;
-  color: #1a1a1a;
-  border-color: #00ff88;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
 }
 
 .category-btn.disabled {
-  background: rgba(255, 255, 255, 0.05);
-  color: #666666;
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--bg-overlay);
+  color: var(--text-disabled);
+  border-color: var(--border-primary);
   cursor: not-allowed;
   opacity: 0.5;
 }
 
 .category-btn.disabled:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-overlay);
   transform: none;
   box-shadow: none;
 }
@@ -1899,14 +1895,16 @@ export default {
 .description-title {
   font-size: 28px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0 0 8px 0;
+  transition: color 0.3s ease;
 }
 
 .description-subtitle {
   font-size: 16px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   margin: 0;
+  transition: color 0.3s ease;
 }
 
 /* Plans Grid */
@@ -1921,12 +1919,12 @@ export default {
 }
 
 .plan-card {
-  background: rgba(42, 42, 42, 0.8);
+  background: var(--bg-card);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   overflow: hidden;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .plan-card:hover {
@@ -1936,18 +1934,20 @@ export default {
 
 .plan-header {
   padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-overlay);
+  border-bottom: 1px solid var(--border-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .plan-duration {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary, #ffffff);
+  background: var(--bg-overlay);
+  color: var(--text-primary);
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .plan-content {
@@ -1957,9 +1957,10 @@ export default {
 .plan-title {
   font-size: 16px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0 0 20px 0;
   line-height: 1.3;
+  transition: color 0.3s ease;
 }
 
 .plan-features {
@@ -1974,14 +1975,15 @@ export default {
   gap: 12px;
   margin-bottom: 12px;
   font-size: 14px;
+  transition: color 0.3s ease;
 }
 
 .feature-item.included {
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
 }
 
 .feature-item:not(.included) {
-  color: var(--text-secondary, #888888);
+  color: var(--text-disabled);
 }
 
 .feature-icon {
@@ -1991,11 +1993,11 @@ export default {
 }
 
 .feature-icon.included {
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .feature-icon.excluded {
-  color: #ff4444;
+  color: var(--error-color);
 }
 
 .plan-price {
@@ -2006,19 +2008,22 @@ export default {
 .price-currency {
   font-size: 20px;
   font-weight: 600;
-  color: #00ff88;
+  color: var(--accent-primary);
+  transition: color 0.3s ease;
 }
 
 .price-value {
   font-size: 36px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
+  transition: color 0.3s ease;
 }
 
 .price-decimal {
   font-size: 20px;
   font-weight: 600;
-  color: #00ff88;
+  color: var(--accent-primary);
+  transition: color 0.3s ease;
 }
 
 .buy-button {
@@ -2027,8 +2032,8 @@ export default {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  color: var(--bg-primary);
   border: none;
   border-radius: 8px;
   padding: 14px 20px;
@@ -2040,7 +2045,13 @@ export default {
 
 .buy-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 8px 20px rgba(var(--accent-primary-rgb), 0.3);
+}
+
+.buy-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
   .buy-icon {
@@ -2056,7 +2067,7 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
+    background: var(--modal-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2069,14 +2080,15 @@ export default {
   .processing-modal,
   .pix-modal,
   .login-required-modal {
-    background: var(--bg-secondary, #2a2a2a);
+    background: var(--bg-secondary);
     border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-primary);
     max-width: 600px;
     width: 95%;
     max-height: 90vh;
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   
   @keyframes modalSlideIn {
@@ -2092,23 +2104,25 @@ export default {
   
   .modal-header {
     padding: 24px 24px 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid var(--border-primary);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: border-color 0.3s ease;
   }
   
   .modal-header h3 {
     margin: 0;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     font-size: 20px;
     font-weight: 600;
+    transition: color 0.3s ease;
   }
   
   .close-btn {
     background: none;
     border: none;
-    color: var(--text-secondary, #888888);
+    color: var(--text-secondary);
     font-size: 24px;
     cursor: pointer;
     padding: 0;
@@ -2122,8 +2136,8 @@ export default {
   }
   
   .close-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #ffffff);
+    background: var(--bg-overlay);
+    color: var(--text-primary);
   }
   
   .modal-body {
@@ -2136,16 +2150,18 @@ export default {
   }
 
   .selected-plan {
-    color: var(--text-secondary, #888888);
+    color: var(--text-secondary);
     margin: 0 0 8px 0;
     font-size: 14px;
+    transition: color 0.3s ease;
   }
   
   .plan-name {
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     margin: 0 0 16px 0;
     font-size: 18px;
     font-weight: 600;
+    transition: color 0.3s ease;
   }
   
   /* Payment Method Selection Modal */
@@ -2160,16 +2176,16 @@ export default {
     align-items: center;
     gap: 16px;
     padding: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--border-primary);
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--bg-overlay);
   }
   
   .payment-method-option:hover {
-    border-color: #00ff88;
-    background: rgba(0, 255, 136, 0.05);
+    border-color: var(--accent-primary);
+    background: rgba(var(--accent-primary-rgb), 0.05);
     transform: translateY(-2px);
   }
   
@@ -2180,12 +2196,12 @@ export default {
   .method-icon {
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #000;
+    color: var(--bg-primary);
     flex-shrink: 0;
   }
   
@@ -2195,34 +2211,37 @@ export default {
   
   .method-info h4 {
     margin: 0 0 4px 0;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     font-size: 18px;
     font-weight: 600;
+    transition: color 0.3s ease;
   }
   
   .method-info p {
     margin: 0 0 8px 0;
-    color: var(--text-secondary, #cccccc);
+    color: var(--text-secondary);
     font-size: 14px;
+    transition: color 0.3s ease;
   }
   
-  .method-advantage {
-    display: inline-block;
-    background: rgba(0, 255, 136, 0.1);
-    color: #00ff88;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 500;
-  }
+        .method-advantage {
+        display: inline-block;
+        background: rgba(var(--accent-primary-rgb), 0.1);
+        color: var(--accent-primary);
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
   
   .method-arrow {
-    color: var(--text-secondary, #888888);
+    color: var(--text-secondary);
     transition: color 0.3s ease;
   }
   
   .payment-method-option:hover .method-arrow {
-    color: #00ff88;
+    color: var(--accent-primary);
   }
   
   /* Login Required Modal Specific */
@@ -2241,41 +2260,44 @@ export default {
   .login-icon {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #1a1a1a;
+    color: var(--bg-primary);
     margin-bottom: 16px;
   }
   
   .login-title {
     font-size: 24px;
     font-weight: 700;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     margin: 0;
+    transition: color 0.3s ease;
   }
   
   .login-description {
     font-size: 16px;
     line-height: 1.6;
-    color: var(--text-secondary, #cccccc);
+    color: var(--text-secondary);
     margin: 0;
     max-width: 400px;
+    transition: color 0.3s ease;
   }
   
   .login-description strong {
-    color: #00ff88;
+    color: var(--accent-primary);
   }
   
   .plan-summary {
-    background: rgba(0, 255, 136, 0.1);
-    border: 1px solid rgba(0, 255, 136, 0.2);
+    background: rgba(var(--accent-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
     border-radius: 12px;
     padding: 20px;
     width: 100%;
     max-width: 300px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
   
   .plan-info {
@@ -2288,15 +2310,17 @@ export default {
   .plan-info .plan-name {
     font-size: 16px;
     font-weight: 600;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     margin: 0;
+    transition: color 0.3s ease;
   }
   
   .plan-info .plan-price {
     font-size: 20px;
     font-weight: 700;
-    color: #00ff88;
+    color: var(--accent-primary);
     margin: 0;
+    transition: color 0.3s ease;
   }
   
   .login-actions {
@@ -2308,8 +2332,8 @@ export default {
   }
   
   .btn-primary {
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-    color: #1a1a1a;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    color: var(--bg-primary);
     border: none;
     border-radius: 12px;
     padding: 16px 24px;
@@ -2317,7 +2341,7 @@ export default {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);
     position: relative;
     overflow: hidden;
     display: flex;
@@ -2330,13 +2354,13 @@ export default {
   
   .btn-primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.4);
-    background: linear-gradient(135deg, #00ff9a 0%, #00dd7a 100%);
+    box-shadow: 0 8px 25px rgba(var(--accent-primary-rgb), 0.4);
+    background: linear-gradient(135deg, var(--accent-hover) 0%, var(--accent-secondary) 100%);
   }
   
   .btn-primary:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);
   }
   
   .btn-primary::before {
@@ -2365,9 +2389,9 @@ export default {
   }
   
   .btn-secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary, #cccccc);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     padding: 14px 20px;
     font-size: 14px;
@@ -2377,15 +2401,15 @@ export default {
   }
   
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: var(--text-primary, #ffffff);
+    background: var(--bg-hover);
+    color: var(--text-primary);
     transform: translateY(-1px);
   }
   
   .plan-price-display {
     text-align: center;
     margin-bottom: 32px;
-    color: #00ff88;
+    color: #198754;
   }
   
   .plan-price-display .price-currency {
@@ -2420,7 +2444,7 @@ export default {
   .section-title {
     font-size: 18px;
     font-weight: 600;
-    color: #00ff88;
+    color: #198754;
     margin-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     padding-bottom: 16px;
@@ -2456,7 +2480,7 @@ export default {
   }
 
   .form-input:focus {
-    border-color: #00ff88;
+    border-color: #198754;
     outline: none;
   }
 
@@ -2486,7 +2510,8 @@ export default {
     align-items: center;
     margin-top: 24px;
     padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-primary);
+    transition: border-color 0.3s ease;
   }
 
   .summary-item {
@@ -2503,7 +2528,7 @@ export default {
   .summary-total {
     font-size: 20px;
     font-weight: 700;
-    color: #00ff88;
+    color: #198754;
     margin-top: 16px;
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding-top: 16px;
@@ -2532,7 +2557,7 @@ export default {
   
   .payment-method-btn:hover {
     background: rgba(255, 255, 255, 0.05);
-    border-color: #00ff88;
+    border-color: #198754;
     transform: translateY(-2px);
   }
   
@@ -2562,8 +2587,8 @@ export default {
   .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 3px solid rgba(0, 255, 136, 0.3);
-    border-top: 3px solid #00ff88;
+    border: 3px solid rgba(25, 135, 84, 0.3);
+    border-top: 3px solid #198754;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin: 0 auto 24px auto;
@@ -2588,15 +2613,17 @@ export default {
   }
   
   .timer-text {
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     margin: 0;
     font-size: 14px;
+    transition: color 0.3s ease;
   }
   
   .timer {
-    color: #00ff88;
+    color: var(--accent-primary);
     font-weight: 600;
     font-size: 16px;
+    transition: color 0.3s ease;
   }
   
   .qr-code-section {
@@ -2657,11 +2684,12 @@ export default {
   }
   
   .qr-instructions {
-    color: var(--text-secondary, #888888);
+    color: var(--text-secondary);
     margin: 0 0 20px 0;
     font-size: 14px;
     line-height: 1.6;
     padding: 0 16px;
+    transition: color 0.3s ease;
   }
   
   .pix-code-section {
@@ -2682,14 +2710,15 @@ export default {
   .pix-code-input {
     width: 100%;
     padding: 14px;
-    background: rgba(42, 42, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-input);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
-    color: var(--text-primary, #ffffff);
+    color: var(--text-primary);
     font-size: 13px;
     font-family: monospace;
     word-break: break-all;
     min-height: 48px;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
   
   .copy-btn {
@@ -2698,8 +2727,8 @@ export default {
     justify-content: center;
     gap: 8px;
     padding: 14px 20px;
-    background: #00ff88;
-    color: #1a1a1a;
+    background: var(--accent-primary);
+    color: var(--bg-primary);
     border: none;
     border-radius: 8px;
     font-size: 14px;
@@ -2712,22 +2741,23 @@ export default {
   }
   
   .copy-btn:hover {
-    background: #00cc6a;
+    background: var(--accent-secondary);
     transform: translateY(-1px);
   }
   
   .payment-wait {
-    color: var(--text-secondary, #888888);
+    color: var(--text-secondary);
     margin: 0 0 20px 0;
     font-size: 14px;
     text-align: center;
     padding: 0 16px;
+    transition: color 0.3s ease;
   }
   
   .secondary-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary, #ffffff);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--bg-overlay);
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
     border-radius: 6px;
     padding: 12px 24px;
     font-size: 14px;
@@ -2737,7 +2767,7 @@ export default {
   }
   
   .secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
+    background: var(--bg-hover);
     transform: translateY(-1px);
   }
 
@@ -2747,7 +2777,7 @@ export default {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%);
     color: #1a1a1a;
     border: none;
     border-radius: 8px;
@@ -2761,7 +2791,7 @@ export default {
 
   .submit-payment-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 8px 20px rgba(25, 135, 84, 0.3);
   }
 
   .submit-payment-btn:disabled {
@@ -2787,16 +2817,17 @@ export default {
 
   /* Redirect Modal Styles */
   .redirect-modal {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
     border-radius: 16px;
     padding: 0;
     max-width: 480px;
     width: 90%;
     text-align: center;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-primary);
     overflow: hidden;
     animation: slideInUp 0.4s ease-out;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
   }
 
   .redirect-content {
@@ -2822,7 +2853,7 @@ export default {
   .dot {
     width: 12px;
     height: 12px;
-    background: #00ff88;
+    background: #198754;
     border-radius: 50%;
     animation: dotPulse 1.4s ease-in-out infinite both;
   }
@@ -2842,16 +2873,17 @@ export default {
   .redirect-text h3 {
     font-size: 24px;
     font-weight: 700;
-    color: #00ff88;
+    color: var(--accent-primary);
     margin: 0 0 12px 0;
     animation: textGlow 2s ease-in-out infinite alternate;
   }
 
   .redirect-text p {
     font-size: 16px;
-    color: var(--text-secondary, #cccccc);
+    color: var(--text-secondary);
     margin: 0 0 32px 0;
     line-height: 1.5;
+    transition: color 0.3s ease;
   }
 
   .security-info {
@@ -2867,12 +2899,13 @@ export default {
     justify-content: center;
     gap: 12px;
     padding: 12px 16px;
-    background: rgba(0, 255, 136, 0.1);
-    border: 1px solid rgba(0, 255, 136, 0.2);
+    background: rgba(var(--accent-primary-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
     border-radius: 8px;
-    color: #00ff88;
+    color: var(--accent-primary);
     font-size: 14px;
     font-weight: 500;
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
 
   .security-item svg {
@@ -2880,9 +2913,9 @@ export default {
   }
 
   .cancel-redirect-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary, #cccccc);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--bg-overlay);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
     border-radius: 8px;
     padding: 12px 24px;
     font-size: 14px;
@@ -2893,18 +2926,18 @@ export default {
   }
 
   .cancel-redirect-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    color: var(--text-primary, #ffffff);
+    background: var(--bg-hover);
+    color: var(--text-primary);
     transform: translateY(-1px);
   }
 
   /* Animations */
   @keyframes logoGlow {
     0% {
-      filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.3));
+      filter: drop-shadow(0 0 10px rgba(25, 135, 84, 0.3));
     }
     100% {
-      filter: drop-shadow(0 0 20px rgba(0, 255, 136, 0.6));
+      filter: drop-shadow(0 0 20px rgba(25, 135, 84, 0.6));
     }
   }
 
@@ -2921,10 +2954,10 @@ export default {
 
   @keyframes textGlow {
     0% {
-      text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+      text-shadow: 0 0 10px rgba(25, 135, 84, 0.3);
     }
     100% {
-      text-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+      text-shadow: 0 0 20px rgba(25, 135, 84, 0.6);
     }
   }
 
@@ -2943,14 +2976,16 @@ export default {
 .plans-footer {
   text-align: center;
   padding: 24px;
-  background: var(--bg-secondary, #2a2a2a);
-  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .plans-footer p {
   margin: 0;
   font-size: 14px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
+  transition: color 0.3s ease;
 }
 
 /* Responsividade */
@@ -3220,302 +3255,11 @@ export default {
   }
 }
   
-  /* Estilos específicos para o checkout */
-  .checkout-form {
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-  }
 
-  .form-section {
-    background: rgba(42, 42, 42, 0.8);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 24px;
-  }
 
-  .section-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #00ff88;
-    margin-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    padding-bottom: 16px;
-  }
 
-  .form-row {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 20px;
-  }
+  
 
-  .form-group {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
 
-  .form-group label {
-    font-size: 14px;
-    color: var(--text-secondary, #888888);
-    margin-bottom: 8px;
-    font-weight: 500;
-  }
 
-  .form-input {
-    padding: 12px;
-    background: rgba(42, 42, 42, 0.8);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: var(--text-primary, #ffffff);
-    font-size: 14px;
-    transition: border-color 0.3s ease;
-  }
-
-  .form-input:focus {
-    border-color: #00ff88;
-    outline: none;
-  }
-
-  .form-input.cpf-input {
-    width: 150px;
-  }
-
-  .form-input.card-input {
-    width: 100%;
-  }
-
-  .form-input.expiry-input {
-    width: 80px;
-  }
-
-  .form-input.cvv-input {
-    width: 60px;
-  }
-
-  .form-input.cep-input {
-    width: 100px;
-  }
-
-  .payment-summary {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 24px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .summary-item {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    color: var(--text-secondary, #cccccc);
-    font-size: 14px;
-  }
-
-  .summary-total {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    font-size: 20px;
-    font-weight: 700;
-    color: #00ff88;
-    margin-top: 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    padding-top: 16px;
-  }
-
-  .submit-payment-btn {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-    color: #1a1a1a;
-    border: none;
-    border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    position: relative;
-  }
-
-  .submit-payment-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
-  }
-
-  .submit-payment-btn:disabled {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary, #888888);
-    border-color: rgba(255, 255, 255, 0.2);
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  .submit-payment-btn .loading-spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 24px;
-    height: 24px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top: 3px solid #ffffff;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-  
-  /* Melhorias no modal de pagamento */
-  .payment-modal {
-    max-width: 600px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-  
-  .selected-plan-info {
-    text-align: center;
-    margin-bottom: 32px;
-    padding: 20px;
-    background: rgba(0, 255, 136, 0.1);
-    border: 1px solid rgba(0, 255, 136, 0.2);
-    border-radius: 12px;
-  }
-  
-  .selected-plan-info .plan-name {
-    color: #00ff88;
-    font-size: 20px;
-    margin: 12px 0;
-  }
-  
-  .selected-plan-info .plan-price-display {
-    margin: 0;
-  }
-  
-  /* Animações para o formulário */
-  .form-section {
-    animation: slideInUp 0.3s ease-out;
-  }
-  
-  .form-section:nth-child(1) { animation-delay: 0.1s; }
-  .form-section:nth-child(2) { animation-delay: 0.2s; }
-  .form-section:nth-child(3) { animation-delay: 0.3s; }
-  
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Estados de foco e erro */
-  .form-input.error {
-    border-color: #ff4444;
-    box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.2);
-  }
-  
-  .form-input.success {
-    border-color: #00ff88;
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
-  }
-  
-  /* Validação visual */
-  .form-group.error label {
-    color: #ff4444;
-  }
-  
-  .form-group.success label {
-    color: #00ff88;
-  }
-  
-  /* Mensagens de erro */
-  .error-message {
-    color: #ff4444;
-    font-size: 12px;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .error-message::before {
-    content: "⚠";
-    font-size: 14px;
-  }
-  
-  /* Sucesso visual */
-  .success-message {
-    color: #00ff88;
-    font-size: 12px;
-    margin-top: 4px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .success-message::before {
-    content: "✓";
-    font-size: 14px;
-  }
-  
-  /* Estilos para PIX */
-  .qr-code-image {
-    width: 180px;
-    height: 180px;
-    border: none;
-    border-radius: 8px;
-    margin: 0 auto 12px;
-    display: block;
-    object-fit: contain;
-  }
-  
-  /* Título do QR Code removido */
-  
-  .pix-ticket-section {
-    text-align: center;
-    margin: 20px 0;
-    padding: 0 16px;
-  }
-  
-  .pix-ticket-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
-    color: #1a1a1a;
-    text-decoration: none;
-    padding: 16px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 15px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
-    min-width: 200px;
-  }
-  
-  .pix-ticket-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 255, 136, 0.3);
-  }
-  
-  /* Removendo label duplicado - já definido acima */
-  
-  .qr-code-text {
-    text-align: center;
-    padding: 20px;
-    background: rgba(0, 255, 136, 0.1);
-    border: 1px solid rgba(0, 255, 136, 0.2);
-    border-radius: 12px;
-  }
 </style>

@@ -6,7 +6,6 @@
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
 
     <!-- Conteúdo Principal -->
@@ -499,7 +498,7 @@
     </main>
 
     <!-- Modal do Glossário -->
-    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary"     />
+    
   </div>
     </RouteGuard>
 </template>
@@ -508,7 +507,7 @@
 import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
+
 import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
@@ -516,14 +515,14 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal,
+
     RouteGuard
   },
   
   data() {
     return {
       sidebarCollapsed: false,
-      showGlossaryModal: false
+
     }
   },
   
@@ -551,13 +550,7 @@ export default {
       this.sidebarCollapsed = collapsed
     },
     
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
-    
-        closeGlossary() {
-      this.showGlossaryModal = false
-    },
+
     
     setupSmoothScroll() {
       // Smooth scroll para links internos

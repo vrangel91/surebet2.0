@@ -3,7 +3,7 @@ export const MARKET_GROUPS = {
   // Over/Under - Mercados de total de gols, chutes, etc.
   'over_under': {
     name: 'Over/Under',
-    color: '#4A90E2', // Azul
+    color: '#198754', // Verde principal
     patterns: [
       'Over/Under',
       'Total Goals',
@@ -19,18 +19,18 @@ export const MARKET_GROUPS = {
       'Total Periods'
     ],
     subcategories: {
-      'goals': { name: 'Gols', color: '#5BA0F2' },
-      'shots': { name: 'Chutes', color: '#6BB0FF' },
-      'corners': { name: 'Escanteios', color: '#7BC0FF' },
-      'cards': { name: 'Cartões', color: '#8BD0FF' },
-      'other': { name: 'Outros', color: '#9BE0FF' }
+      'goals': { name: 'Gols', color: '#20c997' },
+      'shots': { name: 'Chutes', color: '#28d4a3' },
+      'corners': { name: 'Escanteios', color: '#30dfaf' },
+      'cards': { name: 'Cartões', color: '#38eabb' },
+      'other': { name: 'Outros', color: '#40f5c7' }
     }
   },
 
   // Resultado Final - Quem vence, empate, etc.
   'match_result': {
     name: 'Resultado Final',
-    color: '#50C878', // Verde
+    color: '#198754', // Verde principal
     patterns: [
       'Match Winner',
       '1X2',
@@ -45,17 +45,17 @@ export const MARKET_GROUPS = {
       'Relegation'
     ],
     subcategories: {
-      'winner': { name: 'Vencedor', color: '#60D888' },
-      '1x2': { name: '1X2', color: '#70E898' },
-      'double_chance': { name: 'Dupla Chance', color: '#80F8A8' },
-      'other': { name: 'Outros', color: '#90FFB8' }
+      'winner': { name: 'Vencedor', color: '#20c997' },
+      '1x2': { name: '1X2', color: '#28d4a3' },
+      'double_chance': { name: 'Dupla Chance', color: '#30dfaf' },
+      'other': { name: 'Outros', color: '#38eabb' }
     }
   },
 
   // Handicap - Vantagens e desvantagens
   'handicap': {
     name: 'Handicap',
-    color: '#FF6B35', // Laranja
+    color: '#fd7e14', // Laranja ajustado
     patterns: [
       'Handicap',
       'Asian Handicap',
@@ -67,17 +67,17 @@ export const MARKET_GROUPS = {
       'Puck Line'
     ],
     subcategories: {
-      'asian': { name: 'Handicap Asiático', color: '#FF7B45' },
-      'european': { name: 'Handicap Europeu', color: '#FF8B55' },
-      'american': { name: 'Spread Americano', color: '#FF9B65' },
-      'other': { name: 'Outros', color: '#FFAB75' }
+      'asian': { name: 'Handicap Asiático', color: '#fe8a2a' },
+      'european': { name: 'Handicap Europeu', color: '#ff9640' },
+      'american': { name: 'Spread Americano', color: '#ffa256' },
+      'other': { name: 'Outros', color: '#ffae6c' }
     }
   },
 
   // Específicos do Jogador - Performance individual
   'player_specific': {
     name: 'Jogador Específico',
-    color: '#9B59B6', // Roxo
+    color: '#6f42c1', // Roxo ajustado
     patterns: [
       'Player',
       'To Score',
@@ -112,17 +112,17 @@ export const MARKET_GROUPS = {
       'To Score and Team Not Draw'
     ],
     subcategories: {
-      'scoring': { name: 'Marcação', color: '#AB69C6' },
-      'assists': { name: 'Assistências', color: '#BB79D6' },
-      'cards': { name: 'Cartões', color: '#CB89E6' },
-      'other': { name: 'Outros', color: '#DB99F6' }
+      'scoring': { name: 'Marcação', color: '#7c4dd1' },
+      'assists': { name: 'Assistências', color: '#8958e1' },
+      'cards': { name: 'Cartões', color: '#9663f1' },
+      'other': { name: 'Outros', color: '#a36eff' }
     }
   },
 
   // Específicos do Time - Performance coletiva
   'team_specific': {
     name: 'Time Específico',
-    color: '#E74C3C', // Vermelho
+    color: '#dc3545', // Vermelho ajustado
     patterns: [
       'Team',
       'To Win',
@@ -160,17 +160,17 @@ export const MARKET_GROUPS = {
       'To Lose Both Halves'
     ],
     subcategories: {
-      'winning': { name: 'Vitórias', color: '#F7544C' },
-      'scoring': { name: 'Marcação', color: '#FF645C' },
-      'halves': { name: 'Tempos', color: '#FF746C' },
-      'other': { name: 'Outros', color: '#FF847C' }
+      'winning': { name: 'Vitórias', color: '#e74c3c' },
+      'scoring': { name: 'Marcação', color: '#f2544c' },
+      'halves': { name: 'Tempos', color: '#ff5c5c' },
+      'other': { name: 'Outros', color: '#ff646c' }
     }
   },
 
   // Específicos do Jogo - Eventos específicos
   'game_specific': {
     name: 'Jogo Específico',
-    color: '#F39C12', // Amarelo
+    color: '#ffc107', // Amarelo ajustado
     patterns: [
       'Both Teams to Score',
       'Clean Sheet',
@@ -202,20 +202,20 @@ export const MARKET_GROUPS = {
       'Short Range Goals'
     ],
     subcategories: {
-      'scoring': { name: 'Marcação', color: '#FFAC22' },
-      'cards': { name: 'Cartões', color: '#FFBC32' },
-      'corners': { name: 'Escanteios', color: '#FFCC42' },
-      'other': { name: 'Outros', color: '#FFDC52' }
+      'scoring': { name: 'Marcação', color: '#ffca2c' },
+      'cards': { name: 'Cartões', color: '#ffd351' },
+      'corners': { name: 'Escanteios', color: '#ffdc76' },
+      'other': { name: 'Outros', color: '#ffe59b' }
     }
   },
 
   // Outros - Mercados não categorizados
   'others': {
     name: 'Outros',
-    color: '#95A5A6', // Cinza
+    color: '#6c757d', // Cinza ajustado
     patterns: [],
     subcategories: {
-      'misc': { name: 'Diversos', color: '#A5B5B6' }
+      'misc': { name: 'Diversos', color: '#7c858d' }
     }
   }
 }
@@ -265,40 +265,40 @@ export function categorizeMarket(marketName) {
 function getSubcategory(marketName, subcategories) {
   // Garantir que subcategories existe e tem propriedades válidas
   if (!subcategories || typeof subcategories !== 'object') {
-    return { name: 'Diversos', color: '#95A5A6' }
+    return { name: 'Diversos', color: '#6c757d' }
   }
   
   // Lógica específica para cada tipo de grupo
   if (marketName.includes('goal') || marketName.includes('score')) {
-    return subcategories.scoring || subcategories.other || subcategories.misc || { name: 'Gols', color: '#4A90E2' }
+    return subcategories.scoring || subcategories.other || subcategories.misc || { name: 'Gols', color: '#198754' }
   }
   if (marketName.includes('card') || marketName.includes('book')) {
-    return subcategories.cards || subcategories.other || subcategories.misc || { name: 'Cartões', color: '#9B59B6' }
+    return subcategories.cards || subcategories.other || subcategories.misc || { name: 'Cartões', color: '#6f42c1' }
   }
   if (marketName.includes('corner')) {
-    return subcategories.corners || subcategories.other || subcategories.misc || { name: 'Escanteios', color: '#F39C12' }
+    return subcategories.corners || subcategories.other || subcategories.misc || { name: 'Escanteios', color: '#ffc107' }
   }
   if (marketName.includes('win') || marketName.includes('victory')) {
-    return subcategories.winning || subcategories.other || subcategories.misc || { name: 'Vitória', color: '#50C878' }
+    return subcategories.winning || subcategories.other || subcategories.misc || { name: 'Vitória', color: '#198754' }
   }
   if (marketName.includes('assist')) {
-    return subcategories.assists || subcategories.other || subcategories.misc || { name: 'Assistências', color: '#E74C3C' }
+    return subcategories.assists || subcategories.other || subcategories.misc || { name: 'Assistências', color: '#dc3545' }
   }
   if (marketName.includes('half') || marketName.includes('period')) {
-    return subcategories.halves || subcategories.other || subcategories.misc || { name: 'Tempos', color: '#FF6B35' }
+    return subcategories.halves || subcategories.other || subcategories.misc || { name: 'Tempos', color: '#fd7e14' }
   }
   if (marketName.includes('asian')) {
-    return subcategories.asian || subcategories.other || subcategories.misc || { name: 'Asiático', color: '#FF6B35' }
+    return subcategories.asian || subcategories.other || subcategories.misc || { name: 'Asiático', color: '#fd7e14' }
   }
   if (marketName.includes('european')) {
-    return subcategories.european || subcategories.other || subcategories.misc || { name: 'Europeu', color: '#FF6B35' }
+    return subcategories.european || subcategories.other || subcategories.misc || { name: 'Europeu', color: '#fd7e14' }
   }
   if (marketName.includes('spread') || marketName.includes('line')) {
-    return subcategories.american || subcategories.other || subcategories.misc || { name: 'Americano', color: '#FF6B35' }
+    return subcategories.american || subcategories.other || subcategories.misc || { name: 'Americano', color: '#fd7e14' }
   }
   
   // Retornar uma subcategoria padrão se nada for encontrado
-  return subcategories.other || subcategories.misc || { name: 'Diversos', color: '#95A5A6' }
+  return subcategories.other || subcategories.misc || { name: 'Diversos', color: '#6c757d' }
 }
 
 // Função para agrupar mercados por categoria

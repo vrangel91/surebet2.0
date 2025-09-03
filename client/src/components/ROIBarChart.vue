@@ -32,14 +32,145 @@ export default {
   mounted() {
     this.$nextTick(() => {
       this.createChart()
+      this.forceChartBackground()
+      this.forceChartColors()
+      
+      // Observar mudanças de tema
+      this.observeThemeChanges()
     })
   },
   beforeUnmount() {
     if (this.chart) {
       this.chart.destroy()
     }
+    
+    // Limpar observer de tema
+    if (this.themeObserver) {
+      this.themeObserver.disconnect()
+    }
+    
+    // Limpar intervalo de verificação
+    if (this.backgroundCheckInterval) {
+      clearInterval(this.backgroundCheckInterval)
+    }
   },
   methods: {
+    // Método para obter cor do tema atual
+    getThemeColor(cssVariable, fallback) {
+      try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable)
+        return value || fallback
+      } catch (error) {
+        return fallback
+      }
+    },
+    
+    // Método para forçar o fundo do gráfico
+    forceChartBackground() {
+      if (!this.chart) return
+      
+      const canvas = this.chart.canvas
+      
+      // Aplicar fundo via CSS inline com !important
+      canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2d2d2d'), 'important')
+      canvas.style.setProperty('background', this.getThemeColor('--bg-tertiary', '#2d2d2d'), 'important')
+      
+      // Forçar redraw do gráfico
+      this.chart.update('none')
+      
+      // Aplicar fundo diretamente no contexto 2D após um delay
+      setTimeout(() => {
+        if (this.chart && this.chart.ctx) {
+          const chartCtx = this.chart.ctx
+          const chartArea = this.chart.chartArea
+          
+          if (chartArea) {
+            chartCtx.save()
+            chartCtx.globalCompositeOperation = 'destination-over'
+            chartCtx.fillStyle = this.getThemeColor('--bg-tertiary', '#2d2d2d')
+            chartCtx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top)
+            chartCtx.restore()
+          }
+        }
+      }, 200)
+    },
+    
+    // Método para forçar atualização das cores
+    forceChartColors() {
+      if (!this.chart) return
+      
+      // Atualizar cores dos eixos
+      this.chart.options.scales.x.grid.color = this.getThemeColor('--border-primary', '#404040')
+      this.chart.options.scales.x.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
+      this.chart.options.scales.y.grid.color = this.getThemeColor('--border-primary', '#404040')
+      this.chart.options.scales.y.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
+      
+      // Atualizar cores dos tooltips
+      this.chart.options.plugins.tooltip.backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
+      this.chart.options.plugins.tooltip.titleColor = this.getThemeColor('--text-primary', '#ffffff')
+      this.chart.options.plugins.tooltip.bodyColor = this.getThemeColor('--text-primary', '#ffffff')
+      this.chart.options.plugins.tooltip.borderColor = this.getThemeColor('--accent-secondary', '#00cc6a')
+      
+      // Forçar redraw
+      this.chart.update('none')
+    },
+    
+    // Observar mudanças de tema
+    observeThemeChanges() {
+      if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+              console.log('🎨 Tema mudou detectado! Aplicando novas cores...')
+              // Aguardar um pouco para o tema ser aplicado
+              setTimeout(() => {
+                this.forceChartBackground()
+                this.forceChartColors()
+              }, 100)
+            }
+          })
+        })
+        
+        // Observar mudanças no atributo data-theme do html
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        })
+        
+        // Guardar referência para limpeza
+        this.themeObserver = observer
+      }
+      
+      // Verificar fundo e cores periodicamente
+      this.backgroundCheckInterval = setInterval(() => {
+        if (this.chart) {
+          this.forceChartBackground()
+          this.forceChartColors()
+        }
+      }, 2000) // Verificar a cada 2 segundos
+      
+      // Verificar tema atual e aplicar cores
+      this.checkAndApplyTheme()
+    },
+    
+    // Verificar e aplicar tema atual
+    checkAndApplyTheme() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
+      console.log(`🎯 Tema atual detectado: ${currentTheme}`)
+      
+      // Aplicar cores baseadas no tema atual
+      setTimeout(() => {
+        this.forceChartColors()
+      }, 500)
+    },
+    
+    // Método público para forçar atualização de tema
+    forceThemeUpdate() {
+      console.log('🔄 Forçando atualização de tema...')
+      this.forceChartBackground()
+      this.forceChartColors()
+    },
+    
     createChart() {
       const ctx = this.$refs.chartCanvas
       if (!ctx) return
@@ -51,15 +182,34 @@ export default {
           responsive: true,
           maintainAspectRatio: false,
           indexAxis: 'y',
+          // Configuração do fundo do gráfico
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2d2d2d'),
           plugins: {
+            // Plugin personalizado para fundo do canvas
+            customCanvasBackgroundColor: {
+              id: 'customCanvasBackgroundColor',
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx;
+                const chartArea = chart.chartArea;
+                
+                // Forçar fundo da área de plotagem
+                if (chartArea) {
+                  ctx.save();
+                  ctx.globalCompositeOperation = 'destination-over';
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2d2d2d');
+                  ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+                  ctx.restore();
+                }
+              }
+            },
             legend: {
               display: false
             },
             tooltip: {
-              backgroundColor: '#2a2a2a',
-              titleColor: '#ffffff',
-              bodyColor: '#ffffff',
-              borderColor: '#404040',
+              backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'),
+              titleColor: this.getThemeColor('--text-primary', '#ffffff'),
+              bodyColor: this.getThemeColor('--text-primary', '#ffffff'),
+              borderColor: this.getThemeColor('--accent-secondary', '#00cc6a'),
               borderWidth: 1,
               callbacks: {
                 title: (context) => {
@@ -74,10 +224,10 @@ export default {
           scales: {
             x: {
               grid: {
-                color: '#404040'
+                color: this.getThemeColor('--border-primary', '#404040')
               },
               ticks: {
-                color: '#b0b0b0',
+                color: this.getThemeColor('--text-primary', '#ffffff'),
                 callback: (value) => {
                   return `${value.toFixed(1)}%`
                 }
@@ -85,10 +235,10 @@ export default {
             },
             y: {
               grid: {
-                color: '#404040'
+                color: this.getThemeColor('--border-primary', '#404040')
               },
               ticks: {
-                color: '#b0b0b0',
+                color: this.getThemeColor('--text-primary', '#ffffff'),
                 maxTicksLimit: 10
               }
             }
@@ -98,17 +248,17 @@ export default {
               backgroundColor: (context) => {
                 const value = context.parsed.x
                 if (value >= 0) {
-                  return '#00ff88'
+                  return this.getThemeColor('--accent-primary', '#00ff88')
                 } else {
-                  return '#ff4444'
+                  return this.getThemeColor('--error-color', '#ff4444')
                 }
               },
               borderColor: (context) => {
                 const value = context.parsed.x
                 if (value >= 0) {
-                  return '#00cc6a'
+                  return this.getThemeColor('--accent-secondary', '#00cc6a')
                 } else {
-                  return '#cc3333'
+                  return this.getThemeColor('--error-hover', '#ff6666')
                 }
               },
               borderWidth: 1
@@ -157,6 +307,11 @@ export default {
       if (this.chart) {
         this.chart.data = this.getChartData()
         this.chart.update('active')
+        
+        // Forçar fundo após atualização
+        setTimeout(() => {
+          this.forceChartBackground()
+        }, 100)
       } else {
         this.$nextTick(() => {
           this.createChart()
@@ -180,5 +335,58 @@ export default {
 canvas {
   max-width: 100%;
   max-height: 100%;
+}
+
+/* Forçar fundo do gráfico via CSS */
+.chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo dark */
+[data-theme="dark"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo light */
+[data-theme="light"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Forçar fundo também no container */
+.chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo dark no container */
+[data-theme="dark"] .chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo light no container */
+[data-theme="light"] .chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Regras adicionais para forçar o fundo */
+.chart-container canvas[style*="background"] {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Forçar fundo em todos os elementos do gráfico */
+.chart-container * {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Regra específica para o canvas do Chart.js */
+.chart-container canvas[width][height] {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
 }
 </style>

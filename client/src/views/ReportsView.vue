@@ -6,7 +6,6 @@
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
 
     <!-- Conteúdo Principal -->
@@ -298,10 +297,7 @@
     </div>
 
     <!-- Modal do Glossário -->
-        <GlossaryModal
-      :isVisible="showGlossaryModal"
-      @close="closeGlossary"
-    />
+        
 
     <!-- Modal de Confirmação de Exclusão -->
     <div v-if="showDeleteModal" class="modal-overlay" @click="closeDeleteModal">
@@ -356,7 +352,7 @@ import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
+
 import RouteGuard from '../components/RouteGuard.vue'
 import { formatMarketForDisplay } from '../utils/market-translations.js'
 
@@ -368,13 +364,13 @@ export default {
     ROIBarChart,
     Sidebar,
     Header,
-    GlossaryModal,
+
     RouteGuard
   },
   data() {
     return {
       sidebarCollapsed: false,
-      showGlossaryModal: false,
+
       isDarkTheme: true,
       showData: true,
       recordsPerPage: 10,
@@ -516,12 +512,7 @@ export default {
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
-    closeGlossary() {
-      this.showGlossaryModal = false
-    },
+
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
@@ -736,8 +727,8 @@ export default {
          position: fixed;
          top: 100px;
          right: 20px;
-         background: #00ff88;
-         color: #1a1a1a;
+         background: var(--accent-primary);
+color: var(--text-primary);
          padding: 12px 20px;
          border-radius: 8px;
          font-weight: 600;
@@ -1102,12 +1093,12 @@ export default {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
 }
 
 .page-subtitle {
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   font-size: 16px;
   margin: 0;
 }
@@ -1163,7 +1154,7 @@ export default {
   
   &:focus {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 0 0 2px var(--accent-shadow);
   }
   
   &.refreshing {
@@ -1553,7 +1544,7 @@ export default {
     color: var(--error);
     
     &:hover {
-      background: rgba(255, 68, 68, 0.1);
+      background: var(--error-hover-bg);
       transform: scale(1.1);
     }
   }
@@ -1607,7 +1598,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--modal-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1642,7 +1633,7 @@ export default {
 .modal-close {
   background: none;
   border: none;
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -1655,7 +1646,7 @@ export default {
   transition: background 0.3s ease;
   
   &:hover {
-    background: #404040;
+    background: var(--bg-overlay);
   }
 }
 
@@ -1675,7 +1666,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 12px 0;
-  border-bottom: 1px solid #404040;
+  border-bottom: 1px solid var(--border-primary);
   
   &:last-child {
     border-bottom: none;
@@ -1684,11 +1675,11 @@ export default {
 
 .detail-label {
   font-weight: 600;
-  color: #b0b0b0;
+  color: var(--text-secondary);
 }
 
 .detail-value {
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 /* Modal de Exclusão */
@@ -1777,14 +1768,14 @@ export default {
   background: var(--error);
   border: none;
   border-radius: 6px;
-  color: #ffffff;
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
   font-weight: 500;
   
   &:hover {
-    background: #cc3333;
+    background: var(--error-hover);
     transform: translateY(-1px);
   }
 }
@@ -1917,5 +1908,606 @@ export default {
   .roi-chart-container {
     height: 300px;
   }
+}
+
+/* Estilos específicos para o modo light */
+[data-theme="light"] .reports-container {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .page-title {
+  color: var(--accent-primary);
+}
+
+[data-theme="light"] .page-subtitle {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .content-header {
+  background: var(--bg-primary);
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .control-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .control-btn:hover {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .refresh-btn {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .refresh-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+[data-theme="light"] .refresh-btn:focus {
+  box-shadow: 0 0 0 2px var(--accent-shadow);
+}
+
+[data-theme="light"] .refresh-btn.refreshing {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .performance-cards {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] .user-summary-card,
+[data-theme="light"] .chart-card,
+[data-theme="light"] .roi-chart-card {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="light"] .card-header h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .card-subtitle {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .earning-label,
+[data-theme="light"] .stat-label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .earning-value {
+  color: var(--accent-primary);
+}
+
+[data-theme="light"] .stat-value {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .chart-card h3,
+[data-theme="light"] .roi-chart-card h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .table-controls {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] .records-select {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .records-select:focus {
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .search-input {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .search-input:focus {
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .search-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+[data-theme="light"] .table-container {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="light"] .bets-table th {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .bets-table td {
+  color: var(--text-primary);
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .sortable:hover {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .no-records {
+  color: var(--text-tertiary);
+}
+
+[data-theme="light"] .bet-row:hover {
+  background: var(--bg-hover);
+}
+
+[data-theme="light"] .status-badge.Finalizado {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .status-badge.Em\ andamento {
+  background: var(--warning-color);
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .status-badge.Cancelado {
+  background: var(--error-color);
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .profit-positive {
+  color: var(--accent-primary);
+}
+
+[data-theme="light"] .profit-negative {
+  color: var(--error-color);
+}
+
+[data-theme="light"] .action-btn.view-btn {
+  color: var(--accent-primary);
+}
+
+[data-theme="light"] .action-btn.view-btn:hover {
+  background: var(--accent-hover-bg);
+}
+
+[data-theme="light"] .action-btn.delete-btn {
+  color: var(--error-color);
+}
+
+[data-theme="light"] .action-btn.delete-btn:hover {
+  background: var(--error-hover-bg);
+}
+
+[data-theme="light"] .action-btn.delete-btn {
+  &:hover {
+    background: var(--error-hover-bg);
+  }
+}
+
+[data-theme="light"] .pagination-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .pagination-btn:hover:not(:disabled) {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .page-info {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .table-summary {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .table-summary .label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .table-summary .value {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .modal-content {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="light"] .modal-header {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .modal-header h3 {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .modal-close {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .modal-close:hover {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .detail-row {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .detail-label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .detail-value {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .bet-summary {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="light"] .bet-summary .summary-item {
+  border-bottom-color: var(--border-primary);
+}
+
+[data-theme="light"] .bet-summary .label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .bet-summary .value {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .modal-footer {
+  border-top-color: var(--border-primary);
+}
+
+[data-theme="light"] .btn-cancel {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .btn-cancel:hover {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .btn-delete {
+  background: var(--error-color);
+  color: var(--bg-primary);
+}
+
+[data-theme="light"] .btn-delete:hover {
+  background: var(--error-hover);
+}
+
+/* Melhorias adicionais para o modo light */
+[data-theme="light"] .visibility-toggle {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .visibility-toggle:hover {
+  background: var(--bg-overlay);
+}
+
+[data-theme="light"] .pagination-control label {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .search-control {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] .table-summary .left {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .table-summary .right {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] .modal-overlay {
+  background: var(--modal-overlay);
+}
+
+[data-theme="light"] .warning-text strong {
+  color: var(--text-primary);
+}
+
+[data-theme="light"] .warning-details {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .earning-item,
+[data-theme="light"] .stat-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+[data-theme="light"] .earning-item:hover,
+[data-theme="light"] .stat-item:hover {
+  background: var(--bg-overlay);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .chart-container,
+[data-theme="light"] .roi-chart-container {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+}
+
+[data-theme="light"] .action-buttons {
+  background: var(--bg-primary);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+[data-theme="light"] .action-btn {
+  border-radius: 6px;
+}
+
+[data-theme="light"] .action-btn:hover {
+  transform: scale(1.1);
+  transition: all 0.2s ease;
+}
+
+[data-theme="light"] .sort-icon {
+  color: var(--text-secondary);
+}
+
+[data-theme="light"] .sortable:hover .sort-icon {
+  color: var(--accent-primary);
+}
+
+[data-theme="light"] .scroll-spacer {
+  background: var(--bg-primary);
+}
+
+/* Melhorias para responsividade no modo light */
+@media (max-width: 768px) {
+  [data-theme="light"] .performance-cards {
+    background: var(--bg-primary);
+  }
+  
+  [data-theme="light"] .roi-chart-section {
+    background: var(--bg-primary);
+  }
+  
+  [data-theme="light"] .bets-table-section {
+    background: var(--bg-primary);
+  }
+}
+
+@media (max-width: 480px) {
+  [data-theme="light"] .content-header {
+    background: var(--bg-primary);
+  }
+  
+  [data-theme="light"] .table-controls {
+    background: var(--bg-primary);
+  }
+}
+
+/* Melhorias adicionais para elementos específicos no modo light */
+[data-theme="light"] .status-badge {
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .status-badge.Finalizado {
+  box-shadow: 0 2px 4px var(--accent-shadow);
+}
+
+[data-theme="light"] .status-badge.Em\ andamento {
+  box-shadow: 0 2px 4px var(--warning-shadow);
+}
+
+[data-theme="light"] .status-badge.Cancelado {
+  box-shadow: 0 2px 4px var(--error-shadow);
+}
+
+/* Melhorias para botões de ação específicos no modo light */
+[data-theme="light"] .action-btn.view-btn:hover {
+  background: var(--accent-hover-bg);
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--accent-shadow);
+}
+
+[data-theme="light"] .action-btn.delete-btn:hover {
+  background: var(--error-hover-bg);
+border-color: var(--error-color);
+box-shadow: 0 2px 8px var(--error-shadow);
+}
+
+/* Melhorias para paginação no modo light */
+[data-theme="light"] .pagination-btn:hover:not(:disabled) {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--accent-shadow);
+}
+
+[data-theme="light"] .pagination-btn:disabled {
+  background: var(--bg-tertiary);
+  color: var(--text-tertiary);
+  border-color: var(--border-primary);
+  cursor: not-allowed;
+}
+
+/* Melhorias para campos de entrada no modo light */
+[data-theme="light"] .search-input:hover,
+[data-theme="light"] .records-select:hover {
+  border-color: var(--accent-primary);
+  background: var(--bg-primary);
+}
+
+/* Melhorias para o botão de refresh no modo light */
+[data-theme="light"] .refresh-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: 0 4px 12px var(--accent-shadow);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .refresh-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Melhorias para o toggle de visibilidade no modo light */
+[data-theme="light"] .visibility-toggle {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .visibility-toggle:hover {
+  background: var(--accent-hover-bg);
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
+}
+
+/* Melhorias para o resumo da tabela no modo light */
+[data-theme="light"] .table-summary {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 1px solid var(--border-primary);
+}
+
+[data-theme="light"] .table-summary .summary-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="light"] .table-summary .summary-item:hover {
+  background: var(--accent-hover-bg);
+  transform: translateX(4px);
+}
+
+/* Melhorias para modais no modo light */
+[data-theme="light"] .modal-overlay {
+  backdrop-filter: blur(8px);
+}
+
+[data-theme="light"] .modal-content {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+}
+
+[data-theme="light"] .modal-header {
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+}
+
+[data-theme="light"] .modal-close:hover {
+  background: var(--error-hover-bg);
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+/* Melhorias para botões de modal no modo light */
+[data-theme="light"] .btn-delete:hover {
+  background: var(--error-hover);
+  box-shadow: 0 4px 12px var(--error-shadow);
+  transform: translateY(-2px);
+}
+
+[data-theme="light"] .btn-delete:active {
+  transform: translateY(0) scale(0.95);
+}
+
+[data-theme="light"] .btn-cancel:hover {
+  background: var(--bg-overlay);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Melhorias para acessibilidade no modo light */
+[data-theme="light"] .sortable:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  background: var(--accent-hover-bg);
+}
+
+[data-theme="light"] .sortable:hover {
+  background: var(--accent-hover-bg);
+}
+
+/* Melhorias para o estado de loading no modo light */
+[data-theme="light"] .refresh-btn.refreshing .refresh-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Melhorias para notificações no modo light */
+[data-theme="light"] .notification {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  color: var(--bg-primary);
+  box-shadow: 0 8px 25px var(--accent-shadow);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(10px);
+}
+
+/* Melhorias para estados de hover mais refinados no modo light */
+[data-theme="light"] .user-summary-card:hover,
+[data-theme="light"] .chart-card:hover,
+[data-theme="light"] .roi-chart-card:hover {
+  box-shadow: 0 8px 25px var(--shadow-color);
+  transform: translateY(-3px);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .table-container:hover {
+  box-shadow: 0 8px 25px var(--shadow-color);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .bet-row:hover {
+  background: var(--accent-hover-bg);
+  border-left: 3px solid var(--accent-primary);
+}
+
+/* Melhorias para contraste e legibilidade no modo light */
+[data-theme="light"] .page-title {
+  text-shadow: 0 1px 2px var(--text-shadow);
+}
+
+[data-theme="light"] .earning-value {
+  text-shadow: 0 1px 2px var(--accent-shadow);
+}
+
+[data-theme="light"] .stat-value {
+  text-shadow: 0 1px 2px var(--text-shadow);
+}
+
+[data-theme="light"] .profit-positive {
+  text-shadow: 0 1px 2px var(--accent-shadow);
+}
+
+[data-theme="light"] .profit-negative {
+  text-shadow: 0 1px 2px var(--error-shadow);
 }
 </style>

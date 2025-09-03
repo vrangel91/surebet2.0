@@ -6,7 +6,6 @@
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
 
     <!-- Conteúdo Principal -->
@@ -219,19 +218,6 @@
             <div class="section-content">
               <div class="setting-item">
                 <div class="setting-info">
-                  <label class="setting-label">Tema Escuro</label>
-                  <p class="setting-description">Ativa o tema escuro por padrão</p>
-                </div>
-                <div class="setting-control">
-                  <label class="enhanced-toggle">
-                    <input type="checkbox" v-model="settings.interface.darkMode" @change="saveSettings">
-                    <span class="toggle-slider"></span>
-                  </label>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
                   <label class="setting-label">Sidebar Colapsada</label>
                   <p class="setting-description">Inicia com a sidebar minimizada</p>
                 </div>
@@ -244,109 +230,6 @@
               </div>
 
 
-            </div>
-          </div>
-
-          <!-- Perfil e Segurança -->
-          <div class="settings-section">
-            <div class="section-header">
-              <div class="section-icon">🔐</div>
-              <div class="section-title">
-                <h3>Perfil e Segurança</h3>
-                <p>Gerencie suas informações pessoais e segurança</p>
-              </div>
-            </div>
-            <div class="section-content">
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Nome Completo</label>
-                  <p class="setting-description">Seu nome completo para exibição</p>
-                </div>
-                <div class="setting-control">
-                  <input 
-                    type="text" 
-                    v-model="settings.profile.fullName" 
-                    @change="saveSettings"
-                    class="enhanced-input profile-input"
-                    placeholder="Seu nome completo"
-                  >
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Email</label>
-                  <p class="setting-description">Seu endereço de email</p>
-                </div>
-                <div class="setting-control">
-                  <input 
-                    type="email" 
-                    v-model="settings.profile.email" 
-                    @change="saveSettings"
-                    class="enhanced-input profile-input"
-                    placeholder="seu@email.com"
-                  >
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Nova Senha</label>
-                  <p class="setting-description">Digite sua nova senha (mínimo 6 caracteres)</p>
-                </div>
-                <div class="setting-control">
-                  <div class="password-input-group">
-                    <input 
-                      type="password" 
-                      v-model="settings.profile.newPassword" 
-                      @change="saveSettings"
-                      class="enhanced-input profile-input"
-                      placeholder="Nova senha"
-                      minlength="6"
-                    >
-                    <button @click="togglePasswordVisibility" class="password-toggle-btn">
-                      <span v-if="!showPassword" class="btn-icon">👁️</span>
-                      <span v-if="showPassword" class="btn-icon">🙈</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Confirmar Senha</label>
-                  <p class="setting-description">Confirme sua nova senha</p>
-                </div>
-                <div class="setting-control">
-                  <div class="password-input-group">
-                    <input 
-                      type="password" 
-                      v-model="settings.profile.confirmPassword" 
-                      @change="saveSettings"
-                      class="enhanced-input profile-input"
-                      placeholder="Confirmar senha"
-                      minlength="6"
-                    >
-                    <button @click="togglePasswordVisibility" class="password-toggle-btn">
-                      <span v-if="!showPassword" class="btn-icon">👁️</span>
-                      <span v-if="showPassword" class="btn-icon">🙈</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div class="setting-item">
-                <div class="setting-info">
-                  <label class="setting-label">Alterar Senha</label>
-                  <p class="setting-description">Clique para alterar sua senha</p>
-                </div>
-                <div class="setting-control">
-                  <button @click="changePassword" class="primary-btn" :disabled="!isPasswordFormValid">
-                    <span class="btn-icon">🔑</span>
-                    Alterar Senha
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -465,20 +348,14 @@
       @change="handleFileImport"
     >
 
-    <!-- Modal do Glossário -->
-        <GlossaryModal
-      :isVisible="showGlossaryModal"
-      @close="closeGlossary"
-    />
+    
   </div>
     </RouteGuard>
 </template>
 
 <script>
-import { useTheme } from '../composables/useTheme'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
 import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
@@ -486,18 +363,12 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal,
     RouteGuard
   },
-  setup() {
-    const { setTheme } = useTheme()
-    return { setTheme }
-  },
   data() {
-    return {
-      sidebarCollapsed: false,
-      showGlossaryModal: false,
-      settings: {
+          return {
+        sidebarCollapsed: false,
+        settings: {
         notifications: {
           sound: true,
           browser: false,
@@ -514,15 +385,9 @@ export default {
           activeFilter: 'all'
         },
         interface: {
-          darkMode: true,
           sidebarCollapsed: false
         },
-        profile: {
-          fullName: '',
-          email: '',
-          newPassword: '',
-          confirmPassword: ''
-        },
+
         reports: {
           defaultStake: 100.00,
           defaultCurrency: 'BRL',
@@ -542,12 +407,7 @@ export default {
     isAdmin() {
       return this.$store.getters.isAdmin
     },
-    isPasswordFormValid() {
-      return this.settings.profile.newPassword && 
-             this.settings.profile.confirmPassword && 
-             this.settings.profile.newPassword === this.settings.profile.confirmPassword &&
-             this.settings.profile.newPassword.length >= 6;
-    }
+
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -563,14 +423,6 @@ export default {
     
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
-    },
-    
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
-    
-    closeGlossary() {
-      this.showGlossaryModal = false
     },
     
     logout() {
@@ -594,13 +446,6 @@ export default {
     saveSettings() {
       try {
         localStorage.setItem('app_settings', JSON.stringify(this.settings))
-        
-        // Aplicar tema se mudou
-        if (this.settings.interface?.darkMode !== undefined) {
-          const theme = this.settings.interface.darkMode ? 'dark' : 'light'
-          this.setTheme(theme)
-        }
-        
         this.showNotification('Configurações salvas!')
       } catch (error) {
         console.error('Erro ao salvar configurações:', error)
@@ -694,36 +539,7 @@ export default {
               }, 3000)
       },
       
-      async changePassword() {
-        if (!this.isPasswordFormValid) {
-          this.showNotification('As senhas não coincidem ou são muito curtas.', 'error');
-          return;
-        }
 
-        try {
-          // Aqui você pode implementar a chamada para a API de mudança de senha
-          // Por enquanto, vamos simular o sucesso
-          console.log('Alterando senha para:', this.settings.profile.newPassword);
-          
-          // Simular delay da API
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          this.showNotification('Senha alterada com sucesso!', 'success');
-          
-          // Limpar os campos de senha
-          this.settings.profile.newPassword = '';
-          this.settings.profile.confirmPassword = '';
-          
-          // Salvar configurações
-          this.saveSettings();
-        } catch (error) {
-          console.error('Erro ao alterar senha:', error);
-          this.showNotification('Erro ao alterar senha: ' + (error.message || 'Erro desconhecido'), 'error');
-        }
-      },
-      togglePasswordVisibility() {
-        this.showPassword = !this.showPassword;
-      }
     }
   }
 </script>
@@ -800,14 +616,7 @@ export default {
   }
 }
 
-.user-profile {
-  padding: 20px;
-  border-bottom: 1px solid var(--border-primary);
-  
-  .sidebar.collapsed & {
-    padding: 20px 10px;
-  }
-}
+
 
 .user-info {
   display: flex;
@@ -1157,9 +966,7 @@ input:checked + .toggle-slider:before {
     box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
   }
   
-  &.profile-input {
-    width: 250px;
-  }
+
 }
 
 .enhanced-select {

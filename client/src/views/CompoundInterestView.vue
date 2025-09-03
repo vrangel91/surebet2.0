@@ -4,7 +4,6 @@
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
     
     <main class="main-content">
@@ -169,10 +168,7 @@
     </main>
 
     <!-- Modal do Glossário -->
-        <GlossaryModal
-      :isVisible="showGlossaryModal"
-      @close="closeGlossary"
-    />
+    
   </div>
     </RouteGuard>
 </template>
@@ -180,7 +176,7 @@
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import GlossaryModal from '../components/GlossaryModal.vue'
+
 import RouteGuard from '../components/RouteGuard.vue'
 import Chart from 'chart.js/auto'
 
@@ -189,13 +185,13 @@ export default {
   components: {
     Sidebar,
     Header,
-    GlossaryModal,
+
     RouteGuard
   },
   data() {
     return {
       sidebarCollapsed: false,
-      showGlossaryModal: false,
+
       formData: {
         initialValue: 1000,
         interestRate: 1,
@@ -222,22 +218,104 @@ export default {
       immediate: false
     }
   },
+  
+  // Watcher para mudanças no tema
+  mounted() {
+    // Observar mudanças no atributo data-theme
+    const observer = new MutationObserver(() => {
+      this.updateChartBackground()
+    })
+    
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    
+    // Calcular automaticamente com valores padrão
+    this.calculateInterest()
+  },
   methods: {
+    // Método para obter cores do tema atual
+    getThemeColor(cssVariable, fallback) {
+      return getComputedStyle(document.documentElement).getPropertyValue(cssVariable) || fallback
+    },
+    
+    // Método para forçar atualização do fundo do gráfico
+    updateChartBackground() {
+      if (this.chart) {
+        // Forçar redraw do gráfico
+        this.chart.update('none');
+        
+        // Aplicar fundo via CSS como fallback
+        const canvas = this.chart.canvas;
+        if (canvas) {
+          // Forçar fundo via CSS inline
+          canvas.style.backgroundColor = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+          canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important');
+          
+          // Também aplicar ao contexto 2D
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          }
+        }
+      }
+    },
+    
+    // Método para forçar o fundo do gráfico de forma mais agressiva
+    forceChartBackground() {
+      if (this.chart && this.chart.canvas) {
+        const canvas = this.chart.canvas;
+        
+        // 1. Forçar via CSS inline
+        canvas.style.cssText = `
+          background-color: ${this.getThemeColor('--bg-tertiary', '#2a2a2a')} !important;
+        `;
+        
+        // 2. Forçar via setProperty
+        canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important');
+        
+        // 3. Forçar via contexto 2D
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+        
+        // 4. Forçar redraw
+        this.chart.update('none');
+        
+        // 5. Aplicar novamente após um delay
+        setTimeout(() => {
+          if (this.chart && this.chart.canvas) {
+            const canvas = this.chart.canvas;
+            canvas.style.backgroundColor = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+            
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+          }
+        }, 100);
+      }
+    },
 
     showNotification(message, type = 'info') {
       const notification = document.createElement('div')
       notification.className = 'notification'
       notification.textContent = message
       
-      let backgroundColor = '#00ff88'
-      let textColor = '#1a1a1a'
+      let backgroundColor = 'var(--accent-primary)'
+      let textColor = 'var(--bg-primary)'
       
       if (type === 'error') {
-        backgroundColor = '#ff6b6b'
-        textColor = '#ffffff'
+        backgroundColor = 'var(--error-color)'
+        textColor = 'var(--text-primary)'
       } else if (type === 'warning') {
-        backgroundColor = '#ffc107'
-        textColor = '#1a1a1a'
+        backgroundColor = 'var(--warning-color)'
+        textColor = 'var(--bg-primary)'
       }
       
       notification.style.cssText = `
@@ -270,13 +348,7 @@ export default {
       this.sidebarCollapsed = collapsed
     },
     
-    openGlossary() {
-      this.showGlossaryModal = true
-    },
-    
-    closeGlossary() {
-      this.showGlossaryModal = false
-    },
+
     
 
 
@@ -393,18 +465,32 @@ export default {
           {
             label: 'Capital Total',
             data: this.evolutionTable.map(row => row.total),
-            borderColor: '#00ff88',
-            backgroundColor: 'rgba(0, 255, 136, 0.1)',
+            borderColor: this.getThemeColor('--accent-primary', '#00ff88'),
+            backgroundColor: this.getThemeColor('--accent-primary', '#00ff88') + '15',
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            borderWidth: 3,
+            // Configurações para área preenchida mais bonita
+            fillColor: this.getThemeColor('--accent-primary', '#00ff88') + '10',
+            // Gradiente personalizado para a área
+            fillGradient: {
+              type: 'linear',
+              colors: [
+                this.getThemeColor('--accent-primary', '#00ff88') + '20',
+                this.getThemeColor('--accent-primary', '#00ff88') + '08',
+                this.getThemeColor('--accent-primary', '#00ff88') + '05'
+              ]
+            }
           },
           {
             label: 'Capital Inicial',
             data: this.evolutionTable.map(() => this.formData.initialValue),
-            borderColor: '#ff6b6b',
-            backgroundColor: 'rgba(255, 107, 107, 0.1)',
+            borderColor: this.getThemeColor('--error-color', '#ff4444'),
+            backgroundColor: this.getThemeColor('--error-color', '#ff4444') + '15',
             borderDash: [5, 5],
-            fill: false
+            fill: true,
+            fillColor: this.getThemeColor('--error-color', '#ff4444') + '08',
+            borderWidth: 2
           }
         ]
       }
@@ -452,26 +538,149 @@ export default {
             animation: {
               duration: 500
             },
+            // Configuração do fundo do gráfico
+            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
             plugins: {
+              // Plugin personalizado para fundo do canvas - VERSÃO SUPER AGRESSIVA
+              customCanvasBackgroundColor: {
+                id: 'customCanvasBackgroundColor',
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx;
+                  const chartArea = chart.chartArea;
+                  
+                  // Forçar fundo em múltiplas camadas
+                  ctx.save();
+                  
+                  // Camada 1: Fundo geral do canvas
+                  ctx.globalCompositeOperation = 'destination-over';
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+                  ctx.fillRect(0, 0, chart.width, chart.height);
+                  
+                  // Camada 2: Fundo específico da área de plotagem
+                  if (chartArea) {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+                    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+                  }
+                  
+                  // Camada 3: Fundo adicional para garantir
+                  ctx.globalCompositeOperation = 'destination-over';
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+                  ctx.fillRect(0, 0, chart.width, chart.height);
+                  
+                  ctx.restore();
+                },
+                
+                // Também executar após desenhar
+                afterDraw: (chart) => {
+                  const ctx = chart.ctx;
+                  const chartArea = chart.chartArea;
+                  
+                  if (chartArea) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = 'destination-over';
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
+                    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
+                    ctx.restore();
+                  }
+                }
+              },
+              
+              // Plugin para melhorar a área preenchida com gradiente
+              customFillArea: {
+                id: 'customFillArea',
+                afterDraw: (chart) => {
+                  const ctx = chart.ctx;
+                  const datasets = chart.data.datasets;
+                  
+                  datasets.forEach((dataset, datasetIndex) => {
+                    if (dataset.fill && dataset.data && dataset.data.length > 0) {
+                      const meta = chart.getDatasetMeta(datasetIndex);
+                      if (meta.visible) {
+                        ctx.save();
+                        
+                        // Criar gradiente para Capital Total
+                        if (dataset.label === 'Capital Total') {
+                          const gradient = ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
+                          const baseColor = this.getThemeColor('--accent-primary', '#00ff88');
+                          
+                          gradient.addColorStop(0, baseColor + '20');   // Mais claro no topo
+                          gradient.addColorStop(0.5, baseColor + '12'); // Médio no meio
+                          gradient.addColorStop(1, baseColor + '05');   // Mais escuro na base
+                          
+                          ctx.fillStyle = gradient;
+                        }
+                        
+                        // Criar gradiente para Capital Inicial
+                        if (dataset.label === 'Capital Inicial') {
+                          const gradient = ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
+                          const baseColor = this.getThemeColor('--error-color', '#ff4444');
+                          
+                          gradient.addColorStop(0, baseColor + '15');   // Mais claro no topo
+                          gradient.addColorStop(0.5, baseColor + '10'); // Médio no meio
+                          gradient.addColorStop(1, baseColor + '05');   // Mais escuro na base
+                          
+                          ctx.fillStyle = gradient;
+                        }
+                        
+                        // Desenhar área preenchida
+                        ctx.beginPath();
+                        ctx.moveTo(meta.data[0].x, meta.data[0].y);
+                        
+                        for (let i = 1; i < meta.data.length; i++) {
+                          ctx.lineTo(meta.data[i].x, meta.data[i].y);
+                        }
+                        
+                        // Completar o caminho para baixo
+                        ctx.lineTo(meta.data[meta.data.length - 1].x, chart.chartArea.bottom);
+                        ctx.lineTo(meta.data[0].x, chart.chartArea.bottom);
+                        ctx.closePath();
+                        
+                        ctx.fill();
+                        ctx.restore();
+                      }
+                    }
+                  });
+                }
+              },
               legend: {
                 labels: {
-                  color: '#ffffff'
+                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  font: {
+                    size: 12,
+                    weight: '500'
+                  },
+                  usePointStyle: true,
+                  padding: 20
                 }
               }
             },
             scales: {
               x: {
                 ticks: {
-                  color: '#ffffff',
-                  maxTicksLimit: 10
+                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  maxTicksLimit: 10,
+                  font: {
+                    size: 11
+                  }
                 },
                 grid: {
-                  color: 'rgba(255, 255, 255, 0.1)'
-                }
+                  color: this.getThemeColor('--border-primary', '#666666') + '20',
+                  drawBorder: false
+                },
+                border: {
+                  color: this.getThemeColor('--border-primary', '#666666') + '40'
+                },
+                // Fundo do eixo X
+                backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a')
               },
               y: {
                 ticks: {
-                  color: '#ffffff',
+                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  maxTicksLimit: 10,
+                  font: {
+                    size: 11
+                  },
                   callback: function(value) {
                     return new Intl.NumberFormat('pt-BR', {
                       style: 'currency',
@@ -480,12 +689,53 @@ export default {
                   }
                 },
                 grid: {
-                  color: 'rgba(255, 255, 255, 0.1)'
-                }
+                  color: this.getThemeColor('--border-primary', '#666666') + '20',
+                  drawBorder: false
+                },
+                border: {
+                  color: this.getThemeColor('--border-primary', '#666666') + '40'
+                },
+                // Fundo do eixo Y
+                backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a')
+              }
+            },
+            // Configuração específica para o fundo da área de plotagem
+            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+            // Configuração adicional para fundo da área de plotagem
+            plugins: {
+              ...this.chart?.options?.plugins,
+              // Plugin para fundo da área de plotagem
+              background: {
+                color: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+                image: undefined,
+                width: undefined,
+                height: undefined
+              }
+            },
+            elements: {
+              point: {
+                radius: 0,
+                hoverRadius: 4,
+                hoverBackgroundColor: this.getThemeColor('--bg-primary', '#ffffff')
+              }
+            },
+            // Configuração do fundo da área de plotagem
+            layout: {
+              padding: {
+                top: 20,
+                right: 20,
+                bottom: 20,
+                left: 20
               }
             }
           }
         })
+        
+        // Forçar aplicação do fundo imediatamente após criar o gráfico
+        this.$nextTick(() => {
+          this.forceChartBackground();
+        });
+        
       } catch (error) {
         console.error('Error creating chart:', error)
       }
@@ -503,12 +753,7 @@ export default {
     }
   },
 
-  mounted() {
 
-    
-    // Calcular automaticamente com valores padrão
-    this.calculateInterest()
-  },
   
   beforeUnmount() {
     // Limpar timer se existir
@@ -531,6 +776,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+@import '@/assets/styles/themes.scss';
 .compound-interest-container {
   display: flex;
   height: 100vh;
@@ -548,7 +794,7 @@ export default {
   max-width: 100%;
   min-height: 0;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
       .content-header {
@@ -556,7 +802,7 @@ export default {
         align-items: center;
         justify-content: space-between;
         padding: 24px 32px;
-        border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+        border-bottom: 1px solid var(--border-primary);
         margin-bottom: 32px;
       }
 
@@ -571,13 +817,13 @@ export default {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -705,7 +951,7 @@ export default {
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
   }
   
   &::placeholder {
@@ -737,7 +983,7 @@ export default {
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(0, 255, 136, 0.2);
+    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
   }
   
   &::placeholder {
@@ -798,15 +1044,15 @@ export default {
   }
   
   &.interest-value {
-    color: #00d4ff;
+    color: var(--info-color);
   }
   
   &.initial-value {
-    color: #ffffff;
+    color: var(--text-primary);
   }
   
   &.profit-value {
-    color: #ffd700;
+    color: var(--warning-color);
   }
 }
 
@@ -843,7 +1089,7 @@ export default {
 }
 
 .evolution-table tr.highlight {
-  background: rgba(0, 255, 136, 0.05);
+  background: rgba(var(--accent-primary-rgb), 0.05);
 }
 
 .evolution-table tr:hover {
@@ -853,6 +1099,42 @@ export default {
 .chart-container {
   height: 400px;
   position: relative;
+}
+
+/* Forçar fundo do gráfico via CSS - VERSÃO SUPER AGRESSIVA */
+.chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo dark */
+[data-theme="dark"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo light */
+[data-theme="light"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Forçar fundo também no container */
+.chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo dark no container */
+[data-theme="dark"] .chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Estilos específicos para modo light no container */
+[data-theme="light"] .chart-container {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
 }
 
 @media (max-width: 768px) {

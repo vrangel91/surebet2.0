@@ -6,7 +6,6 @@
       :sidebarCollapsed="sidebarCollapsed"
       @toggle-sidebar="handleSidebarToggle"
       @sidebar-state-loaded="handleSidebarStateLoaded"
-      @open-glossary="openGlossary"
     />
 
     <!-- Conteúdo Principal -->
@@ -1356,15 +1355,15 @@ export default {
   gap: 16px;
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
 }
 
 .accounts-icon {
   width: 36px;
   height: 36px;
-  color: #00ff88;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 10px var(--accent-primary-shadow));
 }
 
 .page-subtitle {
@@ -1388,11 +1387,11 @@ export default {
 }
 
 .add-account-btn {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-primary-dark));
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
-  color: #1a1a1a;
+  color: var(--text-dark);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -1406,7 +1405,7 @@ export default {
 
 .add-account-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: 0 4px 12px var(--accent-primary-shadow);
 }
 
 .stats-section {
@@ -1419,9 +1418,9 @@ export default {
 }
 
 .stat-card {
-  background: rgba(42, 42, 42, 0.8);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
   text-align: center;
@@ -1436,19 +1435,19 @@ export default {
   display: block;
   font-size: 28px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin-bottom: 8px;
 }
 
 .stat-label {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .accounts-section {
-  background: rgba(42, 42, 42, 0.8);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
   margin: 0 32px 32px;
@@ -1458,7 +1457,7 @@ export default {
 }
 
 .accounts-section h3 {
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0 0 24px 0;
   font-size: 20px;
   font-weight: 600;
@@ -1470,7 +1469,7 @@ export default {
   justify-content: center;
   gap: 12px;
   padding: 40px;
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 16px;
   min-height: 200px;
 }
@@ -1488,7 +1487,7 @@ export default {
 .no-accounts {
   text-align: center;
   padding: 40px;
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -1536,8 +1535,8 @@ export default {
 }
 
 .account-card {
-  background: rgba(26, 26, 26, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 20px;
   transition: all 0.3s ease;
