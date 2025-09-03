@@ -71,14 +71,11 @@
               Pré-live ({{ preliveCount }})
             </button>
             <button 
-              class="filter-tab disabled-tab" 
+              class="filter-tab" 
               :class="{ active: activeFilter === 'live' }"
               @click="setFilter('live')"
-              disabled
-              title="Funcionalidade em breve"
             >
               Live ({{ liveCount }})
-              <span class="coming-soon-badge">EM BREVE</span>
             </button>
           </div>
           
@@ -628,7 +625,7 @@ export default {
     liveCount() {
       return Object.values(this.surebets).filter(surebet => {
         const firstBet = surebet[0]
-        // Live: isLive = true (ignora campo minutes)
+        // Live: isLive = true
         return firstBet?.isLive === true
       }).length
     },
@@ -684,7 +681,7 @@ export default {
         case 'live':
           surebetsArray = surebetsArray.filter(surebet => {
             const firstBet = surebet[0]
-            // Live: isLive = true (ignora campo minutes)
+            // Live: isLive = true
             return firstBet?.isLive === true
           })
           break
@@ -1958,12 +1955,9 @@ export default {
     },
     
     setFilter(filter) {
-      // Previne a seleção do filtro "live" que está desabilitado
-      if (filter === 'live') {
-        return
-      }
       this.activeFilter = filter
       this.saveFiltersToSettings()
+      this.updateFiltersCache()
     },
     
 
@@ -2785,6 +2779,7 @@ export default {
          formatSelectedDate(dateString) {
            // ... existing code ...
          }
+// ... existing code ...
   }
 }
 </script>
@@ -3372,46 +3367,10 @@ export default {
     border-color: var(--accent-primary);
   }
   
-  &.disabled-tab {
-    cursor: not-allowed;
-    opacity: 0.6;
-    background: var(--bg-muted);
-    border-color: var(--border-secondary);
-    color: var(--text-muted);
-    
-    &:hover {
-      background: var(--bg-muted);
-      color: var(--text-muted);
-    }
-    
-    .coming-soon-badge {
-      position: absolute;
-      top: -8px;
-      right: -8px;
-      background: var(--warning-color);
-      color: var(--text-primary);
-      font-size: 10px;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      box-shadow: var(--shadow);
-      animation: pulse 2s infinite;
-    }
-  }
+
 }
 
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
-}
+
 
 .surebets-list {
   flex: 1;
