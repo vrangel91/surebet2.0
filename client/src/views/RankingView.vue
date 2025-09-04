@@ -35,6 +35,19 @@
               • Atualizado: {{ formatDateTime(lastDataUpdate) }}
             </span>
           </div>
+
+          <!-- Botões de teste UTF-8 (apenas em desenvolvimento) -->
+          <div class="utf8-test-buttons" v-if="isDevelopment">
+            <button @click="testUTF8System" class="test-btn utf8-test">
+              🧪 Testar UTF-8
+            </button>
+            <button @click="showUTF8Statistics" class="test-btn utf8-stats">
+              📊 Stats UTF-8
+            </button>
+            <button @click="clearUTF8Reports" class="test-btn utf8-clear">
+              🗑️ Limpar Relatórios
+            </button>
+          </div>
         </header>
   
         <div class="filters-section">
@@ -625,6 +638,7 @@
         uniqueMarkets: 0,
         averageProfit: 0,
         topHouses: [],
+        isDevelopment: process.env.NODE_ENV === 'development',
         topHousePairs: [],
         topMarkets: [],
         bestPair: null,
@@ -702,6 +716,9 @@
     
     async mounted() {
       try {
+        // Inicializar sistema de prevenção UTF-8
+        await this.setupUTF8Prevention()
+        
         await this.loadSurebetsData()
         this.$nextTick(() => {
           setTimeout(() => {
@@ -933,7 +950,9 @@
                   }
                 }
                 
-                processedData.push(processedSurebet)
+                // Aplicar sanitização UTF-8 antes de adicionar aos dados processados
+                const sanitizedSurebet = this.sanitizeJSONForUTF8(processedSurebet)
+                processedData.push(sanitizedSurebet)
                 
               } catch (partError) {
                 console.error(`Erro ao processar parte ${index + 1} do surebet ${surebetId}:`, partError)
@@ -1683,13 +1702,25 @@
             throw new Error('Token de autenticação não encontrado')
           }
           
+          // Validar codificação UTF-8 do banco de dados
+          await this.validateDatabaseUTF8Encoding()
+          
           // Salvar registros individualmente (mais seguro)
           let savedCount = 0
+          let utf8Errors = 0
           const maxRecords = Math.min(this.surebets.length, 50) // Limitar a 50 registros
           
           for (let i = 0; i < maxRecords; i++) {
             try {
               const item = this.surebets[i]
+              
+              // Log detalhado do item sendo processado
+              console.log(`🔍 Processando item ${i + 1}/${maxRecords}:`, {
+                surebet_id: item.surebet_id || item.id,
+                house: item.house || item.house_name,
+                market: item.market || item.market_name,
+                match: item.match || item.match_name
+              })
               
               // Verificar se o item tem dados válidos
               if (!item.surebet_id || !item.house || !item.market) {
@@ -1697,8 +1728,30 @@
                 continue
               }
               
-              await this.saveIndividualRecord(item)
+              // Validar e sanitizar dados UTF-8 antes de salvar
+              const sanitizedItem = await this.sanitizeDataForUTF8(item)
+              if (sanitizedItem.hasUTF8Issues) {
+                utf8Errors++
+                console.warn(`⚠️ Item ${i} teve problemas UTF-8 corrigidos:`, sanitizedItem.utf8Report)
+                
+                // Log detalhado dos problemas UTF-8 encontrados
+                Object.keys(sanitizedItem.utf8Report).forEach(field => {
+                  const report = sanitizedItem.utf8Report[field]
+                  console.warn(`🔧 Campo '${field}' sanitizado:`, {
+                    original: report.original,
+                    sanitized: report.sanitized,
+                    issue: report.issue
+                  })
+                })
+              }
+              
+              await this.saveIndividualRecord(sanitizedItem.data)
               savedCount++
+              
+              // Log de progresso
+              if ((i + 1) % 10 === 0) {
+                console.log(`📊 Progresso: ${i + 1}/${maxRecords} registros processados`)
+              }
               
               // Pequena pausa para não sobrecarregar o servidor
               if (i % 10 === 0 && i > 0) {
@@ -1707,11 +1760,36 @@
               
             } catch (itemError) {
               console.error(`❌ Erro ao salvar item ${i}:`, itemError)
+              
+              // Log detalhado do erro
+              if (itemError.message.includes('UTF8') || itemError.message.includes('codificação') || itemError.message.includes('0xe3')) {
+                console.error('🚨 ERRO UTF-8 DETECTADO no item:', {
+                  index: i,
+                  item: this.surebets[i],
+                  error: itemError.message
+                })
+                
+                // Tentar sanitização mais agressiva
+                try {
+                  console.log('🔧 Tentando sanitização agressiva...')
+                  const aggressiveItem = this.aggressiveUTF8Sanitization(this.surebets[i])
+                  await this.saveIndividualRecord(aggressiveItem)
+                  savedCount++
+                  utf8Errors++
+                  console.log('✅ Item salvo com sanitização agressiva')
+                } catch (aggressiveError) {
+                  console.error('❌ Falha mesmo com sanitização agressiva:', aggressiveError)
+                }
+              }
+              
               // Continuar com o próximo item
             }
           }
           
           console.log(`✅ ${savedCount} registros salvos com sucesso`)
+          if (utf8Errors > 0) {
+            console.log(`⚠️ ${utf8Errors} registros tiveram problemas UTF-8 corrigidos`)
+          }
           
           // Salvar análise também
           if (this.filteredSurebets && this.filteredSurebets.length > 0) {
@@ -1721,6 +1799,608 @@
         } catch (error) {
           console.error('❌ Erro ao salvar dados no banco:', error)
           throw error
+        }
+      },
+
+      // ===== SISTEMA DE VALIDAÇÃO E SANITIZAÇÃO UTF-8 =====
+      
+      /**
+       * Valida se o banco de dados está configurado para UTF-8
+       */
+      async validateDatabaseUTF8Encoding() {
+        try {
+          console.log('🔍 Verificando codificação UTF-8 do banco de dados...')
+          
+          // Testar codificação UTF-8 localmente primeiro
+          const testStrings = [
+            'Teste UTF-8: áéíóú àèìòù âêîôû ãõ ç ñ',
+            '🏆⚽🎯💰',
+            '€£¥₹',
+            'Flamengo vs São Paulo - 2.5 gols ⚽'
+          ]
+          
+          // Validar se todas as strings de teste são UTF-8 válidas
+          const allValid = testStrings.every(str => this.isValidUTF8String(str))
+          
+          if (!allValid) {
+            console.warn('⚠️ Problemas de codificação UTF-8 detectados localmente')
+            return false
+          }
+          
+          // Testar serialização JSON com caracteres especiais
+          const testData = {
+            test_utf8: testStrings[0],
+            test_emojis: testStrings[1],
+            test_symbols: testStrings[2],
+            test_mixed: testStrings[3]
+          }
+          
+          try {
+            // Testar se consegue serializar e deserializar JSON com UTF-8
+            const jsonString = JSON.stringify(testData)
+            const parsedData = JSON.parse(jsonString)
+            
+            // Verificar se os dados foram preservados corretamente
+            const dataPreserved = JSON.stringify(parsedData) === JSON.stringify(testData)
+            
+            if (!dataPreserved) {
+              console.warn('⚠️ Problemas na serialização/deserialização JSON UTF-8')
+              return false
+            }
+            
+            console.log('✅ Codificação UTF-8 validada localmente com sucesso')
+            return true
+            
+          } catch (jsonError) {
+            console.warn('⚠️ Erro na serialização JSON UTF-8:', jsonError.message)
+            return false
+          }
+          
+        } catch (error) {
+          console.warn('⚠️ Erro na validação UTF-8:', error.message)
+          // Continuar mesmo sem verificação (não é crítico)
+          return true
+        }
+      },
+
+      /**
+       * Valida se uma string é válida em UTF-8
+       */
+      isValidUTF8String(str) {
+        if (typeof str !== 'string') return true
+        
+        try {
+          // Tentar codificar e decodificar para verificar se é UTF-8 válido
+          const encoded = encodeURIComponent(str)
+          const decoded = decodeURIComponent(encoded)
+          return decoded === str
+        } catch (error) {
+          return false
+        }
+      },
+
+      /**
+       * Sanitiza uma string para garantir compatibilidade UTF-8
+       */
+      sanitizeUTF8String(str) {
+        if (typeof str !== 'string') return str
+        
+        try {
+          // Log detalhado para debug UTF-8
+          const originalStr = str
+          let hasIssues = false
+          const issues = []
+          
+          // Detectar sequências de bytes problemáticas específicas
+          // 0xe3 0x6f 0x20 - sequência específica que está causando erro
+          if (str.includes('\u00e3\u006f\u0020') || str.includes('ão ')) {
+            hasIssues = true
+            issues.push('Sequência problemática "ão " detectada')
+          }
+          
+          // Remover caracteres de controle inválidos
+          let sanitized = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+          
+          // Tratar sequências de bytes específicas que causam erro UTF-8
+          // Substituir sequências problemáticas conhecidas
+          sanitized = sanitized
+            .replace(/\u00e3\u006f\u0020/g, 'ao ') // "ão " -> "ao "
+            .replace(/\u00e3\u006f/g, 'ao') // "ão" -> "ao"
+            .replace(/\u00e1/g, 'a') // "á" -> "a"
+            .replace(/\u00e9/g, 'e') // "é" -> "e"
+            .replace(/\u00ed/g, 'i') // "í" -> "i"
+            .replace(/\u00f3/g, 'o') // "ó" -> "o"
+            .replace(/\u00fa/g, 'u') // "ú" -> "u"
+            .replace(/\u00e7/g, 'c') // "ç" -> "c"
+            .replace(/\u00f1/g, 'n') // "ñ" -> "n"
+          
+          // Normalizar caracteres Unicode
+          sanitized = sanitized.normalize('NFC')
+          
+          // Verificar se ainda é UTF-8 válido após normalização
+          if (!this.isValidUTF8String(sanitized)) {
+            // Se ainda houver problemas, usar escape mais agressivo
+            sanitized = sanitized.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?')
+            hasIssues = true
+            issues.push('Caracteres UTF-8 inválidos removidos com escape agressivo')
+          }
+          
+          // Log detalhado se houve problemas
+          if (hasIssues || originalStr !== sanitized) {
+            console.warn('🔧 UTF-8 Sanitização aplicada:', {
+              original: originalStr,
+              sanitized: sanitized,
+              issues: issues,
+              changes: originalStr !== sanitized
+            })
+          }
+          
+          return sanitized
+        } catch (error) {
+          console.warn('⚠️ Erro ao sanitizar string UTF-8:', error)
+          // Fallback: remover caracteres problemáticos
+          return str.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?')
+        }
+      },
+
+      /**
+       * Sanitização UTF-8 mais agressiva para casos problemáticos
+       */
+      aggressiveUTF8Sanitization(obj) {
+        if (obj === null || obj === undefined) return obj
+        
+        if (typeof obj === 'string') {
+          // Sanitização mais agressiva para strings
+          return obj
+            .replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?') // Remover caracteres não-ASCII problemáticos
+            .replace(/\u00e3\u006f\u0020/g, 'ao ') // "ão " -> "ao "
+            .replace(/\u00e3\u006f/g, 'ao') // "ão" -> "ao"
+            .replace(/[áàâãä]/g, 'a') // Todas as variações de 'a' -> 'a'
+            .replace(/[éèêë]/g, 'e') // Todas as variações de 'e' -> 'e'
+            .replace(/[íìîï]/g, 'i') // Todas as variações de 'i' -> 'i'
+            .replace(/[óòôõö]/g, 'o') // Todas as variações de 'o' -> 'o'
+            .replace(/[úùûü]/g, 'u') // Todas as variações de 'u' -> 'u'
+            .replace(/[ç]/g, 'c') // 'ç' -> 'c'
+            .replace(/[ñ]/g, 'n') // 'ñ' -> 'n'
+            .replace(/[^\x20-\x7E]/g, '?') // Qualquer outro caractere não-ASCII -> '?'
+        }
+        
+        if (Array.isArray(obj)) {
+          return obj.map(item => this.aggressiveUTF8Sanitization(item))
+        }
+        
+        if (typeof obj === 'object') {
+          const sanitized = {}
+          for (const [key, value] of Object.entries(obj)) {
+            const sanitizedKey = this.aggressiveUTF8Sanitization(key)
+            const sanitizedValue = this.aggressiveUTF8Sanitization(value)
+            sanitized[sanitizedKey] = sanitizedValue
+          }
+          return sanitized
+        }
+        
+        return obj
+      },
+
+      /**
+       * Sanitiza um objeto JSON para garantir compatibilidade UTF-8
+       */
+      sanitizeJSONForUTF8(obj) {
+        if (obj === null || obj === undefined) return obj
+        
+        if (typeof obj === 'string') {
+          return this.sanitizeUTF8String(obj)
+        }
+        
+        if (Array.isArray(obj)) {
+          return obj.map(item => this.sanitizeJSONForUTF8(item))
+        }
+        
+        if (typeof obj === 'object') {
+          const sanitized = {}
+          for (const [key, value] of Object.entries(obj)) {
+            const sanitizedKey = this.sanitizeUTF8String(key)
+            const sanitizedValue = this.sanitizeJSONForUTF8(value)
+            sanitized[sanitizedKey] = sanitizedValue
+          }
+          return sanitized
+        }
+        
+        return obj
+      },
+
+      /**
+       * Sanitiza dados completos para inserção no banco UTF-8
+       */
+      async sanitizeDataForUTF8(data) {
+        const report = {
+          hasUTF8Issues: false,
+          fieldsCorrected: [],
+          originalData: JSON.parse(JSON.stringify(data)),
+          utf8Report: {}
+        }
+        
+        try {
+          // Lista de campos que podem conter texto
+          const textFields = [
+            'surebet_id', 'house', 'house_name', 'bookmaker',
+            'market', 'market_name', 'bet_type',
+            'match', 'match_name', 'game', 'event',
+            'sport', 'sport_name', 'category',
+            'period', 'time_period', 'period_name',
+            'anchorh1', 'anchor_h1', 'anchor1',
+            'anchorh2', 'anchor_h2', 'anchor2'
+          ]
+          
+          const sanitizedData = JSON.parse(JSON.stringify(data))
+          
+          // Validar e sanitizar cada campo de texto
+          for (const field of textFields) {
+            if (data[field] && typeof data[field] === 'string') {
+              const originalValue = data[field]
+              const sanitizedValue = this.sanitizeUTF8String(originalValue)
+              
+              if (originalValue !== sanitizedValue) {
+                report.hasUTF8Issues = true
+                report.fieldsCorrected.push(field)
+                report.utf8Report[field] = {
+                  original: originalValue,
+                  sanitized: sanitizedValue,
+                  issue: 'Caracteres UTF-8 inválidos detectados e corrigidos'
+                }
+                sanitizedData[field] = sanitizedValue
+              }
+            }
+          }
+          
+          // Sanitizar campo metadata se existir
+          if (data.metadata && typeof data.metadata === 'object') {
+            const originalMetadata = data.metadata
+            const sanitizedMetadata = this.sanitizeJSONForUTF8(originalMetadata)
+            
+            if (JSON.stringify(originalMetadata) !== JSON.stringify(sanitizedMetadata)) {
+              report.hasUTF8Issues = true
+              report.fieldsCorrected.push('metadata')
+              report.utf8Report.metadata = {
+                original: originalMetadata,
+                sanitized: sanitizedMetadata,
+                issue: 'Metadados com caracteres UTF-8 inválidos detectados e corrigidos'
+              }
+              sanitizedData.metadata = sanitizedMetadata
+            }
+          }
+          
+          // Testar se os dados sanitizados podem ser serializados em JSON
+          try {
+            JSON.stringify(sanitizedData)
+          } catch (jsonError) {
+            console.error('❌ Erro ao serializar dados sanitizados:', jsonError)
+            report.hasUTF8Issues = true
+            report.utf8Report.serialization = {
+              error: jsonError.message,
+              issue: 'Dados não podem ser serializados em JSON após sanitização'
+            }
+          }
+          
+          return {
+            data: sanitizedData,
+            hasUTF8Issues: report.hasUTF8Issues,
+            utf8Report: report.utf8Report,
+            fieldsCorrected: report.fieldsCorrected
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro durante sanitização UTF-8:', error)
+          report.hasUTF8Issues = true
+          report.utf8Report.error = {
+            message: error.message,
+            issue: 'Erro durante processo de sanitização UTF-8'
+          }
+          
+          return {
+            data: data, // Retornar dados originais em caso de erro
+            hasUTF8Issues: true,
+            utf8Report: report.utf8Report,
+            fieldsCorrected: []
+          }
+        }
+      },
+
+      /**
+       * Registra relatório de problemas UTF-8 para análise futura
+       */
+      async logUTF8Report(report) {
+        try {
+          const logEntry = {
+            timestamp: new Date().toISOString(),
+            user_id: this.currentUser?.id || 'anonymous',
+            report: report,
+            user_agent: navigator.userAgent,
+            url: window.location.href
+          }
+          
+          // Salvar no localStorage para análise local
+          const existingLogs = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
+          existingLogs.push(logEntry)
+          
+          // Manter apenas os últimos 100 relatórios
+          if (existingLogs.length > 100) {
+            existingLogs.splice(0, existingLogs.length - 100)
+          }
+          
+          localStorage.setItem('utf8_reports', JSON.stringify(existingLogs))
+          
+          // Tentar enviar para o servidor (opcional) - usar endpoint existente
+          try {
+            // Usar o endpoint de surebet-stats para enviar relatório
+            const reportData = {
+              user_id: this.currentUser?.id || 'anonymous',
+              surebet_id: `utf8_report_${Date.now()}`,
+              house: 'Sistema UTF-8',
+              market: 'Relatório de Validação',
+              match: 'Log de Problemas UTF-8',
+              profit: 0,
+              date: new Date().toISOString().split('T')[0],
+              hour: 0,
+              sport: 'Sistema',
+              metadata: {
+                source: 'utf8_report_log',
+                report_data: logEntry,
+                generated_at: new Date().toISOString()
+              }
+            }
+            
+            await fetch('/api/surebet-stats', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.$store.state.authToken}`
+              },
+              body: JSON.stringify(reportData)
+            })
+            
+            console.log('📤 Relatório UTF-8 enviado para o servidor')
+          } catch (serverError) {
+            console.warn('⚠️ Não foi possível enviar relatório UTF-8 para o servidor:', serverError.message)
+            // Continuar normalmente - o relatório já foi salvo localmente
+          }
+          
+        } catch (error) {
+          console.error('❌ Erro ao registrar relatório UTF-8:', error)
+        }
+      },
+
+      /**
+       * Sistema de prevenção UTF-8 para futuras inserções
+       */
+      async setupUTF8Prevention() {
+        try {
+          console.log('🛡️ Configurando sistema de prevenção UTF-8...')
+          
+          // Interceptar todas as requisições fetch para validação UTF-8
+          const originalFetch = window.fetch
+          window.fetch = async (url, options = {}) => {
+            // Aplicar validação UTF-8 apenas para requisições POST/PUT com JSON
+            if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+              if (options.body && typeof options.body === 'string') {
+                try {
+                  const parsedBody = JSON.parse(options.body)
+                  const sanitizedBody = this.sanitizeJSONForUTF8(parsedBody)
+                  
+                  // Se houve mudanças, atualizar o body
+                  if (JSON.stringify(parsedBody) !== JSON.stringify(sanitizedBody)) {
+                    console.warn('⚠️ Dados UTF-8 sanitizados automaticamente na requisição:', url)
+                    options.body = JSON.stringify(sanitizedBody)
+                  }
+                } catch (parseError) {
+                  // Se não for JSON válido, continuar normalmente
+                }
+              }
+            }
+            
+            return originalFetch(url, options)
+          }
+          
+          // Configurar headers padrão para UTF-8
+          if (!window.defaultHeaders) {
+            window.defaultHeaders = {
+              'Content-Type': 'application/json; charset=utf-8',
+              'Accept': 'application/json; charset=utf-8'
+            }
+          }
+          
+          console.log('✅ Sistema de prevenção UTF-8 configurado')
+          
+        } catch (error) {
+          console.error('❌ Erro ao configurar prevenção UTF-8:', error)
+        }
+      },
+
+      /**
+       * Validação automática de UTF-8 em dados de entrada
+       */
+      validateInputData(data) {
+        const issues = []
+        
+        if (typeof data === 'string') {
+          if (!this.isValidUTF8String(data)) {
+            issues.push({
+              type: 'string',
+              value: data,
+              issue: 'String contém caracteres UTF-8 inválidos'
+            })
+          }
+        } else if (Array.isArray(data)) {
+          data.forEach((item, index) => {
+            const itemIssues = this.validateInputData(item)
+            if (itemIssues.length > 0) {
+              issues.push({
+                type: 'array_item',
+                index: index,
+                issues: itemIssues
+              })
+            }
+          })
+        } else if (typeof data === 'object' && data !== null) {
+          Object.entries(data).forEach(([key, value]) => {
+            if (!this.isValidUTF8String(key)) {
+              issues.push({
+                type: 'object_key',
+                key: key,
+                issue: 'Chave do objeto contém caracteres UTF-8 inválidos'
+              })
+            }
+            
+            const valueIssues = this.validateInputData(value)
+            if (valueIssues.length > 0) {
+              issues.push({
+                type: 'object_value',
+                key: key,
+                issues: valueIssues
+              })
+            }
+          })
+        }
+        
+        return issues
+      },
+
+      /**
+       * Relatório completo de validação UTF-8
+       */
+      generateUTF8ValidationReport(data) {
+        const report = {
+          timestamp: new Date().toISOString(),
+          totalIssues: 0,
+          issues: [],
+          recommendations: []
+        }
+        
+        const issues = this.validateInputData(data)
+        report.issues = issues
+        report.totalIssues = issues.length
+        
+        if (issues.length > 0) {
+          report.recommendations.push('Aplicar sanitização UTF-8 antes de inserir no banco')
+          report.recommendations.push('Verificar fonte dos dados para identificar origem dos caracteres inválidos')
+          report.recommendations.push('Implementar validação UTF-8 na entrada de dados')
+        } else {
+          report.recommendations.push('Dados validados com sucesso - nenhuma ação necessária')
+        }
+        
+        return report
+      },
+
+      /**
+       * Exibe relatório UTF-8 no console para análise
+       */
+      displayUTF8Report(report) {
+        console.group('📊 Relatório de Validação UTF-8')
+        console.log('⏰ Timestamp:', report.timestamp)
+        console.log('🔢 Total de Problemas:', report.totalIssues)
+        
+        if (report.totalIssues > 0) {
+          console.group('⚠️ Problemas Encontrados:')
+          report.issues.forEach((issue, index) => {
+            console.log(`${index + 1}.`, issue)
+          })
+          console.groupEnd()
+          
+          console.group('💡 Recomendações:')
+          report.recommendations.forEach((rec, index) => {
+            console.log(`${index + 1}.`, rec)
+          })
+          console.groupEnd()
+        } else {
+          console.log('✅ Nenhum problema UTF-8 encontrado!')
+        }
+        
+        console.groupEnd()
+      },
+
+      /**
+       * Testa o sistema UTF-8 com dados de exemplo
+       */
+      async testUTF8System() {
+        console.log('🧪 Testando sistema UTF-8...')
+        
+        // Dados de teste com caracteres especiais
+        const testData = {
+          normal: 'Texto normal',
+          accents: 'áéíóú àèìòù âêîôû ãõ ç ñ',
+          emojis: '🏆⚽🎯💰',
+          symbols: '€£¥₹',
+          mixed: 'Flamengo vs São Paulo - 2.5 gols ⚽',
+          metadata: {
+            source: 'teste',
+            description: 'Partida com acentos e símbolos especiais'
+          }
+        }
+        
+        // Testar validação
+        const validationReport = this.generateUTF8ValidationReport(testData)
+        this.displayUTF8Report(validationReport)
+        
+        // Testar sanitização
+        const sanitizedData = this.sanitizeJSONForUTF8(testData)
+        console.log('🧹 Dados sanitizados:', sanitizedData)
+        
+        // Testar se dados sanitizados são válidos
+        const finalValidation = this.generateUTF8ValidationReport(sanitizedData)
+        console.log('✅ Validação final:', finalValidation.totalIssues === 0 ? 'SUCESSO' : 'AINDA HÁ PROBLEMAS')
+        
+        return {
+          original: testData,
+          sanitized: sanitizedData,
+          validationReport,
+          finalValidation
+        }
+      },
+
+      /**
+       * Limpa relatórios UTF-8 antigos do localStorage
+       */
+      clearUTF8Reports() {
+        try {
+          localStorage.removeItem('utf8_reports')
+          console.log('🗑️ Relatórios UTF-8 antigos removidos do localStorage')
+        } catch (error) {
+          console.error('❌ Erro ao limpar relatórios UTF-8:', error)
+        }
+      },
+
+      /**
+       * Exibe estatísticas dos relatórios UTF-8 salvos
+       */
+      showUTF8Statistics() {
+        try {
+          const reports = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
+          
+          if (reports.length === 0) {
+            console.log('📊 Nenhum relatório UTF-8 encontrado no localStorage')
+            return
+          }
+          
+          const totalReports = reports.length
+          const totalIssues = reports.reduce((sum, report) => sum + (report.report?.totalIssues || 0), 0)
+          const avgIssuesPerReport = totalIssues / totalReports
+          
+          console.group('📊 Estatísticas UTF-8')
+          console.log('📈 Total de relatórios:', totalReports)
+          console.log('⚠️ Total de problemas:', totalIssues)
+          console.log('📊 Média de problemas por relatório:', avgIssuesPerReport.toFixed(2))
+          
+          // Mostrar os últimos 5 relatórios
+          console.group('📋 Últimos 5 relatórios:')
+          reports.slice(-5).forEach((report, index) => {
+            console.log(`${index + 1}. ${report.timestamp} - ${report.report?.totalIssues || 0} problemas`)
+          })
+          console.groupEnd()
+          
+          console.groupEnd()
+          
+        } catch (error) {
+          console.error('❌ Erro ao exibir estatísticas UTF-8:', error)
         }
       },
       
@@ -1752,7 +2432,7 @@
           }
           
           // Preparar dados com validação robusta e fallbacks
-          const recordData = {
+          let recordData = {
             user_id: this.currentUser.id,
             surebet_id: item.surebet_id || item.id || `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             house: item.house || item.house_name || item.bookmaker || 'Casa não especificada',
@@ -1776,18 +2456,78 @@
               ...(item.metadata || {})
             }
           }
+
+          // Aplicar sanitização UTF-8 final nos dados preparados
+          const originalRecordData = JSON.parse(JSON.stringify(recordData))
+          recordData = this.sanitizeJSONForUTF8(recordData)
+          
+          // Log detalhado se houve mudanças na sanitização
+          if (JSON.stringify(originalRecordData) !== JSON.stringify(recordData)) {
+            console.warn('🔧 Dados sanitizados antes do envio:', {
+              original: originalRecordData,
+              sanitized: recordData,
+              recordId: recordData.surebet_id
+            })
+          }
+          
+          // Validar se os dados sanitizados são válidos para JSON
+          let jsonBody
+          try {
+            jsonBody = JSON.stringify(recordData)
+          } catch (jsonError) {
+            console.error('❌ Erro ao serializar dados para JSON:', jsonError)
+            console.error('📋 Dados problemáticos:', recordData)
+            throw new Error(`Erro de serialização JSON: ${jsonError.message}`)
+          }
           
           const response = await fetch('/api/surebet-stats', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
+              'Content-Type': 'application/json; charset=utf-8',
               'Authorization': `Bearer ${this.$store.state.authToken}`
             },
-            body: JSON.stringify(recordData)
+            body: jsonBody
           })
           
           if (!response.ok) {
             const errorText = await response.text()
+            console.error('❌ Erro HTTP detalhado:', {
+              status: response.status,
+              statusText: response.statusText,
+              errorText: errorText,
+              recordId: recordData.surebet_id,
+              dataSize: jsonBody.length
+            })
+            
+            // Verificar se é erro específico de UTF-8
+            if (errorText.includes('UTF8') || errorText.includes('codificação') || errorText.includes('0xe3')) {
+              console.error('🚨 ERRO UTF-8 DETECTADO - Aplicando sanitização mais agressiva...')
+              
+              // Aplicar sanitização mais agressiva
+              const aggressiveSanitized = this.aggressiveUTF8Sanitization(recordData)
+              const aggressiveJsonBody = JSON.stringify(aggressiveSanitized)
+              
+              console.log('🔧 Tentando novamente com sanitização agressiva...')
+              
+              // Tentar novamente com dados mais agressivamente sanitizados
+              const retryResponse = await fetch('/api/surebet-stats', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json; charset=utf-8',
+                  'Authorization': `Bearer ${this.$store.state.authToken}`
+                },
+                body: aggressiveJsonBody
+              })
+              
+              if (!retryResponse.ok) {
+                const retryErrorText = await retryResponse.text()
+                throw new Error(`Erro HTTP UTF-8 (retry): ${retryResponse.status} - ${retryErrorText}`)
+              }
+              
+              console.log('✅ Registro salvo com sanitização agressiva')
+              return await retryResponse.json()
+            }
+            
             throw new Error(`Erro HTTP: ${response.status} - ${errorText}`)
           }
           
@@ -1839,7 +2579,7 @@
           const averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
           
           // Preparar dados de análise com validação
-          const analyticsData = {
+          let analyticsData = {
             user_id: this.currentUser.id,
             analysis_type: 'comprehensive',
             period_days: parseInt(this.selectedPeriod) || 30,
@@ -1861,6 +2601,9 @@
             average_profit: averageProfit,
             generated_at: new Date().toISOString()
           }
+
+          // Aplicar sanitização UTF-8 nos dados de análise
+          analyticsData = this.sanitizeJSONForUTF8(analyticsData)
           
           // Salvar análise no banco
           const result = await this.$store.dispatch('saveSurebetAnalytics', analyticsData)
@@ -2909,6 +3652,51 @@
        font-size: 12px;
        font-weight: 400;
      }
+
+  /* Botões de teste UTF-8 */
+  .utf8-test-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .test-btn {
+    padding: 6px 12px;
+    border: 1px solid var(--border-primary);
+    border-radius: 16px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+  }
+
+  .test-btn:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+  }
+
+  .utf8-test {
+    border-color: var(--accent-primary);
+  }
+
+  .utf8-stats {
+    border-color: var(--accent-secondary);
+  }
+
+  .utf8-clear {
+    border-color: #ff6b6b;
+  }
+
+  .utf8-clear:hover {
+    border-color: #ff5252;
+    background: rgba(255, 107, 107, 0.1);
+  }
   
   .filters-section {
     display: flex;

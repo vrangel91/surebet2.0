@@ -252,6 +252,8 @@ export default {
 
     async loadProfileData() {
       try {
+        console.log('🔄 Carregando dados do perfil...')
+        
         // Primeiro, tentar carregar da API
         const response = await http.get('/api/users/profile')
         
@@ -273,12 +275,28 @@ export default {
           throw new Error('Resposta da API inválida')
         }
       } catch (error) {
-        console.warn('⚠️ Erro ao carregar perfil da API, usando localStorage:', error)
+        console.warn('⚠️ Erro ao carregar perfil da API, usando fallback:', error)
         
-        // Fallback: carregar do localStorage
+        // Fallback 1: carregar do localStorage
         const savedProfile = localStorage.getItem('userProfile')
         if (savedProfile) {
           this.profile = { ...this.profile, ...JSON.parse(savedProfile) }
+          console.log('📱 Perfil carregado do localStorage:', this.profile)
+        }
+        
+        // Fallback 2: carregar email do store se disponível
+        if (this.$store.state.user && this.$store.state.user.email) {
+          this.profile.email = this.$store.state.user.email
+          console.log('🏪 Email carregado do store:', this.profile.email)
+        }
+        
+        // Se ainda não tem dados, usar valores padrão
+        if (!this.profile.fullName && !this.profile.email) {
+          this.profile = {
+            fullName: 'Usuário',
+            email: 'usuario@exemplo.com'
+          }
+          console.log('🔧 Usando valores padrão para o perfil')
         }
       }
 
@@ -286,27 +304,27 @@ export default {
       const savedSecurity = localStorage.getItem('securitySettings')
       if (savedSecurity) {
         this.security = { ...this.security, ...JSON.parse(savedSecurity) }
-      }
-
-      // Carregar email do usuário logado (se disponível)
-      if (this.$store.state.user && this.$store.state.user.email) {
-        this.profile.email = this.$store.state.user.email
+        console.log('🔒 Configurações de segurança carregadas:', this.security)
       }
     },
     async saveProfile() {
       try {
+        console.log('💾 Salvando perfil...', this.profile)
+        
         // Validar dados
         if (!this.profile.fullName || !this.profile.email) {
           this.showNotification('Por favor, preencha todos os campos obrigatórios.', 'error')
           return
         }
         
-        // Preparar dados para a API (seguindo o mesmo padrão do AdminView)
+        // Preparar dados para a API
         const userData = {
           first_name: this.profile.fullName.split(' ')[0] || this.profile.fullName,
           last_name: this.profile.fullName.split(' ').slice(1).join(' ') || '',
           email: this.profile.email
         }
+        
+        console.log('📤 Enviando dados para API:', userData)
         
         // Chamar API para atualizar usuário
         const response = await http.put('/api/users/profile', userData)
@@ -323,7 +341,7 @@ export default {
           
           console.log('✅ Perfil atualizado via API:', response.data)
         } else {
-          this.showNotification('Erro ao atualizar perfil: ' + (response.data.error || 'Erro desconhecido'), 'error')
+          this.showNotification('Erro ao atualizar perfil: ' + (response.data.message || 'Erro desconhecido'), 'error')
         }
       } catch (error) {
         console.error('❌ Erro ao atualizar perfil:', error)
@@ -331,9 +349,10 @@ export default {
         // Fallback: salvar apenas no localStorage
         localStorage.setItem('userProfile', JSON.stringify(this.profile))
         
+        const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message
+        
         this.showNotification(
-          'Erro ao atualizar perfil no servidor. Dados salvos localmente. ' + 
-          (error.response?.data?.error || error.message), 
+          'Erro ao atualizar perfil no servidor. Dados salvos localmente. ' + errorMessage, 
           'warning'
         )
       }
@@ -365,17 +384,26 @@ export default {
       const notification = document.createElement('div')
       notification.className = 'notification'
       notification.textContent = message
+      
+      // Usar variáveis CSS do sistema de temas
+      const isError = type === 'error'
+      const isWarning = type === 'warning'
+      
       notification.style.cssText = `
         position: fixed;
         top: 100px;
         right: 20px;
-        background: ${type === 'error' ? '#ff4444' : '#00ff88'};
-        color: #1a1a1a;
+        background: ${isError ? 'var(--error)' : isWarning ? 'var(--warning)' : 'var(--accent-primary)'};
+        color: var(--bg-primary);
         padding: 12px 20px;
         border-radius: 8px;
         font-weight: 600;
         z-index: 10000;
         animation: slideIn 0.3s ease;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border-primary);
+        max-width: 400px;
+        word-wrap: break-word;
       `
       
       document.body.appendChild(notification)

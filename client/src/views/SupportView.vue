@@ -284,15 +284,23 @@
               </div>
               
               <div class="new-message-section">
-                <textarea 
-                  v-model="newMessage" 
-                  class="message-input"
-                  placeholder="Digite sua mensagem..."
-                  rows="3"
-                ></textarea>
-                <button class="send-message-btn" @click="sendMessage" :disabled="!newMessage.trim()">
-                  Enviar Mensagem
-                </button>
+                <div v-if="selectedTicket.status === 'closed'" class="ticket-closed-notice">
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                  <span>Este ticket está fechado. Não é possível enviar novas mensagens.</span>
+                </div>
+                <template v-else>
+                  <textarea 
+                    v-model="newMessage" 
+                    class="message-input"
+                    placeholder="Digite sua mensagem..."
+                    rows="3"
+                  ></textarea>
+                  <button class="send-message-btn" @click="sendMessage" :disabled="!newMessage.trim()">
+                    Enviar Mensagem
+                  </button>
+                </template>
               </div>
             </div>
           </div>
@@ -390,6 +398,41 @@ export default {
               content: 'Olá! Nossos pagamentos são processados via PIX e cartão de crédito. Posso te ajudar com algo específico?',
               type: 'support',
               createdAt: new Date(Date.now() - 86400000).toISOString()
+            }
+          ]
+        },
+        {
+          id: 3,
+          title: 'Problema com notificações',
+          description: 'Não estou recebendo notificações de surebets',
+          category: 'technical',
+          priority: 'low',
+          status: 'closed',
+          createdAt: new Date(Date.now() - 259200000).toISOString(),
+          updatedAt: new Date(Date.now() - 172800000).toISOString(),
+          userId: 3,
+          userName: 'Carlos Oliveira',
+          messages: [
+            {
+              id: 1,
+              author: 'Carlos Oliveira',
+              content: 'Não estou recebendo notificações de surebets no meu celular',
+              type: 'user',
+              createdAt: new Date(Date.now() - 259200000).toISOString()
+            },
+            {
+              id: 2,
+              author: 'Suporte Técnico',
+              content: 'Olá Carlos! Verifiquei sua conta e as notificações estão ativas. Pode verificar se o app tem permissão para notificações nas configurações do seu dispositivo?',
+              type: 'support',
+              createdAt: new Date(Date.now() - 216000000).toISOString()
+            },
+            {
+              id: 3,
+              author: 'Carlos Oliveira',
+              content: 'Perfeito! Era isso mesmo. Obrigado pela ajuda!',
+              type: 'user',
+              createdAt: new Date(Date.now() - 172800000).toISOString()
             }
           ]
         }
@@ -540,6 +583,12 @@ export default {
     async sendMessage() {
       if (!this.newMessage.trim()) return
       
+      // Verificar se o ticket está fechado
+      if (this.selectedTicket.status === 'closed') {
+        this.showToastNotification('Não é possível enviar mensagens em tickets fechados.', 'error')
+        return
+      }
+      
       try {
         // Chamar API para adicionar mensagem
         const response = await this.$store.dispatch('addMessageToTicket', {
@@ -629,13 +678,15 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/assets/styles/themes.scss';
+
 .support-container {
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--bg-primary, #1a1a1a);
-  color: var(--text-primary, #ffffff);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -660,7 +711,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 24px 32px;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .header-left {
@@ -672,13 +723,13 @@ export default {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
 }
 
 .page-subtitle {
   font-size: 16px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   margin: 0;
 }
 
@@ -686,8 +737,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 8px;
   padding: 12px 20px;
@@ -698,7 +749,7 @@ export default {
 }
 
 .new-ticket-btn:hover {
-  background: #00cc6a;
+  background: var(--accent-secondary);
   transform: translateY(-1px);
 }
 
@@ -711,8 +762,8 @@ export default {
 }
 
 .stat-card {
-  background: var(--bg-secondary, #2a2a2a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
   display: flex;
@@ -723,7 +774,7 @@ export default {
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-hover);
 }
 
 .stat-icon {
@@ -737,23 +788,23 @@ export default {
 }
 
 .open-icon {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
 }
 
 .pending-icon {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--warning), var(--warning-hover));
+  color: var(--bg-primary);
 }
 
 .closed-icon {
-  background: linear-gradient(135deg, #6c757d, #495057);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--text-secondary), var(--text-tertiary));
+  color: var(--bg-primary);
 }
 
 .time-icon {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--info), var(--info-hover));
+  color: var(--bg-primary);
 }
 
 .stat-content {
@@ -763,19 +814,19 @@ export default {
 .stat-value {
   font-size: 32px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin-bottom: 4px;
 }
 
 .stat-label {
   font-size: 14px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
 }
 
 /* Tickets Section */
 .tickets-section {
-  background: var(--bg-secondary, #2a2a2a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
 }
@@ -790,7 +841,7 @@ export default {
 .section-title {
   font-size: 24px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -805,13 +856,14 @@ export default {
 .status-filter,
 .priority-filter,
 .category-filter {
-  background: var(--bg-primary, #1a1a1a);
-  color: var(--text-primary, #ffffff);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   padding: 8px 12px;
   font-size: 14px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .search-input {
@@ -824,7 +876,17 @@ export default {
 .priority-filter:focus,
 .category-filter:focus {
   outline: none;
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+/* Melhorar visibilidade dos options nos selects */
+.status-filter option,
+.priority-filter option,
+.category-filter option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 8px;
 }
 
 /* Tickets List */
@@ -837,7 +899,7 @@ export default {
 .empty-tickets {
   text-align: center;
   padding: 48px 24px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
 }
 
 .empty-tickets svg {
@@ -856,8 +918,8 @@ export default {
 }
 
 .ticket-card {
-  background: var(--bg-primary, #1a1a1a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
   padding: 20px;
   cursor: pointer;
@@ -865,7 +927,7 @@ export default {
 }
 
 .ticket-card:hover {
-  border-color: rgba(0, 255, 136, 0.3);
+  border-color: rgba(var(--accent-primary-rgb), 0.3);
   transform: translateY(-1px);
 }
 
@@ -885,13 +947,13 @@ export default {
 .ticket-title {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .ticket-id {
   font-size: 12px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
   font-family: monospace;
 }
 
@@ -904,18 +966,18 @@ export default {
 }
 
 .status-badge.open {
-  background: rgba(0, 255, 136, 0.2);
-  color: #00ff88;
+  background: rgba(var(--accent-primary-rgb), 0.2);
+  color: var(--accent-primary);
 }
 
 .status-badge.pending {
-  background: rgba(255, 107, 53, 0.2);
-  color: #ff6b35;
+  background: rgba(var(--warning-rgb), 0.2);
+  color: var(--warning);
 }
 
 .status-badge.closed {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: rgba(var(--text-secondary-rgb), 0.2);
+  color: var(--text-secondary);
 }
 
 .ticket-content {
@@ -924,7 +986,7 @@ export default {
 
 .ticket-description {
   font-size: 14px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   line-height: 1.5;
   margin: 0;
 }
@@ -944,7 +1006,7 @@ export default {
 .ticket-category,
 .ticket-date {
   font-size: 12px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
 }
 
 .priority-badge {
@@ -956,23 +1018,23 @@ export default {
 }
 
 .priority-badge.low {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: rgba(var(--text-secondary-rgb), 0.2);
+  color: var(--text-secondary);
 }
 
 .priority-badge.medium {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  background: rgba(var(--warning-rgb), 0.2);
+  color: var(--warning);
 }
 
 .priority-badge.high {
-  background: rgba(255, 107, 53, 0.2);
-  color: #ff6b35;
+  background: rgba(var(--error-rgb), 0.2);
+  color: var(--error);
 }
 
 .priority-badge.urgent {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
+  background: rgba(var(--error-rgb), 0.3);
+  color: var(--error);
 }
 
 /* Modal Styles */
@@ -994,13 +1056,14 @@ export default {
 
 .ticket-modal,
 .ticket-detail-modal {
-  background: var(--bg-secondary, #2a2a2a);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-modal);
 }
 
 .ticket-detail-modal {
@@ -1012,20 +1075,20 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 24px;
-  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .modal-header h3 {
   font-size: 20px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -1039,8 +1102,8 @@ export default {
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary, #ffffff);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .modal-body {
@@ -1062,7 +1125,7 @@ export default {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
@@ -1071,10 +1134,10 @@ export default {
 .form-textarea {
   width: 100%;
   padding: 12px;
-  background: var(--bg-primary, #1a1a1a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 0.2s ease;
 }
@@ -1083,8 +1146,15 @@ export default {
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #00ff88;
-  background: rgba(0, 255, 136, 0.05);
+  border-color: var(--accent-primary);
+  background: var(--bg-secondary);
+}
+
+/* Melhorar visibilidade dos options nos selects do formulário */
+.form-select option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  padding: 8px;
 }
 
 .form-textarea {
@@ -1100,9 +1170,9 @@ export default {
 }
 
 .cancel-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-primary, #ffffff);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
   padding: 12px 20px;
   font-size: 14px;
@@ -1112,12 +1182,12 @@ export default {
 }
 
 .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-secondary);
 }
 
 .submit-btn {
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 6px;
   padding: 12px 20px;
@@ -1128,7 +1198,7 @@ export default {
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #00cc6a;
+  background: var(--accent-secondary);
 }
 
 .submit-btn:disabled {
@@ -1144,7 +1214,7 @@ export default {
 .ticket-detail-header h4 {
   font-size: 18px;
   font-weight: 700;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
@@ -1159,7 +1229,7 @@ export default {
   gap: 16px;
   margin-bottom: 24px;
   padding: 16px;
-  background: var(--bg-primary, #1a1a1a);
+  background: var(--bg-primary);
   border-radius: 8px;
 }
 
@@ -1171,13 +1241,13 @@ export default {
 
 .info-item label {
   font-size: 12px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .info-item span {
   font-size: 14px;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
 }
 
 .ticket-description-section,
@@ -1189,17 +1259,17 @@ export default {
 .ticket-messages-section h5 {
   font-size: 16px;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   margin: 0 0 12px 0;
 }
 
 .ticket-description-section p {
   font-size: 14px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   line-height: 1.6;
   margin: 0;
   padding: 16px;
-  background: var(--bg-primary, #1a1a1a);
+  background: var(--bg-primary);
   border-radius: 8px;
 }
 
@@ -1219,13 +1289,13 @@ export default {
 }
 
 .message-item.user {
-  background: rgba(0, 255, 136, 0.1);
-  border-left-color: #00ff88;
+  background: rgba(var(--accent-primary-rgb), 0.1);
+  border-left-color: var(--accent-primary);
 }
 
 .message-item.support {
-  background: rgba(255, 107, 53, 0.1);
-  border-left-color: #ff6b35;
+  background: rgba(var(--warning-rgb), 0.1);
+  border-left-color: var(--warning);
 }
 
 .message-header {
@@ -1238,17 +1308,17 @@ export default {
 .message-author {
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
 }
 
 .message-date {
   font-size: 12px;
-  color: var(--text-secondary, #888888);
+  color: var(--text-secondary);
 }
 
 .message-content {
   font-size: 14px;
-  color: var(--text-secondary, #cccccc);
+  color: var(--text-secondary);
   line-height: 1.5;
 }
 
@@ -1261,10 +1331,10 @@ export default {
 .message-input {
   width: 100%;
   padding: 12px;
-  background: var(--bg-primary, #1a1a1a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 6px;
-  color: var(--text-primary, #ffffff);
+  color: var(--text-primary);
   font-size: 14px;
   resize: vertical;
   min-height: 80px;
@@ -1272,13 +1342,13 @@ export default {
 
 .message-input:focus {
   outline: none;
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
 .send-message-btn {
   align-self: flex-end;
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 6px;
   padding: 10px 16px;
@@ -1289,12 +1359,31 @@ export default {
 }
 
 .send-message-btn:hover:not(:disabled) {
-  background: #00cc6a;
+  background: var(--accent-secondary);
 }
 
 .send-message-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Ticket Closed Notice */
+.ticket-closed-notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(var(--text-secondary-rgb), 0.1);
+  border: 1px solid rgba(var(--text-secondary-rgb), 0.3);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.ticket-closed-notice svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
 }
 
 /* Responsividade */

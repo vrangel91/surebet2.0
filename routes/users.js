@@ -41,6 +41,120 @@ const pool = new Pool({
 // Aplicar middleware de autenticação em todas as rotas
 router.use(authenticateToken);
 
+// ===== ROTA DE PERFIL DO USUÁRIO =====
+
+// GET /api/users/profile - Obter perfil do usuário atual
+router.get('/profile', async (req, res) => {
+  try {
+    console.log('👤 [Profile] Buscando perfil do usuário:', req.user.id);
+    
+    const user = await User.findByPk(req.user.id, {
+      attributes: [
+        'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
+        'vip_expires_at', 'account_type', 'cpf', 'phone', 'created_at', 'last_login',
+        'referral_code', 'referred_by'
+      ]
+    });
+
+    if (!user) {
+      console.log('❌ [Profile] Usuário não encontrado');
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    console.log('✅ [Profile] Perfil encontrado:', {
+      id: user.id,
+      email: user.email,
+      name: `${user.first_name || ''} ${user.last_name || ''}`.trim()
+    });
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        is_admin: user.is_admin,
+        is_vip: user.is_vip,
+        vip_expires_at: user.vip_expires_at,
+        account_type: user.account_type,
+        cpf: user.cpf,
+        phone: user.phone,
+        created_at: user.created_at,
+        last_login: user.last_login,
+        referral_code: user.referral_code,
+        referred_by: user.referred_by
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [Profile] Erro ao buscar perfil:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+// PUT /api/users/profile - Atualizar perfil do usuário atual
+router.put('/profile', async (req, res) => {
+  try {
+    console.log('🔄 [Profile] Atualizando perfil do usuário:', req.user.id);
+    console.log('📝 [Profile] Dados recebidos:', req.body);
+    
+    const { first_name, last_name, email, phone, cpf } = req.body;
+    
+    const user = await User.findByPk(req.user.id);
+    
+    if (!user) {
+      console.log('❌ [Profile] Usuário não encontrado');
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+
+    // Atualizar campos permitidos
+    if (first_name !== undefined) user.first_name = first_name;
+    if (last_name !== undefined) user.last_name = last_name;
+    if (email !== undefined) user.email = email.toLowerCase();
+    if (phone !== undefined) user.phone = phone;
+    if (cpf !== undefined) user.cpf = cpf;
+
+    await user.save();
+    
+    console.log('✅ [Profile] Perfil atualizado com sucesso');
+
+    res.json({
+      success: true,
+      message: 'Perfil atualizado com sucesso',
+      user: {
+        id: user.id,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone,
+        cpf: user.cpf,
+        updated_at: user.updated_at
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [Profile] Erro ao atualizar perfil:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
 // ===== ROTAS VIP (devem vir antes das rotas genéricas) =====
 
 // 1. Ativar VIP para usuário

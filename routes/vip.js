@@ -163,7 +163,117 @@ router.patch('/cancel/:userId', requireAdmin, async (req, res) => {
   }
 });
 
-// 6. Listar histórico VIP do usuário atual
+// 6. Atualizar VIP (admin only)
+router.put('/update/:id', requireAdmin, async (req, res) => {
+  try {
+    console.log('🔄 [VIP Update] Iniciando atualização de VIP:', req.params.id);
+    console.log('📝 [VIP Update] Dados recebidos:', req.body);
+    
+    const { id } = req.params;
+    const {
+      planName,
+      planDays,
+      amount,
+      autoRenew,
+      notes
+    } = req.body;
+
+    // Validações básicas
+    if (!planName || !planDays || planDays <= 0) {
+      return res.status(400).json({ 
+        error: 'Dados obrigatórios não fornecidos: planName, planDays (deve ser > 0)' 
+      });
+    }
+
+    // Buscar o VIP existente
+    const existingVIP = await UserVIP.findByPk(id, {
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'username', 'email', 'first_name', 'last_name']
+      }]
+    });
+
+    if (!existingVIP) {
+      console.log('❌ [VIP Update] VIP não encontrado:', id);
+      return res.status(404).json({ 
+        error: 'VIP não encontrado' 
+      });
+    }
+
+    console.log('✅ [VIP Update] VIP encontrado:', {
+      id: existingVIP.id,
+      userId: existingVIP.user_id,
+      currentPlan: existingVIP.plan_name,
+      currentDays: existingVIP.plan_days
+    });
+
+    // Calcular nova data de expiração baseada nos dias restantes
+    const now = new Date();
+    const currentExpiry = new Date(existingVIP.data_fim);
+    const daysRemaining = Math.ceil((currentExpiry - now) / (1000 * 60 * 60 * 24));
+    
+    // Se o VIP já expirou, usar a data atual como base
+    const baseDate = daysRemaining > 0 ? now : currentExpiry;
+    const newExpiryDate = new Date(baseDate.getTime() + (parseInt(planDays) * 24 * 60 * 60 * 1000));
+
+    // Atualizar o VIP
+    const updateData = {
+      plan_name: planName,
+      plan_days: parseInt(planDays),
+      amount: amount ? parseFloat(amount) : existingVIP.amount,
+      auto_renew: autoRenew !== undefined ? autoRenew : existingVIP.auto_renew,
+      notes: notes || existingVIP.notes,
+      data_fim: newExpiryDate,
+      updated_at: new Date()
+    };
+
+    await existingVIP.update(updateData);
+
+    console.log('✅ [VIP Update] VIP atualizado com sucesso:', {
+      id: existingVIP.id,
+      newPlan: planName,
+      newDays: planDays,
+      newExpiry: newExpiryDate
+    });
+
+    // Buscar o VIP atualizado para retornar
+    const updatedVIP = await UserVIP.findByPk(id, {
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'username', 'email', 'first_name', 'last_name']
+      }]
+    });
+
+    res.json({
+      success: true,
+      message: 'VIP atualizado com sucesso',
+      vip: {
+        id: updatedVIP.id,
+        userId: updatedVIP.user_id,
+        planName: updatedVIP.plan_name,
+        planDays: updatedVIP.plan_days,
+        amount: updatedVIP.amount,
+        autoRenew: updatedVIP.auto_renew,
+        notes: updatedVIP.notes,
+        dataInicio: updatedVIP.data_inicio,
+        dataFim: updatedVIP.data_fim,
+        status: updatedVIP.status,
+        user: updatedVIP.user
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [VIP Update] Erro ao atualizar VIP:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message 
+    });
+  }
+});
+
+// 7. Listar histórico VIP do usuário atual
 router.get('/my-history', async (req, res) => {
   try {
     const userId = req.user.id;

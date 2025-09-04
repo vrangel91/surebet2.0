@@ -1083,6 +1083,12 @@ export default {
         console.log('📊 Resposta da API VIPs ativos:', response.data)
         activeVIPs.value = response.data.activeVIPs || []
         console.log('✅ VIPs ativos carregados:', activeVIPs.value.length)
+        
+        // Log detalhado da estrutura dos dados
+        if (activeVIPs.value.length > 0) {
+          console.log('🔍 Estrutura do primeiro VIP:', activeVIPs.value[0])
+          console.log('🆔 IDs dos VIPs:', activeVIPs.value.map(vip => ({ id: vip.id, userId: vip.userId })))
+        }
       } catch (error) {
         console.error('❌ Erro ao carregar VIPs ativos:', error)
         console.error('📋 Detalhes do erro:', error.response?.data)
@@ -1237,6 +1243,9 @@ export default {
     }
     
     const editVIP = (vip) => {
+      console.log('✏️ [Frontend] Editando VIP:', vip)
+      console.log('🆔 [Frontend] ID do VIP:', vip.id)
+      
       editForm.id = vip.id
       editForm.userId = vip.userId
       editForm.userName = `${vip.user?.first_name} ${vip.user?.last_name} (${vip.user?.email})`
@@ -1246,6 +1255,8 @@ export default {
       editForm.autoRenew = vip.autoRenew || false
       editForm.notes = vip.notes || ''
       
+      console.log('📝 [Frontend] Formulário preenchido:', editForm)
+      
       showEditModal.value = true
     }
     
@@ -1253,6 +1264,9 @@ export default {
       if (!canUpdateVIP.value) return
       
       try {
+        console.log('🔄 [Frontend] Iniciando atualização de VIP...')
+        console.log('📝 [Frontend] Dados do formulário:', editForm)
+        
         // Validações
         if (editForm.duration <= 0) {
           alert('A duração deve ser maior que zero.')
@@ -1264,22 +1278,44 @@ export default {
           return
         }
         
+        if (!editForm.id) {
+          console.error('❌ [Frontend] ID do VIP não encontrado')
+          alert('Erro: ID do VIP não encontrado.')
+          return
+        }
+        
         const planName = editForm.planType === 'premium' ? 'Premium' : 'VIP'
         
-        await axios.put(`/api/vip/update/${editForm.id}`, {
+        const payload = {
           planName: planName,
           planDays: editForm.duration,
           amount: editForm.amount,
           autoRenew: editForm.autoRenew,
           notes: editForm.notes
-        })
+        }
+        
+        console.log('📤 [Frontend] Enviando requisição para:', `/api/vip/update/${editForm.id}`)
+        console.log('📤 [Frontend] Payload:', payload)
+        
+        const response = await axios.put(`/api/vip/update/${editForm.id}`, payload)
+        
+        console.log('✅ [Frontend] Resposta da API:', response.data)
         
         showEditModal.value = false
         refreshData()
         alert('VIP atualizado com sucesso!')
       } catch (error) {
-        console.error('Erro ao atualizar VIP:', error)
-        alert('Erro ao atualizar VIP. Verifique os dados e tente novamente.')
+        console.error('❌ [Frontend] Erro ao atualizar VIP:', error)
+        console.error('📋 [Frontend] Detalhes do erro:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          url: error.config?.url,
+          method: error.config?.method
+        })
+        
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
+        alert(`Erro ao atualizar VIP: ${errorMessage}`)
       }
     }
     

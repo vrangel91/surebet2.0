@@ -240,65 +240,11 @@ export default {
       return getComputedStyle(document.documentElement).getPropertyValue(cssVariable) || fallback
     },
     
-    // Método para forçar atualização do fundo do gráfico
+    // Método para atualizar o fundo do gráfico quando o tema mudar
     updateChartBackground() {
       if (this.chart) {
-        // Forçar redraw do gráfico
+        // Apenas atualizar as cores do gráfico
         this.chart.update('none');
-        
-        // Aplicar fundo via CSS como fallback
-        const canvas = this.chart.canvas;
-        if (canvas) {
-          // Forçar fundo via CSS inline
-          canvas.style.backgroundColor = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-          canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important');
-          
-          // Também aplicar ao contexto 2D
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-          }
-        }
-      }
-    },
-    
-    // Método para forçar o fundo do gráfico de forma mais agressiva
-    forceChartBackground() {
-      if (this.chart && this.chart.canvas) {
-        const canvas = this.chart.canvas;
-        
-        // 1. Forçar via CSS inline
-        canvas.style.cssText = `
-          background-color: ${this.getThemeColor('--bg-tertiary', '#2a2a2a')} !important;
-        `;
-        
-        // 2. Forçar via setProperty
-        canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important');
-        
-        // 3. Forçar via contexto 2D
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-        
-        // 4. Forçar redraw
-        this.chart.update('none');
-        
-        // 5. Aplicar novamente após um delay
-        setTimeout(() => {
-          if (this.chart && this.chart.canvas) {
-            const canvas = this.chart.canvas;
-            canvas.style.backgroundColor = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-            
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-              ctx.fillRect(0, 0, canvas.width, canvas.height);
-            }
-          }
-        }, 100);
       }
     },
 
@@ -538,111 +484,7 @@ export default {
             animation: {
               duration: 500
             },
-            // Configuração do fundo do gráfico
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
             plugins: {
-              // Plugin personalizado para fundo do canvas - VERSÃO SUPER AGRESSIVA
-              customCanvasBackgroundColor: {
-                id: 'customCanvasBackgroundColor',
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx;
-                  const chartArea = chart.chartArea;
-                  
-                  // Forçar fundo em múltiplas camadas
-                  ctx.save();
-                  
-                  // Camada 1: Fundo geral do canvas
-                  ctx.globalCompositeOperation = 'destination-over';
-                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-                  ctx.fillRect(0, 0, chart.width, chart.height);
-                  
-                  // Camada 2: Fundo específico da área de plotagem
-                  if (chartArea) {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-                    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-                  }
-                  
-                  // Camada 3: Fundo adicional para garantir
-                  ctx.globalCompositeOperation = 'destination-over';
-                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-                  ctx.fillRect(0, 0, chart.width, chart.height);
-                  
-                  ctx.restore();
-                },
-                
-                // Também executar após desenhar
-                afterDraw: (chart) => {
-                  const ctx = chart.ctx;
-                  const chartArea = chart.chartArea;
-                  
-                  if (chartArea) {
-                    ctx.save();
-                    ctx.globalCompositeOperation = 'destination-over';
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a');
-                    ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-                    ctx.restore();
-                  }
-                }
-              },
-              
-              // Plugin para melhorar a área preenchida com gradiente
-              customFillArea: {
-                id: 'customFillArea',
-                afterDraw: (chart) => {
-                  const ctx = chart.ctx;
-                  const datasets = chart.data.datasets;
-                  
-                  datasets.forEach((dataset, datasetIndex) => {
-                    if (dataset.fill && dataset.data && dataset.data.length > 0) {
-                      const meta = chart.getDatasetMeta(datasetIndex);
-                      if (meta.visible) {
-                        ctx.save();
-                        
-                        // Criar gradiente para Capital Total
-                        if (dataset.label === 'Capital Total') {
-                          const gradient = ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
-                          const baseColor = this.getThemeColor('--accent-primary', '#00ff88');
-                          
-                          gradient.addColorStop(0, baseColor + '20');   // Mais claro no topo
-                          gradient.addColorStop(0.5, baseColor + '12'); // Médio no meio
-                          gradient.addColorStop(1, baseColor + '05');   // Mais escuro na base
-                          
-                          ctx.fillStyle = gradient;
-                        }
-                        
-                        // Criar gradiente para Capital Inicial
-                        if (dataset.label === 'Capital Inicial') {
-                          const gradient = ctx.createLinearGradient(0, chart.chartArea.top, 0, chart.chartArea.bottom);
-                          const baseColor = this.getThemeColor('--error-color', '#ff4444');
-                          
-                          gradient.addColorStop(0, baseColor + '15');   // Mais claro no topo
-                          gradient.addColorStop(0.5, baseColor + '10'); // Médio no meio
-                          gradient.addColorStop(1, baseColor + '05');   // Mais escuro na base
-                          
-                          ctx.fillStyle = gradient;
-                        }
-                        
-                        // Desenhar área preenchida
-                        ctx.beginPath();
-                        ctx.moveTo(meta.data[0].x, meta.data[0].y);
-                        
-                        for (let i = 1; i < meta.data.length; i++) {
-                          ctx.lineTo(meta.data[i].x, meta.data[i].y);
-                        }
-                        
-                        // Completar o caminho para baixo
-                        ctx.lineTo(meta.data[meta.data.length - 1].x, chart.chartArea.bottom);
-                        ctx.lineTo(meta.data[0].x, chart.chartArea.bottom);
-                        ctx.closePath();
-                        
-                        ctx.fill();
-                        ctx.restore();
-                      }
-                    }
-                  });
-                }
-              },
               legend: {
                 labels: {
                   color: this.getThemeColor('--text-primary', '#ffffff'),
@@ -699,19 +541,6 @@ export default {
                 backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a')
               }
             },
-            // Configuração específica para o fundo da área de plotagem
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            // Configuração adicional para fundo da área de plotagem
-            plugins: {
-              ...this.chart?.options?.plugins,
-              // Plugin para fundo da área de plotagem
-              background: {
-                color: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-                image: undefined,
-                width: undefined,
-                height: undefined
-              }
-            },
             elements: {
               point: {
                 radius: 0,
@@ -730,11 +559,6 @@ export default {
             }
           }
         })
-        
-        // Forçar aplicação do fundo imediatamente após criar o gráfico
-        this.$nextTick(() => {
-          this.forceChartBackground();
-        });
         
       } catch (error) {
         console.error('Error creating chart:', error)
