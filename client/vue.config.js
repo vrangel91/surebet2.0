@@ -5,7 +5,7 @@ module.exports = defineConfig({
   
   // Configurações PWA
   pwa: {
-    name: 'SureStake - Apostas Inteligentes',
+    name: 'SureStake',
     shortName: 'SureStake',
     description: 'Sistema inteligente de apostas esportivas com análise de surebets',
     themeColor: '#00ff88',
@@ -107,7 +107,7 @@ module.exports = defineConfig({
     
     // Manifest
     manifestOptions: {
-      name: 'SureStake - Apostas Inteligentes',
+      name: 'SureStake',
       short_name: 'SureStake',
       description: 'Sistema inteligente de apostas esportivas com análise de surebets',
       start_url: '/',

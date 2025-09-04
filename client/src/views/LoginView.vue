@@ -412,16 +412,14 @@ export default {
         // Ativa o estado de loading imediatamente
         this.isLoading = true
         this.loginError = ''
-        
-        // Mostra a tela de loading após validação bem-sucedida
-        this.showLoginLoading = true
 
         
         try {
           const response = await this.authenticateUser()
           
           if (response.success) {
-
+            // Mostra a tela de loading apenas quando o login for bem-sucedido
+            this.showLoginLoading = true
             
             // Salva o token e dados do usuário
             this.$store.dispatch('login', {
@@ -481,8 +479,10 @@ export default {
           this.handleLoginFailure('Erro de conexão. Tente novamente.')
         } finally {
           this.isLoading = false
-          // Não oculta a tela de loading aqui - ela será ocultada após o redirecionamento
-          // this.showLoginLoading = false
+          // Se não foi bem-sucedido, oculta o loading
+          if (!this.showLoginLoading) {
+            this.showLoginLoading = false
+          }
         }
       },
   
@@ -577,6 +577,9 @@ export default {
       handleLoginFailure(message) {
         this.loginError = message
         this.loginAttempts++
+        
+        // Oculta o loading quando há erro de login
+        this.showLoginLoading = false
         
         if (this.loginAttempts >= this.maxLoginAttempts) {
           this.lockoutUntil = Date.now() + this.lockoutTime

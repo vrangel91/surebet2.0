@@ -92,7 +92,7 @@ npm run build
 
 ```json
 {
-  "name": "SureStake - Apostas Inteligentes",
+  "name": "SureStake",
   "short_name": "SureStake",
   "description": "Sistema inteligente de apostas esportivas",
   "start_url": "/",
@@ -115,7 +115,7 @@ O Service Worker implementa estratégias de cache inteligentes:
 
 ```javascript
 pwa: {
-  name: 'SureStake - Apostas Inteligentes',
+  name: 'SureStake',
   themeColor: '#6366f1',
   workboxPluginMode: 'GenerateSW',
   workboxOptions: {
