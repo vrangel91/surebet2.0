@@ -1112,22 +1112,22 @@ export default {
   border-radius: 50%;
   
   &.active {
-    background: #00ff88;
-    box-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    background: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
   }
   &.warning {
-    background: #ffd700;
-    box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+    background: var(--warning);
+    box-shadow: 0 0 8px var(--warning);
   }
   &.expired {
-    background: #ff6b6b;
-    box-shadow: 0 0 8px rgba(255, 107, 107, 0.5);
+    background: var(--error);
+    box-shadow: 0 0 8px var(--error);
   }
 }
 
 .premium-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--bg-gradient-purple-button);
+  color: var(--text-button-purple);
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 12px;
@@ -1156,38 +1156,38 @@ export default {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px var(--transparent-dark);
 }
 
 .account-type-basic {
-  background: linear-gradient(135deg, #6c757d, #495057);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--text-tertiary), var(--text-secondary));
+  color: var(--text-primary);
 }
 
 .account-type-premium {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #ffffff;
+  background: var(--bg-gradient-info-button);
+  color: var(--text-button-info);
 }
 
 .account-type-vip {
-  background: linear-gradient(135deg, #ffd700, #ffb347);
-  color: #1a1a1a;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+  background: var(--bg-gradient-yellow-button);
+  color: var(--text-button-yellow);
+  box-shadow: 0 2px 8px var(--warning);
   animation: vipGlow 2s ease-in-out infinite alternate;
 }
 
 @keyframes vipGlow {
   from {
-    box-shadow: 0 1px 3px rgba(255, 215, 0, 0.3);
+    box-shadow: 0 1px 3px var(--warning);
   }
   to {
-    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 2px 6px var(--warning);
   }
 }
 
 .vip-status {
-  background: rgba(255, 107, 107, 0.1);
-  color: #ff6b6b;
+  background: var(--bg-error);
+  color: var(--error);
   padding: 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -1195,7 +1195,7 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: 1px solid var(--border-error);
   transition: background-color 0.3s ease, border-color 0.3s ease;
   
   i {
@@ -1209,30 +1209,30 @@ export default {
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+  color: var(--error);
+  background: var(--bg-error);
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 107, 107, 0.2);
+  border: 1px solid var(--border-error);
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(255, 107, 107, 0.2);
-    border-color: rgba(255, 107, 107, 0.3);
+    background: var(--error-medium);
+    border-color: var(--error-strong);
   }
 
   .vip-icon {
     font-size: 16px;
-    color: #ff6b6b;
+    color: var(--error);
   }
 
   .vip-text {
-    color: #ff6b6b;
+    color: var(--error);
   }
 
   .vip-days {
     font-weight: 700;
-    color: #ff6b6b;
+    color: var(--error);
   }
 }
 
@@ -1241,25 +1241,25 @@ export default {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #6c757d;
-  background: rgba(108, 117, 125, 0.1);
+  color: var(--text-tertiary);
+  background: var(--badge-neutral-bg);
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(108, 117, 125, 0.2);
+  border: 1px solid var(--border-primary);
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(108, 117, 125, 0.2);
-    border-color: rgba(108, 117, 125, 0.3);
+    background: var(--bg-hover);
+    border-color: var(--border-hover);
   }
 
   .basic-icon {
     font-size: 16px;
-    color: #6c757d;
+    color: var(--text-tertiary);
   }
 
   .basic-text {
-    color: #6c757d;
+    color: var(--text-tertiary);
   }
 }
 
@@ -1283,7 +1283,7 @@ export default {
   }
   
   &.error {
-    color: #ff6b6b;
+    color: var(--error);
   }
 }
 
@@ -1317,12 +1317,12 @@ export default {
 .vip-progress-bar {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--progress-bg);
   border-radius: 3px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-primary);
+  box-shadow: inset 0 1px 2px var(--transparent-dark);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -1331,7 +1331,7 @@ export default {
   border-radius: 3px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 8px var(--transparent-dark);
   
   &::after {
     content: '';
@@ -1340,50 +1340,50 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, var(--transparent-strong), transparent);
     animation: shimmer 2s infinite;
   }
   
   &.progress-healthy {
-    background: linear-gradient(90deg, #00ff88, #00cc6a, #00ff88);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
     background-size: 200% 100%;
     animation: gradientMove 3s ease infinite;
-    box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+    box-shadow: 0 0 12px var(--accent-primary);
   }
   
   &.progress-attention {
-    background: linear-gradient(90deg, #ffd700, #ffb347, #ffd700);
+    background: linear-gradient(90deg, var(--warning), var(--warning-color), var(--warning));
     background-size: 200% 100%;
     animation: gradientMove 2.5s ease infinite;
-    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
+    box-shadow: 0 0 12px var(--warning);
   }
   
   &.progress-warning {
-    background: linear-gradient(90deg, #ffc107, #e0a800, #ffc107);
+    background: linear-gradient(90deg, var(--warning), var(--warning-color), var(--warning));
     background-size: 200% 100%;
     animation: gradientMove 2s ease infinite;
-    box-shadow: 0 0 12px rgba(255, 193, 7, 0.5);
+    box-shadow: 0 0 12px var(--warning);
   }
   
   &.progress-critical {
-    background: linear-gradient(90deg, #ff6b35, #ff4757, #ff6b35);
+    background: linear-gradient(90deg, var(--error), var(--error-color), var(--error));
     background-size: 200% 100%;
     animation: gradientMove 1.5s ease infinite;
-    box-shadow: 0 0 12px rgba(255, 107, 53, 0.5);
+    box-shadow: 0 0 12px var(--error);
   }
   
   &.progress-expired {
-    background: linear-gradient(90deg, #dc3545, #c82333, #dc3545);
+    background: linear-gradient(90deg, var(--error), var(--error-color), var(--error));
     background-size: 200% 100%;
     animation: gradientMove 1s ease infinite;
-    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+    box-shadow: 0 0 12px var(--error);
   }
   
   &.progress-neutral {
-    background: linear-gradient(90deg, #6c757d, #495057, #6c757d);
+    background: linear-gradient(90deg, var(--text-tertiary), var(--text-secondary), var(--text-tertiary));
     background-size: 200% 100%;
     animation: gradientMove 3s ease infinite;
-    box-shadow: 0 0 8px rgba(108, 117, 125, 0.3);
+    box-shadow: 0 0 8px var(--text-tertiary);
   }
 }
 
@@ -1431,46 +1431,46 @@ export default {
   }
   
   &.logout-btn {
-    color: #ff6b6b;
-    border-color: rgba(255, 107, 107, 0.3);
+    color: var(--error);
+    border-color: var(--border-error);
     
     &:hover {
-      background: rgba(255, 107, 107, 0.1);
-      border-color: #ff6b6b;
+      background: var(--bg-error);
+      border-color: var(--error);
     }
     
     i {
-      color: #ff6b6b;
+      color: var(--error);
     }
   }
   
   &.vip-admin-btn {
-    color: #ffd700;
-    border-color: rgba(255, 215, 0, 0.3);
+    color: var(--warning);
+    border-color: var(--border-warning);
     
     &:hover {
-      background: rgba(255, 215, 0, 0.1);
-      border-color: #ffd700;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+      background: var(--bg-warning);
+      border-color: var(--warning);
+      box-shadow: 0 0 15px var(--warning);
     }
     
     i {
-      color: #ffd700;
+      color: var(--warning);
     }
   }
   
   &.admin-btn {
-    color: #007bff;
-    border-color: rgba(0, 123, 255, 0.3);
+    color: var(--info);
+    border-color: var(--border-info);
     
     &:hover {
-      background: rgba(0, 123, 255, 0.1);
-      border-color: #007bff;
-      box-shadow: 0 0 15px rgba(0, 123, 255, 0.3);
+      background: var(--bg-info);
+      border-color: var(--info);
+      box-shadow: 0 0 15px var(--info);
     }
     
     i {
-      color: #007bff;
+      color: var(--info);
     }
   }
 }
@@ -1540,7 +1540,7 @@ export default {
 
 .mark-all-read-btn {
   background: var(--accent-primary);
-  color: var(--bg-primary);
+  color: var(--text-button-primary);
   border: none;
   padding: 6px 12px;
   border-radius: 6px;
@@ -1665,23 +1665,23 @@ export default {
   font-size: 14px;
 
   .bi-info-circle-fill {
-    color: #007bff;
+    color: var(--info);
   }
 
   .bi-check-circle-fill {
-    color: #28a745;
+    color: var(--success);
   }
 
   .bi-exclamation-triangle-fill {
-    color: #ffc107;
+    color: var(--warning);
   }
 
   .bi-x-circle-fill {
-    color: #dc3545;
+    color: var(--error);
   }
 
   .bi-arrow-clockwise {
-    color: #6f42c1;
+    color: var(--accent-primary);
   }
 }
 
@@ -1723,23 +1723,23 @@ export default {
   font-size: 10px;
 
   &.urgent {
-    background: rgba(220, 53, 69, 0.2);
-    color: #dc3545;
+    background: var(--badge-error-bg);
+    color: var(--badge-error-text);
   }
 
   &.high {
-    background: rgba(255, 107, 53, 0.2);
-    color: #ff6b35;
+    background: var(--badge-warning-bg);
+    color: var(--badge-warning-text);
   }
 
   &.normal {
-    background: rgba(255, 193, 7, 0.2);
-    color: #ffc107;
+    background: var(--badge-warning-bg);
+    color: var(--badge-warning-text);
   }
 
   &.low {
-    background: rgba(108, 117, 125, 0.2);
-    color: #6c757d;
+    background: var(--badge-neutral-bg);
+    color: var(--badge-neutral-text);
   }
 }
 
@@ -1765,18 +1765,18 @@ export default {
 }
 
 .mark-read-btn {
-  color: #28a745;
+  color: var(--success);
 
   &:hover {
-    color: #20c997;
+    color: var(--accent-primary);
   }
 }
 
 .dismiss-btn {
-  color: #6c757d;
+  color: var(--text-tertiary);
 
   &:hover {
-    color: #dc3545;
+    color: var(--error);
   }
 }
 
@@ -1814,47 +1814,47 @@ export default {
   }
 
   &.toast-info {
-    border-left-color: #007bff;
+    border-left-color: var(--info);
   }
 
   &.toast-success {
-    border-left-color: #28a745;
+    border-left-color: var(--success);
   }
 
   &.toast-warning {
-    border-left-color: #ffc107;
+    border-left-color: var(--warning);
   }
 
   &.toast-error {
-    border-left-color: #dc3545;
+    border-left-color: var(--error);
   }
 
   &.toast-update {
-    border-left-color: #6f42c1;
+    border-left-color: var(--accent-primary);
   }
 
   &.toast-urgent {
-    border-left-color: #dc3545;
+    border-left-color: var(--error);
     animation: urgentPulse 1s infinite;
   }
 
   &.toast-high {
-    border-left-color: #ff6b35;
+    border-left-color: var(--warning);
   }
 
   &.toast-normal {
-    border-left-color: #ffc107;
+    border-left-color: var(--warning);
   }
 
   &.toast-low {
-    border-left-color: #6c757d;
+    border-left-color: var(--text-tertiary);
   }
 }
 
 @keyframes urgentPulse {
-  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+  0% { box-shadow: 0 0 0 0 var(--error); }
+  70% { box-shadow: 0 0 0 10px var(--transparent); }
+  100% { box-shadow: 0 0 0 0 var(--transparent); }
 }
 
 .toast-header {
