@@ -95,6 +95,8 @@ const Notification = sequelize.define('Notification', {
   tableName: 'notifications',
   timestamps: true,
   underscored: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
   
   indexes: [
     // Comentando índices temporariamente para evitar erros de sincronização

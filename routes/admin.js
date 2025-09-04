@@ -106,6 +106,7 @@ router.post('/send-notification', async (req, res) => {
     });
     
     // Criar notificação no banco
+    const now = new Date();
     const notification = await Notification.create({
       title,
       message,
@@ -115,7 +116,9 @@ router.post('/send-notification', async (req, res) => {
       target_user_ids,
       expires_at: expires_at ? new Date(expires_at) : null,
       metadata,
-      created_by: req.user.id
+      created_by: req.user.id,
+      created_at: now,
+      updated_at: now
     });
     
     // Contar usuários que receberão a notificação
@@ -154,7 +157,10 @@ router.post('/send-notification', async (req, res) => {
           target_audience: notification.target_audience,
           target_user_ids: notification.target_user_ids,
           expires_at: notification.expires_at,
-          sent_at: notification.sent_at
+          sent_at: notification.sent_at,
+          created_at: notification.created_at,
+          updated_at: notification.updated_at,
+          created_by: notification.created_by
         },
         userCount,
         timestamp: new Date().toISOString()
@@ -189,7 +195,7 @@ router.get('/notifications', asyncHandler(async (req, res) => {
       as: 'creator',
       attributes: ['id', 'username', 'email']
     }],
-    order: [['created_at', 'DESC']],
+    order: [['id', 'DESC']], // Usar id em vez de created_at
     limit: parseInt(limit),
     offset: parseInt(offset)
   });
@@ -201,8 +207,11 @@ router.get('/notifications', asyncHandler(async (req, res) => {
     pages: Math.ceil(count / limit)
   };
   
+  // Converter objetos Sequelize para JSON para garantir serialização correta
+  const serializedNotifications = notifications.map(notif => notif.toJSON());
+  
   res.json(successResponse(
-    { notifications, pagination },
+    { notifications: serializedNotifications, pagination },
     'Notificações listadas com sucesso'
   ));
 }));

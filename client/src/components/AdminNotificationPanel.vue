@@ -777,17 +777,30 @@ export default {
            // 5. Verificar se a notificação foi salva no banco
            await loadNotifications();
            const savedNotification = notifications.value && Array.isArray(notifications.value) 
-             ? notifications.value.find(n => 
-                 n.title.includes('🧪 Teste PWA') && 
-                 n.metadata?.source === 'pwa-test'
-               )
+             ? notifications.value.find(n => {
+                 const hasTitle = n.title.includes('🧪 Teste PWA');
+                 const hasMetadata = n.metadata && (
+                   (typeof n.metadata === 'object' && n.metadata.source === 'pwa-test') ||
+                   (typeof n.metadata === 'string' && n.metadata.includes('pwa-test'))
+                 );
+                 return hasTitle && hasMetadata;
+               })
              : null;
            
            if (savedNotification) {
              pwaChecks.notificationSaved = true;
              console.log('✅ Notificação salva no banco de dados');
+             console.log(`   Encontrada: [${savedNotification.id}] ${savedNotification.title}`);
            } else {
              console.log('❌ Notificação não foi salva no banco');
+             console.log(`   Total de notificações carregadas: ${notifications.value?.length || 0}`);
+             if (notifications.value && notifications.value.length > 0) {
+               console.log('   Primeiras 3 notificações:');
+               notifications.value.slice(0, 3).forEach((n, index) => {
+                 console.log(`     ${index + 1}. [${n.id}] ${n.title}`);
+                 console.log(`        metadata: ${typeof n.metadata} - ${JSON.stringify(n.metadata)}`);
+               });
+             }
            }
          } else {
            console.log('❌ API de notificação falhou');
