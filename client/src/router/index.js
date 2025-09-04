@@ -124,6 +124,11 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   console.log(`🔄 Navegação: ${from.path} → ${to.path}`)
   
+  // 🔄 Iniciar loader para transições de página
+  if (from.path !== to.path) {
+    store.dispatch('showLoader')
+  }
+  
   // Verifica se a rota requer guest (não autenticado)
   if (to.meta.requiresGuest && store.getters.isAuthenticated) {
     console.log('🔄 Usuário já autenticado, redirecionando...')
@@ -159,6 +164,17 @@ router.beforeEach((to, from, next) => {
   }
   
   next()
+})
+
+// Guard para parar o loader após a navegação
+router.afterEach((to, from) => {
+  // 🔄 Parar loader após a navegação ser concluída
+  if (from.path !== to.path) {
+    // Pequeno delay para garantir que a página foi carregada
+    setTimeout(() => {
+      store.dispatch('hideLoader')
+    }, 100)
+  }
 })
 
 // Verifica o status de autenticação ao carregar a aplicação

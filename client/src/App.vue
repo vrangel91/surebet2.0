@@ -3,6 +3,9 @@
     <!-- Loading após login -->
     <LoginLoading :isVisible="showLoginLoading" />
     
+    <!-- 🔄 Loader global fullscreen -->
+    <LoaderOverlay />
+    
     <router-view />
     <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->
     <FloatingGuideButton />
@@ -16,7 +19,7 @@
 import { useTheme } from './composables/useTheme'
 import LoginLoading from './components/LoginLoading.vue'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
-
+import LoaderOverlay from './components/LoaderOverlay.vue'
 import PWAUpdateNotification from './components/PWAUpdateNotification.vue'
 
 export default {
@@ -24,6 +27,7 @@ export default {
   components: {
     LoginLoading,
     FloatingGuideButton,
+    LoaderOverlay,
     PWAUpdateNotification
   },
   data() {

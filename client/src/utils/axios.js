@@ -12,7 +12,7 @@ const axiosInstance = axios.create({
   }
 })
 
-// Interceptor para adicionar token de autenticação
+// Interceptor para adicionar token de autenticação e gerenciar loader
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = store.getters.authToken
@@ -22,19 +22,46 @@ axiosInstance.interceptors.request.use(
     } else {
       console.log('⚠️ Nenhum token encontrado para:', config.url)
     }
+    
+    // 🔄 Iniciar loader para requisições (exceto para algumas rotas específicas)
+    const skipLoaderRoutes = ['/api/vip/status', '/api/health']
+    const shouldSkipLoader = skipLoaderRoutes.some(route => config.url?.includes(route))
+    
+    if (!shouldSkipLoader) {
+      store.dispatch('showLoader')
+    }
+    
     return config
   },
   (error) => {
+    // 🔄 Parar loader em caso de erro na requisição
+    store.dispatch('hideLoader')
     return Promise.reject(error)
   }
 )
 
-// Interceptor para tratar erros de autenticação
+// Interceptor para tratar erros de autenticação e gerenciar loader
 axiosInstance.interceptors.response.use(
   (response) => {
+    // 🔄 Parar loader em caso de sucesso
+    const skipLoaderRoutes = ['/api/vip/status', '/api/health']
+    const shouldSkipLoader = skipLoaderRoutes.some(route => response.config.url?.includes(route))
+    
+    if (!shouldSkipLoader) {
+      store.dispatch('hideLoader')
+    }
+    
     return response
   },
   (error) => {
+    // 🔄 Parar loader em caso de erro
+    const skipLoaderRoutes = ['/api/vip/status', '/api/health']
+    const shouldSkipLoader = skipLoaderRoutes.some(route => error.config?.url?.includes(route))
+    
+    if (!shouldSkipLoader) {
+      store.dispatch('hideLoader')
+    }
+    
     // Não tratar 404 em rotas VIP como erro crítico
     const isVIPRoute = error.config?.url?.includes('/api/vip/')
     const is404Error = error.response?.status === 404

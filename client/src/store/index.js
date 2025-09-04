@@ -25,7 +25,11 @@ export default createStore({
       isVIP: false,
       expiration: null,
       lastValidation: null
-    }
+    },
+    // 🔄 Estado global do loader
+    isLoading: false,
+    loadingRequests: 0, // Contador de requisições ativas
+    loadingStartTime: null // Timestamp do início do loading
   },
   
   mutations: {
@@ -71,6 +75,46 @@ export default createStore({
       }
       localStorage.removeItem('vipStatus')
       console.log('🔒 [Store] Status VIP limpo')
+    },
+    
+    // 🔄 Mutations para gerenciar o loader
+    startLoading(state) {
+      state.loadingRequests++
+      if (state.loadingRequests === 1) {
+        state.isLoading = true
+        state.loadingStartTime = Date.now()
+        console.log('🔄 [Store] Loader iniciado')
+      }
+    },
+    
+    stopLoading(state) {
+      if (state.loadingRequests > 0) {
+        state.loadingRequests--
+        if (state.loadingRequests === 0) {
+          // Implementar tempo mínimo de exibição (300ms)
+          const elapsedTime = Date.now() - (state.loadingStartTime || 0)
+          const minDisplayTime = 300
+          
+          if (elapsedTime < minDisplayTime) {
+            setTimeout(() => {
+              state.isLoading = false
+              state.loadingStartTime = null
+              console.log('🔄 [Store] Loader finalizado (com delay mínimo)')
+            }, minDisplayTime - elapsedTime)
+          } else {
+            state.isLoading = false
+            state.loadingStartTime = null
+            console.log('🔄 [Store] Loader finalizado')
+          }
+        }
+      }
+    },
+    
+    forceStopLoading(state) {
+      state.isLoading = false
+      state.loadingRequests = 0
+      state.loadingStartTime = null
+      console.log('🔄 [Store] Loader forçado a parar')
     },
     
     logout(state) {
@@ -558,6 +602,19 @@ export default createStore({
       commit('clearMockData')
     },
     
+    // 🔄 Actions para gerenciar o loader
+    showLoader({ commit }) {
+      commit('startLoading')
+    },
+    
+    hideLoader({ commit }) {
+      commit('stopLoading')
+    },
+    
+    forceHideLoader({ commit }) {
+      commit('forceStopLoading')
+    },
+    
     // Buscar usuários da API
     async fetchUsers({ commit, state }) {
       try {
@@ -740,6 +797,8 @@ export default createStore({
     authToken: state => state.authToken,
     allUsers: state => state.users,
     isAdmin: state => state.user?.is_admin === true,
+    // 🔄 Getter para o estado do loader
+    isLoading: state => state.isLoading,
     isVIP: state => {
       // Priorizar o status VIP do sistema de segurança
       if (state.vipStatus.isVIP) return true
