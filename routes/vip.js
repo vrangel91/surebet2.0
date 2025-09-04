@@ -102,6 +102,9 @@ router.get('/my-status', async (req, res) => {
 // 4. Renovar VIP
 router.post('/renew/:userId', async (req, res) => {
   try {
+    console.log('🔄 [VIP Renew] Iniciando renovação de VIP:', req.params.userId);
+    console.log('📝 [VIP Renew] Dados recebidos:', req.body);
+    
     const { userId } = req.params;
     const {
       planId,
@@ -114,7 +117,21 @@ router.post('/renew/:userId', async (req, res) => {
       notes
     } = req.body;
 
+    console.log('🔍 [VIP Renew] Validação dos dados:', {
+      planId: planId,
+      planName: planName,
+      planDays: planDays,
+      hasPlanId: !!planId,
+      hasPlanName: !!planName,
+      hasPlanDays: !!planDays
+    });
+
     if (!planId || !planName || !planDays) {
+      console.log('❌ [VIP Renew] Dados obrigatórios não fornecidos:', {
+        planId: planId,
+        planName: planName,
+        planDays: planDays
+      });
       return res.status(400).json({ 
         error: 'Dados obrigatórios não fornecidos: planId, planName, planDays' 
       });
@@ -131,12 +148,16 @@ router.post('/renew/:userId', async (req, res) => {
       notes: notes
     };
 
+    console.log('📤 [VIP Renew] Dados processados para o serviço:', planData);
+
     const result = await VIPService.renewVIP(userId, planData);
+
+    console.log('✅ [VIP Renew] Renovação concluída:', result);
 
     res.json(result);
 
   } catch (error) {
-    console.error('Erro ao renovar VIP:', error);
+    console.error('❌ [VIP Renew] Erro ao renovar VIP:', error);
     res.status(500).json({ 
       error: 'Erro interno do servidor',
       details: error.message 

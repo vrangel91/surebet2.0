@@ -1207,14 +1207,46 @@ export default {
     
     const renewVIP = async (vip) => {
       try {
-        await axios.post(`/api/vip/renew/${vip.userId}`, {
-          planType: vip.planName,
-          duration: 30,
-          amount: vip.amount
-        })
+        console.log('🔄 [Frontend] Renovando VIP:', vip)
+        console.log('🆔 [Frontend] User ID:', vip.userId)
+        
+        // Mapear os dados para o formato esperado pelo backend
+        const planId = vip.planName?.toLowerCase() === 'premium' ? 1 : 2
+        const planName = vip.planName || 'Premium'
+        const planDays = 30 // Padrão de 30 dias para renovação
+        
+        const payload = {
+          planId: planId,
+          planName: planName,
+          planDays: planDays,
+          orderId: `renew_${Date.now()}`, // ID único para a renovação
+          paymentMethod: 'admin_renewal',
+          amount: vip.amount || 0,
+          autoRenew: vip.autoRenew || false,
+          notes: `Renovação administrativa - ${new Date().toLocaleString('pt-BR')}`
+        }
+        
+        console.log('📤 [Frontend] Enviando requisição para:', `/api/vip/renew/${vip.userId}`)
+        console.log('📤 [Frontend] Payload:', payload)
+        
+        const response = await axios.post(`/api/vip/renew/${vip.userId}`, payload)
+        
+        console.log('✅ [Frontend] Resposta da API:', response.data)
+        
         refreshData()
+        alert('VIP renovado com sucesso!')
       } catch (error) {
-        console.error('Erro ao renovar VIP:', error)
+        console.error('❌ [Frontend] Erro ao renovar VIP:', error)
+        console.error('📋 [Frontend] Detalhes do erro:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+          url: error.config?.url,
+          method: error.config?.method
+        })
+        
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
+        alert(`Erro ao renovar VIP: ${errorMessage}`)
       }
     }
     
