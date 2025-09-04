@@ -233,7 +233,7 @@
                   <select v-model="statusFilter" class="status-filter">
                     <option value="">Todos os Status</option>
                     <option value="open">Abertos</option>
-                    <option value="pending">Em Andamento</option>
+                    <option value="in_progress">Em Andamento</option>
                     <option value="closed">Fechados</option>
                   </select>
                   <select v-model="priorityFilter" class="priority-filter">
@@ -636,7 +636,7 @@ export default {
     dashboardStats() {
       const totalTickets = this.tickets.length
       const openTickets = this.tickets.filter(t => t.status === 'open').length
-      const pendingTickets = this.tickets.filter(t => t.status === 'pending').length
+      const pendingTickets = this.tickets.filter(t => t.status === 'in_progress' || t.status === 'pending').length
       const closedTickets = this.tickets.filter(t => t.status === 'closed').length
       
       // Mock data para demonstração (será substituído por API real)
@@ -660,7 +660,12 @@ export default {
 
       // Filtro por status
       if (this.statusFilter) {
-        filtered = filtered.filter(ticket => ticket.status === this.statusFilter)
+        if (this.statusFilter === 'in_progress') {
+          // Aceitar tanto 'in_progress' quanto 'pending' para compatibilidade
+          filtered = filtered.filter(ticket => ticket.status === 'in_progress' || ticket.status === 'pending')
+        } else {
+          filtered = filtered.filter(ticket => ticket.status === this.statusFilter)
+        }
       }
 
       // Filtro por prioridade
@@ -817,10 +822,17 @@ export default {
       if (!this.newMessage.trim()) return
       
       try {
+        console.log('📤 [AdminView] Enviando mensagem como admin...')
+        console.log('🆔 [AdminView] Ticket ID:', this.selectedTicket.id)
+        console.log('💬 [AdminView] Mensagem:', this.newMessage)
+        
         // Chamar API para adicionar mensagem
         const response = await axios.post(`/api/tickets/${this.selectedTicket.id}/messages`, {
-          content: this.newMessage
+          message: this.newMessage,  // ✅ Corrigido: usar 'message' em vez de 'content'
+          is_internal: false  // Mensagem visível para o usuário
         })
+        
+        console.log('📥 [AdminView] Resposta da API:', response.data)
         
         if (response.data.success) {
           // Adicionar mensagem ao ticket
@@ -829,16 +841,19 @@ export default {
           
           // Atualizar status para "Em andamento" se ainda estiver aberto
           if (this.selectedTicket.status === 'open') {
-            this.selectedTicket.status = 'pending'
+            this.selectedTicket.status = 'in_progress'
           }
           
           this.newMessage = ''
           this.showToastNotification('Mensagem enviada com sucesso!', 'success')
+          console.log('✅ [AdminView] Mensagem enviada com sucesso')
         } else {
+          console.error('❌ [AdminView] Erro na resposta da API:', response.data)
           this.showToastNotification('Erro ao enviar mensagem', 'error')
         }
       } catch (error) {
-        console.error('Erro ao enviar mensagem:', error)
+        console.error('❌ [AdminView] Erro ao enviar mensagem:', error)
+        console.error('📋 [AdminView] Detalhes do erro:', error.response?.data)
         this.showToastNotification('Erro ao enviar mensagem', 'error')
       }
     },
@@ -846,19 +861,27 @@ export default {
     async closeTicket() {
       if (this.selectedTicket) {
         try {
+          console.log('🔒 [AdminView] Fechando ticket...')
+          console.log('🆔 [AdminView] Ticket ID:', this.selectedTicket.id)
+          
           const response = await axios.patch(`/api/tickets/${this.selectedTicket.id}/status`, {
             status: 'closed'
           })
+          
+          console.log('📥 [AdminView] Resposta da API (fechar ticket):', response.data)
           
           if (response.data.success) {
             this.selectedTicket.status = 'closed'
             this.selectedTicket.updatedAt = new Date().toISOString()
             this.showToastNotification('Ticket fechado com sucesso!', 'success')
+            console.log('✅ [AdminView] Ticket fechado com sucesso')
           } else {
+            console.error('❌ [AdminView] Erro na resposta da API:', response.data)
             this.showToastNotification('Erro ao fechar ticket', 'error')
           }
         } catch (error) {
-          console.error('Erro ao fechar ticket:', error)
+          console.error('❌ [AdminView] Erro ao fechar ticket:', error)
+          console.error('📋 [AdminView] Detalhes do erro:', error.response?.data)
           this.showToastNotification('Erro ao fechar ticket', 'error')
         }
       }
@@ -1040,7 +1063,8 @@ export default {
     getStatusText(status) {
       const statusMap = {
         open: 'Aberto',
-        pending: 'Em Andamento',
+        in_progress: 'Em Andamento',
+        pending: 'Em Andamento',  // Fallback para compatibilidade
         closed: 'Fechado'
       }
       return statusMap[status] || status
@@ -1343,7 +1367,8 @@ export default {
   color: #1a1a1a;
 }
 
-.pending-icon {
+.pending-icon,
+.in-progress-icon {
   background: linear-gradient(135deg, #ff6b35, #ff8c42);
   color: #ffffff;
 }
@@ -1701,6 +1726,10 @@ export default {
   border-left-color: #ffc107;
 }
 
+.admin-ticket.status-in_progress {
+  border-left-color: #ff6b35;
+}
+
 .admin-ticket.priority-low {
   border-left-color: #6c757d;
 }
@@ -1750,7 +1779,8 @@ export default {
   color: #00ff88;
 }
 
-.status-badge.pending {
+.status-badge.pending,
+.status-badge.in_progress {
   background: rgba(255, 107, 53, 0.2);
   color: #ff6b35;
 }
