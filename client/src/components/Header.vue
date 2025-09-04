@@ -616,7 +616,7 @@ export default {
       try {
         const response = await axios.get('/api/notifications')
         if (response.data.success) {
-          this.notifications = response.data.notifications || []
+          this.notifications = response.data.data.notifications || []
           this.updateUnreadCount()
         }
       } catch (error) {
@@ -629,7 +629,9 @@ export default {
     async markAsRead(notificationId) {
       try {
         await axios.patch(`/api/notifications/${notificationId}/read`)
-        const notification = this.notifications.find(n => n.id === notificationId)
+        const notification = this.notifications && Array.isArray(this.notifications) 
+          ? this.notifications.find(n => n.id === notificationId)
+          : null;
         if (notification) {
           notification.is_read = true
           this.updateUnreadCount()
@@ -642,7 +644,9 @@ export default {
     async dismissNotification(notificationId) {
       try {
         await axios.patch(`/api/notifications/${notificationId}/dismiss`)
-        const notification = this.notifications.find(n => n.id === notificationId)
+        const notification = this.notifications && Array.isArray(this.notifications) 
+          ? this.notifications.find(n => n.id === notificationId)
+          : null;
         if (notification) {
           notification.is_dismissed = true
           this.updateUnreadCount()
@@ -657,7 +661,7 @@ export default {
       
       this.markingAllAsRead = true
       try {
-        await axios.patch('/api/notifications/read-all')
+        await axios.patch('/api/notifications/mark-all-read')
         this.notifications.forEach(n => n.is_read = true)
         this.updateUnreadCount()
       } catch (error) {
@@ -735,7 +739,9 @@ export default {
     },
     
     closeToast(toastId) {
-      const toast = this.activeToasts.find(t => t.id === toastId)
+      const toast = this.activeToasts && Array.isArray(this.activeToasts) 
+        ? this.activeToasts.find(t => t.id === toastId)
+        : null;
       if (toast) {
         toast.hiding = true
         setTimeout(() => {
@@ -753,7 +759,7 @@ export default {
         try {
           const response = await axios.get('/api/notifications/unread-count')
           if (response.data.success) {
-            const newCount = response.data.count || 0
+            const newCount = response.data.data.unreadCount || 0
             if (newCount > this.unreadCount) {
               // Nova notificação, carregar e mostrar toast
               await this.loadNotifications()

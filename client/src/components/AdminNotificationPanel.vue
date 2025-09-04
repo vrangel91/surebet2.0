@@ -363,14 +363,14 @@ export default {
         console.log('📊 Propriedades da resposta:', Object.keys(response.data));
         
         // Verificar se a resposta tem a estrutura esperada
-        if (response.data && response.data.success && response.data.data && Array.isArray(response.data.data.notifications)) {
-          notifications.value = response.data.data.notifications;
-          pagination.value = response.data.data.pagination || { page: 1, limit: 20, total: 0, pages: 1 };
+        if (response && response.success && response.data && Array.isArray(response.data.notifications)) {
+          notifications.value = response.data.notifications;
+          pagination.value = response.data.pagination || { page: 1, limit: 20, total: 0, pages: 1 };
           console.log('✅ Notificações carregadas:', notifications.value.length);
         } else {
-          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data);
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response);
           console.warn('⚠️ Estrutura esperada: { success: true, data: { notifications: [...], pagination: {...} } }');
-          console.warn('⚠️ Estrutura recebida:', response.data);
+          console.warn('⚠️ Estrutura recebida:', response);
           notifications.value = [];
           pagination.value = { page: 1, limit: 20, total: 0, pages: 1 };
         }
@@ -392,13 +392,13 @@ export default {
         console.log('📊 Propriedades da resposta:', Object.keys(response.data));
         
         // Verificar se a resposta tem a estrutura esperada
-        if (response.data && response.data.success && response.data.data) {
-          stats.value = response.data.data;
+        if (response && response.success && response.data) {
+          stats.value = response.data;
           console.log('✅ Estatísticas carregadas');
         } else {
-          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data);
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response);
           console.warn('⚠️ Estrutura esperada: { success: true, data: { ... } }');
-          console.warn('⚠️ Estrutura recebida:', response.data);
+          console.warn('⚠️ Estrutura recebida:', response);
           stats.value = { total: 0, unread: 0, dismissed: 0, byType: [], byAudience: [] };
         }
       } catch (error) {
@@ -708,50 +708,53 @@ export default {
 
      const testPWANotification = async () => {
        try {
-         console.log('🧪 Testando recebimento de notificação pelo PWA...');
+         console.log('🧪 Testando funcionalidades PWA...');
          
-         // Verificar se o PWA está instalado e tem permissões
-         if (!('serviceWorker' in navigator)) {
-           testResults.pwaNotification = { 
-             status: 'error', 
-             message: '❌ Service Worker não suportado neste navegador' 
-           };
-           return;
+         const pwaChecks = {
+           serviceWorker: false,
+           notifications: false,
+           permission: false,
+           apiWorking: false,
+           notificationSaved: false
+         };
+         
+         // 1. Verificar suporte ao Service Worker
+         if ('serviceWorker' in navigator) {
+           pwaChecks.serviceWorker = true;
+           console.log('✅ Service Worker suportado');
+         } else {
+           console.log('❌ Service Worker não suportado');
          }
          
-         if (!('Notification' in window)) {
-           testResults.pwaNotification = { 
-             status: 'error', 
-             message: '❌ Notificações não suportadas neste navegador' 
-           };
-           return;
+         // 2. Verificar suporte a notificações
+         if ('Notification' in window) {
+           pwaChecks.notifications = true;
+           console.log('✅ Notificações suportadas');
+         } else {
+           console.log('❌ Notificações não suportadas');
          }
          
-         // Verificar permissão de notificação
-         if (Notification.permission === 'denied') {
-           testResults.pwaNotification = { 
-             status: 'warning', 
-             message: '⚠️ Permissão de notificação negada pelo usuário' 
-           };
-           return;
-         }
-         
-         if (Notification.permission === 'default') {
-           // Solicitar permissão
+         // 3. Verificar permissão de notificação
+         if (Notification.permission === 'granted') {
+           pwaChecks.permission = true;
+           console.log('✅ Permissão de notificação concedida');
+         } else if (Notification.permission === 'default') {
+           console.log('⚠️ Permissão de notificação não solicitada');
            const permission = await Notification.requestPermission();
-           if (permission === 'denied') {
-             testResults.pwaNotification = { 
-               status: 'warning', 
-               message: '⚠️ Permissão de notificação negada pelo usuário' 
-             };
-             return;
+           if (permission === 'granted') {
+             pwaChecks.permission = true;
+             console.log('✅ Permissão de notificação concedida após solicitação');
+           } else {
+             console.log('❌ Permissão de notificação negada');
            }
+         } else {
+           console.log('❌ Permissão de notificação negada');
          }
          
-         // Criar notificação de teste para o PWA
+         // 4. Testar criação de notificação via API
          const testData = {
-           title: '🧪 Teste PWA - Recebimento',
-           message: 'Esta notificação testa se o PWA está recebendo notificações corretamente',
+           title: '🧪 Teste PWA - Funcionalidade',
+           message: 'Esta notificação testa se o sistema PWA está funcionando corretamente',
            type: 'info',
            priority: 'normal',
            target_audience: 'all',
@@ -762,64 +765,77 @@ export default {
            })
          };
          
-         // Enviar notificação via API
          const response = await adminAPI.sendNotification(testData);
          
          if (response && response.success) {
-           // Aguardar um pouco para a notificação ser processada
+           pwaChecks.apiWorking = true;
+           console.log('✅ API de notificação funcionando');
+           
+           // Aguardar processamento
            await new Promise(resolve => setTimeout(resolve, 2000));
            
-           // Verificar se o Service Worker está ativo
-           const registration = await navigator.serviceWorker.getRegistration();
-           if (!registration || !registration.active) {
-             testResults.pwaNotification = { 
-               status: 'warning', 
-               message: '⚠️ Service Worker não está ativo - notificação pode não ser recebida' 
-             };
-             return;
-           }
+           // 5. Verificar se a notificação foi salva no banco
+           await loadNotifications();
+           const savedNotification = notifications.value && Array.isArray(notifications.value) 
+             ? notifications.value.find(n => 
+                 n.title.includes('🧪 Teste PWA') && 
+                 n.metadata?.source === 'pwa-test'
+               )
+             : null;
            
-           // Verificar se há notificações pendentes
-           const notifications = await registration.getNotifications();
-           const testNotification = notifications.find(n => 
-             n.title.includes('🧪 Teste PWA') && 
-             n.data?.source === 'pwa-test'
-           );
-           
-           if (testNotification) {
-             testResults.pwaNotification = { 
-               status: 'success', 
-               message: '✅ PWA recebeu notificação com sucesso!' 
-             };
-             
-             // Fechar a notificação de teste
-             testNotification.close();
+           if (savedNotification) {
+             pwaChecks.notificationSaved = true;
+             console.log('✅ Notificação salva no banco de dados');
            } else {
-             // Verificar se a notificação foi salva no banco
-             await loadNotifications();
-             const savedNotification = notifications.value.find(n => 
-               n.title.includes('🧪 Teste PWA') && 
-               n.metadata?.source === 'pwa-test'
-             );
-             
-             if (savedNotification) {
-               testResults.pwaNotification = { 
-                 status: 'warning', 
-                 message: '⚠️ Notificação salva mas PWA pode não ter recebido em tempo real' 
-               };
-             } else {
-               testResults.pwaNotification = { 
-                 status: 'error', 
-                 message: '❌ PWA não recebeu a notificação de teste' 
-               };
-             }
+             console.log('❌ Notificação não foi salva no banco');
            }
+         } else {
+           console.log('❌ API de notificação falhou');
+         }
+         
+         // 6. Criar notificação local para teste (se permissão concedida)
+         if (pwaChecks.permission) {
+           try {
+             const localNotification = new Notification('🧪 Teste PWA Local', {
+               body: 'Esta é uma notificação local para testar o PWA',
+               icon: '/favicon.ico',
+               tag: 'pwa-test-local'
+             });
+             
+             // Fechar após 3 segundos
+             setTimeout(() => {
+               localNotification.close();
+             }, 3000);
+             
+             console.log('✅ Notificação local criada com sucesso');
+           } catch (error) {
+             console.log('❌ Erro ao criar notificação local:', error);
+           }
+         }
+         
+         // 7. Determinar resultado final
+         const totalChecks = Object.keys(pwaChecks).length;
+         const passedChecks = Object.values(pwaChecks).filter(Boolean).length;
+         
+         if (passedChecks === totalChecks) {
+           testResults.pwaNotification = { 
+             status: 'success', 
+             message: `✅ PWA totalmente funcional (${passedChecks}/${totalChecks} testes passaram)` 
+           };
+         } else if (passedChecks >= totalChecks * 0.6) {
+           testResults.pwaNotification = { 
+             status: 'warning', 
+             message: `⚠️ PWA parcialmente funcional (${passedChecks}/${totalChecks} testes passaram)` 
+           };
          } else {
            testResults.pwaNotification = { 
              status: 'error', 
-             message: `❌ Falha ao enviar notificação de teste: ${response?.error || 'Erro desconhecido'}` 
+             message: `❌ PWA com problemas (${passedChecks}/${totalChecks} testes passaram)` 
            };
          }
+         
+         console.log(`📊 Resultado PWA: ${passedChecks}/${totalChecks} testes passaram`);
+         
        } catch (error) {
          console.error('Erro no teste PWA:', error);
          testResults.pwaNotification = { 

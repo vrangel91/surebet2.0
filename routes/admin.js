@@ -3,6 +3,14 @@ const router = express.Router();
 const { authenticateToken, requireAdmin } = require('../utils/auth');
 const { Notification, User, sequelize } = require('../models');
 const { Op } = require('sequelize');
+const { 
+  successResponse, 
+  errorResponse, 
+  notFoundResponse, 
+  validationErrorResponse,
+  serverErrorResponse,
+  asyncHandler 
+} = require('../utils/apiResponse');
 
 // Middleware para verificar se o usuário é admin
 router.use(authenticateToken);
@@ -115,7 +123,15 @@ router.post('/send-notification', async (req, res) => {
     if (target_audience === 'all') {
       userCount = await User.count();
     } else if (target_audience === 'vip') {
-      userCount = await User.count({ where: { is_vip: true } });
+      // Usar VIPService para contar usuários VIP ativos
+      const { UserVIP } = require('../models');
+      const now = new Date();
+      userCount = await UserVIP.count({
+        where: {
+          status: 'active',
+          dataFim: { [Op.gt]: now }
+        }
+      });
     } else if (target_audience === 'admin') {
       userCount = await User.count({ where: { is_admin: true } });
     } else if (target_audience === 'specific' && target_user_ids) {
@@ -156,99 +172,80 @@ router.post('/send-notification', async (req, res) => {
 });
 
 // Listar todas as notificações
-router.get('/notifications', async (req, res) => {
-  try {
-    const { page = 1, limit = 20, type, priority, target_audience } = req.query;
-    const offset = (page - 1) * limit;
-    
-    let whereClause = {};
-    
-    if (type) whereClause.type = type;
-    if (priority) whereClause.priority = priority;
-    if (target_audience) whereClause.target_audience = target_audience;
-    
-    const { count, rows: notifications } = await Notification.findAndCountAll({
-      where: whereClause,
-      include: [{
-        model: User,
-        as: 'creator',
-        attributes: ['id', 'username', 'email']
-      }],
-      order: [['created_at', 'DESC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
-    });
-    
-    res.json({
-      success: true,
-      data: {
-        notifications,
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: count,
-          pages: Math.ceil(count / limit)
-        }
-      }
-    });
-    
-  } catch (error) {
-    console.error('[ADMIN] Erro ao listar notificações:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
-    });
-  }
-});
+router.get('/notifications', asyncHandler(async (req, res) => {
+  const { page = 1, limit = 20, type, priority, target_audience } = req.query;
+  const offset = (page - 1) * limit;
+  
+  let whereClause = {};
+  
+  if (type) whereClause.type = type;
+  if (priority) whereClause.priority = priority;
+  if (target_audience) whereClause.target_audience = target_audience;
+  
+  const { count, rows: notifications } = await Notification.findAndCountAll({
+    where: whereClause,
+    include: [{
+      model: User,
+      as: 'creator',
+      attributes: ['id', 'username', 'email']
+    }],
+    order: [['created_at', 'DESC']],
+    limit: parseInt(limit),
+    offset: parseInt(offset)
+  });
+  
+  const pagination = {
+    page: parseInt(page),
+    limit: parseInt(limit),
+    total: count,
+    pages: Math.ceil(count / limit)
+  };
+  
+  res.json(successResponse(
+    { notifications, pagination },
+    'Notificações listadas com sucesso'
+  ));
+}));
 
 // Obter estatísticas de notificações
-router.get('/notifications/stats', async (req, res) => {
-  try {
-    const totalNotifications = await Notification.count();
-    const unreadNotifications = await Notification.count({ where: { is_read: false } });
-    const dismissedNotifications = await Notification.count({ where: { is_dismissed: true } });
-    
-    // Contar por tipo (simplificado)
-    const typeStats = [];
-    const types = ['info', 'success', 'warning', 'error', 'update'];
-    for (const type of types) {
-      const count = await Notification.count({ where: { type } });
-      if (count > 0) {
-        typeStats.push({ type, count });
-      }
+router.get('/notifications/stats', asyncHandler(async (req, res) => {
+  const totalNotifications = await Notification.count();
+  const unreadNotifications = await Notification.count({ where: { is_read: false } });
+  const dismissedNotifications = await Notification.count({ where: { is_dismissed: true } });
+  
+  // Contar por tipo (simplificado)
+  const typeStats = [];
+  const types = ['info', 'success', 'warning', 'error', 'update'];
+  for (const type of types) {
+    const count = await Notification.count({ where: { type } });
+    if (count > 0) {
+      typeStats.push({ type, count });
     }
-    
-    // Contar por público-alvo (simplificado)
-    const audienceStats = [];
-    const audiences = ['all', 'vip', 'admin', 'specific'];
-    for (const audience of audiences) {
-      const count = await Notification.count({ where: { target_audience: audience } });
-      if (count > 0) {
-        audienceStats.push({ target_audience: audience, count });
-      }
-    }
-    
-    res.json({
-      success: true,
-      data: {
-        total: totalNotifications,
-        unread: unreadNotifications,
-        dismissed: dismissedNotifications,
-        byType: typeStats,
-        byAudience: audienceStats
-      }
-    });
-    
-  } catch (error) {
-    console.error('[ADMIN] Erro ao obter estatísticas:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
-    });
   }
-});
+  
+  // Contar por público-alvo (simplificado)
+  const audienceStats = [];
+  const audiences = ['all', 'vip', 'admin', 'specific'];
+  for (const audience of audiences) {
+    const count = await Notification.count({ where: { target_audience: audience } });
+    if (count > 0) {
+      audienceStats.push({ target_audience: audience, count });
+    }
+  }
+  
+  const stats = {
+    total: totalNotifications,
+    unread: unreadNotifications,
+    dismissed: dismissedNotifications,
+    byType: typeStats,
+    byAudience: audienceStats
+  };
+  
+  res.json(successResponse(
+    stats,
+    'Estatísticas obtidas com sucesso'
+  ));
+}));
 
 // Deletar notificação
 router.delete('/notifications/:id', async (req, res) => {

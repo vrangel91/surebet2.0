@@ -171,7 +171,7 @@ export default {
     // Marcar todas como lidas
     const markAllAsRead = async () => {
       try {
-        await axios.patch('/api/notifications/read-all');
+        await axios.patch('/api/notifications/mark-all-read');
         await Promise.all([loadNotifications(), loadUnreadCount()]);
       } catch (error) {
         console.error('Erro ao marcar todas como lidas:', error);
