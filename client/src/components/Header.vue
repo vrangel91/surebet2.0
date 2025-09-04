@@ -91,6 +91,21 @@
                 {{ vipDaysRemaining }}d
               </span>
             </div>
+            
+            <!-- Barra de Progresso VIP -->
+            <div v-if="vipDaysRemaining > 0" class="vip-progress-container">
+              <div class="vip-progress-info">
+                <span class="progress-label">Tempo restante</span>
+                <span class="progress-percentage">{{ Math.round(vipProgressPercent) }}%</span>
+              </div>
+              <div class="vip-progress-bar">
+                <div 
+                  class="vip-progress-fill"
+                  :class="vipProgressClass"
+                  :style="{ width: vipProgressPercent + '%' }"
+                ></div>
+              </div>
+            </div>
           </div>
           
           <!-- Status Básico -->
@@ -305,7 +320,11 @@ export default {
     },
     
     accountExpiration() {
-      return this.userVIPData?.dataFim || null
+      // Garantir que userVIPData seja válido antes de acessar propriedades
+      if (!this.userVIPData || typeof this.userVIPData !== 'object') {
+        return null
+      }
+      return this.userVIPData.dataFim || null
     },
     
     accountStatusClass() {
@@ -364,56 +383,91 @@ export default {
       }
     },
     
-    expirationProgressClass() {
-      if (!this.accountExpiration || !this.userVIPData?.dataInicio) return ''
-      
-      const now = new Date()
-      const startDate = new Date(this.userVIPData.dataInicio)
-      const endDate = new Date(this.accountExpiration)
-      
-      const totalPlanTime = endDate - startDate
-      const remainingTime = endDate - now
-      
-      if (totalPlanTime <= 0) return 'progress-expired'
-      if (remainingTime <= 0) return 'progress-expired'
-      
-      const progressPercent = (remainingTime / totalPlanTime) * 100
-      
-      if (progressPercent <= 25) return 'progress-expired'
-      if (progressPercent <= 50) return 'progress-warning'
-      return 'progress-active'
-    },
-
-    expirationProgressPercent() {
-      if (!this.accountExpiration || !this.userVIPData?.dataInicio) return 0
-      
-      const now = new Date()
-      const startDate = new Date(this.userVIPData.dataInicio)
-      const endDate = new Date(this.accountExpiration)
-      
-      const totalPlanTime = endDate - startDate
-      const remainingTime = endDate - now
-      
-      if (totalPlanTime <= 0) return 0
-      if (remainingTime <= 0) return 100
-      
-      const progressPercent = (remainingTime / totalPlanTime) * 100
-      return Math.min(100, Math.max(0, progressPercent))
-    },
-
     vipDaysRemaining() {
       if (!this.accountExpiration) return 0;
-      const now = new Date();
-      const expiration = new Date(this.accountExpiration);
-      const timeDiff = expiration - now;
-      return Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      
+      try {
+        const end = new Date(this.accountExpiration);
+        const now = new Date();
+        
+        // Verificar se a data é válida
+        if (isNaN(end.getTime())) {
+          console.warn('Data de expiração VIP inválida:', this.accountExpiration);
+          return 0;
+        }
+        
+        const diffTime = end - now;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        return Math.max(0, diffDays); // Garantir que não retorne negativo
+      } catch (error) {
+        console.error('Erro ao calcular dias restantes VIP:', error);
+        return 0;
+      }
     },
 
     isVIPExpired() {
       if (!this.accountExpiration) return false;
+      
+      try {
+        const now = new Date();
+        const expiration = new Date(this.accountExpiration);
+        
+        // Verificar se a data é válida
+        if (isNaN(expiration.getTime())) {
+          console.warn('Data de expiração VIP inválida:', this.accountExpiration);
+          return false;
+        }
+        
+        return now > expiration;
+      } catch (error) {
+        console.error('Erro ao verificar expiração VIP:', error);
+        return false;
+      }
+    },
+
+    // Cálculo do progresso VIP para a barra de progresso
+    vipProgressPercent() {
+      if (!this.userVIPData?.dataInicio || !this.accountExpiration) return 0;
+      
+      try {
+        const now = new Date();
+        const startDate = new Date(this.userVIPData.dataInicio);
+        const endDate = new Date(this.accountExpiration);
+        
+        // Verificar se as datas são válidas
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return 0;
+        }
+        
+        const totalDuration = endDate - startDate;
+        const remainingTime = endDate - now;
+        
+        if (totalDuration <= 0) return 0;
+        if (remainingTime <= 0) return 100; // VIP expirado
+        
+        const progressPercent = (remainingTime / totalDuration) * 100;
+        return Math.min(100, Math.max(0, progressPercent));
+      } catch (error) {
+        console.error('Erro ao calcular progresso VIP:', error);
+        return 0;
+      }
+    },
+
+    // Classe CSS para a barra de progresso baseada no status
+    vipProgressClass() {
+      if (!this.accountExpiration) return 'progress-neutral';
+      
       const now = new Date();
       const expiration = new Date(this.accountExpiration);
-      return now > expiration;
+      const timeDiff = expiration - now;
+      const daysRemaining = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      
+      if (timeDiff < 0) return 'progress-expired';
+      if (daysRemaining <= 1) return 'progress-critical';
+      if (daysRemaining <= 3) return 'progress-warning';
+      if (daysRemaining <= 7) return 'progress-attention';
+      return 'progress-healthy';
     }
   },
   
@@ -435,24 +489,53 @@ export default {
       try {
         if (!this.currentUser || !this.currentUser.id) {
           console.log('👤 Usuário não logado, não carregando dados VIP')
+          this.userVIPData = null
           return
         }
         
+        // Verificar se o usuário é VIP antes de fazer a requisição
         if (!this.isVIP) {
           console.log('👤 Usuário não é VIP, não carregando dados VIP')
+          this.userVIPData = null
           return
         }
         
+        // Verificar se o usuário tem role VIP no store
+        const userRole = this.currentUser?.role || this.currentUser?.accountType
+        const isVipUser = userRole === 'vip' || userRole === 'VIP' || this.currentUser?.is_vip
+        
+        if (!isVipUser) {
+          console.log('👤 Usuário não tem role VIP, não carregando dados VIP')
+          this.userVIPData = null
+          return
+        }
+        
+        console.log('🔄 Carregando dados VIP do usuário...')
         const response = await axios.get('/api/vip/my-status')
         
         if (response.data && response.data.success && response.data.vipStatus) {
           this.userVIPData = response.data.vipStatus
+          console.log('✅ Dados VIP carregados:', this.userVIPData)
         } else {
-          this.userVIPData = false
+          console.log('⚠️ Resposta VIP sem dados válidos:', response.data)
+          this.userVIPData = null
         }
       } catch (error) {
-        console.error('Erro ao carregar dados VIP:', error)
-        this.userVIPData = false
+        // Tratar diferentes tipos de erro
+        if (error.response?.status === 404) {
+          console.log('ℹ️ Usuário não possui dados VIP (404) - Normal para usuários não-VIP')
+          this.userVIPData = null
+        } else if (error.response?.status === 401) {
+          console.log('🔒 Usuário não autenticado para dados VIP (401)')
+          this.userVIPData = null
+        } else if (error.response?.status === 403) {
+          console.log('🚫 Acesso negado aos dados VIP (403)')
+          this.userVIPData = null
+        } else {
+          // Só logar como erro se não for um 404 (que é normal para usuários não-VIP)
+          console.warn('⚠️ Erro ao carregar dados VIP:', error.response?.status || error.message)
+          this.userVIPData = null
+        }
       }
     },
     
@@ -462,7 +545,8 @@ export default {
       this.countdownTimer = setInterval(() => {
         this.$forceUpdate()
         
-        if (this.isVIP && this.currentUser) {
+        // Só recarregar dados VIP se o usuário for VIP e estiver logado
+        if (this.isVIP && this.currentUser && this.currentUser.id) {
           this.loadUserVIPData()
         }
       }, 30000)
@@ -727,6 +811,9 @@ export default {
   
   mounted() {
     console.log('🔧 Header.vue mounted')
+    console.log('👤 Usuário atual:', this.currentUser)
+    console.log('👑 É VIP?', this.isVIP)
+    console.log('👑 É Admin?', this.isAdmin)
     
     // Carregar tema do localStorage
     const savedTheme = localStorage.getItem('app_theme')
@@ -1200,16 +1287,18 @@ export default {
   }
 }
 
-.expiration-progress {
-  margin-top: 0;
+/* Barra de Progresso VIP */
+.vip-progress-container {
+  margin-top: 12px;
+  padding: 0;
 }
 
-.progress-info {
+.vip-progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  font-size: 12px;
+  margin-bottom: 6px;
+  font-size: 11px;
 }
 
 .progress-label {
@@ -1221,28 +1310,28 @@ export default {
 .progress-percentage {
   color: var(--text-primary);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   transition: color 0.3s ease;
 }
 
-.progress-bar {
+.vip-progress-bar {
   width: 100%;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
   overflow: hidden;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.progress-fill {
+.vip-progress-fill {
   height: 100%;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
   
   &::after {
     content: '';
@@ -1251,29 +1340,50 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     animation: shimmer 2s infinite;
   }
   
-  &.progress-active {
+  &.progress-healthy {
     background: linear-gradient(90deg, #00ff88, #00cc6a, #00ff88);
     background-size: 200% 100%;
     animation: gradientMove 3s ease infinite;
-    box-shadow: 0 0 15px rgba(0, 255, 136, 0.6);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.5);
+  }
+  
+  &.progress-attention {
+    background: linear-gradient(90deg, #ffd700, #ffb347, #ffd700);
+    background-size: 200% 100%;
+    animation: gradientMove 2.5s ease infinite;
+    box-shadow: 0 0 12px rgba(255, 215, 0, 0.5);
   }
   
   &.progress-warning {
     background: linear-gradient(90deg, #ffc107, #e0a800, #ffc107);
     background-size: 200% 100%;
     animation: gradientMove 2s ease infinite;
-    box-shadow: 0 0 15px rgba(255, 193, 7, 0.6);
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.5);
+  }
+  
+  &.progress-critical {
+    background: linear-gradient(90deg, #ff6b35, #ff4757, #ff6b35);
+    background-size: 200% 100%;
+    animation: gradientMove 1.5s ease infinite;
+    box-shadow: 0 0 12px rgba(255, 107, 53, 0.5);
   }
   
   &.progress-expired {
     background: linear-gradient(90deg, #dc3545, #c82333, #dc3545);
     background-size: 200% 100%;
-    animation: gradientMove 1.5s ease infinite;
-    box-shadow: 0 0 15px rgba(220, 53, 69, 0.6);
+    animation: gradientMove 1s ease infinite;
+    box-shadow: 0 0 12px rgba(220, 53, 69, 0.5);
+  }
+  
+  &.progress-neutral {
+    background: linear-gradient(90deg, #6c757d, #495057, #6c757d);
+    background-size: 200% 100%;
+    animation: gradientMove 3s ease infinite;
+    box-shadow: 0 0 8px rgba(108, 117, 125, 0.3);
   }
 }
 

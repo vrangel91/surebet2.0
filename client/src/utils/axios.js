@@ -35,7 +35,25 @@ axiosInstance.interceptors.response.use(
     return response
   },
   (error) => {
-    // Usar o novo sistema de tratamento de erros
+    // Não tratar 404 em rotas VIP como erro crítico
+    const isVIPRoute = error.config?.url?.includes('/api/vip/')
+    const is404Error = error.response?.status === 404
+    
+    if (isVIPRoute && is404Error) {
+      // Para rotas VIP com 404, não logar como erro crítico
+      console.log('ℹ️ Rota VIP retornou 404 - usuário provavelmente não é VIP')
+      error.apiErrorInfo = {
+        message: 'Usuário não possui dados VIP',
+        type: 'vip_not_found',
+        isOffline: false,
+        shouldRetry: false,
+        original: error,
+        context: 'axios_interceptor'
+      }
+      return Promise.reject(error)
+    }
+    
+    // Usar o novo sistema de tratamento de erros para outros casos
     const errorInfo = apiErrorHandler.handleError(error, 'axios_interceptor')
     
     // Log do erro para debugging

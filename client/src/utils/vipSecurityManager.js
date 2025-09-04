@@ -82,28 +82,32 @@ class VIPSecurityManager {
     try {
       console.log('🌐 [VIP Security] Validando VIP no servidor...');
       
-      const response = await api.get('/api/user/vip-status', {
+      const response = await api.get('/api/vip/my-status', {
         timeout: 10000 // 10 segundos timeout
       });
       
       const vipData = response.data;
       
       // Validar dados recebidos
-      if (!vipData || typeof vipData.isVIP !== 'boolean') {
+      if (!vipData || typeof vipData.hasVIP !== 'boolean') {
         throw new Error('Resposta inválida do servidor');
       }
       
+      // Extrair dados da resposta da API
+      const isVIP = vipData.hasVIP;
+      const expiration = vipData.vipStatus?.dataFim || null;
+      
       // Salvar dados validados localmente
       this.saveVIPData({
-        isVIP: vipData.isVIP,
-        expiration: vipData.expiration,
+        isVIP: isVIP,
+        expiration: expiration,
         lastValidation: Date.now(),
         source: 'online'
       });
       
       // Atualizar status
-      this.vipStatus.value = vipData.isVIP;
-      this.vipExpiration.value = vipData.expiration;
+      this.vipStatus.value = isVIP;
+      this.vipExpiration.value = expiration;
       this.lastOnlineValidation.value = Date.now();
       
       // Configurar expiração offline
@@ -112,8 +116,8 @@ class VIPSecurityManager {
       console.log('✅ [VIP Security] VIP validado online:', vipData);
       
       return {
-        isValid: vipData.isVIP,
-        expiration: vipData.expiration,
+        isValid: isVIP,
+        expiration: expiration,
         lastValidation: Date.now()
       };
       
