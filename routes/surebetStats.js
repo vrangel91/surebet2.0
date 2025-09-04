@@ -75,11 +75,33 @@ router.post('/', async (req, res) => {
       metadata
     } = req.body;
     
-    // Validações básicas
-    if (!surebet_id || !house || !market || !profit || !date || !hour || !sport) {
+    // Validações básicas com detalhamento
+    const requiredFields = {
+      surebet_id: surebet_id,
+      house: house,
+      market: market,
+      profit: profit,
+      date: date,
+      hour: hour,
+      sport: sport
+    };
+    
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value && value !== 0)
+      .map(([key]) => key);
+    
+    if (missingFields.length > 0) {
+      console.error('❌ Campos obrigatórios faltando:', missingFields);
+      console.error('📋 Dados recebidos:', req.body);
+      
       return res.status(400).json({
         success: false,
-        error: 'Campos obrigatórios não fornecidos'
+        error: 'Campos obrigatórios não fornecidos',
+        details: {
+          missingFields: missingFields,
+          receivedFields: Object.keys(req.body),
+          requiredFields: Object.keys(requiredFields)
+        }
       });
     }
     
@@ -183,12 +205,17 @@ router.post('/bulk', async (req, res) => {
     const invalidRecords = [];
     
     stats.forEach((stat, index) => {
-      const missingFields = requiredFields.filter(field => !stat[field]);
+      const missingFields = requiredFields.filter(field => {
+        const value = stat[field];
+        return !value && value !== 0; // Permitir 0 como valor válido
+      });
+      
       if (missingFields.length > 0) {
         invalidRecords.push({
           index,
           surebet_id: stat.surebet_id || 'N/A',
           missingFields,
+          receivedFields: Object.keys(stat),
           data: stat
         });
       }
@@ -202,7 +229,8 @@ router.post('/bulk', async (req, res) => {
         details: {
           totalRecords: stats.length,
           invalidRecords: invalidRecords.length,
-          invalidDetails: invalidRecords
+          invalidDetails: invalidRecords,
+          requiredFields: requiredFields
         }
       });
     }

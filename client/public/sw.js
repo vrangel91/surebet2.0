@@ -66,15 +66,18 @@ self.addEventListener('activate', (event) => {
       .then(() => {
         console.log('[SW] Service Worker ativado e caches limpos');
         
-        // DESABILITADO: Notificação automática que pode causar loop
-        // self.clients.matchAll().then(clients => {
-        //   clients.forEach(client => {
-        //     client.postMessage({
-        //       type: 'SW_UPDATED',
-        //       data: { version: CACHE_NAME }
-        //     });
-        //   });
-        // });
+        // Força atualização completa do PWA
+        self.clients.matchAll().then(clients => {
+          clients.forEach(client => {
+            client.postMessage({
+              type: 'FORCE_REFRESH',
+              data: { 
+                message: 'PWA atualizado automaticamente',
+                timestamp: Date.now()
+              }
+            });
+          });
+        });
         
         return self.clients.claim();
       })
@@ -124,25 +127,31 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(networkFirst(request, DYNAMIC_CACHE));
 });
 
-// Estratégia Cache First
+// Estratégia Cache First (modificada para sempre verificar atualizações)
 async function cacheFirst(request, cacheName) {
   try {
-    const cachedResponse = await caches.match(request);
-    if (cachedResponse) {
-      return cachedResponse;
-    }
-    
+    // Sempre tenta buscar da rede primeiro para garantir atualizações
     const networkResponse = await fetch(request);
+    
     // Verificar se a resposta é válida para cache (não é parcial e é bem-sucedida)
     if (networkResponse.ok && networkResponse.status !== 206) {
       const cache = await caches.open(cacheName);
       cache.put(request, networkResponse.clone());
+      console.log('[SW] Cache atualizado com versão mais recente:', request.url);
     } else if (networkResponse.status === 206) {
       console.log('[SW] Resposta parcial (206) detectada, pulando cache:', request.url);
     }
     
     return networkResponse;
   } catch (error) {
+    console.log('[SW] Rede falhou, usando cache como fallback:', request.url);
+    
+    // Se a rede falhar, usa o cache como fallback
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
     console.error('[SW] Erro na estratégia cache-first:', error);
     return new Response('Erro de rede', { status: 503 });
   }

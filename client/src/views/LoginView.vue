@@ -731,7 +731,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: clamp(10px, 5vw, 40px);
     position: relative;
     overflow: hidden;
   }
@@ -900,10 +900,11 @@ export default {
   .login-card {
     background: rgba(26, 26, 26, 0.85);
     backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 40px;
+    border-radius: clamp(12px, 3vw, 20px);
+    padding: clamp(20px, 8vw, 40px);
     width: 100%;
-    max-width: 400px;
+    max-width: min(90vw, 400px);
+    min-width: 280px;
     box-shadow: 
       0 25px 50px rgba(0, 0, 0, 0.6),
       0 0 0 1px rgba(255, 255, 255, 0.1),
@@ -938,20 +939,20 @@ export default {
   
   .login-header {
     text-align: center;
-    margin-bottom: 32px;
+    margin-bottom: clamp(20px, 6vw, 32px);
   }
   
   .logo {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    margin-bottom: 24px;
+    gap: clamp(8px, 2vw, 12px);
+    margin-bottom: clamp(16px, 4vw, 24px);
   }
   
   .logo-icon {
-    width: 50px;
-    height: 50px;
+    width: clamp(40px, 8vw, 50px);
+    height: clamp(40px, 8vw, 50px);
     object-fit: contain;
     border-radius: 6px;
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
@@ -968,7 +969,7 @@ export default {
   }
   
   .logo-text {
-    font-size: 28px;
+    font-size: clamp(20px, 5vw, 28px);
     font-weight: 700;
     margin: 0;
     letter-spacing: 1px;
@@ -988,7 +989,7 @@ export default {
   
   .login-title {
     color: #ffffff;
-    font-size: 20px;
+    font-size: clamp(16px, 4vw, 20px);
     font-weight: 600;
     margin: 0;
   }
@@ -1000,7 +1001,7 @@ export default {
   .login-form, .register-form {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: clamp(16px, 4vw, 20px);
   }
   
   .form-group {
@@ -1009,13 +1010,13 @@ export default {
   
   .form-input {
     width: 100%;
-    padding: 16px 20px;
+    padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 20px);
     background: rgba(26, 26, 26, 0.8);
     backdrop-filter: blur(10px);
     border: 2px solid rgba(64, 64, 64, 0.6);
-    border-radius: 12px;
+    border-radius: clamp(8px, 2vw, 12px);
     color: #ffffff;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     transition: all 0.3s ease;
     box-sizing: border-box;
     position: relative;
@@ -1093,26 +1094,28 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
+    margin-top: clamp(6px, 1.5vw, 8px);
+    flex-wrap: wrap;
+    gap: clamp(8px, 2vw, 12px);
   }
   
   .remember-me {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: clamp(6px, 1.5vw, 8px);
     cursor: pointer;
   }
   
   .checkbox {
-    width: 18px;
-    height: 18px;
+    width: clamp(16px, 3vw, 18px);
+    height: clamp(16px, 3vw, 18px);
     accent-color: #00ff88;
     cursor: pointer;
   }
   
   .checkbox-label {
     color: #ffffff;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     cursor: pointer;
   }
   
@@ -1120,7 +1123,7 @@ export default {
     background: none;
     border: none;
     color: #00ff88;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     cursor: pointer;
     text-decoration: none;
     transition: color 0.3s ease;
@@ -1133,20 +1136,20 @@ export default {
   
   .login-btn {
     width: 100%;
-    padding: 16px;
+    padding: clamp(12px, 3vw, 16px);
     background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
     border: none;
-    border-radius: 12px;
+    border-radius: clamp(8px, 2vw, 12px);
     color: #1a1a1a;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: clamp(6px, 1.5vw, 8px);
+    margin-top: clamp(6px, 1.5vw, 8px);
     position: relative;
     overflow: hidden;
     box-shadow: 
@@ -1187,8 +1190,8 @@ export default {
   
   .button-group {
     display: flex;
-    gap: 12px;
-    margin-top: 8px;
+    gap: clamp(8px, 2vw, 12px);
+    margin-top: clamp(6px, 1.5vw, 8px);
   }
   
   .login-btn {
@@ -1239,20 +1242,20 @@ export default {
   
   .register-btn {
     width: 100%;
-    padding: 16px;
+    padding: clamp(12px, 3vw, 16px);
     background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%);
     border: none;
-    border-radius: 12px;
+    border-radius: clamp(8px, 2vw, 12px);
     color: #1a1a1a;
-    font-size: 16px;
+    font-size: clamp(14px, 3vw, 16px);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 8px;
+    gap: clamp(6px, 1.5vw, 8px);
+    margin-top: clamp(6px, 1.5vw, 8px);
     position: relative;
     overflow: hidden;
     box-shadow: 
@@ -1346,29 +1349,29 @@ export default {
   .account-type-info {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-    padding: 10px 15px;
+    gap: clamp(8px, 2vw, 10px);
+    margin-top: clamp(16px, 4vw, 20px);
+    padding: clamp(8px, 2vw, 10px) clamp(12px, 3vw, 15px);
     background: rgba(0, 255, 136, 0.1);
     border: 1px solid rgba(0, 255, 136, 0.3);
-    border-radius: 10px;
+    border-radius: clamp(8px, 2vw, 10px);
     color: #00ff88;
-    font-size: 14px;
+    font-size: clamp(12px, 2.5vw, 14px);
     font-weight: 500;
   }
   
   .account-type-badge {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: clamp(4px, 1vw, 5px);
     background: rgba(0, 255, 136, 0.2);
     border: 1px solid rgba(0, 255, 136, 0.4);
-    border-radius: 8px;
-    padding: 4px 10px;
+    border-radius: clamp(6px, 1.5vw, 8px);
+    padding: clamp(3px, 1vw, 4px) clamp(8px, 2vw, 10px);
   }
   
   .badge-icon {
-    font-size: 18px;
+    font-size: clamp(16px, 3vw, 18px);
   }
   
   .badge-text {
@@ -1377,8 +1380,8 @@ export default {
   
   .account-type-description {
     color: #808080;
-    font-size: 13px;
-    margin-top: 4px;
+    font-size: clamp(11px, 2vw, 13px);
+    margin-top: clamp(3px, 1vw, 4px);
   }
   
   /* Estilos para o formulário de registro */
@@ -1440,25 +1443,44 @@ export default {
     }
   }
   
-  /* Responsividade */
-  @media (max-width: 480px) {
+  /* Responsividade para telas muito pequenas */
+  @media (max-width: 320px) {
+    .login-container {
+      padding: 5px;
+    }
+    
     .login-card {
-      padding: 24px;
-      margin: 10px;
-    }
-    
-    .logo-text {
-      font-size: 24px;
-    }
-    
-    .login-title {
-      font-size: 18px;
+      min-width: 260px;
+      padding: 16px;
     }
     
     .form-options {
       flex-direction: column;
-      gap: 12px;
       align-items: flex-start;
+    }
+    
+    .button-group {
+      flex-direction: column;
+    }
+  }
+  
+  /* Responsividade para telas pequenas em landscape */
+  @media (max-height: 500px) and (orientation: landscape) {
+    .login-container {
+      align-items: flex-start;
+      padding-top: 20px;
+    }
+    
+    .login-card {
+      margin: 20px 0;
+    }
+    
+    .login-header {
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      margin-bottom: 16px;
     }
   }
   </style>

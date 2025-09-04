@@ -505,6 +505,8 @@
           </div>
         </div>
       </div>
+
+      
     </RouteGuard>
   </template>
   
@@ -524,11 +526,10 @@
   export default {
     name: 'SurebetsView',
        components: {
-       SurebetCard,
-       Sidebar,
-       
-       Header,
-       RouteGuard,
+             SurebetCard,
+      Sidebar,
+      Header,
+      RouteGuard,
    
        MapPin,
        Trash2
@@ -592,6 +593,7 @@
          dragMode: false, // Modo de arrastar ativo/inativo
          draggedIndex: null, // Índice do card sendo arrastado
          dragOverIndex: null, // Índice onde o card está sendo arrastado sobre
+         
          
   
   
@@ -923,6 +925,7 @@
       
   
     },
+
                  mounted() {
           // DEBUG: Verificar estado inicial
           console.log('🚀 MOUNTED: showSaveFilterModal inicial =', this.showSaveFilterModal)
@@ -1066,6 +1069,7 @@
               this.showSaveFilterModal = false
             }
           }, 1000)
+          
         },
     beforeUnmount() {
       if (this.ws) {
@@ -1073,6 +1077,7 @@
       }
       this.stopAutoUpdate()
       this.stopHttpPolling()
+      
     },
        methods: {
   
@@ -3647,7 +3652,7 @@
   
   .surebets-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Grid responsivo automático */
     gap: 16px; /* Aumentado gap para melhor espaçamento entre os cards */
     max-width: 100%;
     width: 100%; /* Garante que o grid ocupe toda a largura disponível */
@@ -3784,7 +3789,7 @@
   
   .pinned-cards-grid {
     display: grid;
-    grid-template-columns: repeat(var(--grid-columns, 3), 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); /* Grid responsivo automático */
     gap: 20px; /* Reduzido gap para dar mais espaço ao conteúdo dos cards */
     max-width: 100%;
     width: 100%; /* Garante que o grid ocupe toda a largura disponível */
@@ -3792,50 +3797,9 @@
     padding: 8px 16px; /* Adiciona padding vertical e horizontal para evitar corte dos efeitos hover e informações */
   }
   
-  /* Responsividade para diferentes tamanhos de tela */
-  @media (max-width: 1400px) {
-    .surebets-grid {
-      grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
-    }
-    .pinned-cards-grid {
-      grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas para cards fixos */
-    }
-  }
+  /* Grid responsivo automático - não precisa de media queries específicas */
   
-  @media (max-width: 1100px) {
-    .surebets-grid {
-      grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
-    }
-    .pinned-cards-grid {
-      grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
-      gap: 16px; /* Reduzido gap para dar mais espaço ao conteúdo */
-    }
-  }
-  
-  /* Ajuste específico para quando a sidebar está expandida */
-  .sidebar:not(.collapsed) ~ .main-content .surebets-grid {
-    grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
-  }
-  
-  @media (max-width: 1200px) {
-    .sidebar:not(.collapsed) ~ .main-content .surebets-grid {
-      grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas */
-    }
-  }
-  
-  /* Ajuste específico para quando a sidebar está colapsada */
-  .sidebar.collapsed ~ .main-content .surebets-grid {
-    grid-template-columns: repeat(3, 1fr); /* Sempre 3 colunas */
-  }
-  
-  @media (max-width: 900px) {
-    .pinned-cards-grid {
-      grid-template-columns: repeat(3, 1fr); /* Mantém 3 colunas em telas médias */
-      gap: 14px; /* Reduzido gap para dar mais espaço ao conteúdo */
-    }
-  }
-  
-  @media (max-width: 768px) {
+  @media (max-width: 700px) {
     .sidebar {
       position: fixed;
       left: -280px;
@@ -3854,11 +3818,11 @@
     }
     
     .surebets-grid {
-      grid-template-columns: repeat(2, 1fr); /* 2 colunas em mobile para melhor visualização */
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */
       gap: 16px; /* Reduzido gap em mobile */
     }
     .pinned-cards-grid {
-      grid-template-columns: repeat(2, 1fr); /* 2 colunas em mobile */
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */
       gap: 16px; /* Aumentado gap em mobile para melhor espaçamento */
     }
     

@@ -675,7 +675,8 @@ export default {
       } finally {
         this.isLoadingAccounts = false
       }
-    }
+    },
+
   }
 }
 </script>
@@ -893,6 +894,7 @@ export default {
       }
     }
   }
+  
 }
 
 
@@ -1202,6 +1204,50 @@ export default {
     min-width: auto;
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+/* Media query específica para telas muito pequenas (celulares pequenos) */
+@media (max-width: 400px) {
+  .surebet-card {
+    padding: 12px; /* Padding ainda menor para telas muito pequenas */
+  }
+  
+  .bet-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  
+  .market {
+    font-size: 10px;
+    padding: 1px 4px;
+    border-radius: 3px;
+    word-break: break-word;
+    max-width: 100%;
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+  
+  .bookmaker {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  
+  .bet-details {
+    gap: 8px;
+  }
+  
+  .odds-info,
+  .stake-info {
+    font-size: 11px;
+  }
+  
+  .odds-label,
+  .stake-label {
+    font-size: 10px;
   }
 }
 

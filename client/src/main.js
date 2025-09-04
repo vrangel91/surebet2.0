@@ -8,6 +8,7 @@ import 'bootstrap-icons/font/bootstrap-icons.css'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
 import './utils/debug-auth.js'
 import './utils/loaderTest.js'
+import './utils/pwaAutoRefresh.js'
 
 // Inicializar aplicação e limpar dados mocados
 initializeApp()

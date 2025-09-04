@@ -12,6 +12,7 @@ import CompoundInterestView from '../views/CompoundInterestView.vue'
 import RankingView from '../views/RankingView.vue'
 import BookmakerAccountsView from '../views/BookmakerAccountsView.vue'
 import SurebetsGuideView from '../views/SurebetsGuideView.vue'
+import GuiaApostasView from '../views/GuiaApostasView.vue'
 import GlossaryView from '../views/GlossaryView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import VIPAdminView from '../views/VIPAdminView.vue'
@@ -87,6 +88,12 @@ const routes = [
     path: '/guide',
     name: 'guide',
     component: SurebetsGuideView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/guia-apostas',
+    name: 'guia-apostas',
+    component: GuiaApostasView,
     meta: { requiresAuth: true }
   },
   {

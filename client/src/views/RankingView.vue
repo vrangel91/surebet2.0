@@ -1870,12 +1870,122 @@
         if (typeof str !== 'string') return true
         
         try {
-          // Tentar codificar e decodificar para verificar se é UTF-8 válido
+          // Método 1: Verificar se consegue codificar/decodificar sem perda
           const encoded = encodeURIComponent(str)
           const decoded = decodeURIComponent(encoded)
-          return decoded === str
+          if (decoded !== str) return false
+          
+          // Método 2: Verificar se não há caracteres de substituição UTF-8
+          // O caractere (U+FFFD) indica problemas de codificação
+          if (str.includes('\uFFFD')) return false
+          
+          // Método 3: Verificar se consegue serializar em JSON sem problemas
+          try {
+            JSON.stringify({ test: str })
+            return true
+          } catch (jsonError) {
+            return false
+          }
         } catch (error) {
           return false
+        }
+      },
+
+      /**
+       * Testa se uma string específica é UTF-8 válida (para debug)
+       */
+      testUTF8String(str) {
+        console.log('🧪 Testando string UTF-8:', str)
+        console.log('📝 Caracteres individuais:')
+        for (let i = 0; i < str.length; i++) {
+          const char = str[i]
+          const code = char.charCodeAt(0)
+          const hex = code.toString(16).toUpperCase()
+          console.log(`  ${i}: "${char}" (U+${hex.padStart(4, '0')})`)
+        }
+        
+        const isValid = this.isValidUTF8String(str)
+        console.log('✅ É UTF-8 válida:', isValid)
+        
+        try {
+          const json = JSON.stringify({ test: str })
+          console.log('✅ JSON válido:', json)
+        } catch (error) {
+          console.log('❌ JSON inválido:', error.message)
+        }
+        
+        return isValid
+      },
+
+      /**
+       * Detecta e corrige problemas de codificação (Latin1 -> UTF-8)
+       */
+      fixEncodingIssues(str) {
+        try {
+          // Detectar se a string tem caracteres que parecem Latin1 mal codificados
+          // Padrões comuns de problemas de codificação em português
+          const latin1Patterns = {
+            // "ã" em Latin1 mal codificado
+            'n?o': 'não',
+            'n?o ': 'não ',
+            'n?o especificado': 'não especificado',
+            'n?o encontrado': 'não encontrado',
+            'n?o disponível': 'não disponível',
+            
+            // "ç" em Latin1 mal codificado  
+            'c?o': 'ção',
+            'c?es': 'ções',
+            'c?ao': 'ção',
+            'c?oes': 'ções',
+            
+            // "é" em Latin1 mal codificado
+            'e?': 'é',
+            'e? ': 'é ',
+            'e?s': 'és',
+            
+            // "á" em Latin1 mal codificado
+            'a?': 'á',
+            'a? ': 'á ',
+            'a?s': 'ás',
+            
+            // "í" em Latin1 mal codificado
+            'i?': 'í',
+            'i? ': 'í ',
+            'i?s': 'ís',
+            
+            // "ó" em Latin1 mal codificado
+            'o?': 'ó',
+            'o? ': 'ó ',
+            'o?s': 'ós',
+            
+            // "ú" em Latin1 mal codificado
+            'u?': 'ú',
+            'u? ': 'ú ',
+            'u?s': 'ús'
+          }
+          
+          let corrected = str
+          
+          // Aplicar correções de padrões conhecidos
+          for (const [wrong, correct] of Object.entries(latin1Patterns)) {
+            if (corrected.includes(wrong)) {
+              corrected = corrected.replace(new RegExp(wrong, 'g'), correct)
+            }
+          }
+          
+          // Se houve correções, logar para debug
+          if (corrected !== str) {
+            console.log('🔧 Codificação corrigida:', {
+              original: str,
+              corrected: corrected,
+              pattern: 'Latin1 -> UTF-8'
+            })
+          }
+          
+          return corrected
+        } catch (error) {
+          console.warn('⚠️ Erro ao corrigir codificação:', error)
+          return str
         }
       },
 
@@ -1886,47 +1996,48 @@
         if (typeof str !== 'string') return str
         
         try {
-          // Log detalhado para debug UTF-8
           const originalStr = str
           let hasIssues = false
           const issues = []
           
-          // Detectar sequências de bytes problemáticas específicas
-          // 0xe3 0x6f 0x20 - sequência específica que está causando erro
-          if (str.includes('\u00e3\u006f\u0020') || str.includes('ão ')) {
+          // Primeiro, tentar detectar e corrigir problemas de codificação
+          let sanitized = this.fixEncodingIssues(str)
+          
+          if (sanitized !== str) {
             hasIssues = true
-            issues.push('Sequência problemática "ão " detectada')
+            issues.push('Problemas de codificação detectados e corrigidos')
+          }
+          
+          // Debug específico para "Jogo Específico"
+          if (str === 'Jogo Específico') {
+            console.log('🔍 Debug para "Jogo Específico":')
+            this.testUTF8String(str)
           }
           
           // Remover caracteres de controle inválidos
-          let sanitized = str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+          sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
           
-          // Tratar sequências de bytes específicas que causam erro UTF-8
-          // Substituir sequências problemáticas conhecidas
-          sanitized = sanitized
-            .replace(/\u00e3\u006f\u0020/g, 'ao ') // "ão " -> "ao "
-            .replace(/\u00e3\u006f/g, 'ao') // "ão" -> "ao"
-            .replace(/\u00e1/g, 'a') // "á" -> "a"
-            .replace(/\u00e9/g, 'e') // "é" -> "e"
-            .replace(/\u00ed/g, 'i') // "í" -> "i"
-            .replace(/\u00f3/g, 'o') // "ó" -> "o"
-            .replace(/\u00fa/g, 'u') // "ú" -> "u"
-            .replace(/\u00e7/g, 'c') // "ç" -> "c"
-            .replace(/\u00f1/g, 'n') // "ñ" -> "n"
-          
-          // Normalizar caracteres Unicode
+          // Normalizar caracteres Unicode primeiro
           sanitized = sanitized.normalize('NFC')
           
-          // Verificar se ainda é UTF-8 válido após normalização
-          if (!this.isValidUTF8String(sanitized)) {
-            // Se ainda houver problemas, usar escape mais agressivo
-            sanitized = sanitized.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?')
+          // Verificar se a string é UTF-8 válida APÓS normalização
+          const isValidUTF8 = this.isValidUTF8String(sanitized)
+          
+          if (!isValidUTF8) {
             hasIssues = true
-            issues.push('Caracteres UTF-8 inválidos removidos com escape agressivo')
+            issues.push('Sequências de bytes malformadas detectadas')
+            
+            // Aplicar correção conservadora - apenas caracteres realmente problemáticos
+            // Remover caracteres de controle e sequências malformadas específicas
+            sanitized = sanitized
+              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Caracteres de controle
+              .replace(/\uFFFD/g, '?') // Caracteres de substituição UTF-8
+              .replace(/[\uD800-\uDFFF](?![\uDC00-\uDFFF])/g, '?') // Surrogates malformados
+              .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '?') // Surrogates órfãos
           }
           
-          // Log detalhado se houve problemas
-          if (hasIssues || originalStr !== sanitized) {
+          // Log APENAS se houve problemas reais (não para acentos normais)
+          if (hasIssues && originalStr !== sanitized) {
             console.warn('🔧 UTF-8 Sanitização aplicada:', {
               original: originalStr,
               sanitized: sanitized,
@@ -1938,8 +2049,8 @@
           return sanitized
         } catch (error) {
           console.warn('⚠️ Erro ao sanitizar string UTF-8:', error)
-          // Fallback: remover caracteres problemáticos
-          return str.replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?')
+          // Fallback: remover APENAS caracteres de controle, preservar acentos
+          return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
         }
       },
 
@@ -1950,19 +2061,11 @@
         if (obj === null || obj === undefined) return obj
         
         if (typeof obj === 'string') {
-          // Sanitização mais agressiva para strings
+          // Sanitização mais agressiva APENAS para caracteres realmente problemáticos
           return obj
-            .replace(/[^\x20-\x7E\u00A0-\uFFFF]/g, '?') // Remover caracteres não-ASCII problemáticos
-            .replace(/\u00e3\u006f\u0020/g, 'ao ') // "ão " -> "ao "
-            .replace(/\u00e3\u006f/g, 'ao') // "ão" -> "ao"
-            .replace(/[áàâãä]/g, 'a') // Todas as variações de 'a' -> 'a'
-            .replace(/[éèêë]/g, 'e') // Todas as variações de 'e' -> 'e'
-            .replace(/[íìîï]/g, 'i') // Todas as variações de 'i' -> 'i'
-            .replace(/[óòôõö]/g, 'o') // Todas as variações de 'o' -> 'o'
-            .replace(/[úùûü]/g, 'u') // Todas as variações de 'u' -> 'u'
-            .replace(/[ç]/g, 'c') // 'ç' -> 'c'
-            .replace(/[ñ]/g, 'n') // 'ñ' -> 'n'
-            .replace(/[^\x20-\x7E]/g, '?') // Qualquer outro caractere não-ASCII -> '?'
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remover caracteres de controle
+            .replace(/[\x80-\xFF](?![\x80-\xBF])/g, '?') // Corrigir sequências malformadas
+            .normalize('NFC') // Normalizar Unicode (preserva acentos)
         }
         
         if (Array.isArray(obj)) {
@@ -2433,15 +2536,17 @@
           
           // Preparar dados com validação robusta e fallbacks
           let recordData = {
-            user_id: this.currentUser.id,
+            // Campos obrigatórios com validação rigorosa
             surebet_id: item.surebet_id || item.id || `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             house: item.house || item.house_name || item.bookmaker || 'Casa não especificada',
             market: item.market || item.market_name || item.bet_type || 'Mercado não especificado',
-            match: item.match || item.match_name || item.game || item.event || 'Partida não especificada',
-            profit: typeof item.profit === 'number' ? item.profit : parseFloat(item.profit) || parseFloat(item.return) || 0,
-            date: item.date || item.match_date || item.event_date || new Date().toISOString().split('T')[0],
-            hour: typeof item.hour === 'number' ? item.hour : parseInt(item.hour) || parseInt(item.time) || 0,
+            profit: this.validateProfit(item.profit, item.return),
+            date: this.validateDate(item.date, item.match_date, item.event_date),
+            hour: this.validateHour(item.hour, item.time),
             sport: item.sport || item.sport_name || item.category || 'Esporte não especificado',
+            
+            // Campos opcionais
+            match: item.match || item.match_name || item.game || item.event || 'Partida não especificada',
             period: item.period || item.time_period || item.period_name || null,
             minutes: item.minutes || item.match_minutes || item.duration || null,
             anchorh1: item.anchorh1 || item.anchor_h1 || item.anchor1 || null,
@@ -2455,6 +2560,13 @@
               missing_fields: missingFields,
               ...(item.metadata || {})
             }
+          }
+          
+          // Validação final dos campos obrigatórios
+          const finalValidation = this.validateRequiredFields(recordData)
+          if (!finalValidation.isValid) {
+            console.error('❌ Validação final falhou:', finalValidation.errors)
+            throw new Error(`Campos obrigatórios inválidos: ${finalValidation.errors.join(', ')}`)
           }
 
           // Aplicar sanitização UTF-8 final nos dados preparados
@@ -2498,6 +2610,44 @@
               recordId: recordData.surebet_id,
               dataSize: jsonBody.length
             })
+            
+            // Tratar erro HTTP 400 - Campos obrigatórios
+            if (response.status === 400) {
+              try {
+                const errorData = JSON.parse(errorText)
+                if (errorData.details && errorData.details.missingFields) {
+                  console.error('🚨 CAMPOS OBRIGATÓRIOS FALTANDO:', errorData.details.missingFields)
+                  console.error('📋 Campos recebidos:', errorData.details.receivedFields)
+                  console.error('📋 Campos obrigatórios:', errorData.details.requiredFields)
+                  
+                  // Tentar corrigir automaticamente os campos faltantes
+                  const correctedData = this.correctMissingFields(recordData, errorData.details.missingFields)
+                  if (correctedData) {
+                    console.log('🔧 Tentando novamente com campos corrigidos...')
+                    
+                    const correctedJsonBody = JSON.stringify(correctedData)
+                    const retryResponse = await fetch('/api/surebet-stats', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Authorization': `Bearer ${this.$store.state.authToken}`
+                      },
+                      body: correctedJsonBody
+                    })
+                    
+                    if (!retryResponse.ok) {
+                      const retryErrorText = await retryResponse.text()
+                      throw new Error(`Erro HTTP após correção: ${retryResponse.status} - ${retryErrorText}`)
+                    }
+                    
+                    console.log('✅ Registro salvo com campos corrigidos')
+                    return await retryResponse.json()
+                  }
+                }
+              } catch (parseError) {
+                console.error('❌ Erro ao parsear resposta de erro:', parseError)
+              }
+            }
             
             // Verificar se é erro específico de UTF-8
             if (errorText.includes('UTF8') || errorText.includes('codificação') || errorText.includes('0xe3')) {
@@ -2546,6 +2696,140 @@
         } catch (error) {
           console.error(`❌ Erro ao salvar registro ${item.surebet_id}:`, error)
           throw error
+        }
+      },
+      
+      // Funções de validação para campos obrigatórios
+      validateProfit(profit, returnValue) {
+        if (typeof profit === 'number' && !isNaN(profit)) {
+          return profit;
+        }
+        if (typeof returnValue === 'number' && !isNaN(returnValue)) {
+          return returnValue;
+        }
+        const parsedProfit = parseFloat(profit);
+        if (!isNaN(parsedProfit)) {
+          return parsedProfit;
+        }
+        const parsedReturn = parseFloat(returnValue);
+        if (!isNaN(parsedReturn)) {
+          return parsedReturn;
+        }
+        console.warn('⚠️ Profit inválido, usando 0 como fallback');
+        return 0;
+      },
+      
+      validateDate(date, matchDate, eventDate) {
+        const dateValue = date || matchDate || eventDate;
+        if (dateValue) {
+          // Se já é uma string no formato YYYY-MM-DD
+          if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+            return dateValue;
+          }
+          // Se é um objeto Date
+          if (dateValue instanceof Date) {
+            return dateValue.toISOString().split('T')[0];
+          }
+          // Tentar converter string para Date
+          const parsedDate = new Date(dateValue);
+          if (!isNaN(parsedDate.getTime())) {
+            return parsedDate.toISOString().split('T')[0];
+          }
+        }
+        console.warn('⚠️ Data inválida, usando data atual como fallback');
+        return new Date().toISOString().split('T')[0];
+      },
+      
+      validateHour(hour, time) {
+        if (typeof hour === 'number' && hour >= 0 && hour <= 23) {
+          return hour;
+        }
+        if (typeof time === 'number' && time >= 0 && time <= 23) {
+          return time;
+        }
+        const parsedHour = parseInt(hour);
+        if (!isNaN(parsedHour) && parsedHour >= 0 && parsedHour <= 23) {
+          return parsedHour;
+        }
+        const parsedTime = parseInt(time);
+        if (!isNaN(parsedTime) && parsedTime >= 0 && parsedTime <= 23) {
+          return parsedTime;
+        }
+        console.warn('⚠️ Hora inválida, usando 0 como fallback');
+        return 0;
+      },
+      
+      validateRequiredFields(recordData) {
+        const requiredFields = ['surebet_id', 'house', 'market', 'profit', 'date', 'hour', 'sport'];
+        const errors = [];
+        
+        requiredFields.forEach(field => {
+          const value = recordData[field];
+          if (!value && value !== 0) {
+            errors.push(`${field} é obrigatório`);
+          }
+        });
+        
+        // Validações específicas
+        if (recordData.profit !== undefined && (isNaN(recordData.profit) || recordData.profit === null)) {
+          errors.push('profit deve ser um número válido');
+        }
+        
+        if (recordData.hour !== undefined && (isNaN(recordData.hour) || recordData.hour < 0 || recordData.hour > 23)) {
+          errors.push('hour deve ser um número entre 0 e 23');
+        }
+        
+        if (recordData.date && !/^\d{4}-\d{2}-\d{2}$/.test(recordData.date)) {
+          errors.push('date deve estar no formato YYYY-MM-DD');
+        }
+        
+        return {
+          isValid: errors.length === 0,
+          errors: errors
+        };
+      },
+      
+      correctMissingFields(recordData, missingFields) {
+        console.log('🔧 Corrigindo campos faltantes:', missingFields)
+        
+        const correctedData = { ...recordData }
+        
+        missingFields.forEach(field => {
+          switch (field) {
+            case 'surebet_id':
+              correctedData.surebet_id = correctedData.surebet_id || `corrected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+              break
+            case 'house':
+              correctedData.house = correctedData.house || 'Casa corrigida automaticamente'
+              break
+            case 'market':
+              correctedData.market = correctedData.market || 'Mercado corrigido automaticamente'
+              break
+            case 'profit':
+              correctedData.profit = correctedData.profit !== undefined ? correctedData.profit : 0
+              break
+            case 'date':
+              correctedData.date = correctedData.date || new Date().toISOString().split('T')[0]
+              break
+            case 'hour':
+              correctedData.hour = correctedData.hour !== undefined ? correctedData.hour : 0
+              break
+            case 'sport':
+              correctedData.sport = correctedData.sport || 'Esporte corrigido automaticamente'
+              break
+            default:
+              console.warn(`⚠️ Campo desconhecido para correção: ${field}`)
+          }
+        })
+        
+        // Validar se a correção foi bem-sucedida
+        const validation = this.validateRequiredFields(correctedData)
+        if (validation.isValid) {
+          console.log('✅ Campos corrigidos com sucesso')
+          return correctedData
+        } else {
+          console.error('❌ Correção falhou:', validation.errors)
+          return null
         }
       },
       

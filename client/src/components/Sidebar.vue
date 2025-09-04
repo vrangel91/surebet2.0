@@ -103,6 +103,17 @@
           </router-link>
         </li>
 
+        <!-- Guia de Apostas -->
+        <li class="nav-item" :class="{ active: $route.path === '/guia-apostas' }">
+          <router-link to="/guia-apostas" class="nav-link" :title="shouldBeCollapsed ? 'Guia de Apostas' : ''">
+            <i class="bi bi-shield-check nav-icon"></i>
+            <span class="nav-text" v-show="!shouldBeCollapsed">
+              Guia de Apostas
+              <span class="nav-badge important">(importante)</span>
+            </span>
+          </router-link>
+        </li>
+
         <!-- Glosário -->
         <li class="nav-item" :class="{ active: $route.path === '/glossary' }">
           <router-link to="/glossary" class="nav-link" :title="shouldBeCollapsed ? 'Glosário' : ''">
@@ -1674,10 +1685,30 @@ export default {
   font-size: 10px;
   font-weight: 700;
   color: #1a1a1a;
+}
+
+/* Badge Importante */
+.nav-badge.important {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 4px;
+  background: var(--accent-primary);
+  color: var(--text-button-primary);
+  border-radius: 8px;
+  font-size: 7px;
+  font-weight: 600;
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
-  animation: vipGlow 2s ease-in-out infinite alternate;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.nav-badge.important:hover {
+  transform: scale(1.02);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* Indicador de bloqueio para Contas */
