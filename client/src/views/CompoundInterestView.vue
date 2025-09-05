@@ -248,6 +248,24 @@ export default {
       }
     },
 
+    // Método para destruir gráfico de forma segura
+    destroyChartSafely() {
+      try {
+        if (this.chart && typeof this.chart.destroy === 'function') {
+          // Verificar se o gráfico ainda está ativo
+          if (this.chart.canvas && this.chart.canvas.parentNode) {
+            this.chart.destroy()
+            console.log('✅ Gráfico de juros compostos destruído com sucesso')
+          }
+          this.chart = null
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao destruir gráfico de juros compostos:', error.message)
+        // Forçar limpeza mesmo com erro
+        this.chart = null
+      }
+    },
+
     showNotification(message, type = 'info') {
       const notification = document.createElement('div')
       notification.className = 'notification'
@@ -467,11 +485,8 @@ export default {
         this.chart = null
       }
       
-      // Limpar o canvas
-      const context = ctx.getContext('2d')
-      if (context) {
-        context.clearRect(0, 0, ctx.width, ctx.height)
-      }
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely()
       
       try {
         // Criar novo gráfico

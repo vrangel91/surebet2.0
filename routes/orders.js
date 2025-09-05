@@ -422,7 +422,8 @@ router.post('/pix', authenticateToken, async (req, res) => {
     // Gerar PIX usando o serviço aprimorado
     console.log(`🔄 Gerando PIX para pedido ${order.id}...`);
     
-    const pixPayment = await mercadopagoService.createPixPayment({
+    // Log dos dados que serão enviados para o MercadoPago
+    const pixRequestData = {
       amount: parseFloat(amount),
       description: `Plano ${planName} - PIX`,
       externalReference: order.id.toString(),
@@ -432,7 +433,21 @@ router.post('/pix', authenticateToken, async (req, res) => {
         lastName: customerData.lastName,
         cpf: customerData.cpf
       }
+    };
+    
+    console.log('🔍 Dados para PIX:', {
+      amount: pixRequestData.amount,
+      description: pixRequestData.description,
+      externalReference: pixRequestData.externalReference,
+      payer: {
+        email: pixRequestData.payer.email,
+        firstName: pixRequestData.payer.firstName,
+        lastName: pixRequestData.payer.lastName,
+        cpf: pixRequestData.payer.cpf ? 'Presente' : 'Ausente'
+      }
     });
+    
+    const pixPayment = await mercadopagoService.createPixPayment(pixRequestData);
 
     // Extrair dados do PIX usando o serviço
     const pixData = mercadopagoService.extractPixData(pixPayment);
@@ -489,9 +504,34 @@ router.post('/pix', authenticateToken, async (req, res) => {
       }
     }
 
-    res.status(500).json({ 
-      error: error.message || 'Erro interno do servidor',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+    // Retornar erro mais específico baseado no tipo de erro
+    let errorMessage = 'Erro interno do servidor ao processar PIX';
+    let statusCode = 500;
+
+    if (error.message.includes('Campos obrigatórios ausentes')) {
+      errorMessage = 'Dados obrigatórios ausentes';
+      statusCode = 400;
+    } else if (error.message.includes('Dados do pagador incompletos')) {
+      errorMessage = 'Dados do cliente incompletos';
+      statusCode = 400;
+    } else if (error.message.includes('Valor do pagamento inválido')) {
+      errorMessage = 'Valor do pagamento inválido';
+      statusCode = 400;
+    } else if (error.message.includes('Formato de email inválido')) {
+      errorMessage = 'Formato de email inválido';
+      statusCode = 400;
+    } else if (error.message.includes('CPF inválido')) {
+      errorMessage = 'CPF inválido';
+      statusCode = 400;
+    } else if (error.message.includes('MERCADOPAGO_ACCESS_TOKEN')) {
+      errorMessage = 'Erro de configuração do pagamento';
+      statusCode = 500;
+    }
+
+    res.status(statusCode).json({
+      success: false,
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       timestamp: new Date().toISOString()
     });
   }

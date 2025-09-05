@@ -104,7 +104,6 @@
 </template>
 
 <script>
-import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 export default {
   name: 'SplitScreenModal',
@@ -160,7 +159,7 @@ export default {
 
     formatMarket(market) {
       if (!market) return 'Resultado Final'
-      return formatMarketForDisplay(market)
+      return market
     },
 
     formatProfit(profit) {

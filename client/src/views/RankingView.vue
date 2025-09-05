@@ -1224,11 +1224,32 @@
           this.chartsInitialized = false
         }
       },
+
+      // Método para destruir gráficos de forma segura
+      destroyChartSafely(chartName) {
+        try {
+          const chart = this[chartName]
+          if (chart && typeof chart.destroy === 'function') {
+            // Verificar se o gráfico ainda está ativo
+            if (chart.canvas && chart.canvas.parentNode) {
+              chart.destroy()
+              console.log(`✅ Gráfico ${chartName} destruído com sucesso`)
+            }
+            this[chartName] = null
+          }
+        } catch (error) {
+          console.warn(`⚠️ Erro ao destruir gráfico ${chartName}:`, error.message)
+          // Forçar limpeza mesmo com erro
+          this[chartName] = null
+        }
+      },
   
       setupHousesChart() {
         const ctx = this.$refs.housesChart
         if (!ctx) return
-        if (this.housesChart) this.housesChart.destroy()
+        
+        // Destruir gráfico existente de forma segura
+        this.destroyChartSafely('housesChart')
         
         const data = this.topHouses.slice(0, 12) // Mostrar top 12 casas no gráfico
         this.housesChart = new Chart(ctx, {
@@ -1286,7 +1307,9 @@
       setupMarketsChart() {
         const ctx = this.$refs.marketsChart
         if (!ctx) return
-        if (this.marketsChart) this.marketsChart.destroy()
+        
+        // Destruir gráfico existente de forma segura
+        this.destroyChartSafely('marketsChart')
         
         // Criar dados do gráfico usando o novo sistema de agrupamento
         const { chartData, colors, labels } = createChartData(
@@ -1373,7 +1396,9 @@
       setupTimeChart() {
         const ctx = this.$refs.timeChart
         if (!ctx) return
-        if (this.timeChart) this.timeChart.destroy()
+        
+        // Destruir gráfico existente de forma segura
+        this.destroyChartSafely('timeChart')
         
         const hourStats = {}
         this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
@@ -1418,7 +1443,9 @@
       setupSportsChart() {
         const ctx = this.$refs.sportsChart
         if (!ctx) return
-        if (this.sportsChart) this.sportsChart.destroy()
+        
+        // Destruir gráfico existente de forma segura
+        this.destroyChartSafely('sportsChart')
         
         const sportStats = {}
         const surebetGroups = {}
@@ -1473,7 +1500,9 @@
       setupProfitFrequencyChart() {
         const ctx = this.$refs.profitFrequencyChart
         if (!ctx) return
-        if (this.profitFrequencyChart) this.profitFrequencyChart.destroy()
+        
+        // Destruir gráfico existente de forma segura
+        this.destroyChartSafely('profitFrequencyChart')
         
         // Agrupar dados por mercado para calcular frequência e lucro médio
         const marketStats = {}
@@ -1661,14 +1690,22 @@
       },
   
       updateCharts() {
-        if (!this.chartsInitialized) return
+        if (!this.chartsInitialized || this._updatingCharts) return
+        
+        this._updatingCharts = true
         
         this.$nextTick(() => setTimeout(() => {
-          if (this.housesChart) this.updateHousesChart()
-          if (this.marketsChart) this.updateMarketsChart()
-          if (this.timeChart) this.updateTimeChart()
-          if (this.sportsChart) this.updateSportsChart()
-          if (this.profitFrequencyChart) this.updateProfitFrequencyChart()
+          try {
+            if (this.housesChart) this.updateHousesChart()
+            if (this.marketsChart) this.updateMarketsChart()
+            if (this.timeChart) this.updateTimeChart()
+            if (this.sportsChart) this.updateSportsChart()
+            if (this.profitFrequencyChart) this.updateProfitFrequencyChart()
+          } catch (error) {
+            console.error('❌ Erro ao atualizar gráficos:', error)
+          } finally {
+            this._updatingCharts = false
+          }
         }, 100))
       },
       
@@ -2902,6 +2939,13 @@
       updateHousesChart() {
         if (!this.housesChart || !this.housesChart.data || !this.housesChart.data.datasets || !this.housesChart.data.datasets[0]) return
         
+        // Verificar se o gráfico ainda está ativo
+        if (!this.housesChart.canvas || !this.housesChart.canvas.parentNode) {
+          console.warn('⚠️ Gráfico housesChart não está mais ativo, recriando...')
+          this.setupHousesChart()
+          return
+        }
+        
         const data = this.topHouses.slice(0, 12)
         this.housesChart.data.labels = data.map(h => h.name)
         this.housesChart.data.datasets[0].data = data.map(h => h.count)
@@ -2913,6 +2957,13 @@
   
       updateMarketsChart() {
         if (!this.marketsChart || !this.marketsChart.data || !this.marketsChart.data.datasets || !this.marketsChart.data.datasets[0]) return
+        
+        // Verificar se o gráfico ainda está ativo
+        if (!this.marketsChart.canvas || !this.marketsChart.canvas.parentNode) {
+          console.warn('⚠️ Gráfico marketsChart não está mais ativo, recriando...')
+          this.setupMarketsChart()
+          return
+        }
         
         const { chartData, colors, labels } = createChartData(
           this.groupedMarkets, 
@@ -2933,6 +2984,13 @@
       updateTimeChart() {
         if (!this.timeChart || !this.timeChart.data || !this.timeChart.data.datasets || !this.timeChart.data.datasets[0]) return
         
+        // Verificar se o gráfico ainda está ativo
+        if (!this.timeChart.canvas || !this.timeChart.canvas.parentNode) {
+          console.warn('⚠️ Gráfico timeChart não está mais ativo, recriando...')
+          this.setupTimeChart()
+          return
+        }
+        
         const hourStats = {}
         this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
         const hours = Array.from({length: 24}, (_, i) => i)
@@ -2946,6 +3004,13 @@
   
       updateSportsChart() {
         if (!this.sportsChart || !this.sportsChart.data || !this.sportsChart.data.datasets || !this.sportsChart.data.datasets[0]) return
+        
+        // Verificar se o gráfico ainda está ativo
+        if (!this.sportsChart.canvas || !this.sportsChart.canvas.parentNode) {
+          console.warn('⚠️ Gráfico sportsChart não está mais ativo, recriando...')
+          this.setupSportsChart()
+          return
+        }
         
         const sportStats = {}
         const surebetGroups = {}
@@ -2971,6 +3036,13 @@
   
       updateProfitFrequencyChart() {
         if (!this.profitFrequencyChart) return
+        
+        // Verificar se o gráfico ainda está ativo
+        if (!this.profitFrequencyChart.canvas || !this.profitFrequencyChart.canvas.parentNode) {
+          console.warn('⚠️ Gráfico profitFrequencyChart não está mais ativo, recriando...')
+          this.setupProfitFrequencyChart()
+          return
+        }
         
         // Recalcular dados para o gráfico
         const marketStats = {}

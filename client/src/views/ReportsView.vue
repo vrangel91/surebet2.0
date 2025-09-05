@@ -164,7 +164,7 @@
                 <td>{{ bet.roi }}%</td>
                 <td>{{ bet.sport }}</td>
                 <td>{{ bet.houses.join(', ') }}</td>
-                <td>{{ formatMarketForDisplay(bet.market) }}</td>
+                <td>{{ bet.market }}</td>
                 <td>{{ bet.odds }}</td>
                 <td>{{ formatCurrency(bet.stake) }}</td>
                 <td>{{ formatCurrency(bet.investment) }}</td>
@@ -263,7 +263,7 @@
             </div>
             <div class="detail-row">
               <span class="detail-label">Mercado:</span>
-              <span class="detail-value">{{ formatMarketForDisplay(selectedBet.market) }}</span>
+              <span class="detail-value">{{ selectedBet.market }}</span>
             </div>
             <div class="detail-row">
               <span class="detail-label">Odds:</span>
@@ -354,7 +354,6 @@ import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
 import RouteGuard from '../components/RouteGuard.vue'
-import { formatMarketForDisplay } from '../utils/market-translations.js'
 
 
 export default {
@@ -560,13 +559,6 @@ export default {
       }).format(value)
     },
     
-    // Formatar campo market para exibição usando o novo sistema
-    formatMarketForDisplay(marketText) {
-      if (!marketText) return 'N/A'
-      
-      // Usar o novo sistema de formatação inteligente
-      return formatMarketForDisplay(marketText)
-    },
     
     // Traduzir campo market (fallback se a importação falhar)
     translateMarketField(marketText) {

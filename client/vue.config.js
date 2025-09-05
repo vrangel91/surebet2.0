@@ -15,85 +15,13 @@ module.exports = defineConfig({
     scope: '/',
     startUrl: '/',
     
-    // Desabilitar prompt automático - usar apenas nosso instalador personalizado
+    // Usar nosso Service Worker personalizado
     disable: false,
-    workboxPluginMode: 'GenerateSW',
+    workboxPluginMode: 'InjectManifest',
     workboxOptions: {
-      // Desabilitar prompt automático de instalação
-      skipWaiting: true,
-      clientsClaim: true,
-      cleanupOutdatedCaches: true,
-      
-      // Não mostrar prompt automático
-      navigateFallback: null,
-      navigateFallbackDenylist: [/^\/api\//],
-      
-      // Estratégia de cache
-      runtimeCaching: [
-        {
-          urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'google-fonts-cache',
-            expiration: {
-              maxEntries: 10,
-              maxAgeSeconds: 60 * 60 * 24 * 365 // 1 ano
-            }
-          }
-        },
-        {
-          urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'gstatic-fonts-cache',
-            expiration: {
-              maxEntries: 10,
-              maxAgeSeconds: 60 * 60 * 24 * 365 // 1 ano
-            }
-          }
-        },
-        {
-          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|ico|woff|woff2|ttf)$/,
-          handler: 'CacheFirst',
-          options: {
-            cacheName: 'images-cache',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24 * 30 // 30 dias
-            }
-          }
-        },
-        {
-          urlPattern: /\.(?:css|js)$/,
-          handler: 'StaleWhileRevalidate',
-          options: {
-            cacheName: 'static-resources',
-            expiration: {
-              maxEntries: 50,
-              maxAgeSeconds: 60 * 60 * 24 * 7 // 7 dias
-            }
-          }
-        },
-        {
-          urlPattern: /^https:\/\/api\./i,
-          handler: 'NetworkFirst',
-          options: {
-            cacheName: 'api-cache',
-            expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 5 // 5 minutos
-            },
-            networkTimeoutSeconds: 5
-          }
-        }
-      ],
-      
-      // Excluir arquivos do cache
-      exclude: [
-        /\.map$/,
-        /_redirects/,
-        /\.htaccess/
-      ]
+      // Usar nosso arquivo sw.js personalizado
+      swSrc: './public/sw.js',
+      swDest: 'sw.js'
     },
     
     // Ícones

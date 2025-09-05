@@ -105,7 +105,6 @@
 
 <script>
 import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
-import { formatMarketForDisplay } from '../utils/market-translations.js'
 import { http } from '../utils/http.js'
 
 export default {
@@ -231,27 +230,11 @@ export default {
     
              formatMarket(market, sport = null) {
       if (!market) {
-        // Retorna um tipo de mercado padrão baseado no esporte
-        if (sport) {
-          const defaultMarkets = {
-            'Futebol': 'Resultado Final',
-            'Tênis': 'Vencedor',
-            'Basquete': 'Handicap',
-            'Vôlei': 'Resultado Final',
-            'Handebol': 'Resultado Final',
-            'Futsal': 'Resultado Final',
-            'MMA': 'Vencedor',
-            'Boxe': 'Vencedor',
-            'Esports': 'Vencedor',
-            'Hóquei': 'Resultado Final'
-          }
-          return defaultMarkets[sport] || 'Resultado Final'
-        }
         return 'Resultado Final'
       }
       
-      // Usa o novo sistema de formatação inteligente
-      return formatMarketForDisplay(market)
+      // Retorna o market original sem tradução
+      return market
     },
     
     

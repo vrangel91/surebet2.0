@@ -723,7 +723,7 @@ export default {
               id: 'pre-daily',
               duration: 'Diário',
               title: 'SUREBET \nPRÉ JOGO DIÁRIO',
-              price: '19',
+              price: '1',
               days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
@@ -736,7 +736,7 @@ export default {
               id: 'pre-weekly',
               duration: 'Semanal',
               title: 'SUREBET PRÉ JOGO SEMANAL',
-              price: '67',
+              price: '57',
               days: 7,
               features: [
                 { text: '7 dias de acesso', included: true },
@@ -749,7 +749,7 @@ export default {
               id: 'pre-monthly',
               duration: 'Mensal',
               title: 'SUREBET PRÉ JOGO MENSAL',
-              price: '147',
+              price: '97',
               days: 30,
               features: [
                 { text: '30 dias de acesso', included: true },
@@ -762,7 +762,7 @@ export default {
               id: 'pre-yearly',
               duration: 'Anual',
               title: 'SUREBET PRÉ JOGO ANUAL',
-              price: '897',
+              price: '597',
               days: 365,
               features: [
                 { text: '365 dias de acesso', included: true },
@@ -2078,7 +2078,6 @@ export default {
   .payment-modal,
   .payment-method-modal,
   .processing-modal,
-  .pix-modal,
   .login-required-modal {
     background: var(--bg-secondary);
     border-radius: 12px;
@@ -2089,6 +2088,72 @@ export default {
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  .pix-modal {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-primary);
+    max-width: 480px;
+    width: 95%;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: modalSlideIn 0.3s ease-out;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+  }
+
+  @media (max-width: 480px) {
+    .pix-modal {
+      max-width: 95%;
+      width: 95%;
+      max-height: 90vh;
+    }
+    
+    .qr-code-placeholder,
+    .qr-code-generated,
+    .qr-code-loading {
+      width: 160px;
+      height: 160px;
+      padding: 12px;
+    }
+    
+    .qr-code {
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    
+    .timer-section {
+      margin-bottom: 12px;
+      padding: 0 12px;
+    }
+    
+    .qr-instructions {
+      font-size: 12px;
+      margin: 0 0 10px 0;
+      padding: 0 12px;
+    }
+    
+    .pix-code-section {
+      padding: 0 12px;
+      margin-bottom: 12px;
+    }
+    
+    .pix-code-input {
+      padding: 10px;
+      font-size: 11px;
+      min-height: 36px;
+    }
+    
+    .copy-btn {
+      padding: 10px 14px;
+      font-size: 12px;
+    }
+    
+    .payment-wait {
+      font-size: 12px;
+      margin: 0 0 12px 0;
+      padding: 0 12px;
+    }
   }
   
   @keyframes modalSlideIn {
@@ -2608,8 +2673,8 @@ export default {
   /* PIX Modal */
   .timer-section {
     text-align: right;
-    margin-bottom: 20px;
-    padding: 0 8px;
+    margin-bottom: 16px;
+    padding: 0 16px;
   }
   
   .timer-text {
@@ -2633,18 +2698,18 @@ export default {
   
   .qr-code {
     display: inline-block;
-    padding: 20px;
+    padding: 16px;
     background: white;
     border-radius: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
   .qr-code-placeholder,
   .qr-code-generated,
   .qr-code-loading {
-    width: 220px;
-    height: 220px;
+    width: 180px;
+    height: 180px;
     border: 2px solid #e0e0e0;
     border-radius: 12px;
     display: flex;
@@ -2653,7 +2718,14 @@ export default {
     justify-content: center;
     margin: 0 auto;
     background: #ffffff;
-    padding: 20px;
+    padding: 16px;
+  }
+
+  .qr-code-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 8px;
   }
   
   .qr-code-placeholder p {
@@ -2685,9 +2757,9 @@ export default {
   
   .qr-instructions {
     color: var(--text-secondary);
-    margin: 0 0 20px 0;
-    font-size: 14px;
-    line-height: 1.6;
+    margin: 0 0 12px 0;
+    font-size: 13px;
+    line-height: 1.5;
     padding: 0 16px;
     transition: color 0.3s ease;
   }
@@ -2695,8 +2767,8 @@ export default {
   .pix-code-section {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    gap: 10px;
+    margin-bottom: 16px;
     padding: 0 16px;
   }
   
@@ -2709,15 +2781,15 @@ export default {
   
   .pix-code-input {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: var(--bg-input);
     border: 1px solid var(--border-primary);
     border-radius: 8px;
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 12px;
     font-family: monospace;
     word-break: break-all;
-    min-height: 48px;
+    min-height: 40px;
     transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
   }
   
@@ -2726,18 +2798,18 @@ export default {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 14px 20px;
+    padding: 12px 16px;
     background: var(--accent-primary);
     color: var(--bg-primary);
     border: none;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
     width: 100%;
-    margin-top: 8px;
+    margin-top: 6px;
   }
   
   .copy-btn:hover {
@@ -2747,8 +2819,8 @@ export default {
   
   .payment-wait {
     color: var(--text-secondary);
-    margin: 0 0 20px 0;
-    font-size: 14px;
+    margin: 0 0 16px 0;
+    font-size: 13px;
     text-align: center;
     padding: 0 16px;
     transition: color 0.3s ease;

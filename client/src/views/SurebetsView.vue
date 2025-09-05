@@ -520,7 +520,6 @@
   import { filterOptions } from '../config/filters.js'
   import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
   import { MapPin, Trash2 } from 'lucide-vue-next'
-  import { formatMarketForDisplay } from '../utils/market-translations.js'
   
   
   export default {
@@ -619,24 +618,24 @@
       },
   
       totalSurebets() {
-        return Object.keys(this.surebets).length
+        return this.surebets ? Object.keys(this.surebets).length : 0
       },
       preliveCount() {
-        return Object.values(this.surebets).filter(surebet => {
+        return this.surebets ? Object.values(this.surebets).filter(surebet => {
           const firstBet = surebet[0]
           // Pre-match: isLive = false (ignora campo minutes)
           return !firstBet?.isLive
-        }).length
+        }).length : 0
       },
       liveCount() {
-        return Object.values(this.surebets).filter(surebet => {
+        return this.surebets ? Object.values(this.surebets).filter(surebet => {
           const firstBet = surebet[0]
           // Live: isLive = true
           return firstBet?.isLive === true
-        }).length
+        }).length : 0
       },
       filteredSurebets() {
-        let surebetsArray = Object.values(this.surebets)
+        let surebetsArray = this.surebets ? Object.values(this.surebets) : []
         console.log('🔍 DEBUG FILTROS:')
         console.log('Total surebets inicial:', surebetsArray.length)
         console.log('Selected houses:', this.selectedHouses.length, '/', this.filterOptions.houses.length)
@@ -835,11 +834,9 @@
           // Buscar no campo market de todas as apostas do surebet
           return surebet.some(bet => {
             const market = bet.market || ''
-            const translatedMarket = formatMarketForDisplay(market)
             
-            // Buscar tanto no texto original quanto na tradução
-            return market.toLowerCase().includes(searchTerm) || 
-                   translatedMarket.toLowerCase().includes(searchTerm)
+            // Buscar apenas no texto original
+            return market.toLowerCase().includes(searchTerm)
           })
         })
       },
@@ -1570,12 +1567,12 @@
                 
               case 'new_surebet':
                 // Verifica se há novos dados antes de tocar o som
-                const currentKeys = Object.keys(this.surebets)
-                const newKeys = Object.keys(data.surebets)
+                const currentKeys = this.surebets ? Object.keys(this.surebets) : []
+                const newKeys = data.surebets ? Object.keys(data.surebets) : []
                 const hasNewData = newKeys.length > currentKeys.length || 
                                   newKeys.some(key => !currentKeys.includes(key))
                 
-                this.surebets = data.surebets
+                this.surebets = data.surebets || {}
                 
                 // Toca som apenas se há novos dados e o som está habilitado
                 if (this.soundEnabled && hasNewData) {
@@ -1787,8 +1784,8 @@
           const data = await response.json()
           
           // Verifica se há novos dados comparando com os dados atuais
-          const currentKeys = Object.keys(this.surebets)
-          const newKeys = Object.keys(data)
+          const currentKeys = this.surebets ? Object.keys(this.surebets) : []
+          const newKeys = data ? Object.keys(data) : []
           const hasNewData = newKeys.length > currentKeys.length || 
                             newKeys.some(key => !currentKeys.includes(key))
           
@@ -1828,7 +1825,8 @@
           const dynamicUrls = {}
           
           // Processa cada surebet para extrair casas de apostas
-          Object.values(surebetsData).forEach(surebet => {
+          if (surebetsData) {
+            Object.values(surebetsData).forEach(surebet => {
             if (Array.isArray(surebet) && surebet.length > 0) {
               surebet.forEach(bet => {
                 if (bet.house) {
@@ -1853,6 +1851,7 @@
               })
             }
           })
+          }
           
           // Converte para array e ordena alfabeticamente
           const sortedBookmakers = Array.from(uniqueBookmakers).sort()
@@ -2167,9 +2166,9 @@
       // Adiciona surebet aos relatórios
        addSurebetToReports(surebet) {
          // Encontra o ID do surebet no objeto surebets
-         const surebetId = Object.keys(this.surebets).find(key => 
+         const surebetId = this.surebets ? Object.keys(this.surebets).find(key => 
            this.surebets[key] === surebet
-         )
+         ) : null
          
          if (surebetId) {
            // Salva no localStorage para a página de relatórios
@@ -2183,7 +2182,7 @@
              match: firstBet.match || 'Partida não especificada',
              sport: firstBet.sport || 'Esporte não especificado',
              houses: houses,
-             market: formatMarketForDisplay(firstBet.market) || 'Mercado não especificado',
+             market: firstBet.market || 'Mercado não especificado',
              odds: surebet.map(bet => bet.chance || bet.odds).join(' / '),
              stake: 100.00,
              investment: 100.00,
@@ -2536,10 +2535,10 @@
                const pinnedKey = this.createSurebetKey(pinnedCard)
                
                // Procura por dados atualizados na nova resposta da API
-               const updatedCard = Object.values(newData).find(surebet => {
+               const updatedCard = newData ? Object.values(newData).find(surebet => {
                  const surebetKey = this.createSurebetKey(surebet)
                  return surebetKey === pinnedKey
-               })
+               }) : null
                
                if (updatedCard) {
                  updatedPinnedCards.push(updatedCard)

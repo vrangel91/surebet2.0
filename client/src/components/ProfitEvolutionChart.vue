@@ -64,6 +64,24 @@ export default {
         return fallback
       }
     },
+
+    // Método para destruir gráfico de forma segura
+    destroyChartSafely() {
+      try {
+        if (this.chart && typeof this.chart.destroy === 'function') {
+          // Verificar se o gráfico ainda está ativo
+          if (this.chart.canvas && this.chart.canvas.parentNode) {
+            this.chart.destroy()
+            console.log('✅ Gráfico de evolução de lucro destruído com sucesso')
+          }
+          this.chart = null
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao destruir gráfico de evolução de lucro:', error.message)
+        // Forçar limpeza mesmo com erro
+        this.chart = null
+      }
+    },
     
     // Método para forçar o fundo do gráfico
     forceChartBackground() {
@@ -180,6 +198,9 @@ export default {
     createChart() {
       const ctx = this.$refs.chartCanvas
       if (!ctx) return
+      
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely()
       
       this.chart = new Chart(ctx, {
         type: 'line',

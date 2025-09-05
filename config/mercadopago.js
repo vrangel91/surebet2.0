@@ -5,8 +5,16 @@ const { MercadoPagoConfig, Payment } = require('mercadopago');
  */
 class MercadoPagoService {
   constructor() {
+    const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-3182761403687473-051409-e381080719c0060d8dd1dc1582618d3d-266645918';
+    
+    console.log('🔧 Configuração MercadoPago:', {
+      hasEnvToken: !!process.env.MERCADOPAGO_ACCESS_TOKEN,
+      tokenPrefix: accessToken.substring(0, 10) + '...',
+      environment: process.env.NODE_ENV || 'development'
+    });
+    
     this.config = new MercadoPagoConfig({
-      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'APP_USR-3182761403687473-051409-e381080719c0060d8dd1dc1582618d3d-266645918'
+      accessToken: accessToken
     });
     
     this.payment = new Payment(this.config);
@@ -26,6 +34,11 @@ class MercadoPagoService {
       throw new Error('Formato inválido do MERCADOPAGO_ACCESS_TOKEN');
     }
     
+    console.log('✅ Token MercadoPago válido:', {
+      prefix: this.config.accessToken.substring(0, 10) + '...',
+      environment: process.env.NODE_ENV || 'development'
+    });
+    
     return true;
   }
 
@@ -34,7 +47,11 @@ class MercadoPagoService {
    */
   async createPixPayment(paymentData, retryCount = 0) {
     try {
-      console.log(`🔄 Tentativa ${retryCount + 1} de criar PIX`);
+      console.log(`🔄 Tentativa ${retryCount + 1} de criar PIX`, {
+        environment: process.env.NODE_ENV || 'development',
+        amount: paymentData.amount,
+        description: paymentData.description
+      });
       
       // Validar dados obrigatórios
       this.validatePixPaymentData(paymentData);
@@ -63,6 +80,15 @@ class MercadoPagoService {
 
       // Validar resposta
       this.validatePixResponse(pixPayment);
+      
+      console.log('📱 Resposta do MercadoPago:', {
+        hasResponse: !!pixPayment,
+        hasBody: !!pixPayment.body,
+        hasPointOfInteraction: !!(pixPayment.body || pixPayment).point_of_interaction,
+        paymentId: (pixPayment.body || pixPayment).id,
+        status: (pixPayment.body || pixPayment).status,
+        environment: process.env.NODE_ENV || 'development'
+      });
       
       console.log('✅ PIX criado com sucesso');
       return pixPayment;
@@ -110,10 +136,16 @@ class MercadoPagoService {
       throw new Error('Formato de email inválido');
     }
 
-    // Validar CPF
+    // Validar CPF (aceita com ou sem formatação)
+    const cpfClean = paymentData.payer.cpf.replace(/\D/g, '');
     const cpfRegex = /^\d{11}$/;
-    if (!cpfRegex.test(paymentData.payer.cpf.replace(/\D/g, ''))) {
-      throw new Error('CPF inválido');
+    if (!cpfRegex.test(cpfClean)) {
+      console.error('❌ CPF inválido:', {
+        original: paymentData.payer.cpf,
+        cleaned: cpfClean,
+        length: cpfClean.length
+      });
+      throw new Error('CPF inválido - deve conter 11 dígitos');
     }
   }
 
@@ -173,18 +205,50 @@ class MercadoPagoService {
    * Extrair dados do PIX da resposta
    */
   extractPixData(pixPayment) {
-    // A resposta pode ter a estrutura com 'body' ou diretamente no objeto raiz
-    const responseData = pixPayment.body || pixPayment;
-    const transactionData = responseData.point_of_interaction.transaction_data;
-    
-    return {
-      pixCode: transactionData.qr_code || '',
-      pixCodeBase64: transactionData.qr_code_base64 || '',
-      ticketUrl: transactionData.ticket_url || '',
-      paymentId: responseData.id,
-      status: responseData.status,
-      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
-    };
+    try {
+      console.log('🔍 Estrutura da resposta do MercadoPago:', {
+        hasBody: !!pixPayment.body,
+        hasPointOfInteraction: !!(pixPayment.body || pixPayment).point_of_interaction,
+        keys: Object.keys(pixPayment.body || pixPayment)
+      });
+
+      // A resposta pode ter a estrutura com 'body' ou diretamente no objeto raiz
+      const responseData = pixPayment.body || pixPayment;
+      
+      if (!responseData.point_of_interaction) {
+        console.error('❌ Estrutura de resposta inválida - point_of_interaction ausente');
+        throw new Error('Resposta do MercadoPago inválida - point_of_interaction ausente');
+      }
+
+      if (!responseData.point_of_interaction.transaction_data) {
+        console.error('❌ Estrutura de resposta inválida - transaction_data ausente');
+        throw new Error('Resposta do MercadoPago inválida - transaction_data ausente');
+      }
+
+      const transactionData = responseData.point_of_interaction.transaction_data;
+      
+      const pixData = {
+        pixCode: transactionData.qr_code || '',
+        pixCodeBase64: transactionData.qr_code_base64 || '',
+        ticketUrl: transactionData.ticket_url || '',
+        paymentId: responseData.id,
+        status: responseData.status,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      };
+
+      console.log('✅ Dados PIX extraídos com sucesso:', {
+        hasPixCode: !!pixData.pixCode,
+        hasPixCodeBase64: !!pixData.pixCodeBase64,
+        hasTicketUrl: !!pixData.ticketUrl,
+        paymentId: pixData.paymentId,
+        status: pixData.status
+      });
+
+      return pixData;
+    } catch (error) {
+      console.error('❌ Erro ao extrair dados PIX:', error.message);
+      throw error;
+    }
   }
 
   /**
