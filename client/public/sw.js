@@ -1,8 +1,14 @@
 // Service Worker Simplificado - SureStake
 import { precacheAndRoute } from 'workbox-precaching';
 
-// Precaching automático do Workbox
-precacheAndRoute(self.__WB_MANIFEST);
+// Verificar se estamos em ambiente de desenvolvimento
+const isLocalDev = self.location.hostname === 'localhost';
+const isLocalHttps = isLocalDev && self.location.protocol === 'https:';
+
+// Precaching automático do Workbox (apenas se não for desenvolvimento local)
+if (!isLocalDev) {
+  precacheAndRoute(self.__WB_MANIFEST);
+}
 
 const CACHE_NAME = 'surestake-v1.0.0';
 const STATIC_CACHE = 'surestake-static-v1.0.0';
@@ -21,6 +27,12 @@ const STATIC_FILES = [
 self.addEventListener('install', (event) => {
   console.log('🔧 [SW] Instalando Service Worker...');
   
+  if (isLocalDev) {
+    console.log('⚠️ [SW] Modo desenvolvimento local detectado - pulando cache');
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
+  
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then((cache) => {
@@ -33,6 +45,8 @@ self.addEventListener('install', (event) => {
       })
       .catch((error) => {
         console.error('❌ [SW] Erro na instalação:', error);
+        // Em caso de erro, ainda assim ativar o SW
+        return self.skipWaiting();
       })
   );
 });
@@ -40,6 +54,12 @@ self.addEventListener('install', (event) => {
 // Ativação do Service Worker
 self.addEventListener('activate', (event) => {
   console.log('🚀 [SW] Ativando Service Worker...');
+  
+  if (isLocalDev) {
+    console.log('⚠️ [SW] Modo desenvolvimento local - ativação simplificada');
+    event.waitUntil(self.clients.claim());
+    return;
+  }
   
   event.waitUntil(
     caches.keys()
@@ -59,6 +79,8 @@ self.addEventListener('activate', (event) => {
       })
       .catch((error) => {
         console.error('❌ [SW] Erro na ativação:', error);
+        // Em caso de erro, ainda assim ativar o SW
+        return self.clients.claim();
       })
   );
 });
@@ -67,6 +89,11 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+  
+  // Em modo desenvolvimento local, não interceptar requisições
+  if (isLocalDev) {
+    return;
+  }
   
   // Ignorar requisições para APIs
   if (url.pathname.startsWith('/api/')) {

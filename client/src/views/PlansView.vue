@@ -670,6 +670,9 @@ export default {
         accessToken: 'APP_USR-3182761403687473-051409-e381080719c0060d8dd1dc1582618d3d-266645918'
       },
       
+      // Device ID para Mercado Pago
+      deviceId: null,
+      
       // Payment modals
       showPaymentModal: false,
       showPaymentMethodModal: false,
@@ -1211,10 +1214,70 @@ export default {
       script.onload = () => {
         if (window.Mercadopago) {
           window.Mercadopago.setPublishableKey(this.mercadopagoConfig.publicKey)
+          
+          // Inicializar identificador de dispositivo
+          this.initializeDeviceId()
+          
           console.log('Mercado Pago SDK carregado com sucesso')
         }
       }
       document.head.appendChild(script)
+    },
+
+    initializeDeviceId() {
+      // Gerar identificador único de dispositivo
+      this.deviceId = this.generateDeviceId()
+      
+      // Configurar device ID no SDK do Mercado Pago
+      if (window.Mercadopago && window.Mercadopago.setDeviceId) {
+        window.Mercadopago.setDeviceId(this.deviceId)
+        console.log('Device ID configurado:', this.deviceId)
+      }
+    },
+
+    generateDeviceId() {
+      // Gerar um ID único baseado em características do dispositivo
+      let deviceId = localStorage.getItem('mercadopago_device_id')
+      
+      if (!deviceId) {
+        // Combinar informações do navegador para criar um ID único
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        ctx.textBaseline = 'top'
+        ctx.font = '14px Arial'
+        ctx.fillText('Device fingerprint', 2, 2)
+        
+        const fingerprint = [
+          navigator.userAgent,
+          navigator.language,
+          screen.width + 'x' + screen.height,
+          new Date().getTimezoneOffset(),
+          canvas.toDataURL(),
+          navigator.hardwareConcurrency || 'unknown',
+          navigator.maxTouchPoints || 'unknown'
+        ].join('|')
+        
+        // Criar hash simples do fingerprint
+        deviceId = this.simpleHash(fingerprint)
+        
+        // Salvar no localStorage para reutilização
+        localStorage.setItem('mercadopago_device_id', deviceId)
+      }
+      
+      return deviceId
+    },
+
+    simpleHash(str) {
+      let hash = 0
+      if (str.length === 0) return hash.toString()
+      
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i)
+        hash = ((hash << 5) - hash) + char
+        hash = hash & hash // Convert to 32bit integer
+      }
+      
+      return Math.abs(hash).toString(36)
     },
     
     async processPixPayment() {
@@ -1483,10 +1546,21 @@ export default {
               federal_unit: this.checkoutData.state
             }
           },
+          // Adicionar items para melhorar índice de aprovação
+          items: [{
+            id: order.planId,
+            title: order.planName,
+            description: `Acesso VIP ao plano ${order.planName} por ${order.planDays} dias - SureStake`,
+            category_id: 'services', // Categoria de serviços
+            quantity: 1,
+            unit_price: order.amount
+          }],
           card_token: cardToken,
           external_reference: order.id,
           notification_url: `${window.location.origin}/api/webhooks/mercadopago`,
-          statement_descriptor: 'SUREBET'
+          statement_descriptor: 'SUREBET',
+          // Incluir device ID para melhor segurança
+          device_id: this.deviceId
         }
         
         // Processar pagamento via API do Mercado Pago
@@ -1533,13 +1607,19 @@ export default {
           cardholderName: this.checkoutData.cardName,
           expirationMonth: this.checkoutData.expiry.split('/')[0],
           expirationYear: '20' + this.checkoutData.expiry.split('/')[1],
-          securityCode: this.checkoutData.cvv
+          securityCode: this.checkoutData.cvv,
+          // Incluir device ID para melhor segurança
+          deviceId: this.deviceId
         }
+        
+        console.log('Criando token do cartão com device ID:', this.deviceId)
         
         window.Mercadopago.createCardToken(cardData, (status, response) => {
           if (status === 200 || status === 201) {
+            console.log('Token do cartão criado com sucesso')
             resolve(response.id)
           } else {
+            console.error('Erro ao criar token do cartão:', response)
             reject(new Error(response.error || 'Erro ao criar token do cartão'))
           }
         })

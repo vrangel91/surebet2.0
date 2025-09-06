@@ -52,7 +52,8 @@ const routes = [
   {
     path: '/plans',
     name: 'plans',
-    component: PlansView
+    component: PlansView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/referrals',
@@ -159,7 +160,14 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresVIP && (!store.getters.isAuthenticated || !store.getters.isVIP)) {
     console.log('🚫 Rota VIP acessada sem permissão:', to.path)
     localStorage.setItem('redirectAfterUpgrade', to.fullPath)
-    next('/plans')
+    
+    // Se não está autenticado, redireciona para login
+    if (!store.getters.isAuthenticated) {
+      next('/login')
+    } else {
+      // Se está autenticado mas não é VIP, redireciona para plans
+      next('/plans')
+    }
     return
   }
   

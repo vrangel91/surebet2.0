@@ -121,13 +121,19 @@ export default {
     isDragging: {
       type: Boolean,
       default: false
+    },
+    bookmakerAccounts: {
+      type: Array,
+      default: () => []
+    },
+    isLoadingAccounts: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      defaultStake: 100.00, // Valor padrão, será carregado das configurações
-      bookmakerAccounts: [], // Lista de contas de Bookmaker Accounts
-      isLoadingAccounts: false
+      defaultStake: 100.00 // Valor padrão, será carregado das configurações
     }
   },
   computed: {
@@ -204,7 +210,6 @@ export default {
   },
   mounted() {
     this.loadSettings()
-    this.loadBookmakerAccounts()
   },
   methods: {
     formatProfit(profit) {
@@ -553,8 +558,8 @@ export default {
           }
         }
         
-        // 6. Atualizar lista de contas
-        await this.loadBookmakerAccounts()
+        // 6. Emitir evento para atualizar contas no componente pai
+        this.$emit('refresh-accounts')
         
         // 7. Emitir eventos e mostrar resultados
         const successfulResults = results.filter(r => r.success)
@@ -640,24 +645,6 @@ export default {
       return this.bookmakerAccounts.find(account => 
         account.bookmaker_name.toLowerCase() === bookmakerName.toLowerCase()
       )
-    },
-
-    // Carrega contas de Bookmaker Accounts
-    async loadBookmakerAccounts() {
-      try {
-        this.isLoadingAccounts = true
-        const response = await http.get('/api/bookmaker-accounts')
-        
-        if (response.data.success) {
-          this.bookmakerAccounts = response.data.data.accounts || []
-          console.log('📊 Contas de Bookmaker carregadas:', this.bookmakerAccounts.length)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao carregar contas de Bookmaker:', error)
-        this.bookmakerAccounts = []
-      } finally {
-        this.isLoadingAccounts = false
-      }
     },
 
   }

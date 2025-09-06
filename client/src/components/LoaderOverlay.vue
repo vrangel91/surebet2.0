@@ -1,6 +1,6 @@
 <template>
   <transition name="loader-fade">
-    <div v-if="isLoading" class="loader-overlay">
+    <div v-if="isLoading" :class="['loader-overlay', { 'page-mode': pageMode }]">
       <div class="loader-container">
         <div class="spinner">
           <div class="spinner-ring"></div>
@@ -8,7 +8,7 @@
           <div class="spinner-ring"></div>
         </div>
         <div class="loader-text">
-          <p>Carregando...</p>
+          <p>{{ text || 'Carregando...' }}</p>
         </div>
       </div>
     </div>
@@ -20,6 +20,16 @@ import { mapGetters } from 'vuex'
 
 export default {
   name: 'LoaderOverlay',
+  props: {
+    pageMode: {
+      type: Boolean,
+      default: false
+    },
+    text: {
+      type: String,
+      default: 'Carregando...'
+    }
+  },
   computed: {
     ...mapGetters(['isLoading'])
   }
@@ -39,6 +49,18 @@ export default {
   align-items: center;
   z-index: 9999;
   backdrop-filter: blur(2px);
+}
+
+/* Modo página - overlay relativo ao container pai */
+.loader-overlay.page-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(1px);
+  z-index: 1000;
 }
 
 .loader-container {

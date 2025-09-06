@@ -203,9 +203,12 @@
               :surebet="surebet"
               :isPinned="true"
               :isDragging="dragMode"
+              :bookmaker-accounts="bookmakerAccounts"
+              :is-loading-accounts="isLoadingAccounts"
               @add-to-reports="addSurebetToReports"
               @toggle-pin="togglePinCard"
               @balance-debited="handleBalanceDebited"
+              @refresh-accounts="loadBookmakerAccounts"
             />
           </div>
         </div>
@@ -249,9 +252,12 @@
               :key="index"
               :surebet="surebet"
               :isPinned="isPinned(surebet)"
+              :bookmaker-accounts="bookmakerAccounts"
+              :is-loading-accounts="isLoadingAccounts"
               @add-to-reports="addSurebetToReports"
               @toggle-pin="togglePinCard"
               @balance-debited="handleBalanceDebited"
+              @refresh-accounts="loadBookmakerAccounts"
             />
           </div>
         </div>
@@ -520,6 +526,10 @@
   import { filterOptions } from '../config/filters.js'
   import { getBookmakerUrl, addBookmakerUrl } from '../config/bookmakerUrls.js'
   import { MapPin, Trash2 } from 'lucide-vue-next'
+  import { http } from '../utils/http.js'
+  import { useAdaptivePolling } from '../utils/adaptivePolling.js'
+  import { useSmartCache } from '../utils/smartCache.js'
+  import { useRateLimiter } from '../utils/rateLimiter.js'
   
   
   export default {
@@ -551,7 +561,16 @@
         filterOptions: filterOptions,
         availableBookmakers: [], // Casas de apostas disponíveis da API
         bookmakerUrls: {}, // URLs das casas de apostas
-                           showFilterOverlay: false,
+        bookmakerAccounts: [], // Contas de Bookmaker Accounts
+        isLoadingAccounts: false,
+        showFilterOverlay: false,
+        
+        // Sistemas de otimização
+        adaptivePolling: useAdaptivePolling(),
+        smartCache: useSmartCache(),
+        rateLimiter: useRateLimiter(),
+        lastRequestTime: 0,
+        requestLatency: 0,
         selectedDate: '',
         minProfit: 0,
         maxProfit: 1000,
@@ -936,7 +955,8 @@
           // Carregar configurações de busca automática
           this.loadAutoSearchSettings()
           
-  
+          // Carregar contas de Bookmaker Accounts
+          this.loadBookmakerAccounts()
           
           // Aplicar configurações de busca em segundo plano
           this.applyBackgroundSearchSettings()
@@ -1078,6 +1098,43 @@
     },
        methods: {
   
+       // Carrega contas de Bookmaker Accounts
+       async loadBookmakerAccounts() {
+         try {
+           // Verificar cache primeiro
+           const cachedAccounts = this.smartCache.getBookmakerAccounts()
+           if (cachedAccounts) {
+             console.log('📦 Usando contas do cache')
+             this.bookmakerAccounts = cachedAccounts
+             return
+           }
+
+           // Verificar rate limiting
+           if (!this.rateLimiter.canMakeRequest('/api/bookmaker-accounts')) {
+             console.log('⏳ Rate limit atingido para contas de bookmaker')
+             return
+           }
+
+           this.isLoadingAccounts = true
+           const response = await http.get('/api/bookmaker-accounts')
+           
+           if (response.data.success) {
+             this.bookmakerAccounts = response.data.data.accounts || []
+             
+             // Armazenar no cache
+             this.smartCache.setBookmakerAccounts(this.bookmakerAccounts)
+             
+             console.log('📊 Contas de Bookmaker carregadas:', this.bookmakerAccounts.length)
+           }
+         } catch (error) {
+           console.error('❌ Erro ao carregar contas de Bookmaker:', error)
+           this.bookmakerAccounts = []
+           this.rateLimiter.applyBackoff('/api/bookmaker-accounts')
+         } finally {
+           this.isLoadingAccounts = false
+         }
+       },
+
        // Métodos para pesquisa de casas de apostas
        onHouseSearchInput() {
          // Método chamado quando o usuário digita no campo de pesquisa
@@ -1772,9 +1829,26 @@
       
                async fetchSurebets() {
         try {
+          // Verificar rate limiting
+          if (!this.rateLimiter.canMakeRequest('/api/surebets')) {
+            const waitTime = this.rateLimiter.getWaitTime('/api/surebets')
+            console.log(`⏳ Rate limit atingido. Aguardando ${waitTime}ms`)
+            return
+          }
+
+          // Verificar cache primeiro
+          const cachedData = this.smartCache.getSurebets()
+          if (cachedData && this.smartCache.has('surebets_data')) {
+            console.log('📦 Usando dados do cache')
+            this.surebets = cachedData
+            this.loading = false
+            return
+          }
+
           // Preserva os filtros atuais antes da atualização
           this.updateFiltersCache()
           
+          const startTime = Date.now()
           const response = await fetch('/api/surebets')
           
           if (!response.ok) {
@@ -1783,6 +1857,15 @@
           
           const data = await response.json()
           
+          // Calcular latência
+          this.requestLatency = Date.now() - startTime
+          this.lastRequestTime = Date.now()
+          
+          // Atualizar sistemas de otimização
+          this.rateLimiter.recordRequest('/api/surebets')
+          this.adaptivePolling.updateConnectionQuality(this.requestLatency)
+          this.adaptivePolling.resetRetryCount()
+          
           // Verifica se há novos dados comparando com os dados atuais
           const currentKeys = this.surebets ? Object.keys(this.surebets) : []
           const newKeys = data ? Object.keys(data) : []
@@ -1790,6 +1873,14 @@
                             newKeys.some(key => !currentKeys.includes(key))
           
           this.surebets = data
+          
+          // Armazenar no cache
+          this.smartCache.setSurebets(data, {
+            hasNewData,
+            latency: this.requestLatency,
+            timestamp: Date.now()
+          })
+          
           this.loading = false
           this.updateStats() // Atualiza estatísticas
           
@@ -2092,19 +2183,24 @@
       startAutoUpdate() {
         this.stopAutoUpdate() // Limpa qualquer intervalo existente
         
-        // Garantir que o intervalo seja válido
-        if (!this.autoUpdateInterval || this.autoUpdateInterval < 1000) {
-          this.autoUpdateInterval = 5000 // Valor mínimo: 1 segundo
-          console.log('⚠️ Intervalo inválido, usando valor padrão de 5 segundos')
-        }
+        // Usar polling adaptativo
+        const adaptiveInterval = this.adaptivePolling.getCurrentInterval()
+        this.autoUpdateInterval = adaptiveInterval
         
         this.updateInterval = setInterval(() => {
           if (this.isSearching) {
+            // Atualizar intervalo adaptativo antes de cada requisição
+            const newInterval = this.adaptivePolling.getCurrentInterval()
+            if (newInterval !== this.autoUpdateInterval) {
+              this.autoUpdateInterval = newInterval
+              console.log(`🔄 Intervalo adaptativo ajustado para ${this.autoUpdateInterval / 1000}s`)
+            }
+            
             this.fetchSurebets()
           }
-        }, this.autoUpdateInterval) // Usa o intervalo configurável das configurações
+        }, this.autoUpdateInterval)
         
-        console.log('🔍 Busca automática iniciada com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
+        console.log('🔍 Busca automática iniciada com intervalo adaptativo de', this.autoUpdateInterval / 1000, 'segundos')
       },
       
       updateStats() {
@@ -2112,16 +2208,49 @@
         this.lastCheckCount++
         
         // Atualiza tempo online
+        this.updateUptime()
+        
+        // Log de estatísticas de performance a cada 10 verificações
+        if (this.lastCheckCount % 10 === 0) {
+          this.logPerformanceStats()
+        }
+      },
+
+      // Log de estatísticas de performance
+      logPerformanceStats() {
+        const pollingStats = this.adaptivePolling.getStats()
+        const cacheStats = this.smartCache.getStats()
+        const rateLimitStats = this.rateLimiter.getStats()
+        
+        console.log('📊 === ESTATÍSTICAS DE PERFORMANCE ===')
+        console.log('🔄 Polling Adaptativo:', {
+          intervalo: `${pollingStats.currentInterval / 1000}s`,
+          usuarioAtivo: pollingStats.isUserActive,
+          qualidadeConexao: pollingStats.connectionQuality,
+          cargaServidor: pollingStats.serverLoad
+        })
+        console.log('💾 Cache Inteligente:', {
+          entradasValidas: cacheStats.validEntries,
+          entradasExpiradas: cacheStats.expiredEntries,
+          subscribers: cacheStats.subscribers
+        })
+        console.log('⏳ Rate Limiting:', rateLimitStats)
+        console.log('🌐 Latência da Última Requisição:', `${this.requestLatency}ms`)
+        console.log('=====================================')
+      },
+
+      // Atualiza tempo online
+      updateUptime() {
         const now = Date.now()
         const uptimeMs = now - this.startTime
         this.uptimeMinutes = Math.floor(uptimeMs / (1000 * 60))
       },
       
-           stopAutoUpdate() {
-         if (this.updateInterval) {
-           clearInterval(this.updateInterval)
-           this.updateInterval = null
-               }
+      stopAutoUpdate() {
+        if (this.updateInterval) {
+          clearInterval(this.updateInterval)
+          this.updateInterval = null
+        }
       },
       
       // Salva o estado da busca nas configurações

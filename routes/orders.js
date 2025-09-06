@@ -422,11 +422,27 @@ router.post('/pix', authenticateToken, async (req, res) => {
     // Gerar PIX usando o serviço aprimorado
     console.log(`🔄 Gerando PIX para pedido ${order.id}...`);
     
+    // Validar dados obrigatórios antes de enviar
+    if (!amount || !planName || !customerData.email || !customerData.firstName || !customerData.lastName || !customerData.cpf) {
+      console.error('❌ Dados obrigatórios ausentes:', {
+        amount: !!amount,
+        planName: !!planName,
+        email: !!customerData.email,
+        firstName: !!customerData.firstName,
+        lastName: !!customerData.lastName,
+        cpf: !!customerData.cpf
+      });
+      throw new Error('Dados obrigatórios ausentes para gerar PIX');
+    }
+    
     // Log dos dados que serão enviados para o MercadoPago
     const pixRequestData = {
       amount: parseFloat(amount),
       description: `Plano ${planName} - PIX`,
       externalReference: order.id.toString(),
+      planId: planId,
+      planName: planName,
+      planDays: planDays,
       payer: {
         email: customerData.email,
         firstName: customerData.firstName,
@@ -439,12 +455,16 @@ router.post('/pix', authenticateToken, async (req, res) => {
       amount: pixRequestData.amount,
       description: pixRequestData.description,
       externalReference: pixRequestData.externalReference,
+      planId: pixRequestData.planId,
+      planName: pixRequestData.planName,
+      planDays: pixRequestData.planDays,
       payer: {
         email: pixRequestData.payer.email,
         firstName: pixRequestData.payer.firstName,
         lastName: pixRequestData.payer.lastName,
         cpf: pixRequestData.payer.cpf ? 'Presente' : 'Ausente'
-      }
+      },
+      // Nota: items não é suportado para pagamentos PIX
     });
     
     const pixPayment = await mercadopagoService.createPixPayment(pixRequestData);

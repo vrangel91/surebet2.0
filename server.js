@@ -1,9 +1,11 @@
 const express = require('express');
+const https = require('https');
 const cors = require('cors');
 const axios = require('axios');
 const WebSocket = require('ws');
 const cron = require('node-cron');
 const path = require('path');
+const fs = require('fs');
 
 // Importar configurações do banco e modelos
 const { sequelize, testConnection } = require('./config/database');
@@ -26,6 +28,7 @@ const vipCronJobs = require('./utils/vipCronJobs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HTTPS_PORT = 3443; // Porta para HTTPS
 
 // Middleware
 app.use(cors({
@@ -92,8 +95,8 @@ app.use('/api/tickets', ticketsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// WebSocket server
-const wss = new WebSocket.Server({ port: 3002 });
+// WebSocket server será configurado após HTTPS
+let wss = null;
 
 // Estado global
 let surebets = {};
@@ -170,63 +173,6 @@ cron.schedule('*/30 * * * * *', () => {
   }
 });
 
-// WebSocket connection handler
-wss.on('connection', (ws) => {
-  console.log('Novo cliente conectado');
-  
-  // Enviar estado atual para o novo cliente
-  try {
-    // Garantir que surebets seja sempre um objeto válido
-    const safeSurebets = surebets && typeof surebets === 'object' ? surebets : {};
-    
-    ws.send(JSON.stringify({
-      type: 'initial_state',
-      surebets: safeSurebets,
-      isSearching: isSearching,
-      soundEnabled: soundEnabled
-    }));
-  } catch (error) {
-    console.error('Erro ao enviar estado inicial:', error);
-  }
-  
-  ws.on('message', (message) => {
-    try {
-      const data = JSON.parse(message);
-      
-      switch (data.type) {
-        case 'toggle_search':
-          isSearching = data.isSearching;
-          console.log(`Busca ${isSearching ? 'ativada' : 'pausada'}`);
-          
-          // Notificar todos os clientes sobre a mudança de estado
-          wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({
-                type: 'search_state_changed',
-                isSearching: isSearching
-              }));
-            }
-          });
-          break;
-          
-        case 'toggle_sound':
-          soundEnabled = data.soundEnabled;
-          console.log(`Som ${soundEnabled ? 'ativado' : 'desativado'}`);
-          break;
-      }
-    } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
-    }
-  });
-  
-  ws.on('error', (error) => {
-    console.error('Erro no WebSocket:', error);
-  });
-  
-  ws.on('close', () => {
-    console.log('Cliente desconectado');
-  });
-});
 
 // Rotas da API existentes
 app.get('/api/surebets', (req, res) => {
@@ -300,11 +246,150 @@ async function initializeApp() {
     // Inicializar busca de surebets
     fetchSurebets();
     
-    // Iniciar servidor
-    app.listen(PORT, () => {
-      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+    // Configurar HTTPS
+    const httpsOptions = {
+      key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
+      cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
+    };
+    
+    // Criar servidor HTTPS
+    const httpsServer = https.createServer(httpsOptions, app);
+    
+    // Iniciar servidor HTTPS
+    httpsServer.listen(HTTPS_PORT, () => {
+      console.log(`🚀 Servidor HTTPS rodando na porta ${HTTPS_PORT}`);
+      console.log(`📊 API disponível em https://localhost:${HTTPS_PORT}/api`);
+      console.log(`🔐 Certificados SSL carregados com sucesso`);
+      console.log(`⚠️  Certificado autoassinado - aceite o aviso de segurança no navegador`);
+      
+      // Configurar WebSocket após HTTPS estar rodando
+      wss = new WebSocket.Server({ 
+        port: 3002,
+        verifyClient: (info) => {
+          return true;
+        }
+      });
+      
       console.log(`🔌 WebSocket rodando na porta 3002`);
-      console.log(`📊 API disponível em http://localhost:${PORT}/api`);
+      
+      // WebSocket connection handler
+      wss.on('connection', (ws) => {
+        console.log('Novo cliente conectado');
+        
+        // Enviar estado atual para o novo cliente
+        try {
+          // Garantir que surebets seja sempre um objeto válido
+          const safeSurebets = surebets && typeof surebets === 'object' ? surebets : {};
+          
+          ws.send(JSON.stringify({
+            type: 'initial_state',
+            surebets: safeSurebets,
+            isSearching: isSearching,
+            soundEnabled: soundEnabled
+          }));
+        } catch (error) {
+          console.error('Erro ao enviar estado inicial:', error);
+        }
+        
+        ws.on('message', (message) => {
+          try {
+            const data = JSON.parse(message);
+            
+            switch (data.type) {
+              case 'toggle_search':
+                isSearching = data.isSearching;
+                console.log(`Busca ${isSearching ? 'ativada' : 'pausada'}`);
+                
+                // Notificar todos os clientes sobre a mudança de estado
+                wss.clients.forEach(client => {
+                  if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                      type: 'search_state_changed',
+                      isSearching: isSearching
+                    }));
+                  }
+                });
+                break;
+                
+              case 'toggle_sound':
+                soundEnabled = data.soundEnabled;
+                console.log(`Som ${soundEnabled ? 'ativado' : 'desativado'}`);
+                break;
+            }
+          } catch (error) {
+            console.error('Erro ao processar mensagem:', error);
+          }
+        });
+        
+        ws.on('error', (error) => {
+          console.error('Erro no WebSocket:', error);
+        });
+        
+        ws.on('close', () => {
+          console.log('Cliente desconectado');
+        });
+      });
+    });
+    
+    // Manter servidor HTTP para compatibilidade na porta 3000
+    app.listen(3000, () => {
+      console.log(`🌐 Servidor HTTP de compatibilidade na porta 3000`);
+    });
+    
+    // Servidor HTTP adicional na porta 3001 para acesso direto
+    const httpApp = express();
+    httpApp.use(cors({
+      origin: true,
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    }));
+    httpApp.use(express.json({ limit: '10mb' }));
+    httpApp.use(express.static(path.join(__dirname, 'client', 'dist')));
+    
+    // Aplicar todas as rotas da API no servidor HTTP também
+    httpApp.use('/api/auth', authRoutes);
+    httpApp.use('/api/users', userRoutes);
+    httpApp.use('/api/vip', vipRoutes);
+    httpApp.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
+    httpApp.use('/api/surebet-stats', surebetStatsRoutes);
+    httpApp.use('/api/orders', ordersRoutes);
+    httpApp.use('/api/referrals', referralsRoutes);
+    httpApp.use('/api/tickets', ticketsRoutes);
+    httpApp.use('/api/admin', adminRoutes);
+    httpApp.use('/api/notifications', notificationRoutes);
+    
+    // Rotas da API existentes
+    httpApp.get('/api/surebets', (req, res) => {
+      res.json(surebets);
+    });
+    
+    httpApp.get('/api/status', (req, res) => {
+      res.json({
+        isSearching,
+        soundEnabled,
+        surebetCount: surebets && typeof surebets === 'object' ? Object.keys(surebets).length : 0
+      });
+    });
+    
+    httpApp.post('/api/toggle-search', (req, res) => {
+      isSearching = req.body.isSearching;
+      res.json({ isSearching });
+    });
+    
+    httpApp.post('/api/toggle-sound', (req, res) => {
+      soundEnabled = req.body.soundEnabled;
+      res.json({ soundEnabled });
+    });
+    
+    // Servir SPA para todas as outras rotas
+    httpApp.get('*', (req, res) => {
+      console.log(`🌐 Servindo SPA para: ${req.path}`);
+      res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+    });
+    
+    httpApp.listen(3001, () => {
+      console.log(`🌐 Servidor HTTP rodando na porta 3001`);
     });
     
   } catch (error) {

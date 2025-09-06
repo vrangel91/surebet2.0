@@ -1,4 +1,5 @@
 const { defineConfig } = require('@vue/cli-service')
+const path = require('path')
 
 module.exports = defineConfig({
   transpileDependencies: true,
@@ -99,18 +100,24 @@ module.exports = defineConfig({
   
   devServer: {
     port: 3001,
+    https: {
+      key: require('fs').readFileSync(path.join(__dirname, '../certs/key.pem')),
+      cert: require('fs').readFileSync(path.join(__dirname, '../certs/cert.pem'))
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:3001',
+        target: 'https://localhost:3001', // Usar HTTPS
         changeOrigin: true,
+        secure: false, // Aceitar certificados autoassinados
         headers: {
           'Content-Type': 'application/json; charset=utf-8'
         }
       },
       '/ws': {
-        target: 'ws://localhost:3002',
+        target: 'wss://localhost:3002', // Usar WSS (WebSocket Secure)
         ws: true,
-        changeOrigin: true
+        changeOrigin: true,
+        secure: false // Aceitar certificados autoassinados
       }
     }
   },

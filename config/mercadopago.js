@@ -50,8 +50,13 @@ class MercadoPagoService {
       console.log(`🔄 Tentativa ${retryCount + 1} de criar PIX`, {
         environment: process.env.NODE_ENV || 'development',
         amount: paymentData.amount,
-        description: paymentData.description
+        description: paymentData.description,
+        hasAccessToken: !!this.config.accessToken,
+        tokenPrefix: this.config.accessToken ? this.config.accessToken.substring(0, 10) + '...' : 'N/A'
       });
+      
+      // Validar configuração
+      this.validateConfig();
       
       // Validar dados obrigatórios
       this.validatePixPaymentData(paymentData);
@@ -71,6 +76,7 @@ class MercadoPagoService {
               number: paymentData.payer.cpf.replace(/\D/g, '')
             }
           },
+          // Nota: items não é suportado para pagamentos PIX na API do Mercado Pago
           date_of_expiration: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         },
         requestOptions: {
@@ -115,24 +121,44 @@ class MercadoPagoService {
    * Validar dados do pagamento PIX
    */
   validatePixPaymentData(paymentData) {
+    console.log('🔍 Validando dados PIX:', {
+      hasAmount: !!paymentData.amount,
+      hasDescription: !!paymentData.description,
+      hasExternalReference: !!paymentData.externalReference,
+      hasPayer: !!paymentData.payer,
+      payerEmail: paymentData.payer?.email,
+      payerFirstName: paymentData.payer?.firstName,
+      payerLastName: paymentData.payer?.lastName,
+      payerCpf: paymentData.payer?.cpf
+    });
+    
     const required = ['amount', 'description', 'externalReference', 'payer'];
     const missing = required.filter(field => !paymentData[field]);
     
     if (missing.length > 0) {
+      console.error('❌ Campos obrigatórios ausentes:', missing);
       throw new Error(`Campos obrigatórios ausentes: ${missing.join(', ')}`);
     }
 
     if (!paymentData.payer.email || !paymentData.payer.firstName || !paymentData.payer.lastName || !paymentData.payer.cpf) {
+      console.error('❌ Dados do pagador incompletos:', {
+        email: !!paymentData.payer.email,
+        firstName: !!paymentData.payer.firstName,
+        lastName: !!paymentData.payer.lastName,
+        cpf: !!paymentData.payer.cpf
+      });
       throw new Error('Dados do pagador incompletos');
     }
 
     if (isNaN(paymentData.amount) || paymentData.amount <= 0) {
+      console.error('❌ Valor do pagamento inválido:', paymentData.amount);
       throw new Error('Valor do pagamento inválido');
     }
 
     // Validar email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(paymentData.payer.email)) {
+      console.error('❌ Formato de email inválido:', paymentData.payer.email);
       throw new Error('Formato de email inválido');
     }
 
@@ -147,6 +173,8 @@ class MercadoPagoService {
       });
       throw new Error('CPF inválido - deve conter 11 dígitos');
     }
+    
+    console.log('✅ Dados PIX validados com sucesso');
   }
 
   /**
