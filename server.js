@@ -26,6 +26,21 @@ const notificationRoutes = require('./routes/notifications');
 // Importar cron jobs VIP
 const vipCronJobs = require('./utils/vipCronJobs');
 
+// Importar sistemas de otimização
+const { backendCache } = require('./utils/cache');
+const { backendRateLimiter, surebetsRateLimiter } = require('./utils/rateLimiter');
+const { systemMonitor } = require('./utils/monitoring');
+const { logger } = require('./utils/logger');
+const { healthChecker } = require('./utils/healthCheck');
+const { errorAnalyzer } = require('./utils/errorAnalyzer');
+const { databaseOptimizer } = require('./utils/databaseOptimizer');
+const { compressionManager } = require('./utils/compression');
+// Cache completamente removido
+// const { surebetsCache } = require('./utils/surebetsCache');
+// Sistema de cache desabilitado temporariamente
+// const { surebetsScheduler } = require('./utils/surebetsScheduler');
+// const { surebetsWebSocket } = require('./utils/surebetsWebSocket');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HTTPS_PORT = 3443; // Porta para HTTPS
@@ -39,6 +54,35 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Middleware de monitoramento
+app.use(systemMonitor.requestMiddleware());
+
+// Middleware de logging detalhado
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  
+  res.on('finish', () => {
+    const responseTime = Date.now() - startTime;
+    logger.httpRequest(req, res, responseTime);
+    
+    // Log de performance para endpoints críticos
+    if (req.path.includes('/api/surebets') || req.path.includes('/api/bookmaker-accounts')) {
+      logger.performance(`API ${req.method} ${req.path}`, responseTime, {
+        statusCode: res.statusCode,
+        userId: req.user ? req.user.id : null
+      });
+    }
+  });
+  
+  next();
+});
+
+// Middleware de rate limiting
+app.use(backendRateLimiter.middleware());
+
+// Middleware de compressão
+app.use(compressionManager.middleware());
 // Servir arquivos estáticos com tratamento de erros
 app.use(express.static(path.join(__dirname, 'client/dist'), {
   setHeaders: (res, path, stat) => {
@@ -89,11 +133,147 @@ app.use('/api/users', userRoutes);
 app.use('/api/vip', vipRoutes);
 app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
 app.use('/api/surebet-stats', surebetStatsRoutes);
+
+// Rate limiting específico para surebets (desabilitado)
+// app.use('/api/surebets', surebetsRateLimiter.middleware());
+
+// Rota de surebets com cache otimizado (COMENTADA - usando versão otimizada abaixo)
+// app.get('/api/surebets', async (req, res) => {
+//   try {
+//     const filters = req.query;
+//     const cacheKey = surebetsCache.generateKey(filters);
+//     
+//     // Verificar cache primeiro
+//     const cachedData = surebetsCache.get(cacheKey);
+//     if (cachedData) {
+//       logger.info('Surebets served from cache', { 
+//         filters, 
+//         count: cachedData.surebets?.length || 0 
+//       });
+//       return res.json({
+//         success: true,
+//         data: cachedData,
+//         cached: true,
+//         timestamp: Date.now()
+//       });
+//     }
+//     
+//     logger.debug('Buscando surebets', { filters, userId: req.user?.id });
+//     
+//     // Verificar cache do backend
+//     const backendCachedData = backendCache.getSurebets(filters);
+//     if (backendCachedData) {
+//       logger.cache('HIT', 'surebets', true, { filters });
+//       
+//       // Salvar no cache otimizado
+//       surebetsCache.set(cacheKey, backendCachedData);
+//       
+//       return res.json(backendCachedData);
+//     }
+//     
+//     logger.cache('MISS', 'surebets', false, { filters });
+//     
+//     // Buscar dados (simulação - substitua pela lógica real)
+//     const surebets = await getSurebetsFromAPI(filters);
+//     
+//     // Armazenar no cache
+//     backendCache.setSurebets(filters, surebets);
+//     logger.cache('SET', 'surebets', null, { filters, dataSize: JSON.stringify(surebets).length });
+//     
+//     res.json(surebets);
+//   } catch (error) {
+//     logger.apiError('/api/surebets', error, req);
+//     res.status(500).json({ 
+//       error: 'Erro interno do servidor',
+//       message: 'Não foi possível buscar surebets no momento'
+//     });
+//   }
+// });
+
+// Função para buscar surebets (substitua pela lógica real)
+async function getSurebetsFromAPI(filters) {
+  // Simulação - substitua pela lógica real de busca de surebets
+  return {
+    surebets: [],
+    total: 0,
+    filters: filters,
+    timestamp: new Date().toISOString()
+  };
+}
 app.use('/api/orders', ordersRoutes);
 app.use('/api/referrals', referralsRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// Rota de monitoramento do sistema
+app.get('/api/monitoring/stats', (req, res) => {
+  try {
+    const stats = systemMonitor.getSystemStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('❌ Erro ao obter estatísticas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota de alertas
+app.get('/api/monitoring/alerts', (req, res) => {
+  try {
+    const alerts = systemMonitor.getActiveAlerts();
+    res.json(alerts);
+  } catch (error) {
+    console.error('❌ Erro ao obter alertas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Rota de health check
+app.get('/api/health', async (req, res) => {
+  try {
+    const health = await healthChecker.runAllChecks();
+    const statusCode = health.status === 'healthy' ? 200 : 
+                      health.status === 'warning' ? 200 : 503;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    logger.error('Health check failed', { error: error.message });
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      message: 'Health check falhou',
+      error: error.message 
+    });
+  }
+});
+
+// Rota de health check rápido
+app.get('/api/health/quick', async (req, res) => {
+  try {
+    const health = await healthChecker.quickCheck();
+    const statusCode = health.status === 'healthy' ? 200 : 503;
+    res.status(statusCode).json(health);
+  } catch (error) {
+    logger.error('Quick health check failed', { error: error.message });
+    res.status(503).json({ 
+      status: 'unhealthy', 
+      message: 'Quick health check falhou',
+      error: error.message 
+    });
+  }
+});
+
+// Rota de análise de erros
+app.get('/api/errors/analysis', (req, res) => {
+  try {
+    const report = errorAnalyzer.getErrorReport();
+    res.json(report);
+  } catch (error) {
+    logger.error('Error analysis failed', { error: error.message });
+    res.status(500).json({ 
+      error: 'Erro ao gerar análise de erros',
+      message: error.message 
+    });
+  }
+});
 
 // WebSocket server será configurado após HTTPS
 let wss = null;
@@ -174,10 +354,12 @@ cron.schedule('*/30 * * * * *', () => {
 });
 
 
-// Rotas da API existentes
-app.get('/api/surebets', (req, res) => {
-  res.json(surebets);
+// Rota de surebets otimizada (DESABILITADA - usando rota original)
+/*
+app.get('/api/surebets', async (req, res) => {
+  // ... código comentado ...
 });
+*/
 
 app.get('/api/status', (req, res) => {
   res.json({
@@ -212,6 +394,46 @@ app.use((err, req, res, next) => {
   next(err);
 });
 
+// Middleware global de tratamento de erros com análise
+app.use((err, req, res, next) => {
+  // Analisar erro
+  const analysis = errorAnalyzer.analyzeError(err, {
+    endpoint: req.path,
+    method: req.method,
+    userId: req.user ? req.user.id : null,
+    ip: req.ip || req.connection.remoteAddress,
+    userAgent: req.get('User-Agent')
+  });
+  
+  // Log do erro
+  logger.error('Unhandled error', {
+    error: err.message,
+    stack: err.stack,
+    analysis
+  });
+  
+  // Resposta baseada no tipo de erro
+  if (err.code === 'ECONNREFUSED') {
+    res.status(503).json({
+      error: 'Serviço indisponível',
+      message: 'Serviço temporariamente indisponível. Tente novamente em alguns minutos.',
+      code: 'SERVICE_UNAVAILABLE'
+    });
+  } else if (err.code === 'ETIMEDOUT') {
+    res.status(504).json({
+      error: 'Timeout',
+      message: 'A requisição demorou muito para ser processada. Tente novamente.',
+      code: 'TIMEOUT'
+    });
+  } else {
+    res.status(500).json({
+      error: 'Erro interno do servidor',
+      message: 'Ocorreu um erro inesperado. Nossa equipe foi notificada.',
+      code: 'INTERNAL_ERROR'
+    });
+  }
+});
+
 // Rota específica para favicon
 app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(__dirname, 'client/dist/favicon.ico'));
@@ -243,8 +465,20 @@ async function initializeApp() {
       console.error('⚠️ Erro ao inicializar cron jobs VIP:', error.message);
     }
     
-    // Inicializar busca de surebets
+  // Sistema otimizado de surebets desabilitado
+  // surebetsScheduler.start();
+  // console.log('🚀 Sistema otimizado de surebets iniciado');
+    
+    // Inicializar busca de surebets (legacy - manter para compatibilidade)
     fetchSurebets();
+    
+    // Inicializar sistema de monitoramento
+    systemMonitor.start();
+    console.log('📊 Sistema de monitoramento iniciado');
+    
+    // Inicializar otimizador de banco de dados
+    await databaseOptimizer.initialize();
+    console.log('🗄️ Otimizador de banco de dados iniciado');
     
     // Configurar HTTPS
     const httpsOptions = {
@@ -272,9 +506,13 @@ async function initializeApp() {
       
       console.log(`🔌 WebSocket rodando na porta 3002`);
       
-      // WebSocket connection handler
-      wss.on('connection', (ws) => {
-        console.log('Novo cliente conectado');
+      // WebSocket connection handler otimizado
+      wss.on('connection', (ws, req) => {
+        const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log(`🔌 Cliente WebSocket conectado: ${clientId}`);
+        
+        // Sistema WebSocket otimizado desabilitado
+        // surebetsWebSocket.addClient(clientId, ws);
         
         // Enviar estado atual para o novo cliente
         try {
@@ -293,6 +531,10 @@ async function initializeApp() {
         
         ws.on('message', (message) => {
           try {
+            // Sistema WebSocket otimizado desabilitado
+            // surebetsWebSocket.handleClientMessage(clientId, message);
+            
+            // Manter compatibilidade com sistema legado
             const data = JSON.parse(message);
             
             switch (data.type) {
@@ -322,11 +564,13 @@ async function initializeApp() {
         });
         
         ws.on('error', (error) => {
-          console.error('Erro no WebSocket:', error);
+          console.error(`❌ Erro WebSocket para cliente ${clientId}:`, error);
+          // surebetsWebSocket.removeClient(clientId);
         });
         
         ws.on('close', () => {
-          console.log('Cliente desconectado');
+          console.log(`🔌 Cliente WebSocket desconectado: ${clientId}`);
+          // surebetsWebSocket.removeClient(clientId);
         });
       });
     });
@@ -382,6 +626,58 @@ async function initializeApp() {
       res.json({ soundEnabled });
     });
     
+    // Rota de estatísticas do cache
+    // Rotas de cache desabilitadas
+    /*
+    httpApp.get('/api/cache/stats', (req, res) => {
+      try {
+        // const cacheStats = surebetsCache.getStats();
+        // const rateLimitStats = surebetsRateLimiter.getStats();
+        
+        // ... código comentado ...
+      } catch (error) {
+        // ... código comentado ...
+      }
+    });
+
+    httpApp.post('/api/cache/clear', (req, res) => {
+      try {
+        // surebetsCache.clear();
+        // ... código comentado ...
+      } catch (error) {
+        // ... código comentado ...
+      }
+    });
+    */
+
+    // Rota para controlar o scheduler
+    // Rotas de monitoramento desabilitadas
+    /*
+    httpApp.get('/api/scheduler/stats', (req, res) => {
+      try {
+        // const schedulerStats = surebetsScheduler.getStats();
+        // const webSocketStats = surebetsWebSocket.getStats();
+        
+        // ... código comentado ...
+      } catch (error) {
+        // ... código comentado ...
+      }
+    });
+    */
+
+    // Rotas do scheduler desabilitadas
+    /*
+    httpApp.post('/api/scheduler/force-update', async (req, res) => {
+      try {
+        // await surebetsScheduler.forceUpdate();
+        
+        // ... código comentado ...
+      } catch (error) {
+        // ... código comentado ...
+      }
+    });
+    */
+
     // Servir SPA para todas as outras rotas
     httpApp.get('*', (req, res) => {
       console.log(`🌐 Servindo SPA para: ${req.path}`);

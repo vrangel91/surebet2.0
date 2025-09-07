@@ -1,4 +1,5 @@
 const { UserVIP, User } = require('../models');
+const { vipCache } = require('./vipCache');
 
 class VIPService {
   /**
@@ -28,6 +29,9 @@ class VIPService {
 
       console.log(`✅ VIP ativado com sucesso para usuário ${userId}`);
       
+      // Invalidar cache VIP
+      this.invalidateVIPCache(userId);
+      
       return {
         success: true,
         message: 'VIP ativado com sucesso',
@@ -54,6 +58,12 @@ class VIPService {
    */
   static async checkVIPStatus(userId) {
     try {
+      // Verificar cache primeiro
+      const cachedStatus = vipCache.get(userId);
+      if (cachedStatus) {
+        return cachedStatus;
+      }
+      
       console.log(`🔍 Verificando status VIP para usuário ${userId}...`);
       
       const vipStatus = await UserVIP.getUserVIPStatus(userId);
@@ -75,14 +85,27 @@ class VIPService {
         }
       }
       
-      return {
+      const result = {
         success: true,
         ...vipStatus
       };
+      
+      // Armazenar no cache
+      vipCache.set(userId, result);
+      
+      return result;
     } catch (error) {
       console.error('❌ Erro ao verificar status VIP:', error);
       throw error;
     }
+  }
+
+  /**
+   * Invalidar cache VIP para um usuário
+   * @param {number} userId - ID do usuário
+   */
+  static invalidateVIPCache(userId) {
+    vipCache.invalidate(userId);
   }
 
   /**
@@ -119,6 +142,9 @@ class VIPService {
       await activeVIP.renew(planData.plan_days, false);
       
       console.log(`✅ VIP renovado com sucesso para usuário ${userId}`);
+      
+      // Invalidar cache VIP
+      this.invalidateVIPCache(userId);
       
       return {
         success: true,
@@ -178,6 +204,9 @@ class VIPService {
       }
 
       console.log(`✅ VIP cancelado com sucesso para usuário ${userId}`);
+      
+      // Invalidar cache VIP
+      this.invalidateVIPCache(userId);
       
       return {
         success: true,

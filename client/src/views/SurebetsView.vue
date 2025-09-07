@@ -1836,10 +1836,10 @@
             return
           }
 
-          // Verificar cache primeiro
+          // Verificar cache local primeiro
           const cachedData = this.smartCache.getSurebets()
           if (cachedData && this.smartCache.has('surebets_data')) {
-            console.log('📦 Usando dados do cache')
+            console.log('📦 Usando dados do cache local')
             this.surebets = cachedData
             this.loading = false
             return
@@ -1849,6 +1849,7 @@
           this.updateFiltersCache()
           
           const startTime = Date.now()
+          // Usar a nova API otimizada que serve dados do cache do servidor
           const response = await fetch('/api/surebets')
           
           if (!response.ok) {
@@ -1866,15 +1867,16 @@
           this.adaptivePolling.updateConnectionQuality(this.requestLatency)
           this.adaptivePolling.resetRetryCount()
           
+          // Usar dados diretamente (sistema original)
+          this.surebets = data
+          
           // Verifica se há novos dados comparando com os dados atuais
           const currentKeys = this.surebets ? Object.keys(this.surebets) : []
           const newKeys = data ? Object.keys(data) : []
           const hasNewData = newKeys.length > currentKeys.length || 
                             newKeys.some(key => !currentKeys.includes(key))
           
-          this.surebets = data
-          
-          // Armazenar no cache
+          // Armazenar no cache local
           this.smartCache.setSurebets(data, {
             hasNewData,
             latency: this.requestLatency,
@@ -1898,7 +1900,7 @@
             this.playNotificationSound()
           }
           
-          console.log('✅ Dados da API atualizados e filtros preservados')
+          console.log(`✅ Dados atualizados: ${Object.keys(data).length} surebets (${this.requestLatency}ms)`)
         } catch (error) {
           // Log silencioso para evitar spam no console
           this.loading = false

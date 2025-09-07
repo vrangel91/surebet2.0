@@ -16,6 +16,7 @@ import GuiaApostasView from '../views/GuiaApostasView.vue'
 import GlossaryView from '../views/GlossaryView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import VIPAdminView from '../views/VIPAdminView.vue'
+import MonitoringView from '../views/MonitoringView.vue'
 import { requireAuth, requireGuest, requireAdmin, requireVIP, checkAuthStatus } from './guards'
 
 const routes = [
@@ -47,6 +48,12 @@ const routes = [
     path: '/admin',
     name: 'admin',
     component: AdminView,
+    meta: { requiresAdmin: true }
+  },
+  {
+    path: '/monitoring',
+    name: 'monitoring',
+    component: MonitoringView,
     meta: { requiresAdmin: true }
   },
   {

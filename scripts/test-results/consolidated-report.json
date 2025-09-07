@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "testSuite": "Performance Tests Suite",
+    "version": "1.0.0",
+    "startTime": "2025-09-06T03:28:16.566Z",
+    "endTime": "2025-09-06T03:43:32.619Z",
+    "duration": 916053,
+    "configuration": {
+      "baseUrl": "http://localhost:3001",
+      "wsUrl": "ws://localhost:3002",
+      "outputDir": "D:\\PROJETOS\\surebet\\scripts\\test-results",
+      "parallel": false
+    }
+  },
+  "results": {
+    "loadTests": {
+      "status": "success",
+      "exitCode": 0
+    },
+    "stressTests": {
+      "status": "success",
+      "exitCode": 0
+    },
+    "monitoring": {
+      "status": "success",
+      "exitCode": null
+    },
+    "startTime": "2025-09-06T03:28:16.566Z",
+    "endTime": "2025-09-06T03:43:32.619Z"
+  },
+  "summary": {
+    "overallStatus": "SUCCESS",
+    "totalTests": 3,
+    "passedTests": 3,
+    "failedTests": 0,
+    "criticalIssues": 0,
+    "warnings": 0
+  },
+  "recommendations": [
+    "Implementar monitoramento contínuo de performance",
+    "Configurar alertas para métricas críticas",
+    "Executar testes de carga regularmente",
+    "Sistema demonstrou boa resistência ao estresse",
+    "Sistema atende aos requisitos de carga normal"
+  ]
+}

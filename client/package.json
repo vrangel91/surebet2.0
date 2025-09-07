@@ -7,7 +7,17 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "build:prod": "npm run build && cd dist && npx serve -s . -p 8080",
-    "serve:prod": "cd dist && npx serve -s . -p 8080"
+    "serve:prod": "cd dist && npx serve -s . -p 8080",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:unit": "vitest run --reporter=verbose src/**/*.test.js",
+    "test:integration": "vitest run --reporter=verbose src/**/*.integration.test.js",
+    "test:e2e": "cypress run",
+    "test:e2e:open": "cypress open",
+    "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
+    "test:watch": "vitest --watch"
   },
   "dependencies": {
     "@vueuse/core": "^10.4.1",
@@ -27,10 +37,19 @@
     "@vue/cli-service": "^5.0.8",
     "@vue/compiler-sfc": "^3.3.4",
     "@vue/eslint-config-standard": "^8.0.1",
+    "@vue/test-utils": "^2.4.2",
+    "@testing-library/vue": "^8.0.0",
+    "@testing-library/jest-dom": "^6.1.4",
+    "@testing-library/user-event": "^14.5.1",
+    "@vitest/ui": "^1.0.4",
+    "cypress": "^13.6.0",
     "eslint": "^8.42.0",
     "eslint-plugin-vue": "^9.14.1",
+    "jsdom": "^23.0.1",
+    "msw": "^2.0.8",
     "sass": "^1.70.0",
     "sass-loader": "^14.0.0",
+    "vitest": "^1.0.4",
     "workbox-webpack-plugin": "^7.0.0"
   },
   "browserslist": [
