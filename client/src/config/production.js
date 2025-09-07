@@ -1,7 +1,7 @@
 // Configurações para produção
 export const PRODUCTION_CONFIG = {
-  API_BASE_URL: 'http://localhost:3001',
-  WS_BASE_URL: 'ws://localhost:3002',
+  API_BASE_URL: 'https://surestake.com.br', // ✅ Domínio correto
+  WS_BASE_URL: 'wss://surestake.com.br',   // ✅ Domínio correto
   ENVIRONMENT: 'production'
 };
 

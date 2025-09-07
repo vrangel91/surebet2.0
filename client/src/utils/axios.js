@@ -1,6 +1,6 @@
 import axios from 'axios'
 import store from '@/store'
-import { getApiUrl } from '@/config/production.js'
+import { getApiUrl } from '@/config/environment.js'
 import apiErrorHandler from './apiErrorHandler'
 
 // Criar instância do axios

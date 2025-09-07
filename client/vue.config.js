@@ -106,18 +106,18 @@ module.exports = defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'https://localhost:3001', // Usar HTTPS
+        target: 'http://localhost:3001', // ← CORRIGIDO: usar HTTP em desenvolvimento
         changeOrigin: true,
-        secure: false, // Aceitar certificados autoassinados
+        secure: false,
         headers: {
           'Content-Type': 'application/json; charset=utf-8'
         }
       },
       '/ws': {
-        target: 'wss://localhost:3002', // Usar WSS (WebSocket Secure)
+        target: 'ws://localhost:3002', // ← CORRIGIDO: usar WS em desenvolvimento
         ws: true,
         changeOrigin: true,
-        secure: false // Aceitar certificados autoassinados
+        secure: false
       }
     }
   },
