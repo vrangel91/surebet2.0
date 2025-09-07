@@ -45,7 +45,7 @@ router.get('/', async (req, res) => {
         whereClause,
         {
           target_audience: 'specific',
-          target_user_ids: { [Op.contains]: [req.user.id] }
+          target_user_ids: { [Op.like]: `%${req.user.id}%` }
         }
       ]
     };
@@ -205,7 +205,7 @@ router.patch('/mark-all-read', async (req, res) => {
         whereClause,
         {
           target_audience: 'specific',
-          target_user_ids: { [Op.contains]: [req.user.id] }
+          target_user_ids: { [Op.like]: `%${req.user.id}%` }
         }
       ]
     };
@@ -270,7 +270,7 @@ router.get('/unread-count', async (req, res) => {
         whereClause,
         {
           target_audience: 'specific',
-          target_user_ids: { [Op.contains]: [req.user.id] }
+          target_user_ids: { [Op.like]: `%${req.user.id}%` }
         }
       ]
     };

@@ -35,11 +35,9 @@ const { healthChecker } = require('./utils/healthCheck');
 const { errorAnalyzer } = require('./utils/errorAnalyzer');
 const { databaseOptimizer } = require('./utils/databaseOptimizer');
 const { compressionManager } = require('./utils/compression');
-// Cache completamente removido
-// const { surebetsCache } = require('./utils/surebetsCache');
-// Sistema de cache desabilitado temporariamente
-// const { surebetsScheduler } = require('./utils/surebetsScheduler');
-// const { surebetsWebSocket } = require('./utils/surebetsWebSocket');
+// Sistema de cache para surebets
+const { surebetsCache } = require('./utils/surebetsCache');
+const { surebetsService } = require('./utils/surebetsService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -284,6 +282,9 @@ let isSearching = true;
 let soundEnabled = true;
 let lastSurebetCount = 0;
 
+// Expor variável global para o serviço de cache
+global.surebets = surebets;
+
 console.log('🚀 Estado inicial do servidor:');
 console.log(`   - isSearching: ${isSearching}`);
 console.log(`   - soundEnabled: ${soundEnabled}`);
@@ -322,6 +323,7 @@ async function fetchSurebets() {
       }
       
       surebets = newSurebets;
+      global.surebets = surebets; // Atualizar variável global
       lastSurebetCount = currentSurebetCount;
       
       console.log(`Surebets atualizados: ${currentSurebetCount} encontrados`);
@@ -472,6 +474,20 @@ async function initializeApp() {
     // Inicializar busca de surebets (legacy - manter para compatibilidade)
     fetchSurebets();
     
+    // Inicializar sistema de cache
+    console.log('🚀 Sistema de cache de surebets inicializado');
+    
+    // Pré-aquecer cache após 5 segundos
+    setTimeout(async () => {
+      try {
+        console.log('🔥 Pré-aquecendo cache de surebets...');
+        await surebetsService.preloadCache();
+        console.log('✅ Cache pré-aquecido com sucesso');
+      } catch (error) {
+        console.warn('⚠️ Falha ao pré-aquecer cache:', error.message);
+      }
+    }, 5000);
+    
     // Inicializar sistema de monitoramento
     systemMonitor.start();
     console.log('📊 Sistema de monitoramento iniciado');
@@ -604,8 +620,88 @@ async function initializeApp() {
     httpApp.use('/api/notifications', notificationRoutes);
     
     // Rotas da API existentes
-    httpApp.get('/api/surebets', (req, res) => {
-      res.json(surebets);
+    // Rota de surebets com cache inteligente
+    httpApp.get('/api/surebets', async (req, res) => {
+      try {
+        const filters = req.query;
+        const result = await surebetsService.getSurebets(filters);
+        
+        if (result.success) {
+          res.json({
+            success: true,
+            data: result.data,
+            source: result.source,
+            timestamp: result.timestamp,
+            responseTime: result.responseTime,
+            warning: result.warning
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            error: result.error,
+            source: result.source,
+            timestamp: result.timestamp
+          });
+        }
+      } catch (error) {
+        console.error('❌ Erro na rota /api/surebets:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Erro interno do servidor',
+          timestamp: Date.now()
+        });
+      }
+    });
+
+    // Rotas de gerenciamento do cache
+    httpApp.get('/api/cache/stats', (req, res) => {
+      try {
+        const cacheStats = surebetsCache.getStats();
+        const serviceStats = surebetsService.getStats();
+        
+        res.json({
+          cache: cacheStats,
+          service: serviceStats,
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    httpApp.post('/api/cache/clear', (req, res) => {
+      try {
+        surebetsService.clearCache();
+        res.json({
+          success: true,
+          message: 'Cache limpo com sucesso',
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    httpApp.post('/api/cache/preload', async (req, res) => {
+      try {
+        const result = await surebetsService.preloadCache();
+        res.json({
+          success: result.success,
+          message: result.success ? 'Cache pré-aquecido com sucesso' : 'Falha ao pré-aquecer cache',
+          timestamp: Date.now()
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    httpApp.get('/api/cache/health', async (req, res) => {
+      try {
+        const health = await surebetsService.healthCheck();
+        res.json(health);
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
     });
     
     httpApp.get('/api/status', (req, res) => {

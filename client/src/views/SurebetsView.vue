@@ -102,13 +102,10 @@
               </button>
             </div>
             
-            <!-- Total de jogos encontrados -->
+            <!-- Total de surebets encontrados -->
             <div class="games-found-info">
-              <div v-if="activeFilter === 'prelive'" class="games-count">
-                Total de jogos encontrados: {{ preliveCount }}
-              </div>
-              <div v-else-if="activeFilter === 'live'" class="games-count">
-                Total de jogos encontrados: {{ liveCount }}
+              <div class="surebets-count">
+                Total de surebets encontrados: {{ filteredSurebetsByMarket.length }}
               </div>
             </div>
             
@@ -673,6 +670,12 @@
         
         surebetsArray.forEach(surebet => {
           if (!surebet || surebet.length === 0) return
+          
+          // Validação adicional para evitar erros
+          if (!Array.isArray(surebet)) {
+            console.warn('⚠️ Surebet não é um array:', surebet)
+            return
+          }
           
           // Cria uma chave única baseada em campos que identificam o surebet
           const key = this.createSurebetKey(surebet)
@@ -1867,17 +1870,22 @@
           this.adaptivePolling.updateConnectionQuality(this.requestLatency)
           this.adaptivePolling.resetRetryCount()
           
-          // Usar dados diretamente (sistema original)
-          this.surebets = data
+          // Usar dados da resposta da API (sistema otimizado)
+          if (data.success && data.data) {
+            this.surebets = data.data
+          } else {
+            // Fallback para sistema original se a resposta não tiver o formato esperado
+            this.surebets = data
+          }
           
           // Verifica se há novos dados comparando com os dados atuais
           const currentKeys = this.surebets ? Object.keys(this.surebets) : []
-          const newKeys = data ? Object.keys(data) : []
+          const newKeys = this.surebets ? Object.keys(this.surebets) : []
           const hasNewData = newKeys.length > currentKeys.length || 
                             newKeys.some(key => !currentKeys.includes(key))
           
           // Armazenar no cache local
-          this.smartCache.setSurebets(data, {
+          this.smartCache.setSurebets(this.surebets, {
             hasNewData,
             latency: this.requestLatency,
             timestamp: Date.now()
@@ -2357,6 +2365,7 @@
          if (!surebet || surebet.length === 0) return ''
          
          const firstBet = surebet[0]
+         if (!firstBet || typeof firstBet !== 'object') return ''
          
          // Campos principais que identificam um surebet único
          const keyFields = [
