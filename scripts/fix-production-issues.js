@@ -45,7 +45,7 @@ async function fixProductionIssues() {
     // 2. Verificar tabela de notificações
     console.log('\n📋 2. Verificando tabela de notificações...');
     try {
-      await Notification.sync({ alter: true });
+      await Notification.sync({ force: false, alter: false });
       console.log('✅ Tabela de notificações sincronizada');
     } catch (error) {
       console.log('⚠️ Erro ao sincronizar notificações:', error.message);

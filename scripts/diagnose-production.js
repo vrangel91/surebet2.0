@@ -11,7 +11,7 @@ const https = require('https');
 // Configurações
 const API_BASE_URL = 'https://surestake.com.br';
 const TEST_USER = {
-  email: 'admin@surebets.com', // ← Usuário admin encontrado no banco
+  email: 'admin@surestake.com', // ← Usuário admin encontrado no banco
   password: 'admin123' // ← ALTERAR para senha real
 };
 

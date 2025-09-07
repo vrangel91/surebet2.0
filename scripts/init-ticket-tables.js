@@ -6,7 +6,7 @@ async function initTicketTables() {
     console.log('🚀 Iniciando criação das tabelas de tickets...');
     
     // Sincronizar modelos com o banco
-    await sequelize.sync({ force: false, alter: true });
+    await sequelize.sync({ force: false, alter: false });
     
     console.log('✅ Tabelas de tickets criadas/atualizadas com sucesso!');
     

@@ -6,13 +6,13 @@ const ENVIRONMENTS = {
     ENVIRONMENT: 'development'
   },
   production: {
-    API_BASE_URL: 'https://seu-dominio.com', // ← ALTERAR para seu domínio real
-    WS_BASE_URL: 'wss://seu-dominio.com',   // ← ALTERAR para seu domínio real
+    API_BASE_URL: 'https://surestake.com.br', // Seu domínio real
+    WS_BASE_URL: 'wss://surestake.com.br',   // WebSocket do seu domínio
     ENVIRONMENT: 'production'
   },
   staging: {
-    API_BASE_URL: 'https://staging.seu-dominio.com', // ← ALTERAR para seu domínio de staging
-    WS_BASE_URL: 'wss://staging.seu-dominio.com',   // ← ALTERAR para seu domínio de staging
+    API_BASE_URL: 'https://surestake.com.br', // Usar o mesmo domínio principal
+    WS_BASE_URL: 'wss://surestake.com.br',   // WebSocket do domínio principal
     ENVIRONMENT: 'staging'
   }
 };

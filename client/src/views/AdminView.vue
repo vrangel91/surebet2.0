@@ -568,6 +568,9 @@ export default {
   },
   mounted() {
     console.log('🚀 Componente AdminView montado, verificando permissões...')
+    console.log('👤 Usuário atual:', this.$store.getters.currentUser)
+    console.log('👑 É admin?', this.$store.getters.isAdmin)
+    console.log('🔑 Token disponível:', !!this.$store.getters.authToken)
     
     // Verificar se o usuário é admin
     if (!this.$store.getters.isAdmin) {
@@ -642,7 +645,16 @@ export default {
       // Mock data para demonstração (será substituído por API real)
       const avgResponseTime = '2h 30m'
       const totalUsers = this.users.length
-      const vipUsers = this.users.filter(u => u.plan === 'vip' || u.plan === 'premium').length
+      const vipUsers = this.users.filter(u => u.plan === 'vip' || u.plan === 'premium' || u.account_type === 'vip').length
+      
+      console.log('📊 Dashboard Stats calculadas:', { 
+        totalTickets, 
+        openTickets, 
+        pendingTickets, 
+        closedTickets, 
+        totalUsers, 
+        vipUsers 
+      })
       
       return { 
         totalTickets, 
@@ -731,13 +743,14 @@ export default {
         if (response.data && response.data.success && Array.isArray(response.data.users)) {
           this.users = response.data.users.map(user => ({
             id: user.id,
-            name: user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
+            name: user.name || user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
             email: user.email,
             status: user.status || 'active',
             plan: user.account_type || user.plan || '',
             createdAt: user.created_at || user.createdAt || new Date().toISOString()
           }))
           console.log('✅ Usuários carregados:', this.users.length)
+          console.log('📊 Primeiro usuário:', this.users[0])
         } else {
           console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
           console.warn('⚠️ Estrutura esperada: { success: true, users: [...] }')

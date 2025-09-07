@@ -22,6 +22,7 @@ const referralsRoutes = require('./routes/referrals');
 const ticketsRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
+const paymentRoutes = require('./routes/payments');
 
 // Importar cron jobs VIP
 const vipCronJobs = require('./utils/vipCronJobs');
@@ -203,6 +204,7 @@ app.use('/api/referrals', referralsRoutes);
 app.use('/api/tickets', ticketsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Rota de monitoramento do sistema
 app.get('/api/monitoring/stats', (req, res) => {
@@ -294,6 +296,7 @@ console.log(`   - surebets: ${surebets && typeof surebets === 'object' ? Object.
 async function fetchSurebets() {
   try {
     const response = await axios.get('https://zerolossbet.com/api/fetch_surebets/', {
+      timeout: 15000, // Aumentado para 15 segundos
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
         'Accept': 'application/json',
@@ -618,6 +621,7 @@ async function initializeApp() {
     httpApp.use('/api/tickets', ticketsRoutes);
     httpApp.use('/api/admin', adminRoutes);
     httpApp.use('/api/notifications', notificationRoutes);
+    httpApp.use('/api/payments', paymentRoutes);
     
     // Rotas da API existentes
     // Rota de surebets com cache inteligente
