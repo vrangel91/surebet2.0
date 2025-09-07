@@ -6,7 +6,7 @@
 const express = require('express');
 const { Op } = require('sequelize');
 const { Notification, User } = require('../models');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken } = require('../utils/auth');
 
 const router = express.Router();
 
