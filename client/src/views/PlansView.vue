@@ -726,7 +726,7 @@ export default {
               id: 'pre-daily',
               duration: 'Diário',
               title: 'SUREBET \nPRÉ JOGO DIÁRIO',
-              price: '1',
+              price: '19',
               days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
