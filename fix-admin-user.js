@@ -29,7 +29,7 @@ async function fixAdminUser() {
       console.log('✅ Senha definida: admin123');
       
       console.log('\n🎯 Usuário admin corrigido!');
-      console.log('📧 Email: admin@surebets.com');
+      console.log('📧 Email: admin@surestake.com');
       console.log('🔑 Senha: admin123');
       
     } else {
