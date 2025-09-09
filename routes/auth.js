@@ -13,21 +13,26 @@ const router = express.Router();
 // Rota de login
 router.post('/login', async (req, res) => {
   try {
+    console.log('🔍 [Auth] Rota de login chamada')
+    console.log('🔍 [Auth] Request body:', req.body)
+    console.log('🔍 [Auth] Request headers:', req.headers)
+    
     const { email, password } = req.body;
 
     // Validações básicas
     if (!email || !password) {
+      console.log('❌ [Auth] Dados obrigatórios ausentes:', { email: !!email, password: !!password })
       return res.status(400).json({
         error: 'E-mail e senha são obrigatórios'
       });
     }
 
-    console.log('🔍 Tentativa de login para:', email);
+    console.log('🔍 [Auth] Tentativa de login para:', email);
 
     // Buscar usuário diretamente no banco
     const user = await User.findOne({
       where: { email: email.toLowerCase() },
-      attributes: ['id', 'username', 'first_name', 'last_name', 'email', 'password_hash', 'is_admin', 'is_vip', 'created_at']
+      attributes: ['id', 'username', 'first_name', 'last_name', 'email', 'password_hash', 'is_admin', 'is_vip', 'account_type', 'plan', 'created_at']
     });
 
     if (!user) {
@@ -78,6 +83,7 @@ router.post('/login', async (req, res) => {
       is_admin: user.is_admin,
       is_vip: user.is_vip,
       account_type: user.account_type || 'basic',
+      plan: user.plan || user.account_type || 'basic', // Incluir campo plan
       can_use_system: true, // Todos os usuários podem usar o sistema
       // Mapeamento para propriedades esperadas pelo frontend
       role: user.is_admin ? 'admin' : 'user',
@@ -87,14 +93,19 @@ router.post('/login', async (req, res) => {
       lastLogin: user.last_login // Incluir último login
     };
 
-    console.log('✅ Login bem-sucedido para:', email);
+    console.log('✅ [Auth] Login bem-sucedido para:', email);
+    console.log('🔍 [Auth] Dados do usuário a serem retornados:', userData);
 
-    res.json({
+    const responseData = {
       success: true,
       message: 'Login realizado com sucesso',
       token,
       user: userData
-    });
+    };
+    
+    console.log('🔍 [Auth] Response data:', responseData);
+    
+    res.json(responseData);
 
   } catch (error) {
     console.error('❌ Erro no login:', error.message);
@@ -108,10 +119,15 @@ router.post('/login', async (req, res) => {
 // Rota de registro
 router.post('/register', async (req, res) => {
   try {
+    console.log('🔍 [Auth] Rota de registro chamada')
+    console.log('🔍 [Auth] Request body:', req.body)
+    console.log('🔍 [Auth] Request headers:', req.headers)
+    
     const { name, email, password, referer_id } = req.body;
 
     // Validações
     if (!name || !email || !password) {
+      console.log('❌ [Auth] Dados obrigatórios ausentes:', { name: !!name, email: !!email, password: !!password })
       return res.status(400).json({
         error: 'Nome, e-mail e senha são obrigatórios'
       });

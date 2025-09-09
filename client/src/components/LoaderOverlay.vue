@@ -1,6 +1,6 @@
 <template>
   <transition name="loader-fade">
-    <div v-if="isLoading" :class="['loader-overlay', { 'page-mode': pageMode }]">
+    <div v-if="isLoading" :class="loaderClasses" :style="loaderStyle">
       <div class="loader-container">
         <div class="spinner">
           <div class="spinner-ring"></div>
@@ -17,6 +17,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { useSidebarState } from '@/composables/useSidebarState'
 
 export default {
   name: 'LoaderOverlay',
@@ -25,13 +26,49 @@ export default {
       type: Boolean,
       default: false
     },
+    contentOnly: {
+      type: Boolean,
+      default: false
+    },
     text: {
       type: String,
       default: 'Carregando...'
     }
   },
+  setup() {
+    const { isCollapsed, getContentOffset, getContentWidth } = useSidebarState()
+    
+    return {
+      isCollapsed,
+      getContentOffset,
+      getContentWidth
+    }
+  },
   computed: {
-    ...mapGetters(['isLoading'])
+    ...mapGetters(['isLoading']),
+    
+    // Computed para as classes CSS do loader
+    loaderClasses() {
+      return [
+        'loader-overlay',
+        {
+          'page-mode': this.pageMode,
+          'content-only': this.contentOnly,
+          'sidebar-collapsed': this.contentOnly && this.isCollapsed
+        }
+      ]
+    },
+    
+    // Computed para o estilo dinâmico do loader
+    loaderStyle() {
+      if (this.contentOnly) {
+        return {
+          left: this.getContentOffset,
+          width: this.getContentWidth
+        }
+      }
+      return {}
+    }
   }
 }
 </script>
@@ -61,6 +98,17 @@ export default {
   background-color: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(1px);
   z-index: 1000;
+}
+
+/* Modo conteúdo apenas - não bloqueia o sidebar */
+.loader-overlay.content-only {
+  position: fixed;
+  top: 0;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+  z-index: 1000;
+  transition: left 0.3s ease, width 0.3s ease;
 }
 
 .loader-container {
@@ -148,6 +196,12 @@ export default {
   
   .loader-text {
     font-size: 14px;
+  }
+  
+  /* Em dispositivos móveis, o loader deve cobrir toda a tela */
+  .loader-overlay.content-only {
+    left: 0 !important;
+    width: 100vw !important;
   }
 }
 

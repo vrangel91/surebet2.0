@@ -52,6 +52,7 @@ async function createAdminUser() {
         UPDATE users 
         SET is_admin = true, 
             is_vip = true,
+            account_type = 'vip',
             first_name = '${adminData.first_name}',
             last_name = '${adminData.last_name}',
             password_hash = '${passwordHash}',
@@ -77,6 +78,7 @@ async function createAdminUser() {
           last_name, 
           is_admin, 
           is_vip,
+          account_type,
           created_at,
           updated_at
         ) VALUES (
@@ -87,6 +89,7 @@ async function createAdminUser() {
           '${adminData.last_name}',
           ${adminData.is_admin},
           ${adminData.is_vip},
+          'vip',
           NOW(),
           NOW()
         )
@@ -100,7 +103,7 @@ async function createAdminUser() {
 
     // Verificar se foi criado/atualizado com sucesso
     const [adminUser] = await sequelize.query(`
-      SELECT id, username, email, first_name, last_name, is_admin, is_vip, created_at
+      SELECT id, username, email, first_name, last_name, is_admin, is_vip, account_type, created_at
       FROM users 
       WHERE email = '${adminData.email}'
     `);
@@ -113,6 +116,7 @@ async function createAdminUser() {
       console.log(`   - Nome: ${adminUser[0].first_name} ${adminUser[0].last_name}`);
       console.log(`   - Is Admin: ${adminUser[0].is_admin}`);
       console.log(`   - Is VIP: ${adminUser[0].is_vip}`);
+      console.log(`   - Account Type: ${adminUser[0].account_type}`);
       console.log(`   - Criado em: ${adminUser[0].created_at}`);
     }
 

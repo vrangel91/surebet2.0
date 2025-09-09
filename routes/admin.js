@@ -1,63 +1,300 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireAdmin } = require('../utils/auth');
-const { Notification, User, sequelize } = require('../models');
+const { Order, User, UserVIP, Notification, sequelize } = require('../models');
 const { Op } = require('sequelize');
-const { 
-  successResponse, 
-  errorResponse, 
-  notFoundResponse, 
-  validationErrorResponse,
-  serverErrorResponse,
-  asyncHandler 
-} = require('../utils/apiResponse');
 
-// Middleware para verificar se o usuário é admin
+// Middleware para verificar se é admin
 router.use(authenticateToken);
 router.use(requireAdmin);
 
-// Forçar atualização PWA para todos os usuários
-router.post('/force-pwa-update', async (req, res) => {
+// Buscar todos os pagamentos com informações do usuário
+router.get('/payments', async (req, res) => {
   try {
-    console.log('[ADMIN] Forçando atualização PWA...');
+    console.log('🔍 [Admin] Buscando pagamentos...');
     
-    // Aqui você pode implementar lógica para:
-    // 1. Enviar notificações push para todos os usuários
-    // 2. Invalidar caches
-    // 3. Forçar reload em clientes conectados via WebSocket
-    
-    // Por enquanto, retornamos sucesso
+    const payments = await Order.findAll({
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'first_name', 'last_name', 'email', 'username']
+        }
+      ],
+      order: [['created_at', 'DESC']],
+      limit: 100 // Limitar para performance
+    });
+
+    console.log(`📊 [Admin] Encontrados ${payments.length} pagamentos`);
+
+    const formattedPayments = payments.map(payment => ({
+      id: payment.id,
+      user_id: payment.user_id,
+      user_name: payment.user ? 
+        `${payment.user.first_name || ''} ${payment.user.last_name || ''}`.trim() || 
+        payment.user.username || 
+        'Usuário' : 'Usuário',
+      user_email: payment.user?.email || '',
+      plan_id: payment.plan_id,
+      amount: payment.amount,
+      status: payment.status,
+      payment_method: payment.payment_method,
+      payment_id: payment.payment_data?.id || payment.payment_data?.payment_id || '',
+      description: payment.plan_name || '',
+      created_at: payment.created_at,
+      expires_at: null // Order não tem campo expires_at, será calculado baseado no VIP
+    }));
+
     res.json({
       success: true,
-      message: 'Atualização PWA forçada com sucesso',
-      timestamp: new Date().toISOString(),
-      action: 'force-pwa-update'
+      payments: formattedPayments
     });
-    
+
   } catch (error) {
-    console.error('[ADMIN] Erro ao forçar atualização PWA:', error);
+    console.error('❌ [Admin] Erro ao buscar pagamentos:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
+      error: 'Erro interno do servidor'
     });
   }
 });
 
-// Obter estatísticas de usuários PWA
-router.get('/pwa-stats', async (req, res) => {
+// Aprovar pagamento
+router.patch('/payments/:id/approve', async (req, res) => {
   try {
-    console.log('[ADMIN] Obtendo estatísticas PWA...');
+    const paymentId = req.params.id;
+    console.log(`✅ [Admin] Aprovando pagamento ${paymentId}...`);
+
+    const payment = await Order.findByPk(paymentId, {
+      include: [
+        {
+          model: User,
+          as: 'user'
+        }
+      ]
+    });
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Pagamento não encontrado'
+      });
+    }
+
+    if (payment.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        error: 'Pagamento já foi processado'
+      });
+    }
+
+    // Atualizar status do pagamento
+    await payment.update({
+      status: 'approved',
+      approved_at: new Date(),
+      approved_by: req.user.id
+    });
+
+    // Ativar VIP do usuário
+    const { PaymentService } = require('../services/paymentService');
+    const paymentService = new PaymentService();
     
-    // Aqui você pode implementar lógica para coletar estatísticas
-    // como número de usuários com PWA instalado, versões, etc.
+    await paymentService.activateVIP(
+      payment.user_id,
+      payment.plan_id,
+      payment.id
+    );
+
+    console.log(`✅ [Admin] Pagamento ${paymentId} aprovado e VIP ativado`);
+
+    res.json({
+      success: true,
+      message: 'Pagamento aprovado com sucesso'
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao aprovar pagamento:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Rejeitar pagamento
+router.patch('/payments/:id/reject', async (req, res) => {
+  try {
+    const paymentId = req.params.id;
+    console.log(`❌ [Admin] Rejeitando pagamento ${paymentId}...`);
+
+    const payment = await Order.findByPk(paymentId);
+
+    if (!payment) {
+      return res.status(404).json({
+        success: false,
+        error: 'Pagamento não encontrado'
+      });
+    }
+
+    if (payment.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        error: 'Pagamento já foi processado'
+      });
+    }
+
+    // Atualizar status do pagamento
+    await payment.update({
+      status: 'rejected',
+      rejected_at: new Date(),
+      rejected_by: req.user.id
+    });
+
+    console.log(`❌ [Admin] Pagamento ${paymentId} rejeitado`);
+
+    res.json({
+      success: true,
+      message: 'Pagamento rejeitado com sucesso'
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao rejeitar pagamento:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Buscar estatísticas de pagamentos
+router.get('/payments/stats', async (req, res) => {
+  try {
+    console.log('📊 [Admin] Buscando estatísticas de pagamentos...');
+
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+    const [
+      totalPayments,
+      todayPayments,
+      weekPayments,
+      monthPayments,
+      approvedPayments,
+      pendingPayments,
+      rejectedPayments
+    ] = await Promise.all([
+      Order.count(),
+      Order.count({ where: { created_at: { [Op.gte]: startOfDay } } }),
+      Order.count({ where: { created_at: { [Op.gte]: startOfWeek } } }),
+      Order.count({ where: { created_at: { [Op.gte]: startOfMonth } } }),
+      Order.count({ where: { status: 'approved' } }),
+      Order.count({ where: { status: 'pending' } }),
+      Order.count({ where: { status: 'rejected' } })
+    ]);
+
+    const totalRevenue = await Order.sum('amount', {
+      where: { status: 'approved' }
+    });
+
+    const todayRevenue = await Order.sum('amount', {
+      where: {
+        status: 'approved',
+        created_at: { [Op.gte]: startOfDay }
+      }
+    });
+
+    const weekRevenue = await Order.sum('amount', {
+      where: {
+        status: 'approved',
+        created_at: { [Op.gte]: startOfWeek }
+      }
+    });
+
+    const monthRevenue = await Order.sum('amount', {
+      where: {
+        status: 'approved',
+        created_at: { [Op.gte]: startOfMonth }
+      }
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        totalPayments,
+        todayPayments,
+        weekPayments,
+        monthPayments,
+        approvedPayments,
+        pendingPayments,
+        rejectedPayments,
+        totalRevenue: totalRevenue || 0,
+        todayRevenue: todayRevenue || 0,
+        weekRevenue: weekRevenue || 0,
+        monthRevenue: monthRevenue || 0
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar estatísticas:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// ===== ROTAS DE NOTIFICAÇÕES =====
+
+// Obter estatísticas de notificações
+router.get('/notifications/stats', async (req, res) => {
+  try {
+    console.log('📊 [Admin] Buscando estatísticas de notificações...');
+    
+    const total = await Notification.count();
+    const unread = await Notification.count({
+      where: { is_read: false }
+    });
+    const dismissed = await Notification.count({
+      where: { is_dismissed: true }
+    });
+    
+    // Estatísticas por tipo
+    const byType = await Notification.findAll({
+      attributes: [
+        'type',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      group: ['type'],
+      raw: true
+    });
+    
+    // Estatísticas por público-alvo
+    const byAudience = await Notification.findAll({
+      attributes: [
+        'target_audience',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+      ],
+      group: ['target_audience'],
+      raw: true
+    });
     
     const stats = {
-      totalUsers: 0,
-      pwaInstalled: 0,
-      pwaNotInstalled: 0,
-      lastUpdate: new Date().toISOString()
+      total,
+      unread,
+      dismissed,
+      byType: byType.map(item => ({
+        type: item.type,
+        count: parseInt(item.count)
+      })),
+      byAudience: byAudience.map(item => ({
+        audience: item.target_audience,
+        count: parseInt(item.count)
+      }))
     };
+    
+    console.log('✅ [Admin] Estatísticas de notificações:', stats);
     
     res.json({
       success: true,
@@ -65,29 +302,77 @@ router.get('/pwa-stats', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('[ADMIN] Erro ao obter estatísticas PWA:', error);
+    console.error('❌ [Admin] Erro ao buscar estatísticas de notificações:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
+      error: 'Erro interno do servidor'
     });
   }
 });
 
-// Enviar notificação global para todos os usuários
+// Obter lista de notificações
+router.get('/notifications', async (req, res) => {
+  try {
+    console.log('📋 [Admin] Buscando notificações...');
+    
+    const { page = 1, limit = 20, type, priority, target_audience } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const whereClause = {};
+    if (type) whereClause.type = type;
+    if (priority) whereClause.priority = priority;
+    if (target_audience) whereClause.target_audience = target_audience;
+    
+    const { count, rows: notifications } = await Notification.findAndCountAll({
+      where: whereClause,
+      order: [['created_at', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    const pagination = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: count,
+      pages: Math.ceil(count / limit)
+    };
+    
+    console.log(`✅ [Admin] Encontradas ${notifications.length} notificações`);
+    
+    res.json({
+      success: true,
+      data: {
+        notifications,
+        pagination
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar notificações:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Enviar notificação
 router.post('/send-notification', async (req, res) => {
   try {
-    const { 
-      title, 
-      message, 
-      type = 'info', 
+    console.log('📤 [Admin] Enviando notificação...');
+    console.log('📋 [Admin] Dados recebidos:', req.body);
+    
+    const {
+      title,
+      message,
+      type = 'info',
       priority = 'normal',
       target_audience = 'all',
-      target_user_ids = null,
-      expires_at = null,
+      expires_at,
       metadata = {}
     } = req.body;
     
+    // Validar dados obrigatórios
     if (!title || !message) {
       return res.status(400).json({
         success: false,
@@ -95,173 +380,43 @@ router.post('/send-notification', async (req, res) => {
       });
     }
     
-    console.log('[ADMIN] Enviando notificação:', { 
-      title, 
-      message, 
-      type, 
-      priority, 
-      target_audience,
-      target_user_ids,
-      expires_at 
-    });
-    
-    // Criar notificação no banco
-    const now = new Date();
+    // Criar notificação
     const notification = await Notification.create({
       title,
       message,
       type,
       priority,
       target_audience,
-      target_user_ids,
       expires_at: expires_at ? new Date(expires_at) : null,
-      metadata,
-      created_by: req.user.id,
-      created_at: now,
-      updated_at: now
+      metadata: typeof metadata === 'string' ? JSON.parse(metadata) : metadata,
+      is_read: false,
+      is_dismissed: false,
+      created_by: req.user.id // ID do usuário admin que está criando a notificação
     });
     
-    // Contar usuários que receberão a notificação
-    let userCount = 0;
-    if (target_audience === 'all') {
-      userCount = await User.count();
-    } else if (target_audience === 'vip') {
-      // Usar VIPService para contar usuários VIP ativos
-      const { UserVIP } = require('../models');
-      const now = new Date();
-      userCount = await UserVIP.count({
-        where: {
-          status: 'active',
-          dataFim: { [Op.gt]: now }
-        }
-      });
-    } else if (target_audience === 'admin') {
-      userCount = await User.count({ where: { is_admin: true } });
-    } else if (target_audience === 'specific' && target_user_ids) {
-      userCount = target_user_ids.length;
-    }
-    
-    // TODO: Implementar WebSocket para notificações em tempo real
-    // TODO: Implementar notificações push para dispositivos móveis
+    console.log('✅ [Admin] Notificação criada:', notification.id);
     
     res.json({
       success: true,
-      message: 'Notificação enviada com sucesso',
-      data: {
-        notification: {
-          id: notification.id,
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          priority: notification.priority,
-          target_audience: notification.target_audience,
-          target_user_ids: notification.target_user_ids,
-          expires_at: notification.expires_at,
-          sent_at: notification.sent_at,
-          created_at: notification.created_at,
-          updated_at: notification.updated_at,
-          created_by: notification.created_by
-        },
-        userCount,
-        timestamp: new Date().toISOString()
-      }
+      data: notification
     });
     
   } catch (error) {
-    console.error('[ADMIN] Erro ao enviar notificação:', error);
+    console.error('❌ [Admin] Erro ao enviar notificação:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
+      error: 'Erro interno do servidor'
     });
   }
 });
 
-// Listar todas as notificações
-router.get('/notifications', asyncHandler(async (req, res) => {
-  const { page = 1, limit = 20, type, priority, target_audience } = req.query;
-  const offset = (page - 1) * limit;
-  
-  let whereClause = {};
-  
-  if (type) whereClause.type = type;
-  if (priority) whereClause.priority = priority;
-  if (target_audience) whereClause.target_audience = target_audience;
-  
-  const { count, rows: notifications } = await Notification.findAndCountAll({
-    where: whereClause,
-    include: [{
-      model: User,
-      as: 'creator',
-      attributes: ['id', 'username', 'email']
-    }],
-    order: [['id', 'DESC']], // Usar id em vez de created_at
-    limit: parseInt(limit),
-    offset: parseInt(offset)
-  });
-  
-  const pagination = {
-    page: parseInt(page),
-    limit: parseInt(limit),
-    total: count,
-    pages: Math.ceil(count / limit)
-  };
-  
-  // Converter objetos Sequelize para JSON para garantir serialização correta
-  const serializedNotifications = notifications.map(notif => notif.toJSON());
-  
-  res.json(successResponse(
-    { notifications: serializedNotifications, pagination },
-    'Notificações listadas com sucesso'
-  ));
-}));
-
-// Obter estatísticas de notificações
-router.get('/notifications/stats', asyncHandler(async (req, res) => {
-  const totalNotifications = await Notification.count();
-  const unreadNotifications = await Notification.count({ where: { is_read: false } });
-  const dismissedNotifications = await Notification.count({ where: { is_dismissed: true } });
-  
-  // Contar por tipo (simplificado)
-  const typeStats = [];
-  const types = ['info', 'success', 'warning', 'error', 'update'];
-  for (const type of types) {
-    const count = await Notification.count({ where: { type } });
-    if (count > 0) {
-      typeStats.push({ type, count });
-    }
-  }
-  
-  // Contar por público-alvo (simplificado)
-  const audienceStats = [];
-  const audiences = ['all', 'vip', 'admin', 'specific'];
-  for (const audience of audiences) {
-    const count = await Notification.count({ where: { target_audience: audience } });
-    if (count > 0) {
-      audienceStats.push({ target_audience: audience, count });
-    }
-  }
-  
-  const stats = {
-    total: totalNotifications,
-    unread: unreadNotifications,
-    dismissed: dismissedNotifications,
-    byType: typeStats,
-    byAudience: audienceStats
-  };
-  
-  res.json(successResponse(
-    stats,
-    'Estatísticas obtidas com sucesso'
-  ));
-}));
-
 // Deletar notificação
 router.delete('/notifications/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    console.log('🗑️ [Admin] Deletando notificação:', req.params.id);
     
-    const notification = await Notification.findByPk(id);
+    const notification = await Notification.findByPk(req.params.id);
+    
     if (!notification) {
       return res.status(404).json({
         success: false,
@@ -271,33 +426,20 @@ router.delete('/notifications/:id', async (req, res) => {
     
     await notification.destroy();
     
+    console.log('✅ [Admin] Notificação deletada');
+    
     res.json({
       success: true,
       message: 'Notificação deletada com sucesso'
     });
     
   } catch (error) {
-    console.error('[ADMIN] Erro ao deletar notificação:', error);
+    console.error('❌ [Admin] Erro ao deletar notificação:', error);
     res.status(500).json({
       success: false,
-      error: 'Erro interno do servidor',
-      message: error.message
+      error: 'Erro interno do servidor'
     });
   }
-});
-
-// Endpoint de teste para verificar se as rotas admin estão funcionando
-router.get('/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Rotas admin funcionando corretamente',
-    timestamp: new Date().toISOString(),
-    user: {
-      id: req.user.id,
-      username: req.user.username || req.user.email,
-      isAdmin: req.user.is_admin
-    }
-  });
 });
 
 module.exports = router;

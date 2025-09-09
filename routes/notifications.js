@@ -298,4 +298,52 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/notifications/unread-count - Contar notificações não lidas
+router.get('/unread-count', authenticateToken, async (req, res) => {
+  try {
+    console.log('🔔 [Notifications] Buscando contagem de não lidas para usuário:', req.user.userId);
+
+    // Consulta base - notificações não lidas
+    let whereClause = {
+      is_read: false,
+      is_dismissed: false,
+      [Op.or]: [
+        { expires_at: null },
+        { expires_at: { [Op.gt]: new Date() } }
+      ]
+    };
+
+    // Filtrar por público-alvo baseado no tipo de usuário
+    if (req.user.isAdmin) {
+      whereClause.target_audience = { [Op.in]: ['all', 'admin'] };
+    } else if (req.user.isVIP) {
+      whereClause.target_audience = { [Op.in]: ['all', 'vip'] };
+    } else {
+      whereClause.target_audience = 'all';
+    }
+
+    // Contar notificações não lidas
+    const unreadCount = await Notification.count({
+      where: whereClause
+    });
+
+    console.log('🔔 [Notifications] Contagem de não lidas:', unreadCount);
+
+    res.json({
+      success: true,
+      data: {
+        unreadCount: unreadCount
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [Notifications] Erro ao contar notificações não lidas:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor',
+      message: 'Não foi possível contar as notificações não lidas'
+    });
+  }
+});
+
 module.exports = router;

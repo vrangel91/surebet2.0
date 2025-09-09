@@ -91,3 +91,262 @@ export function requireVIP(to, from, next) {
     next('/plans')
   }
 }
+
+// Guard para verificar acesso baseado em tipo de plano específico
+export function requirePlanType(requiredPlans) {
+  return function(to, from, next) {
+    if (!store.getters.isAuthenticated) {
+      console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+      localStorage.setItem('redirectAfterLogin', to.fullPath)
+      next('/login')
+      return
+    }
+
+    const user = store.getters.currentUser
+    const userPlan = user?.accountType || user?.plan || 'basic'
+    
+    // Verificar se o usuário tem um dos planos necessários
+    const hasAccess = requiredPlans.includes(userPlan) || user?.is_admin === true
+    
+    if (hasAccess) {
+      console.log('✅ Acesso autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+      next()
+    } else {
+      console.warn('🚫 Acesso negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Planos necessários:', requiredPlans, 'Rota:', to.path)
+      
+      // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+      if (to.path !== '/plans') {
+        localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+      }
+      
+      next('/plans')
+    }
+  }
+}
+
+// Guard para verificar acesso a funcionalidades de surebet
+export function requireSurebetAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  console.log('🔍 [Guard] Verificando acesso a surebets:', {
+    user: user?.email,
+    accountType: user?.accountType,
+    plan: user?.plan,
+    is_admin: user?.is_admin,
+    is_vip: user?.is_vip,
+    userPlan,
+    route: to.path
+  })
+  
+  // Planos que têm acesso a surebets
+  const surebetPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                       'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                       'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly']
+  
+  const hasAccess = surebetPlans.includes(userPlan) || user?.is_admin === true
+  
+  // Permitir que administradores acessem a página inicial mesmo com plano básico
+  if (to.path === '/' && user?.is_admin === true) {
+    console.log('✅ Admin acessando página inicial - permitido')
+    next()
+    return
+  }
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a surebets autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a surebets negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}
+
+// Guard para verificar acesso a funcionalidades de valuebet
+export function requireValuebetAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  // Planos que têm acesso a valuebets
+  const valuebetPlans = ['vip', 'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly']
+  
+  const hasAccess = valuebetPlans.includes(userPlan) || user?.is_admin === true
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a valuebets autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a valuebets negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}
+
+// Guard para verificar acesso a funcionalidades de relatórios e análises
+export function requireReportsAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  // Planos que têm acesso a relatórios (todos os planos pagos)
+  const reportsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                       'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                       'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                       'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                       'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+  
+  const hasAccess = reportsPlans.includes(userPlan) || user?.is_admin === true
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a relatórios autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a relatórios negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}
+
+// Guard para verificar acesso a funcionalidades de juros compostos
+export function requireCompoundInterestAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  // Planos que têm acesso a juros compostos (todos os planos pagos)
+  const compoundInterestPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                                'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                                'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                                'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                                'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+  
+  const hasAccess = compoundInterestPlans.includes(userPlan) || user?.is_admin === true
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a juros compostos autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a juros compostos negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}
+
+// Guard para verificar acesso a contas de casas de apostas
+export function requireBookmakerAccountsAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  // Planos que têm acesso a contas de casas de apostas (todos os planos pagos)
+  const bookmakerAccountsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                                 'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                                 'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                                 'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                                 'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+  
+  const hasAccess = bookmakerAccountsPlans.includes(userPlan) || user?.is_admin === true
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a contas de casas de apostas autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a contas de casas de apostas negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}
+
+// Guard para verificar acesso a funcionalidades premium (guias, glossário, etc.)
+export function requirePremiumAccess(to, from, next) {
+  if (!store.getters.isAuthenticated) {
+    console.warn('🚫 Tentativa de acesso sem autenticação para rota:', to.path)
+    localStorage.setItem('redirectAfterLogin', to.fullPath)
+    next('/login')
+    return
+  }
+
+  const user = store.getters.currentUser
+  const userPlan = user?.accountType || user?.plan || 'basic'
+  
+  // Planos que têm acesso a funcionalidades premium (todos os planos pagos)
+  const premiumPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                       'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                       'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                       'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                       'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+  
+  const hasAccess = premiumPlans.includes(userPlan) || user?.is_admin === true
+  
+  if (hasAccess) {
+    console.log('✅ Acesso a funcionalidades premium autorizado para:', user?.email, 'Plano:', userPlan, 'Rota:', to.path)
+    next()
+  } else {
+    console.warn('🚫 Acesso a funcionalidades premium negado para usuário:', user?.email, 'Plano atual:', userPlan, 'Rota:', to.path)
+    
+    // Salva a rota que o usuário tentou acessar para redirecionar após upgrade
+    if (to.path !== '/plans') {
+      localStorage.setItem('redirectAfterUpgrade', to.fullPath)
+    }
+    
+    next('/plans')
+  }
+}

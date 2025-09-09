@@ -172,12 +172,12 @@ import {
 } from 'lucide-vue-next'
 
 import axios from '@/utils/axios'
-import vipSecurityManager from '@/utils/vipSecurityManager';
+import vipSecurityManager from '@/utils/vipSecurityManager'
+import { useSidebarState } from '@/composables/useSidebarState'
 
 export default {
   name: 'Sidebar',
   components: {
-
     Menu,
     ChevronRight,
     Target,
@@ -192,6 +192,13 @@ export default {
     BookOpen,
     LogOut,
     Download
+  },
+  setup() {
+    const { setSidebarState } = useSidebarState()
+    
+    return {
+      setSidebarState
+    }
   },
   props: {
     sidebarCollapsed: {
@@ -460,6 +467,21 @@ export default {
     }
   },
   mounted() {
+    console.log('🔧 [Sidebar] Componente montado')
+    console.log('🔧 [Sidebar] Store state:', {
+      isAuthenticated: this.$store.getters.isAuthenticated,
+      currentUser: this.$store.getters.currentUser,
+      isAdmin: this.$store.getters.isAdmin,
+      isVIP: this.$store.getters.isVIP
+    })
+    console.log('🔧 [Sidebar] Props recebidas:', {
+      sidebarCollapsed: this.sidebarCollapsed
+    })
+    console.log('🔧 [Sidebar] Estado inicial do componente:', {
+      shouldBeCollapsed: this.shouldBeCollapsed,
+      userVIPData: this.userVIPData
+    })
+    
     this.loadSidebarState()
     this.startCountdownTimer()
     this.loadUserVIPData()
@@ -467,6 +489,7 @@ export default {
     // Monitorar mudanças no localStorage para configurações
     window.addEventListener('storage', (event) => {
       if (event.key === 'app_settings') {
+        console.log('🔧 [Sidebar] Storage event detectado:', event.key)
         this.loadSidebarState()
       }
     })
@@ -532,6 +555,7 @@ export default {
     toggleSidebar() {
       this.internalCollapsed = !this.internalCollapsed
       this.saveSidebarState(this.internalCollapsed)
+      this.setSidebarState(this.internalCollapsed) // Sincronizar com o composable
       this.$emit('toggle-sidebar', this.internalCollapsed)
     },
 
@@ -603,16 +627,13 @@ export default {
       // Limpa timer anterior se existir
       this.stopCountdownTimer()
       
-      // Inicia timer para atualizar countdown a cada 30 segundos
+      // Inicia timer para atualizar countdown a cada 5 minutos
       this.countdownTimer = setInterval(() => {
-        // Força re-render dos computed properties
-        this.$forceUpdate()
-        
         // Recarregar dados do VIP a cada 5 minutos
         if (this.isVIP && this.currentUser) {
           this.loadUserVIPData()
         }
-      }, 30000) // Atualiza a cada 30 segundos
+      }, 300000) // Aumentado para 5 minutos (era 30 segundos)
     },
     
     stopCountdownTimer() {
@@ -630,8 +651,8 @@ export default {
           const settings = JSON.parse(savedSettings)
           if (settings.interface && settings.interface.sidebarCollapsed !== undefined) {
             this.internalCollapsed = settings.interface.sidebarCollapsed
+            this.setSidebarState(this.internalCollapsed) // Sincronizar com o composable
             this.$emit('sidebar-state-loaded', this.internalCollapsed)
-
           }
         }
       } catch (error) {

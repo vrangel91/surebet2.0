@@ -11,6 +11,8 @@ const SurebetAnalytics = require('./SurebetAnalytics')(sequelize);
 const Ticket = require('./Ticket')(sequelize);
 const TicketMessage = require('./TicketMessage')(sequelize);
 const Notification = require('./Notification');
+const Order = require('./Order');
+const Plan = require('./Plan')(sequelize);
 
 // Definir associações
 User.hasMany(UserSession, {
@@ -108,6 +110,17 @@ Notification.belongsTo(User, {
   as: 'creator'
 });
 
+// Associações para pedidos
+User.hasMany(Order, {
+  foreignKey: 'user_id',
+  as: 'orders'
+});
+
+Order.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user'
+});
+
 // Função para sincronizar modelos com o banco
 async function syncModels() {
   try {
@@ -130,6 +143,21 @@ async function syncModels() {
         console.error('❌ Erro ao criar tabela Notification:', forceError.message);
         // Não lançar erro, apenas logar e continuar
         console.log('⚠️ Continuando sem sincronizar Notification...');
+      }
+    }
+    
+    // Sincronizar modelo Order
+    try {
+      await Order.sync({ force: false });
+      console.log('✅ Modelo Order sincronizado com o banco de dados');
+    } catch (orderError) {
+      console.error('⚠️ Erro ao sincronizar Order:', orderError.message);
+      try {
+        await Order.sync({ force: true });
+        console.log('✅ Tabela Order criada do zero');
+      } catch (forceError) {
+        console.error('❌ Erro ao criar tabela Order:', forceError.message);
+        console.log('⚠️ Continuando sem sincronizar Order...');
       }
     }
     
@@ -157,5 +185,7 @@ module.exports = {
   Ticket,
   TicketMessage,
   Notification,
+  Order,
+  Plan,
   syncModels
 };

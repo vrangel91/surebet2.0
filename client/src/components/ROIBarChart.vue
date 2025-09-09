@@ -65,6 +65,29 @@ export default {
       }
     },
     
+    // Método para destruir gráfico de forma segura
+    destroyChartSafely() {
+      try {
+        if (this.chart) {
+          // Verificar se o gráfico ainda está ativo e tem método destroy
+          if (typeof this.chart.destroy === 'function') {
+            // Verificar se o canvas ainda existe e está no DOM
+            if (this.chart.canvas && this.chart.canvas.parentNode) {
+              this.chart.destroy()
+              console.log('✅ Gráfico de ROI destruído com sucesso')
+            } else {
+              console.log('⚠️ Canvas não encontrado, forçando limpeza')
+            }
+          }
+          this.chart = null
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao destruir gráfico de ROI:', error.message)
+        // Forçar limpeza mesmo com erro
+        this.chart = null
+      }
+    },
+    
     // Método para forçar o fundo do gráfico
     forceChartBackground() {
       if (!this.chart) return
@@ -141,27 +164,46 @@ export default {
         this.themeObserver = observer
       }
       
-      // Verificar fundo e cores periodicamente
-      this.backgroundCheckInterval = setInterval(() => {
-        if (this.chart) {
-          this.forceChartBackground()
-          this.forceChartColors()
-        }
-      }, 2000) // Verificar a cada 2 segundos
+      // Usar MutationObserver em vez de timer para detectar mudanças de tema
+      this.setupThemeObserver()
       
       // Verificar tema atual e aplicar cores
       this.checkAndApplyTheme()
     },
     
+    // Configurar observer para mudanças de tema
+    setupThemeObserver() {
+      if (this.themeObserver) {
+        this.themeObserver.disconnect()
+      }
+      
+      this.themeObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && 
+              (mutation.attributeName === 'data-theme' || 
+               mutation.attributeName === 'class')) {
+            console.log('🎨 [ROIBarChart] Mudança de tema detectada')
+            this.checkAndApplyTheme()
+          }
+        })
+      })
+      
+      // Observar mudanças no elemento html
+      this.themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme', 'class']
+      })
+    },
+
     // Verificar e aplicar tema atual
     checkAndApplyTheme() {
       const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
       console.log(`🎯 Tema atual detectado: ${currentTheme}`)
       
       // Aplicar cores baseadas no tema atual
-      setTimeout(() => {
+      if (this.chart) {
         this.forceChartColors()
-      }, 500)
+      }
     },
     
     // Método público para forçar atualização de tema
@@ -175,7 +217,14 @@ export default {
       const ctx = this.$refs.chartCanvas
       if (!ctx) return
       
-      this.chart = new Chart(ctx, {
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely()
+      
+      // Aguardar um pouco para garantir que o canvas esteja limpo
+      setTimeout(() => {
+        if (!this.$refs.chartCanvas) return
+        
+        this.chart = new Chart(ctx, {
         type: 'bar',
         data: this.getChartData(),
         options: {
@@ -266,6 +315,14 @@ export default {
           }
         }
       })
+      
+      // Aplicar fundo e cores após criação
+      setTimeout(() => {
+        this.forceChartBackground()
+        this.forceChartColors()
+      }, 100)
+      
+      }, 50) // Pequeno delay para garantir limpeza do canvas
     },
     
     getChartData() {
@@ -304,14 +361,22 @@ export default {
     },
     
     updateChart() {
-      if (this.chart) {
-        this.chart.data = this.getChartData()
-        this.chart.update('active')
-        
-        // Forçar fundo após atualização
-        setTimeout(() => {
-          this.forceChartBackground()
-        }, 100)
+      if (this.chart && typeof this.chart.update === 'function') {
+        try {
+          this.chart.data = this.getChartData()
+          this.chart.update('active')
+          
+          // Forçar fundo após atualização
+          setTimeout(() => {
+            this.forceChartBackground()
+          }, 100)
+        } catch (error) {
+          console.warn('⚠️ Erro ao atualizar gráfico de ROI, recriando:', error.message)
+          this.destroyChartSafely()
+          this.$nextTick(() => {
+            this.createChart()
+          })
+        }
       } else {
         this.$nextTick(() => {
           this.createChart()

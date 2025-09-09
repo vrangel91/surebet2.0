@@ -3,8 +3,8 @@
     <!-- Loading após login -->
     <LoginLoading :isVisible="showLoginLoading" />
     
-    <!-- 🔄 Loader global fullscreen -->
-    <LoaderOverlay />
+    <!-- 🔄 Loader global - apenas para área de conteúdo -->
+    <LoaderOverlay :content-only="true" />
     
     <router-view />
     <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->

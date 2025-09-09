@@ -2,14 +2,46 @@ import { createStore } from 'vuex'
 
 // Função para verificar se a resposta é JSON de forma segura
 async function safeJsonResponse(response) {
+  console.log('🔍 [Store] Verificando resposta da API...')
+  console.log('🔍 [Store] Response status:', response.status)
+  console.log('🔍 [Store] Response headers:', Object.fromEntries(response.headers.entries()))
+  
   const contentType = response.headers.get('content-type')
+  console.log('🔍 [Store] Content-Type:', contentType)
+  
+  // Verificar se é JSON
   if (contentType && contentType.includes('application/json')) {
-    return await response.json()
+    try {
+      const jsonData = await response.json()
+      console.log('✅ [Store] JSON válido recebido:', jsonData)
+      return jsonData
+    } catch (parseError) {
+      console.error('❌ [Store] Erro ao fazer parse do JSON:', parseError)
+      const text = await response.text()
+      console.error('❌ [Store] Response text que causou erro:', text.substring(0, 200) + '...')
+      return { error: 'Erro ao fazer parse do JSON', details: text.substring(0, 200) }
+    }
   } else {
     // Se não for JSON, retornar o texto da resposta
     const text = await response.text()
-    console.error('Resposta não-JSON recebida:', text.substring(0, 200) + '...')
-    return { error: 'Resposta inválida do servidor', details: text.substring(0, 200) }
+    console.error('❌ [Store] Resposta não-JSON recebida:', text.substring(0, 200) + '...')
+    console.error('❌ [Store] Content-Type recebido:', contentType)
+    
+    // Verificar se é HTML (página de erro)
+    if (contentType && contentType.includes('text/html')) {
+      return { 
+        error: 'Servidor retornou HTML em vez de JSON', 
+        details: 'Possível erro de roteamento - API não encontrada',
+        contentType: contentType,
+        responseText: text.substring(0, 200)
+      }
+    }
+    
+    return { 
+      error: 'Resposta inválida do servidor', 
+      details: text.substring(0, 200),
+      contentType: contentType
+    }
   }
 }
 
@@ -29,27 +61,39 @@ export default createStore({
     // 🔄 Estado global do loader
     isLoading: false,
     loadingRequests: 0, // Contador de requisições ativas
-    loadingStartTime: null // Timestamp do início do loading
+    loadingStartTime: null, // Timestamp do início do loading
+    
+    // 📋 Estado dos planos
+    plans: JSON.parse(localStorage.getItem('plans')) || [],
+    plansLoaded: false
   },
   
   mutations: {
     setAuthToken(state, token) {
+      console.log('🔍 [Store] setAuthToken chamado com:', token ? 'Token presente' : 'Token ausente')
       state.authToken = token
       state.isAuthenticated = !!token
       if (token) {
         localStorage.setItem('authToken', token)
+        console.log('🔍 [Store] Token salvo no localStorage')
       } else {
         localStorage.removeItem('authToken')
+        console.log('🔍 [Store] Token removido do localStorage')
       }
+      console.log('🔍 [Store] Estado de autenticação atualizado:', state.isAuthenticated)
     },
     
     setUser(state, user) {
+      console.log('🔍 [Store] setUser chamado com:', user)
       state.user = user
       if (user) {
         localStorage.setItem('user', JSON.stringify(user))
+        console.log('🔍 [Store] Usuário salvo no localStorage')
       } else {
         localStorage.removeItem('user')
+        console.log('🔍 [Store] Usuário removido do localStorage')
       }
+      console.log('🔍 [Store] Estado do usuário atualizado:', state.user)
     },
     
     // 🔒 Mutação para definir status VIP
@@ -207,11 +251,28 @@ export default createStore({
       }
     },
     
+    // 📋 Mutations para gerenciar planos
+    setPlans(state, plans) {
+      state.plans = plans
+      state.plansLoaded = true
+      localStorage.setItem('plans', JSON.stringify(plans))
+      console.log('📋 [Store] Planos carregados:', plans.length)
+    },
+    
+    clearPlans(state) {
+      state.plans = []
+      state.plansLoaded = false
+      localStorage.removeItem('plans')
+      console.log('📋 [Store] Planos limpos')
+    },
+    
 
   },
   
   actions: {
     login({ commit }, { token, user }) {
+      console.log('🔍 [Store] Action login chamada com:', { token: token ? 'Token presente' : 'Token ausente', user })
+      
       // Converter dados do backend para o formato esperado pelo frontend
       const convertedUser = {
         ...user,
@@ -223,10 +284,19 @@ export default createStore({
         accountType: user.accountType || 'basic'
       }
       
+      console.log('🔍 [Store] Usuário convertido:', convertedUser)
+      
       commit('setAuthToken', token)
       commit('setUser', convertedUser)
       
-      console.log('✅ Login realizado com sucesso para:', convertedUser.email, 'Tipo de conta:', convertedUser.accountType)
+      console.log('✅ [Store] Login realizado com sucesso para:', convertedUser.email, 'Tipo de conta:', convertedUser.accountType)
+      console.log('✅ [Store] Dados do usuário salvos:', {
+        id: convertedUser.id,
+        email: convertedUser.email,
+        accountType: convertedUser.accountType,
+        is_admin: convertedUser.is_admin,
+        is_vip: convertedUser.is_vip
+      })
     },
     
     logout({ commit, state }) {
@@ -788,6 +858,46 @@ export default createStore({
         console.error('❌ Erro ao buscar análises de surebets:', error)
         throw error
       }
+    },
+    
+    // 📋 Actions para gerenciar planos
+    async fetchPlans({ commit, state }) {
+      try {
+        console.log('📋 [Store] Buscando planos da API...')
+        
+        const response = await fetch('/api/plans', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await safeJsonResponse(response)
+        
+        if (data.success && data.data) {
+          commit('setPlans', data.data)
+          console.log(`✅ ${data.data.length} planos carregados da API`)
+          return data.data
+        } else {
+          console.error('❌ Resposta da API inválida:', data)
+          return []
+        }
+      } catch (error) {
+        console.error('❌ Erro ao buscar planos:', error)
+        return []
+      }
+    },
+    
+    async loadPlansIfNeeded({ commit, state, dispatch }) {
+      if (!state.plansLoaded || state.plans.length === 0) {
+        console.log('📋 [Store] Carregando planos...')
+        await dispatch('fetchPlans')
+      }
+      return state.plans
     }
   },
   
@@ -807,7 +917,29 @@ export default createStore({
       if (!state.user) return false
       if (state.user.is_admin === true) return true
       if (state.user.is_vip === true) return true
-      return ['premium', 'vip'].includes(state.user.accountType)
+      
+      // Verificar se tem qualquer plano pago
+      const paidPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                        'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                        'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                        'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                        'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      const userPlan = state.user.accountType || state.user.plan
+      const hasPaidPlan = paidPlans.includes(userPlan)
+      
+      console.log('🔍 Verificando isVIP:', {
+        user: state.user?.email,
+        accountType: state.user?.accountType,
+        plan: state.user?.plan,
+        is_admin: state.user?.is_admin,
+        is_vip: state.user?.is_vip,
+        vipStatus: state.vipStatus.isVIP,
+        hasPaidPlan,
+        result: hasPaidPlan
+      })
+      
+      return hasPaidPlan
     },
     
     // 🔒 Status VIP completo
@@ -843,6 +975,117 @@ export default createStore({
         return expiration > now
       }
       return true
+    },
+    
+    // 🔒 Getters específicos para tipos de plano
+    userPlan: state => state.user?.accountType || state.user?.plan || 'basic',
+    
+    hasSurebetAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const surebetPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly']
+      
+      return surebetPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    hasValuebetAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const valuebetPlans = ['vip', 'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly']
+      
+      return valuebetPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    // 🔒 Getters específicos para diferentes tipos de acesso
+    hasReportsAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const reportsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                           'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                           'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      return reportsPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    hasCompoundInterestAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const compoundInterestPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                                    'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                                    'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                                    'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                                    'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      return compoundInterestPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    hasBookmakerAccountsAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const bookmakerAccountsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                                     'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                                     'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                                     'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                                     'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      return bookmakerAccountsPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    hasPremiumAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const premiumPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
+                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+                           'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
+                           'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      return premiumPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    hasFullAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const fullPlans = ['vip', 'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
+      
+      return fullPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    // 📋 Getters para planos
+    allPlans: state => state.plans,
+    plansLoaded: state => state.plansLoaded,
+    
+    // 📋 Buscar plano por tipo/name
+    getPlanByType: state => planType => {
+      return state.plans.find(plan => plan.type === planType || plan.name === planType)
+    },
+    
+    // 📋 Buscar plano por display_name
+    getPlanByDisplayName: state => displayName => {
+      return state.plans.find(plan => plan.display_name === displayName)
+    },
+    
+    // 📋 Obter nome de exibição do plano
+    getPlanDisplayName: state => planType => {
+      const plan = state.plans.find(p => p.type === planType || p.name === planType)
+      return plan ? plan.display_name : planType || 'Plano Desconhecido'
+    },
+    
+    // 📋 Obter classe CSS do plano
+    getPlanCssClass: state => planType => {
+      const plan = state.plans.find(p => p.type === planType || p.name === planType)
+      return plan ? plan.css_class : 'basic'
     },
     activeUsers: state => state.users.filter(user => user.status === 'active'),
     inactiveUsers: state => state.users.filter(user => user.status === 'inactive'),

@@ -1,16 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const mercadopagoService = require('../config/mercadopago');
-const { Pool } = require('pg');
-
-// Configuração do banco de dados
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'SureStake2024!',
-  database: process.env.DB_NAME || 'surestake'
-});
+const { sequelize } = require('../config/database');
+const Order = require('../models/Order');
 
 // Middleware de autenticação
 const authenticateToken = (req, res, next) => {
@@ -398,26 +390,18 @@ router.post('/pix', authenticateToken, async (req, res) => {
     }
 
     // Inserir pedido no banco
-    const query = `
-      INSERT INTO orders (user_id, plan_id, plan_name, plan_days, amount, status, payment_method, installments, customer_data)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-      RETURNING *
-    `;
-
-    const values = [
-      userId,
-      planId,
-      planName,
-      planDays,
-      amount,
-      'pending',
-      'pix',
-      1, // PIX sempre é à vista
-      JSON.stringify(customerData)
-    ];
-
-    const result = await pool.query(query, values);
-    const order = result.rows[0];
+    // Criar pedido no banco de dados
+    const order = await Order.create({
+      user_id: userId,
+      plan_id: planId,
+      plan_name: planName,
+      plan_days: planDays,
+      amount: amount,
+      status: 'pending',
+      payment_method: 'pix',
+      installments: 1, // PIX sempre é à vista
+      customer_data: customerData
+    });
 
     // Gerar PIX usando o serviço aprimorado
     console.log(`🔄 Gerando PIX para pedido ${order.id}...`);
@@ -488,10 +472,9 @@ router.post('/pix', authenticateToken, async (req, res) => {
       throw new Error('Falha ao gerar códigos PIX');
     }
 
-    await pool.query(
-      'UPDATE orders SET payment_data = $1 WHERE id = $2',
-      [JSON.stringify(pixData), order.id]
-    );
+    await order.update({
+      payment_data: pixData
+    });
 
     res.status(201).json({
       success: true,
@@ -516,8 +499,13 @@ router.post('/pix', authenticateToken, async (req, res) => {
     // Se falhar ao gerar PIX, deletar o pedido criado (se existir)
     if (req.body && req.body.planId) {
       try {
-        await pool.query('DELETE FROM orders WHERE user_id = $1 AND plan_id = $2 AND status = $3', 
-          [req.body.userId, req.body.planId, 'pending']);
+        await Order.destroy({
+          where: {
+            user_id: req.body.userId,
+            plan_id: req.body.planId,
+            status: 'pending'
+          }
+        });
         console.log('🗑️ Pedido pendente removido após falha');
       } catch (deleteError) {
         console.error('❌ Erro ao remover pedido pendente:', deleteError);

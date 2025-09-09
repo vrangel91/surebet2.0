@@ -76,7 +76,7 @@
          <div class="chart-card">
            <h3>Evolução do Lucro Acumulado</h3>
            <div class="chart-container">
-             <ProfitEvolutionChart :bets="bets" />
+             <ProfitEvolutionChart ref="profitChart" :bets="bets" />
            </div>
          </div>
        </div>
@@ -86,7 +86,7 @@
          <div class="roi-chart-card">
            <h3>ROI por Aposta (Últimas 10)</h3>
            <div class="roi-chart-container">
-             <ROIBarChart :bets="bets" />
+             <ROIBarChart ref="roiChart" :bets="bets" />
            </div>
          </div>
        </div>
@@ -498,6 +498,9 @@ export default {
   },
   beforeDestroy() {
     this.stopStatusCheckTimer() // Limpa o timer ao destruir o componente
+    
+    // Destruir gráficos de forma segura
+    this.destroyCharts()
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -817,13 +820,32 @@ color: var(--text-primary);
     // Inicia o timer para verificar o status das apostas
     startStatusCheckTimer() {
       this.stopStatusCheckTimer() // Garante que não haja múltiplos timers
-      this.statusCheckTimer = setInterval(this.checkBetStatuses, 60000) // Verifica a cada 60 segundos
+      this.statusCheckTimer = setInterval(this.checkBetStatuses, 300000) // Aumentado para 5 minutos (era 60 segundos)
     },
     // Para o timer de status das apostas
     stopStatusCheckTimer() {
       if (this.statusCheckTimer) {
         clearInterval(this.statusCheckTimer)
         this.statusCheckTimer = null
+      }
+    },
+    
+    // Destruir gráficos de forma segura
+    destroyCharts() {
+      try {
+        // Destruir gráfico de evolução de lucro
+        if (this.$refs.profitChart && typeof this.$refs.profitChart.destroyChartSafely === 'function') {
+          this.$refs.profitChart.destroyChartSafely()
+        }
+        
+        // Destruir gráfico de ROI
+        if (this.$refs.roiChart && typeof this.$refs.roiChart.destroyChartSafely === 'function') {
+          this.$refs.roiChart.destroyChartSafely()
+        }
+        
+        console.log('✅ Gráficos destruídos com sucesso')
+      } catch (error) {
+        console.warn('⚠️ Erro ao destruir gráficos:', error.message)
       }
     },
          // Método para verificar o status das apostas e atualizar automaticamente após 3 horas

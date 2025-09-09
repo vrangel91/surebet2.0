@@ -643,12 +643,31 @@
         </div>
       </div>
     </div>
+    
+    <!-- Payment Success Notification -->
+    <PaymentSuccessNotification 
+      :show="showPaymentSuccess"
+      :planName="successPlanName"
+      @close="closePaymentSuccess"
+    />
+    
+    <!-- Payment Confirmation Modal -->
+    <PaymentConfirmationModal
+      :show="showPaymentConfirmation"
+      :planName="confirmationPlanName"
+      :paymentId="confirmationPaymentId"
+      :expiresAt="confirmationExpiresAt"
+      :planBenefits="confirmationPlanBenefits"
+      @close="closePaymentConfirmation"
+    />
   </div>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
+import PaymentSuccessNotification from '../components/PaymentSuccessNotification.vue'
+import PaymentConfirmationModal from '../components/PaymentConfirmationModal.vue'
 
 
 export default {
@@ -656,13 +675,24 @@ export default {
   components: {
     Sidebar,
     Header,
-
+    PaymentSuccessNotification,
+    PaymentConfirmationModal
   },
   data() {
     return {
       sidebarCollapsed: false,
-
       selectedCategory: 'pre-game',
+      
+      // Payment success notification
+      showPaymentSuccess: false,
+      successPlanName: '',
+      
+      // Payment confirmation modal
+      showPaymentConfirmation: false,
+      confirmationPlanName: '',
+      confirmationPaymentId: '',
+      confirmationExpiresAt: '',
+      confirmationPlanBenefits: [],
       
       // Mercado Pago Configuration
       mercadopagoConfig: {
@@ -726,7 +756,7 @@ export default {
               id: 'pre-daily',
               duration: 'Diário',
               title: 'SUREBET \nPRÉ JOGO DIÁRIO',
-              price: '19',
+              price: '1',
               days: 1,
               features: [
                 { text: '1 dia de acesso', included: true },
@@ -1408,18 +1438,20 @@ export default {
         // 4. Atualizar status do pedido
         await this.updateOrderStatus(order.id, paymentResult.status)
         
-        // 5. Se aprovado, ativar VIP
-        if (paymentResult.status === 'approved') {
-          await this.activateVIP(order)
-          this.showSuccessMessage('Pagamento aprovado! Seu VIP foi ativado.')
-        } else if (paymentResult.status === 'pending') {
-          this.showSuccessMessage('Pagamento em análise. Você receberá uma notificação quando for aprovado.')
+        // 5. Iniciar polling para verificar status do pagamento
+        if (paymentResult.status === 'pending') {
+          this.showSuccessMessage('Pagamento processado! Aguardando confirmação...')
+          this.closePaymentModal()
+          
+          // Iniciar polling para verificar status
+          this.startPaymentPolling(order.id, order.payment_id)
+          
+        } else if (paymentResult.status === 'approved') {
+          // Pagamento já aprovado (caso raro)
+          await this.handleApprovedPayment(order)
         } else {
           this.showErrorMessage('Pagamento não aprovado. Tente novamente.')
         }
-        
-        // 6. Fechar modal e limpar dados
-        this.closePaymentModal()
         
       } catch (error) {
         console.error('Erro no processamento do pagamento:', error)
@@ -1427,6 +1459,76 @@ export default {
       } finally {
         this.processingPayment = false
       }
+    },
+    
+    // Método para iniciar polling do status do pagamento
+    startPaymentPolling(orderId, paymentId) {
+      console.log(`🔄 Iniciando polling para pedido ${orderId}, pagamento ${paymentId}`)
+      
+      let attempts = 0
+      const maxAttempts = 60 // 5 minutos (5 segundos * 60)
+      
+      const pollInterval = setInterval(async () => {
+        attempts++
+        
+        try {
+          const response = await this.$http.get(`/api/payment-status/pending/${orderId}`)
+          
+          if (response.data.success) {
+            const { status, vipActivated, vipDetails } = response.data.data
+            
+            if (status === 'approved' && vipActivated) {
+              console.log('✅ Pagamento aprovado e VIP ativado!')
+              clearInterval(pollInterval)
+              
+              // Mostrar notificação de sucesso
+              this.handlePaymentSuccess({
+                planName: this.selectedPlan.title,
+                paymentId: paymentId,
+                expiresAt: vipDetails?.expiresAt || '',
+                benefits: this.getDefaultPlanBenefits(this.selectedPlan.title)
+              })
+              
+              // Fechar modal de pagamento
+              this.closePaymentModal()
+              
+            } else if (status === 'rejected' || status === 'cancelled') {
+              console.log('❌ Pagamento rejeitado ou cancelado')
+              clearInterval(pollInterval)
+              this.showErrorMessage('Pagamento não foi aprovado. Tente novamente.')
+              
+            } else if (attempts >= maxAttempts) {
+              console.log('⏰ Timeout no polling do pagamento')
+              clearInterval(pollInterval)
+              this.showErrorMessage('Tempo limite excedido. Verifique o status do pagamento em alguns minutos.')
+            }
+          }
+          
+        } catch (error) {
+          console.error('Erro no polling do pagamento:', error)
+          
+          if (attempts >= maxAttempts) {
+            clearInterval(pollInterval)
+            this.showErrorMessage('Erro ao verificar status do pagamento. Tente novamente mais tarde.')
+          }
+        }
+      }, 5000) // Verificar a cada 5 segundos
+    },
+    
+    // Método para tratar pagamento já aprovado
+    async handleApprovedPayment(order) {
+      await this.activateVIP(order)
+      
+      // Mostrar notificação de sucesso
+      this.handlePaymentSuccess({
+        planName: this.selectedPlan.title,
+        paymentId: order.id,
+        expiresAt: '',
+        benefits: this.getDefaultPlanBenefits(this.selectedPlan.title)
+      })
+      
+      // Fechar modal
+      this.closePaymentModal()
     },
     
     validateCheckoutForm() {
@@ -1739,6 +1841,64 @@ export default {
       this.selectedPlan = null
       this.codeCopied = false
       this.stopTimer()
+    },
+    
+    // Payment success methods
+    handlePaymentSuccess(paymentData) {
+      this.successPlanName = paymentData.planName
+      this.showPaymentSuccess = true
+      
+      // Também mostrar o modal de confirmação após um pequeno delay
+      setTimeout(() => {
+        this.showPaymentConfirmationModal(paymentData)
+      }, 2000)
+    },
+    
+    closePaymentSuccess() {
+      this.showPaymentSuccess = false
+      this.successPlanName = ''
+    },
+    
+    // Payment confirmation modal methods
+    showPaymentConfirmationModal(paymentData) {
+      this.confirmationPlanName = paymentData.planName
+      this.confirmationPaymentId = paymentData.paymentId || ''
+      this.confirmationExpiresAt = paymentData.expiresAt || ''
+      this.confirmationPlanBenefits = paymentData.benefits || this.getDefaultPlanBenefits(paymentData.planName)
+      this.showPaymentConfirmation = true
+    },
+    
+    closePaymentConfirmation() {
+      this.showPaymentConfirmation = false
+      this.confirmationPlanName = ''
+      this.confirmationPaymentId = ''
+      this.confirmationExpiresAt = ''
+      this.confirmationPlanBenefits = []
+    },
+    
+    getDefaultPlanBenefits(planName) {
+      const benefits = {
+        'Plano Básico': [
+          'Acesso a surebets básicas',
+          'Suporte por email',
+          'Atualizações diárias'
+        ],
+        'Plano Premium': [
+          'Acesso a todas as surebets',
+          'Alertas em tempo real',
+          'Suporte prioritário',
+          'Análises detalhadas'
+        ],
+        'Plano VIP': [
+          'Acesso a todas as surebets',
+          'Alertas em tempo real',
+          'Suporte VIP 24/7',
+          'Análises exclusivas',
+          'Estratégias avançadas'
+        ]
+      }
+      
+      return benefits[planName] || benefits['Plano VIP']
     },
     
     startTimer() {

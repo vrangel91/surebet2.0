@@ -614,8 +614,22 @@
           <div class="form-group">
             <label>Tipo de Plano</label>
             <select v-model="activateForm.planType" class="form-select">
-              <option value="premium">Premium</option>
-              <option value="vip">VIP</option>
+              <option value="">Selecione um plano...</option>
+              
+              <!-- Planos dinâmicos do banco de dados -->
+              <optgroup 
+                v-for="(categoryPlans, category) in groupedPlans" 
+                :key="category" 
+                :label="category"
+              >
+                <option 
+                  v-for="plan in categoryPlans" 
+                  :key="plan.id" 
+                  :value="plan.type || plan.name"
+                >
+                  {{ plan.display_name }}
+                </option>
+              </optgroup>
             </select>
           </div>
           
@@ -670,8 +684,22 @@
           <div class="form-group">
             <label>Tipo de Plano</label>
             <select v-model="editForm.planType" class="form-select">
-              <option value="premium">Premium</option>
-              <option value="vip">VIP</option>
+              <option value="">Selecione um plano...</option>
+              
+              <!-- Planos dinâmicos do banco de dados -->
+              <optgroup 
+                v-for="(categoryPlans, category) in groupedPlans" 
+                :key="category" 
+                :label="category"
+              >
+                <option 
+                  v-for="plan in categoryPlans" 
+                  :key="plan.id" 
+                  :value="plan.type || plan.name"
+                >
+                  {{ plan.display_name }}
+                </option>
+              </optgroup>
             </select>
           </div>
           
@@ -779,11 +807,14 @@ export default {
     const vipHistory = ref([])
     const availableUsers = ref([])
     const cronStatus = ref({ isRunning: false })
-         const reports = ref({})
-     const reportsLoading = ref(false)
-     const reportsError = ref('')
-     const searchTerm = ref('')
-     const historySearchTerm = ref('')
+    const reports = ref({})
+    const reportsLoading = ref(false)
+    const reportsError = ref('')
+    const searchTerm = ref('')
+    const historySearchTerm = ref('')
+    
+    // Sistema de planos
+    const plans = ref([])
     
     // Filtros adicionais
     const statusFilter = ref('all')
@@ -793,7 +824,7 @@ export default {
     // Form
     const activateForm = reactive({
       userId: '',
-      planType: 'premium',
+      planType: '',
       duration: 30,
       amount: 0,
       autoRenew: false,
@@ -908,6 +939,35 @@ export default {
       return ['all', ...plans]
     })
     
+    // Planos agrupados por categoria para os modais
+    const groupedPlans = computed(() => {
+      console.log('🔍 [groupedPlans] Computed executado')
+      console.log('📊 [groupedPlans] plans.value.length:', plans.value.length)
+      console.log('📊 [groupedPlans] store.getters.plansLoaded:', store.getters.plansLoaded)
+      console.log('📊 [groupedPlans] store.getters.allPlans.length:', store.getters.allPlans?.length || 0)
+      
+      if (!plans.value.length && !store.getters.plansLoaded) {
+        console.log('⚠️ [groupedPlans] Nenhum plano disponível, retornando objeto vazio')
+        return {}
+      }
+      
+      const plansData = store.getters.plansLoaded ? store.getters.allPlans : plans.value
+      console.log('📊 [groupedPlans] plansData.length:', plansData?.length || 0)
+      console.log('📊 [groupedPlans] plansData:', plansData)
+      
+      const grouped = plansData.reduce((groups, plan) => {
+        const category = plan.category || 'Outros'
+        if (!groups[category]) {
+          groups[category] = []
+        }
+        groups[category].push(plan)
+        return groups
+      }, {})
+      
+      console.log('📊 [groupedPlans] Resultado agrupado:', grouped)
+      return grouped
+    })
+    
     // Função para obter o status atual de um VIP baseado na data de expiração
     const getVIPStatus = (endDate) => {
       const daysRemaining = getDaysRemaining(endDate)
@@ -962,13 +1022,15 @@ export default {
       return activateForm.userId && 
              activateForm.duration > 0 && 
              activateForm.amount >= 0 &&
-             activateForm.planType
+             activateForm.planType && 
+             activateForm.planType !== ''
     })
     
     const canUpdateVIP = computed(() => {
       return editForm.duration > 0 && 
              editForm.amount >= 0 &&
-             editForm.planType
+             editForm.planType && 
+             editForm.planType !== ''
     })
     
     // Methods
@@ -987,7 +1049,7 @@ export default {
       
       if (existingVIP) {
         // Preencher formulário com dados existentes
-        activateForm.planType = existingVIP.planName?.toLowerCase() || 'premium'
+        activateForm.planType = getPlanTypeFromName(existingVIP.planName) || 'premium'
         activateForm.amount = existingVIP.amount || 0
         activateForm.autoRenew = existingVIP.autoRenew || false
         activateForm.notes = existingVIP.notes || ''
@@ -1163,8 +1225,8 @@ export default {
         }
         
         // Mapear os dados do formulário para o formato esperado pelo backend
-        const planId = activateForm.planType === 'premium' ? 1 : 2
-        const planName = activateForm.planType === 'premium' ? 'Premium' : 'VIP'
+        const planId = getPlanId(activateForm.planType)
+        const planName = getPlanDisplayName(activateForm.planType)
         
         const payload = {
           userId: activateForm.userId,
@@ -1191,7 +1253,7 @@ export default {
         // Reset form
         Object.assign(activateForm, {
           userId: '',
-          planType: 'premium',
+          planType: '',
           duration: 30,
           amount: 0,
           autoRenew: false,
@@ -1211,7 +1273,7 @@ export default {
         console.log('🆔 [Frontend] User ID:', vip.userId)
         
         // Mapear os dados para o formato esperado pelo backend
-        const planId = vip.planName?.toLowerCase() === 'premium' ? 1 : 2
+        const planId = getPlanId(vip.planName?.toLowerCase())
         const planName = vip.planName || 'Premium'
         const planDays = 30 // Padrão de 30 dias para renovação
         
@@ -1281,7 +1343,7 @@ export default {
       editForm.id = vip.id
       editForm.userId = vip.userId
       editForm.userName = `${vip.user?.first_name} ${vip.user?.last_name} (${vip.user?.email})`
-      editForm.planType = vip.planName?.toLowerCase() || 'premium'
+      editForm.planType = getPlanTypeFromName(vip.planName) || 'premium'
       editForm.duration = vip.planDays || 30
       editForm.amount = vip.amount || 0
       editForm.autoRenew = vip.autoRenew || false
@@ -1316,7 +1378,7 @@ export default {
           return
         }
         
-        const planName = editForm.planType === 'premium' ? 'Premium' : 'VIP'
+        const planName = getPlanDisplayName(editForm.planType)
         
         const payload = {
           planName: planName,
@@ -1359,7 +1421,7 @@ export default {
       try {
         // Preencher formulário de ativação com dados do histórico
         activateForm.userId = vip.userId
-        activateForm.planType = vip.planName?.toLowerCase() || 'premium'
+        activateForm.planType = getPlanTypeFromName(vip.planName) || 'premium'
         activateForm.duration = 30 // Padrão de 30 dias
         activateForm.amount = vip.amount || 0
         activateForm.autoRenew = false
@@ -1495,6 +1557,111 @@ export default {
       return new Date(date).toLocaleDateString('pt-BR')
     }
     
+    // Funções auxiliares para mapeamento de planos (agora usando dados do banco)
+    const getPlanId = (planType) => {
+      // Primeiro tentar usar o store
+      if (store.getters.plansLoaded) {
+        const plan = store.getters.getPlanByType(planType)
+        return plan ? plan.id : 2 // Default para premium
+      }
+      
+      // Fallback para dados locais se disponíveis
+      const plan = plans.value.find(p => p.type === planType || p.name === planType)
+      if (plan) {
+        return plan.id
+      }
+      
+      // Fallback final
+      return 2 // Default para premium
+    }
+    
+    const getPlanDisplayName = (planType) => {
+      // Primeiro tentar usar o store
+      if (store.getters.plansLoaded) {
+        return store.getters.getPlanDisplayName(planType)
+      }
+      
+      // Fallback para dados locais se disponíveis
+      const plan = plans.value.find(p => p.type === planType || p.name === planType)
+      if (plan) {
+        return plan.display_name
+      }
+      
+      // Fallback final
+      return planType || 'Plano Desconhecido'
+    }
+    
+    const getPlanTypeFromName = (planName) => {
+      // Primeiro tentar usar o store
+      if (store.getters.plansLoaded) {
+        const plan = store.getters.getPlanByDisplayName(planName)
+        return plan ? plan.type : 'premium'
+      }
+      
+      // Fallback para dados locais se disponíveis
+      const plan = plans.value.find(p => p.display_name === planName)
+      if (plan) {
+        return plan.type
+      }
+      
+      // Fallback final
+      return 'premium'
+    }
+    
+    // Carregar planos do banco de dados
+    const loadPlans = async () => {
+      try {
+        console.log('📋 [VIPAdmin] Carregando planos...')
+        
+        // Tentar carregar diretamente da API
+        const response = await axios.get('/api/plans', {
+          timeout: 10000
+        })
+        
+        if (response.data && response.data.success && response.data.plans) {
+          plans.value = response.data.plans
+          // Atualizar store também
+          store.dispatch('setPlans', response.data.plans)
+          console.log('✅ [VIPAdmin] Planos carregados da API:', plans.value.length)
+        } else {
+          console.warn('⚠️ [VIPAdmin] Resposta da API inválida:', response.data)
+          plans.value = []
+        }
+      } catch (error) {
+        console.error('❌ [VIPAdmin] Erro ao carregar planos:', error)
+        console.error('📋 [VIPAdmin] Detalhes do erro:', error.response?.data)
+        
+        // Fallback: usar dados hardcoded temporariamente
+        console.log('🔄 [VIPAdmin] Usando dados hardcoded como fallback')
+        plans.value = [
+          { id: 1, name: 'basic', display_name: 'Plano Básico', type: 'basic', category: 'Básicos', price: 29.90, duration_days: 30 },
+          { id: 2, name: 'premium', display_name: 'Plano Premium', type: 'premium', category: 'Básicos', price: 49.90, duration_days: 30 },
+          { id: 3, name: 'vip', display_name: 'Plano VIP', type: 'vip', category: 'Básicos', price: 99.90, duration_days: 30 },
+          { id: 4, name: 'pre-daily', display_name: 'Pré-Jogo Diário', type: 'pre-daily', category: 'Pré-Jogo', price: 19.90, duration_days: 1 },
+          { id: 5, name: 'pre-weekly', display_name: 'Pré-Jogo Semanal', type: 'pre-weekly', category: 'Pré-Jogo', price: 39.90, duration_days: 7 },
+          { id: 6, name: 'pre-monthly', display_name: 'Pré-Jogo Mensal', type: 'pre-monthly', category: 'Pré-Jogo', price: 79.90, duration_days: 30 },
+          { id: 7, name: 'pre-yearly', display_name: 'Pré-Jogo Anual', type: 'pre-yearly', category: 'Pré-Jogo', price: 299.90, duration_days: 365 },
+          { id: 8, name: 'live-daily', display_name: 'Live Diário', type: 'live-daily', category: 'Live', price: 19.90, duration_days: 1 },
+          { id: 9, name: 'live-weekly', display_name: 'Live Semanal', type: 'live-weekly', category: 'Live', price: 39.90, duration_days: 7 },
+          { id: 10, name: 'live-monthly', display_name: 'Live Mensal', type: 'live-monthly', category: 'Live', price: 79.90, duration_days: 30 },
+          { id: 11, name: 'live-yearly', display_name: 'Live Anual', type: 'live-yearly', category: 'Live', price: 299.90, duration_days: 365 },
+          { id: 12, name: 'prelive-daily', display_name: 'Pré+Live Diário', type: 'prelive-daily', category: 'Pré+Live', price: 29.90, duration_days: 1 },
+          { id: 13, name: 'prelive-weekly', display_name: 'Pré+Live Semanal', type: 'prelive-weekly', category: 'Pré+Live', price: 59.90, duration_days: 7 },
+          { id: 14, name: 'prelive-monthly', display_name: 'Pré+Live Mensal', type: 'prelive-monthly', category: 'Pré+Live', price: 119.90, duration_days: 30 },
+          { id: 15, name: 'prelive-yearly', display_name: 'Pré+Live Anual', type: 'prelive-yearly', category: 'Pré+Live', price: 399.90, duration_days: 365 },
+          { id: 16, name: 'valuebet-daily', display_name: 'Valuebet Diário', type: 'valuebet-daily', category: 'Valuebet', price: 19.90, duration_days: 1 },
+          { id: 17, name: 'valuebet-weekly', display_name: 'Valuebet Semanal', type: 'valuebet-weekly', category: 'Valuebet', price: 39.90, duration_days: 7 },
+          { id: 18, name: 'valuebet-monthly', display_name: 'Valuebet Mensal', type: 'valuebet-monthly', category: 'Valuebet', price: 79.90, duration_days: 30 },
+          { id: 19, name: 'valuebet-yearly', display_name: 'Valuebet Anual', type: 'valuebet-yearly', category: 'Valuebet', price: 299.90, duration_days: 365 },
+          { id: 20, name: 'full-daily', display_name: 'Full Diário', type: 'full-daily', category: 'Full', price: 39.90, duration_days: 1 },
+          { id: 21, name: 'full-weekly', display_name: 'Full Semanal', type: 'full-weekly', category: 'Full', price: 79.90, duration_days: 7 },
+          { id: 22, name: 'full-monthly', display_name: 'Full Mensal', type: 'full-monthly', category: 'Full', price: 159.90, duration_days: 30 },
+          { id: 23, name: 'full-yearly', display_name: 'Full Anual', type: 'full-yearly', category: 'Full', price: 599.90, duration_days: 365 }
+        ]
+        console.log('✅ [VIPAdmin] Planos hardcoded carregados:', plans.value.length)
+      }
+    }
+    
          const formatCurrency = (value) => {
        return parseFloat(value || 0).toFixed(2)
      }
@@ -1545,7 +1712,7 @@ export default {
     }
     
          // Lifecycle
-     onMounted(() => {
+     onMounted(async () => {
        console.log('🚀 Componente VIPAdminView montado, verificando permissões...')
        console.log('🔑 Token no store:', !!store.getters.authToken)
        console.log('👤 Usuário atual:', store.getters.currentUser)
@@ -1564,6 +1731,9 @@ export default {
            rawUser: currentUser
          })
        }
+       
+       // Carregar planos do banco de dados
+       await loadPlans()
        
        // Verificar se o usuário é admin
        if (!store.getters.isAdmin) {
@@ -1638,6 +1808,8 @@ export default {
       filteredActiveVIPs,
       filteredVIPHistory,
       availablePlans,
+      groupedPlans,
+      plans,
       getVIPStatus,
       hasActiveFilters,
       hasActiveHistoryFilters,
@@ -1661,6 +1833,7 @@ export default {
       processExpiredVIPs,
       generateWeeklyReport,
       generateReports,
+      loadPlans,
              formatDate,
        formatCurrency,
        formatPercentage,

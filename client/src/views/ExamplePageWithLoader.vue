@@ -1,36 +1,31 @@
 <template>
-  <div class="page-container">
-    <!-- Header da página -->
+  <div class="example-page">
     <div class="page-header">
       <h1>Exemplo de Página com Loader</h1>
-      <p>Esta página demonstra como usar o loader dentro da página</p>
+      <p>Esta página demonstra como usar o sistema de loader otimizado</p>
     </div>
-
-    <!-- Conteúdo principal com loader -->
-    <div class="page-content" style="position: relative;">
-      <!-- Conteúdo da página -->
-      <div class="content-section">
-        <h2>Dados da API</h2>
-        <div v-if="!dataLoaded" class="no-data">
-          <p>Nenhum dado carregado ainda</p>
+    
+    <div class="page-content">
+      <div class="demo-section">
+        <h3>Loader da Página (não bloqueia o sidebar)</h3>
+        <div class="demo-buttons">
           <button @click="loadData" class="btn btn-primary" :disabled="isLoading">
             {{ isLoading ? 'Carregando...' : 'Carregar Dados' }}
           </button>
-        </div>
-        
-        <div v-else class="data-display">
-          <h3>Dados carregados com sucesso!</h3>
-          <p>Timestamp: {{ lastLoadTime }}</p>
           <button @click="refreshData" class="btn btn-secondary" :disabled="isLoading">
             {{ isLoading ? 'Atualizando...' : 'Atualizar' }}
           </button>
         </div>
+        
+        <div v-if="dataLoaded" class="data-display">
+          <h4>Dados carregados com sucesso!</h4>
+          <p>Timestamp: {{ lastLoadTime }}</p>
+        </div>
       </div>
-
-      <!-- Seção de configurações -->
-      <div class="content-section">
-        <h2>Configurações do Loader</h2>
-        <div class="loader-config">
+      
+      <div class="demo-section">
+        <h3>Configurações do Loader</h3>
+        <div class="config-options">
           <label>
             Texto do Loader:
             <input v-model="loaderText" type="text" class="form-input" />
@@ -53,20 +48,20 @@
           </label>
         </div>
       </div>
-
-      <!-- Loader da página -->
-      <PageLoader 
-        :isLoading="isLoading"
-        :text="loaderText"
-        :size="loaderSize"
-        :position="loaderPosition"
-      />
     </div>
+    
+    <!-- Loader da página -->
+    <PageLoader 
+      :isLoading="isLoading"
+      :text="loaderText"
+      :size="loaderSize"
+      :position="loaderPosition"
+    />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import PageLoader from '@/components/PageLoader.vue'
 import { usePageLoader } from '@/composables/usePageLoader'
 
@@ -80,64 +75,47 @@ export default {
     const dataLoaded = ref(false)
     const lastLoadTime = ref(null)
     
-    // Configuração do loader
+    // Configurações do loader
     const loaderText = ref('Carregando dados...')
     const loaderSize = ref('medium')
     const loaderPosition = ref('center')
     
     // Usar o composable do loader
-    const { isLoading, showLoader, hideLoader, withLoader } = usePageLoader({
-      text: loaderText.value,
-      size: loaderSize.value,
-      position: loaderPosition.value
+    const { isLoading, withPageLoader } = usePageLoader({
+      text: loaderText.value
     })
-
-    // Simular carregamento de dados
+    
+    // Função para carregar dados
     const loadData = async () => {
-      await withLoader(async () => {
-        // Simular chamada à API
+      await withPageLoader(async () => {
+        // Simular carregamento
         await new Promise(resolve => setTimeout(resolve, 2000))
-        
-        // Simular dados carregados
         dataLoaded.value = true
         lastLoadTime.value = new Date().toLocaleString()
-      }, {
-        text: 'Carregando dados da API...',
-        size: 'large',
-        position: 'center'
-      })
+      }, 'Carregando dados...')
     }
-
-    // Atualizar dados
+    
+    // Função para atualizar dados
     const refreshData = async () => {
-      await withLoader(async () => {
+      await withPageLoader(async () => {
         // Simular atualização
         await new Promise(resolve => setTimeout(resolve, 1500))
-        
         lastLoadTime.value = new Date().toLocaleString()
-      }, {
-        text: 'Atualizando dados...',
-        size: 'medium',
-        position: 'center'
-      })
+      }, 'Atualizando dados...')
     }
-
-    // Carregar dados automaticamente ao montar a página
-    onMounted(() => {
-      // Opcional: carregar dados automaticamente
-      // loadData()
-    })
-
+    
     return {
       // Estado
       dataLoaded,
       lastLoadTime,
-      isLoading,
       
       // Configuração do loader
       loaderText,
       loaderSize,
       loaderPosition,
+      
+      // Computed
+      isLoading,
       
       // Métodos
       loadData,
@@ -148,109 +126,59 @@ export default {
 </script>
 
 <style scoped>
-.page-container {
-  min-height: 100vh;
+.example-page {
   padding: 20px;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  max-width: 800px;
+  margin: 0 auto;
+  position: relative;
+  min-height: 400px;
 }
 
 .page-header {
   text-align: center;
-  margin-bottom: 40px;
-  padding: 20px;
-  background-color: var(--bg-secondary);
-  border-radius: 12px;
+  margin-bottom: 30px;
 }
 
 .page-header h1 {
-  margin-bottom: 10px;
   color: var(--text-primary);
+  margin-bottom: 10px;
 }
 
 .page-header p {
   color: var(--text-secondary);
-  font-size: 16px;
 }
 
 .page-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.content-section {
-  background-color: var(--bg-secondary);
-  padding: 24px;
-  margin-bottom: 20px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.content-section h2 {
-  margin-bottom: 16px;
-  color: var(--text-primary);
-  font-size: 20px;
-}
-
-.content-section h3 {
-  margin-bottom: 12px;
-  color: var(--text-primary);
-  font-size: 18px;
-}
-
-.no-data {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-secondary);
-}
-
-.data-display {
-  padding: 20px;
-  background-color: var(--bg-tertiary);
-  border-radius: 8px;
-  border: 1px solid var(--success-color);
-}
-
-.loader-config {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 16px;
-}
-
-.loader-config label {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-weight: 500;
-  color: var(--text-primary);
+  gap: 30px;
 }
 
-.form-input,
-.form-select {
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 14px;
+.demo-section {
+  background: var(--bg-secondary);
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
 }
 
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+.demo-section h3 {
+  color: var(--text-primary);
+  margin-bottom: 15px;
+}
+
+.demo-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .btn {
   padding: 10px 20px;
   border: none;
   border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  font-weight: 500;
+  transition: all 0.3s ease;
 }
 
 .btn:disabled {
@@ -259,35 +187,86 @@ export default {
 }
 
 .btn-primary {
-  background-color: var(--primary-color);
-  color: white;
+  background: var(--accent-primary);
+  color: var(--text-button-primary);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--primary-hover);
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: var(--secondary-color);
-  color: white;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: var(--secondary-hover);
+  background: var(--bg-overlay);
+  transform: translateY(-1px);
 }
 
-/* Responsivo */
+.data-display {
+  background: var(--bg-overlay);
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 4px solid var(--accent-primary);
+}
+
+.data-display h4 {
+  color: var(--accent-primary);
+  margin-bottom: 8px;
+}
+
+.data-display p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.config-options {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.config-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-input,
+.form-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
+}
+
+/* Responsividade */
 @media (max-width: 768px) {
-  .page-container {
-    padding: 16px;
+  .example-page {
+    padding: 15px;
   }
   
-  .loader-config {
-    grid-template-columns: 1fr;
+  .demo-buttons {
+    flex-direction: column;
   }
   
-  .content-section {
-    padding: 16px;
+  .config-options {
+    gap: 12px;
   }
 }
 </style>

@@ -21,10 +21,11 @@ class VIPService {
       // Ativar VIP usando o modelo
       const vip = await UserVIP.activateVIP(userId, planData);
       
-      // Atualizar status do usuário
+      // Atualizar status do usuário com o plano específico
       await user.update({
         is_vip: true,
-        account_type: planData.plan_id
+        account_type: planData.plan_name, // Usar o nome do plano, não o ID
+        plan: planData.plan_name // Adicionar campo plan também
       });
 
       console.log(`✅ VIP ativado com sucesso para usuário ${userId}`);
@@ -299,7 +300,8 @@ class VIPService {
               
               await vip.user.update({
                 is_vip: highestPlan.plan_id === 'vip',
-                account_type: highestPlan.plan_id
+                account_type: highestPlan.plan_name, // Usar o nome do plano, não o ID
+                plan: highestPlan.plan_name // Adicionar campo plan também
               });
               
               console.log(`✅ Usuário ${vip.user.id} mantido no plano ${highestPlan.plan_name} (${highestPlan.plan_id})`);

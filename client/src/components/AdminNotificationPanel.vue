@@ -358,9 +358,9 @@ export default {
         if (filters.target_audience) params.append('target_audience', filters.target_audience);
         
         const response = await adminAPI.getNotifications(params.toString());
-        console.log('📊 Resposta da API notificações:', response.data);
-        console.log('📊 Tipo da resposta:', typeof response.data);
-        console.log('📊 Propriedades da resposta:', Object.keys(response.data));
+        console.log('📊 Resposta da API notificações:', response);
+        console.log('📊 Tipo da resposta:', typeof response);
+        console.log('📊 Propriedades da resposta:', response ? Object.keys(response) : 'response é null/undefined');
         
         // Verificar se a resposta tem a estrutura esperada
         if (response && response.success && response.data && Array.isArray(response.data.notifications)) {
@@ -387,9 +387,9 @@ export default {
     const loadStats = async () => {
       try {
         const response = await adminAPI.getNotificationStats();
-        console.log('📊 Resposta da API estatísticas:', response.data);
-        console.log('📊 Tipo da resposta:', typeof response.data);
-        console.log('📊 Propriedades da resposta:', Object.keys(response.data));
+        console.log('📊 Resposta da API estatísticas:', response);
+        console.log('📊 Tipo da resposta:', typeof response);
+        console.log('📊 Propriedades da resposta:', response ? Object.keys(response) : 'response é null/undefined');
         
         // Verificar se a resposta tem a estrutura esperada
         if (response && response.success && response.data) {
@@ -556,7 +556,7 @@ export default {
         } else {
           testResults.apiStats = { 
             status: 'error', 
-            message: `❌ Estrutura inválida: ${JSON.stringify(response).substring(0, 100)}...` 
+            message: `❌ Estrutura inválida: ${response ? JSON.stringify(response).substring(0, 100) : 'response é null/undefined'}...` 
           };
         }
       } catch (error) {
@@ -580,7 +580,7 @@ export default {
         } else {
           testResults.apiNotifications = { 
             status: 'error', 
-            message: `❌ Estrutura inválida: ${JSON.stringify(response).substring(0, 100)}...` 
+            message: `❌ Estrutura inválida: ${response ? JSON.stringify(response).substring(0, 100) : 'response é null/undefined'}...` 
           };
         }
       } catch (error) {

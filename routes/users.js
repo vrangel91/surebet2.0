@@ -46,6 +46,9 @@ router.use(authenticateToken);
 // GET /api/users/profile - Obter perfil do usuário atual
 router.get('/profile', async (req, res) => {
   try {
+    console.log('🔍 [Users] Rota de perfil chamada')
+    console.log('🔍 [Users] Request headers:', req.headers)
+    console.log('🔍 [Users] User from token:', req.user)
     console.log('👤 [Profile] Buscando perfil do usuário:', req.user.id);
     
     const user = await User.findByPk(req.user.id, {
@@ -739,7 +742,7 @@ router.get('/', async (req, res) => {
     const users = await User.findAll({
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'account_type', 'created_at', 'last_login'
+        'vip_expires_at', 'account_type', 'status', 'created_at', 'last_login'
       ],
       order: [['created_at', 'DESC']]
     });
@@ -750,7 +753,7 @@ router.get('/', async (req, res) => {
       name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Nome não informado',
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'basic',
-      status: 'active',
+      status: user.status, // Usar o status real do banco de dados
       lastLogin: user.last_login // Mapear para o formato esperado pelo frontend
     }));
 
@@ -892,9 +895,9 @@ router.put('/:id', async (req, res) => {
   try {
     console.log('🔄 PUT /api/users/:id - Iniciando atualização...')
     const { id } = req.params;
-    const { name, email, role, account_type, status } = req.body;
+    const { name, email, role, account_type, plan, status } = req.body;
     
-    console.log('Backend: Dados recebidos:', { id, name, email, role, account_type, status })
+    console.log('Backend: Dados recebidos:', { id, name, email, role, account_type, plan, status })
 
     const user = await User.findByPk(id);
 
@@ -916,9 +919,14 @@ router.put('/:id', async (req, res) => {
     if (name) user.name = name;
     if (email) user.email = email.toLowerCase();
     if (role) user.role = role;
+    
+    // Priorizar account_type sobre plan para evitar conflitos
     if (account_type) {
       console.log('Backend: Atualizando account_type de', user.account_type, 'para', account_type)
       user.account_type = account_type;
+    } else if (plan) {
+      console.log('Backend: Atualizando plan de', user.account_type, 'para', plan)
+      user.account_type = plan; // Usar account_type para armazenar o plano apenas se account_type não foi fornecido
     }
 
     if (status) user.status = status;
@@ -1035,10 +1043,14 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 // Alterar status do usuário
 router.patch('/:id/status', requireAdmin, async (req, res) => {
   try {
+    console.log('🔄 [Status Update] Iniciando alteração de status...');
     const { id } = req.params;
     const { status } = req.body;
     
+    console.log('🔄 [Status Update] Dados recebidos:', { userId: id, newStatus: status });
+    
     if (!status || !['active', 'inactive'].includes(status)) {
+      console.log('❌ [Status Update] Status inválido:', status);
       return res.status(400).json({
         error: 'Status inválido. Deve ser "active" ou "inactive"'
       });
@@ -1046,14 +1058,31 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
     
     const user = await User.findByPk(id);
     if (!user) {
+      console.log('❌ [Status Update] Usuário não encontrado:', id);
       return res.status(404).json({
         error: 'Usuário não encontrado'
       });
     }
     
+    console.log('✅ [Status Update] Usuário encontrado:', {
+      id: user.id,
+      email: user.email,
+      statusAtual: user.status,
+      novoStatus: status
+    });
+    
     // Atualizar status
+    const statusAnterior = user.status;
     user.status = status;
+    
+    console.log('💾 [Status Update] Salvando no banco...');
     await user.save();
+    
+    console.log('✅ [Status Update] Status alterado com sucesso:', {
+      id: user.id,
+      statusAnterior,
+      statusNovo: user.status
+    });
     
     res.json({
       success: true,
@@ -1065,8 +1094,88 @@ router.patch('/:id/status', requireAdmin, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Erro ao alterar status do usuário:', error);
+    console.error('❌ [Status Update] Erro ao alterar status do usuário:', error);
     res.status(500).json({
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Alterar senha do usuário (admin only)
+router.patch('/:id/password', requireAdmin, async (req, res) => {
+  try {
+    console.log('🔐 [Change Password] Iniciando alteração de senha...')
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    console.log('🔐 [Change Password] Dados recebidos:', { userId: id, hasPassword: !!newPassword })
+    
+    // Validações
+    if (!newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nova senha é obrigatória'
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        error: 'A senha deve ter pelo menos 6 caracteres'
+      });
+    }
+    
+    if (newPassword.length > 50) {
+      return res.status(400).json({
+        success: false,
+        error: 'A senha deve ter no máximo 50 caracteres'
+      });
+    }
+    
+    // Buscar usuário
+    const user = await User.findByPk(id);
+    if (!user) {
+      console.log('❌ [Change Password] Usuário não encontrado:', id)
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
+    
+    console.log('✅ [Change Password] Usuário encontrado:', { 
+      id: user.id, 
+      email: user.email, 
+      username: user.username 
+    })
+    
+    // Hash da nova senha
+    const bcrypt = require('bcryptjs');
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    
+    // Atualizar senha
+    user.password_hash = passwordHash;
+    await user.save();
+    
+    console.log('✅ [Change Password] Senha alterada com sucesso para usuário:', user.email)
+    
+    // Log da ação para auditoria
+    console.log('📝 [AUDIT] Senha alterada:', {
+      userId: user.id,
+      userEmail: user.email,
+      adminId: req.user.id,
+      adminEmail: req.user.email,
+      timestamp: new Date().toISOString()
+    })
+    
+    res.json({
+      success: true,
+      message: 'Senha alterada com sucesso'
+    });
+    
+  } catch (error) {
+    console.error('❌ [Change Password] Erro ao alterar senha:', error);
+    res.status(500).json({
+      success: false,
       error: 'Erro interno do servidor'
     });
   }

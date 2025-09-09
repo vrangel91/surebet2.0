@@ -121,7 +121,7 @@ router.get('/my-status', async (req, res) => {
         commissionBalance: user.commission_balance || 0,
         totalEarned: totalCommission,
         referredUsers: referredUsersWithCommission,
-        affiliateLink: `${process.env.FRONTEND_URL || 'http://localhost:3001'}/login?referer_id=${user.referral_code}`
+        affiliateLink: `${process.env.FRONTEND_URL || 'https://surestake.com.br'}/login?referer_id=${user.referral_code}`
       }
     };
     

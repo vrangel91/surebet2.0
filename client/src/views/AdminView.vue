@@ -123,6 +123,13 @@
               </button>
               <button 
                 class="tab-btn" 
+                :class="{ active: activeTab === 'payments' }"
+                @click="activeTab = 'payments'"
+              >
+                💳 Pagamentos
+              </button>
+              <button 
+                class="tab-btn" 
                 :class="{ active: activeTab === 'notifications' }"
                 @click="activeTab = 'notifications'"
               >
@@ -180,7 +187,9 @@
                   
                   <div class="user-content">
                     <div class="user-meta">
-                      <span class="user-plan">{{ user.plan || 'Sem plano' }}</span>
+                      <span class="user-plan">{{ getPlanDisplayName(user.plan) || 'Sem plano' }}</span>
+                      <!-- Debug: {{ user.plan }} -->
+                      <span class="user-role" :class="user.account_type">{{ getUserRoleText(user.account_type) }}</span>
                       <span class="user-created">{{ formatDate(user.createdAt) }}</span>
                     </div>
                   </div>
@@ -206,6 +215,12 @@
                         <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.5-.5V9h-.5a.5.5 0 0 1-.5-.5V8h-.5a.5.5 0 0 1-.5-.5V7h-.5a.5.5 0 0 1-.5-.5V6h-.5a.5.5 0 0 1-.5-.5V5h-.5a.5.5 0 0 1-.5-.5V4h-.5a.5.5 0 0 1-.5-.5V3h-.5a.5.5 0 0 1-.5-.5V2h-.5a.5.5 0 0 1-.5-.5V1h-.5a.5.5 0 0 1-.5-.5V0H1a.5.5 0 0 0-.5.5v15a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5V1a.5.5 0 0 0-.5-.5H1z"/>
                       </svg>
                       Editar
+                    </button>
+                    <button class="action-btn password-btn" @click="changePassword(user)">
+                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                      </svg>
+                      Senha
                     </button>
                     <button class="action-btn delete-btn" @click="deleteUser(user)">
                       <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -289,6 +304,135 @@
                     </div>
                     <div class="ticket-priority" :class="ticket.priority">
                       <span class="priority-badge">{{ getPriorityText(ticket.priority) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Payments Tab -->
+            <div v-if="activeTab === 'payments'" class="tab-content">
+              <div class="section-header">
+                <h3 class="section-title">Gerenciamento de Pagamentos</h3>
+                <div class="filter-controls">
+                  <input 
+                    v-model="paymentSearchQuery" 
+                    type="text" 
+                    placeholder="Buscar por usuário, email ou ID do pagamento..."
+                    class="search-input"
+                  >
+                  <select v-model="paymentPlanFilter" class="status-filter">
+                    <option value="">Todos os Planos</option>
+                    <template v-for="(plans, category) in groupedPlans" :key="category">
+                      <optgroup :label="category">
+                        <option 
+                          v-for="plan in plans" 
+                          :key="plan.id" 
+                          :value="plan.type"
+                        >
+                          {{ plan.display_name || plan.name }}
+                        </option>
+                      </optgroup>
+                    </template>
+                  </select>
+                  <select v-model="paymentStatusFilter" class="status-filter">
+                    <option value="">Todos os Status</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="pending">Pendente</option>
+                    <option value="rejected">Rejeitado</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
+                  <select v-model="paymentPeriodFilter" class="status-filter">
+                    <option value="">Todos os Períodos</option>
+                    <option value="today">Hoje</option>
+                    <option value="week">Esta Semana</option>
+                    <option value="month">Este Mês</option>
+                    <option value="year">Este Ano</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="payments-list">
+                <!-- Loading State -->
+                <div v-if="loadingPayments" class="loading-payments">
+                  <div class="loading-spinner"></div>
+                  <p>Carregando pagamentos...</p>
+                </div>
+                
+                <!-- Empty State -->
+                <div v-else-if="filteredPayments.length === 0" class="empty-payments">
+                  <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                  </svg>
+                  <h4>Nenhum pagamento encontrado</h4>
+                  <p>Não há pagamentos que correspondam aos filtros selecionados</p>
+                </div>
+
+                <div v-for="payment in filteredPayments" :key="payment.id" class="payment-card">
+                  <div class="payment-header">
+                    <div class="payment-info">
+                      <h4 class="payment-user">{{ payment.userName }}</h4>
+                      <span class="payment-email">{{ payment.userEmail }}</span>
+                      <span class="payment-id">#{{ payment.id }}</span>
+                    </div>
+                    <div class="payment-status" :class="payment.status">
+                      <span class="status-badge">{{ getPaymentStatusText(payment.status) }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="payment-content">
+                    <div class="payment-details">
+                      <div class="payment-plan">
+                        <span class="plan-label">Plano:</span>
+                        <span class="plan-name">{{ getPlanDisplayName(payment.planId) }}</span>
+                      </div>
+                      <div class="payment-amount">
+                        <span class="amount-label">Valor:</span>
+                        <span class="amount-value">R$ {{ payment.amount.toFixed(2) }}</span>
+                      </div>
+                      <div class="payment-method">
+                        <span class="method-label">Método:</span>
+                        <span class="method-name">{{ getPaymentMethodText(payment.paymentMethod) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="payment-footer">
+                    <div class="payment-meta">
+                      <span class="payment-date">{{ formatDate(payment.createdAt) }}</span>
+                      <span class="payment-expires" v-if="payment.expiresAt">
+                        Expira em: {{ formatDate(payment.expiresAt) }}
+                      </span>
+                    </div>
+                    <div class="payment-actions">
+                      <button class="action-btn view-btn" @click="viewPaymentDetails(payment)">
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                          <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                        </svg>
+                        Ver Detalhes
+                      </button>
+                      <button 
+                        v-if="payment.status === 'pending'" 
+                        class="action-btn approve-btn" 
+                        @click="approvePayment(payment)"
+                      >
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                        </svg>
+                        Aprovar
+                      </button>
+                      <button 
+                        v-if="payment.status === 'pending'" 
+                        class="action-btn reject-btn" 
+                        @click="rejectPayment(payment)"
+                      >
+                        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                        </svg>
+                        Rejeitar
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -437,9 +581,17 @@
                 <label for="user-plan">Plano</label>
                 <select id="user-plan" v-model="newUser.plan" class="form-select">
                   <option value="">Sem plano</option>
-                  <option value="basic">Básico</option>
-                  <option value="premium">Premium</option>
-                  <option value="vip">VIP</option>
+                  <template v-for="(plans, category) in groupedPlans" :key="category">
+                    <optgroup :label="category">
+                      <option 
+                        v-for="plan in plans" 
+                        :key="plan.id" 
+                        :value="plan.type"
+                      >
+                        {{ plan.display_name || plan.name }}
+                      </option>
+                    </optgroup>
+                  </template>
                 </select>
               </div>
               
@@ -467,11 +619,20 @@
                 <input 
                   id="edit-user-name"
                   v-model="editingUser.name" 
+                  @input="validateField('name', $event.target.value)"
+                  @blur="validateField('name', $event.target.value)"
                   type="text" 
                   class="form-input"
+                  :class="{
+                    'field-valid': fieldValidation.name.isValid && fieldValidation.name.isTouched,
+                    'field-invalid': !fieldValidation.name.isValid && fieldValidation.name.isTouched
+                  }"
                   placeholder="Nome completo"
                   required
                 >
+                <div v-if="validationErrors.name" class="field-error">
+                  {{ validationErrors.name }}
+                </div>
               </div>
               
               <div class="form-group">
@@ -479,22 +640,25 @@
                 <input 
                   id="edit-user-email"
                   v-model="editingUser.email" 
+                  @input="validateField('email', $event.target.value)"
+                  @blur="validateField('email', $event.target.value)"
                   type="email" 
                   class="form-input"
+                  :class="{
+                    'field-valid': fieldValidation.email.isValid && fieldValidation.email.isTouched,
+                    'field-invalid': !fieldValidation.email.isValid && fieldValidation.email.isTouched
+                  }"
                   placeholder="email@exemplo.com"
                   required
                 >
+                <div v-if="validationErrors.email" class="field-error">
+                  {{ validationErrors.email }}
+                </div>
+                <div v-if="isValidatingEmail" class="field-loading">
+                  Validando email...
+                </div>
               </div>
               
-              <div class="form-group">
-                <label for="edit-user-plan">Plano</label>
-                <select id="edit-user-plan" v-model="editingUser.plan" class="form-select">
-                  <option value="">Sem plano</option>
-                  <option value="basic">Básico</option>
-                  <option value="premium">Premium</option>
-                  <option value="vip">VIP</option>
-                </select>
-              </div>
               
               <div class="form-group">
                 <label for="edit-user-status">Status</label>
@@ -504,9 +668,132 @@
                 </select>
               </div>
               
+              <div class="form-group">
+                <label for="edit-user-role">Tipo de Conta</label>
+                <select 
+                  id="edit-user-role" 
+                  v-model="editingUser.account_type" 
+                  @change="validateField('account_type', $event.target.value)"
+                  class="form-select"
+                  :class="{
+                    'field-valid': fieldValidation.account_type.isValid && fieldValidation.account_type.isTouched,
+                    'field-invalid': !fieldValidation.account_type.isValid && fieldValidation.account_type.isTouched
+                  }"
+                >
+                  <option value="">Selecione o tipo de conta</option>
+                  <option value="user">Usuário</option>
+                  <option value="admin">Administrador</option>
+                  <option value="moderator">Moderador</option>
+                </select>
+                <div v-if="validationErrors.account_type" class="field-error">
+                  {{ validationErrors.account_type }}
+                </div>
+                <small class="form-help">
+                  <strong>Usuário:</strong> Acesso padrão ao sistema<br>
+                  <strong>Moderador:</strong> Pode gerenciar tickets e usuários<br>
+                  <strong>Administrador:</strong> Acesso completo ao sistema
+                </small>
+              </div>
+              
               <div class="form-actions">
-                <button type="button" class="cancel-btn" @click="closeEditUserModal">Cancelar</button>
-                <button type="submit" class="submit-btn">Salvar Alterações</button>
+                <button 
+                  type="button" 
+                  class="cancel-btn" 
+                  @click="closeEditUserModal"
+                  :disabled="isSaving"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  class="submit-btn"
+                  :disabled="!isFormValid()"
+                  :class="{ 'loading': isSaving }"
+                >
+                  <span v-if="isSaving" class="loading-spinner-small"></span>
+                  {{ isSaving ? 'Salvando...' : 'Salvar Alterações' }}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Password Modal -->
+      <div v-if="showChangePasswordModal" class="modal-overlay" @click="closeChangePasswordModal">
+        <div class="user-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Alterar Senha</h3>
+            <button class="close-btn" @click="closeChangePasswordModal">×</button>
+          </div>
+          
+          <div class="modal-body">
+            <div class="password-user-info">
+              <p><strong>Usuário:</strong> {{ userToChangePassword?.name }}</p>
+              <p><strong>Email:</strong> {{ userToChangePassword?.email }}</p>
+            </div>
+            
+            <form @submit.prevent="updatePassword">
+              <div class="form-group">
+                <label for="new-password">Nova Senha</label>
+                <input 
+                  id="new-password"
+                  v-model="newPassword" 
+                  type="password" 
+                  class="form-input"
+                  :class="{
+                    'field-valid': passwordValidation.isValid && passwordValidation.isTouched,
+                    'field-invalid': !passwordValidation.isValid && passwordValidation.isTouched
+                  }"
+                  placeholder="Digite a nova senha"
+                  required
+                  @input="validatePassword"
+                  @blur="validatePassword"
+                >
+                <div v-if="passwordValidation.error" class="field-error">
+                  {{ passwordValidation.error }}
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="confirm-password">Confirmar Nova Senha</label>
+                <input 
+                  id="confirm-password"
+                  v-model="confirmPassword" 
+                  type="password" 
+                  class="form-input"
+                  :class="{
+                    'field-valid': confirmPasswordValidation.isValid && confirmPasswordValidation.isTouched,
+                    'field-invalid': !confirmPasswordValidation.isValid && confirmPasswordValidation.isTouched
+                  }"
+                  placeholder="Confirme a nova senha"
+                  required
+                  @input="validateConfirmPassword"
+                  @blur="validateConfirmPassword"
+                >
+                <div v-if="confirmPasswordValidation.error" class="field-error">
+                  {{ confirmPasswordValidation.error }}
+                </div>
+              </div>
+              
+              <div class="form-actions">
+                <button 
+                  type="button" 
+                  class="cancel-btn" 
+                  @click="closeChangePasswordModal"
+                  :disabled="isUpdatingPassword"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  class="submit-btn"
+                  :disabled="!isPasswordFormValid()"
+                  :class="{ 'loading': isUpdatingPassword }"
+                >
+                  <span v-if="isUpdatingPassword" class="loading-spinner-small"></span>
+                  {{ isUpdatingPassword ? 'Alterando...' : 'Alterar Senha' }}
+                </button>
               </div>
             </form>
           </div>
@@ -528,6 +815,89 @@
             <div class="form-actions">
               <button type="button" class="cancel-btn" @click="closeDeleteUserModal">Cancelar</button>
               <button type="button" class="delete-btn" @click="confirmDeleteUser">Excluir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Details Modal -->
+      <div v-if="showPaymentDetailModal" class="modal-overlay" @click="closePaymentDetailModal">
+        <div class="payment-detail-modal admin-modal" @click.stop>
+          <div class="modal-header">
+            <h3>Detalhes do Pagamento #{{ selectedPayment?.id }}</h3>
+            <button class="close-btn" @click="closePaymentDetailModal">×</button>
+          </div>
+          
+          <div class="modal-body" v-if="selectedPayment">
+            <div class="payment-detail-header">
+              <div class="payment-detail-meta">
+                <span class="status-badge" :class="selectedPayment.status">{{ getPaymentStatusText(selectedPayment.status) }}</span>
+                <span class="amount-badge">R$ {{ selectedPayment.amount.toFixed(2) }}</span>
+                <span class="plan-badge">{{ getPlanDisplayName(selectedPayment.planId) }}</span>
+              </div>
+            </div>
+            
+            <div class="payment-detail-content">
+              <div class="payment-info-grid">
+                <div class="info-item">
+                  <label>Usuário:</label>
+                  <span>{{ selectedPayment.userName }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Email:</label>
+                  <span>{{ selectedPayment.userEmail }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Plano:</label>
+                  <span>{{ getPlanDisplayName(selectedPayment.planId) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Valor:</label>
+                  <span>R$ {{ selectedPayment.amount.toFixed(2) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Método de Pagamento:</label>
+                  <span>{{ getPaymentMethodText(selectedPayment.paymentMethod) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Status:</label>
+                  <span class="status-text" :class="selectedPayment.status">{{ getPaymentStatusText(selectedPayment.status) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Data do Pagamento:</label>
+                  <span>{{ formatDate(selectedPayment.createdAt) }}</span>
+                </div>
+                <div class="info-item" v-if="selectedPayment.expiresAt">
+                  <label>Expira em:</label>
+                  <span>{{ formatDate(selectedPayment.expiresAt) }}</span>
+                </div>
+                <div class="info-item" v-if="selectedPayment.paymentId">
+                  <label>ID do Pagamento:</label>
+                  <span class="payment-id-text">{{ selectedPayment.paymentId }}</span>
+                </div>
+                <div class="info-item" v-if="selectedPayment.description">
+                  <label>Descrição:</label>
+                  <span>{{ selectedPayment.description }}</span>
+                </div>
+              </div>
+              
+              <div class="payment-actions-section" v-if="selectedPayment.status === 'pending'">
+                <h5>Ações Administrativas</h5>
+                <div class="admin-actions">
+                  <button class="approve-payment-btn" @click="approvePayment(selectedPayment)">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Aprovar Pagamento
+                  </button>
+                  <button class="reject-payment-btn" @click="rejectPayment(selectedPayment)">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                    Rejeitar Pagamento
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -593,7 +963,9 @@ export default {
       showCreateUserModal: false,
       showEditUserModal: false,
       showDeleteUserModal: false,
+      showChangePasswordModal: false,
       showPWAForceUpdateModal: false,
+      showPaymentDetailModal: false,
       activeTab: 'users',
       statusFilter: '',
       priorityFilter: '',
@@ -604,6 +976,19 @@ export default {
       selectedTicket: null,
       newMessage: '',
       userToDelete: null,
+      userToChangePassword: null,
+      newPassword: '',
+      confirmPassword: '',
+      isUpdatingPassword: false,
+      
+      // Payment management
+      paymentSearchQuery: '',
+      paymentPlanFilter: '',
+      paymentStatusFilter: '',
+      paymentPeriodFilter: '',
+      selectedPayment: null,
+      payments: [],
+      loadingPayments: false,
       
       newUser: {
         name: '',
@@ -615,8 +1000,38 @@ export default {
       editingUser: {
         name: '',
         email: '',
-        plan: '',
-        status: 'active'
+        status: 'active',
+        account_type: 'user'
+      },
+      
+      // Estados de validação
+      validationErrors: {
+        name: '',
+        email: '',
+        account_type: ''
+      },
+      
+      // Estados de loading
+      isSaving: false,
+      isValidatingEmail: false,
+      
+      // Estados de validação em tempo real
+      fieldValidation: {
+        name: { isValid: false, isTouched: false },
+        email: { isValid: false, isTouched: false },
+        account_type: { isValid: false, isTouched: false }
+      },
+      
+      // Validações de senha
+      passwordValidation: {
+        isValid: false,
+        isTouched: false,
+        error: ''
+      },
+      confirmPasswordValidation: {
+        isValid: false,
+        isTouched: false,
+        error: ''
       },
       
       // Dados dos usuários carregados do banco
@@ -624,6 +1039,9 @@ export default {
       loading: false,
       
       tickets: [],
+      
+      // Sistema de planos
+      plans: [],
       
       // Estado da atualização PWA
       updatingPWA: false
@@ -633,8 +1051,28 @@ export default {
   computed: {
     ...mapGetters([
       'currentUser',
-      'isAdmin'
+      'isAdmin',
+      'allPlans',
+      'plansLoaded'
     ]),
+    
+    // Planos agrupados por categoria para os modais
+    groupedPlans() {
+      if (!this.plansLoaded && !this.plans.length) {
+        return {}
+      }
+      
+      const plansData = this.plansLoaded ? this.allPlans : this.plans
+      
+      return plansData.reduce((groups, plan) => {
+        const category = plan.category || 'Outros'
+        if (!groups[category]) {
+          groups[category] = []
+        }
+        groups[category].push(plan)
+        return groups
+      }, {})
+    },
     
     dashboardStats() {
       const totalTickets = this.tickets.length
@@ -721,6 +1159,59 @@ export default {
       }
 
       return filtered
+    },
+    
+    filteredPayments() {
+      let filtered = this.payments
+
+      // Filtro por plano
+      if (this.paymentPlanFilter) {
+        filtered = filtered.filter(payment => payment.planId === this.paymentPlanFilter)
+      }
+
+      // Filtro por status
+      if (this.paymentStatusFilter) {
+        filtered = filtered.filter(payment => payment.status === this.paymentStatusFilter)
+      }
+
+      // Filtro por período
+      if (this.paymentPeriodFilter) {
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        
+        filtered = filtered.filter(payment => {
+          const paymentDate = new Date(payment.createdAt)
+          
+          switch (this.paymentPeriodFilter) {
+            case 'today':
+              return paymentDate >= today
+            case 'week':
+              const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+              return paymentDate >= weekAgo
+            case 'month':
+              const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+              return paymentDate >= monthAgo
+            case 'year':
+              const yearAgo = new Date(today.getTime() - 365 * 24 * 60 * 60 * 1000)
+              return paymentDate >= yearAgo
+            default:
+              return true
+          }
+        })
+      }
+
+      // Filtro por busca
+      if (this.paymentSearchQuery) {
+        const query = this.paymentSearchQuery.toLowerCase()
+        filtered = filtered.filter(payment => 
+          payment.id.toString().includes(query) ||
+          payment.userName.toLowerCase().includes(query) ||
+          payment.userEmail.toLowerCase().includes(query) ||
+          (payment.paymentId && payment.paymentId.toLowerCase().includes(query))
+        )
+      }
+
+      return filtered
     }
   },
   
@@ -737,7 +1228,7 @@ export default {
         const response = await axios.get('/api/users')
         console.log('📊 Resposta da API usuários:', response.data)
         console.log('📊 Tipo da resposta:', typeof response.data)
-        console.log('📊 Propriedades da resposta:', Object.keys(response.data))
+        console.log('📊 Propriedades da resposta:', response.data ? Object.keys(response.data) : 'response.data é null/undefined')
         
         // Verificar se a resposta tem a estrutura esperada
         if (response.data && response.data.success && Array.isArray(response.data.users)) {
@@ -745,8 +1236,9 @@ export default {
             id: user.id,
             name: user.name || user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Usuário',
             email: user.email,
-            status: user.status || 'active',
-            plan: user.account_type || user.plan || '',
+            status: user.status, // Não definir valor padrão - usar exatamente o que vem do banco
+            plan: user.plan || user.account_type || '', // Priorizar plan sobre account_type
+            account_type: user.account_type || 'user', // Manter account_type para tipo de conta
             createdAt: user.created_at || user.createdAt || new Date().toISOString()
           }))
           console.log('✅ Usuários carregados:', this.users.length)
@@ -773,7 +1265,7 @@ export default {
         const response = await axios.get('/api/tickets')
         console.log('📊 Resposta da API tickets:', response.data)
         console.log('📊 Tipo da resposta tickets:', typeof response.data)
-        console.log('📊 Propriedades da resposta tickets:', Object.keys(response.data))
+        console.log('📊 Propriedades da resposta tickets:', response.data ? Object.keys(response.data) : 'response.data é null/undefined')
         
         // Verificar se a resposta tem a estrutura esperada
         if (response.data && response.data.success && Array.isArray(response.data.tickets)) {
@@ -792,13 +1284,83 @@ export default {
       }
     },
     
+    // Carregar pagamentos do banco de dados
+    async loadPayments() {
+      console.log('🔍 Carregando pagamentos...')
+      this.loadingPayments = true
+      try {
+        const response = await axios.get('/api/admin/payments')
+        console.log('📊 Resposta da API pagamentos:', response.data)
+        
+        if (response.data && response.data.success && Array.isArray(response.data.payments)) {
+          this.payments = response.data.payments.map(payment => ({
+            id: payment.id,
+            userId: payment.user_id,
+            userName: payment.user_name || payment.userName || 'Usuário',
+            userEmail: payment.user_email || payment.userEmail || '',
+            planId: payment.plan_id || payment.planId || '',
+            amount: parseFloat(payment.amount) || 0,
+            status: payment.status || 'pending',
+            paymentMethod: payment.payment_method || payment.paymentMethod || 'pix',
+            paymentId: payment.payment_id || payment.paymentId || '',
+            description: payment.description || '',
+            createdAt: payment.created_at || payment.createdAt || new Date().toISOString(),
+            expiresAt: payment.expires_at || payment.expiresAt || null
+          }))
+          console.log('✅ Pagamentos carregados:', this.payments.length)
+        } else {
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          this.payments = []
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar pagamentos:', error)
+        console.error('📋 Detalhes do erro:', error.response?.data)
+        this.payments = []
+      } finally {
+        this.loadingPayments = false
+      }
+    },
+
+    // Carregar planos do banco de dados
+    async loadPlans() {
+      console.log('🔍 Carregando planos...')
+      try {
+        // Se os planos já estão carregados no store, usar eles
+        if (this.$store.getters.plansLoaded) {
+          this.plans = this.$store.getters.allPlans
+          console.log('✅ Planos carregados do store:', this.plans.length)
+          return
+        }
+        
+        // Caso contrário, carregar do banco
+        const response = await axios.get('/api/plans')
+        console.log('📊 Resposta da API planos:', response.data)
+        
+        if (response.data && response.data.success && Array.isArray(response.data.plans)) {
+          this.plans = response.data.plans
+          // Atualizar store também
+          this.$store.dispatch('setPlans', response.data.plans)
+          console.log('✅ Planos carregados:', this.plans.length)
+        } else {
+          console.warn('⚠️ Resposta da API não contém dados válidos:', response.data)
+          this.plans = []
+        }
+      } catch (error) {
+        console.error('❌ Erro ao carregar planos:', error)
+        console.error('📋 Detalhes do erro:', error.response?.data)
+        this.plans = []
+      }
+    },
+
     // Atualizar dados
     async refreshData() {
       console.log('🔄 Iniciando refreshData...')
       try {
         await Promise.all([
           this.loadUsers(),
-          this.loadTickets()
+          this.loadTickets(),
+          this.loadPayments(),
+          this.loadPlans()
         ])
         console.log('✅ refreshData concluído com sucesso')
       } catch (error) {
@@ -911,14 +1473,156 @@ export default {
       this.editingUser = {
         name: '',
         email: '',
-        plan: '',
-        status: 'active'
+        status: 'active',
+        account_type: 'user'
       }
+      // Limpar estados de validação
+      this.clearValidationStates()
+    },
+    
+    // Limpar estados de validação
+    clearValidationStates() {
+      this.validationErrors = {
+        name: '',
+        email: '',
+        account_type: ''
+      }
+      this.fieldValidation = {
+        name: { isValid: false, isTouched: false },
+        email: { isValid: false, isTouched: false },
+        account_type: { isValid: false, isTouched: false }
+      }
+      this.isSaving = false
+      this.isValidatingEmail = false
     },
     
     closeDeleteUserModal() {
       this.showDeleteUserModal = false
       this.userToDelete = null
+    },
+    
+    // Métodos para alteração de senha
+    changePassword(user) {
+      this.userToChangePassword = user
+      this.newPassword = ''
+      this.confirmPassword = ''
+      this.resetPasswordValidation()
+      this.showChangePasswordModal = true
+    },
+    
+    closeChangePasswordModal() {
+      this.showChangePasswordModal = false
+      this.userToChangePassword = null
+      this.newPassword = ''
+      this.confirmPassword = ''
+      this.resetPasswordValidation()
+    },
+    
+    resetPasswordValidation() {
+      this.passwordValidation = {
+        isValid: false,
+        isTouched: false,
+        error: ''
+      }
+      this.confirmPasswordValidation = {
+        isValid: false,
+        isTouched: false,
+        error: ''
+      }
+    },
+    
+    validatePassword() {
+      this.passwordValidation.isTouched = true
+      
+      if (!this.newPassword || this.newPassword.length < 6) {
+        this.passwordValidation.error = 'A senha deve ter pelo menos 6 caracteres'
+        this.passwordValidation.isValid = false
+      } else if (this.newPassword.length > 50) {
+        this.passwordValidation.error = 'A senha deve ter no máximo 50 caracteres'
+        this.passwordValidation.isValid = false
+      } else {
+        this.passwordValidation.error = ''
+        this.passwordValidation.isValid = true
+      }
+      
+      // Revalidar confirmação se já foi tocada
+      if (this.confirmPasswordValidation.isTouched) {
+        this.validateConfirmPassword()
+      }
+    },
+    
+    validateConfirmPassword() {
+      this.confirmPasswordValidation.isTouched = true
+      
+      if (!this.confirmPassword) {
+        this.confirmPasswordValidation.error = 'Confirme a senha'
+        this.confirmPasswordValidation.isValid = false
+      } else if (this.newPassword !== this.confirmPassword) {
+        this.confirmPasswordValidation.error = 'As senhas não coincidem'
+        this.confirmPasswordValidation.isValid = false
+      } else {
+        this.confirmPasswordValidation.error = ''
+        this.confirmPasswordValidation.isValid = true
+      }
+    },
+    
+    isPasswordFormValid() {
+      return this.passwordValidation.isValid && 
+             this.confirmPasswordValidation.isValid &&
+             !this.isUpdatingPassword
+    },
+    
+    async updatePassword() {
+      try {
+        // Validar formulário
+        this.validatePassword()
+        this.validateConfirmPassword()
+        
+        if (!this.isPasswordFormValid()) {
+          this.showToastNotification('Por favor, corrija os erros nos campos de senha', 'error')
+          return
+        }
+        
+        if (this.isUpdatingPassword) {
+          return
+        }
+        
+        this.isUpdatingPassword = true
+        
+        // Chamar API para alterar senha
+        const response = await axios.patch(`/api/users/${this.userToChangePassword.id}/password`, {
+          newPassword: this.newPassword
+        })
+        
+        if (response.data.success) {
+          this.closeChangePasswordModal()
+          this.showToastNotification('Senha alterada com sucesso!', 'success')
+          
+          // Log da ação para auditoria
+          console.log('✅ [ADMIN] Senha alterada:', {
+            userId: this.userToChangePassword.id,
+            userName: this.userToChangePassword.name,
+            admin: this.currentUser?.email || 'Unknown',
+            timestamp: new Date().toISOString()
+          })
+        } else {
+          this.showToastNotification('Erro ao alterar senha: ' + (response.data.error || 'Erro desconhecido'), 'error')
+        }
+      } catch (error) {
+        console.error('Erro ao alterar senha:', error)
+        
+        let errorMessage = 'Erro ao alterar senha. Tente novamente.'
+        
+        if (error.response?.status === 404) {
+          errorMessage = 'Usuário não encontrado.'
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error
+        }
+        
+        this.showToastNotification(errorMessage, 'error')
+      } finally {
+        this.isUpdatingPassword = false
+      }
     },
     
     resetNewUser() {
@@ -952,6 +1656,7 @@ export default {
           email: this.newUser.email,
           password: this.newUser.password,
           account_type: this.newUser.plan || 'basic',
+          plan: this.newUser.plan || '', // Adicionar campo plan separadamente
           status: 'active'
         }
         
@@ -977,27 +1682,126 @@ export default {
         id: user.id,
         name: user.name,
         email: user.email,
-        plan: user.plan,
-        status: user.status
+        status: user.status,
+        account_type: user.account_type || 'user'
       }
+      console.log('Frontend: Editando usuário:', this.editingUser)
+      
+      // Limpar estados de validação e validar campos iniciais
+      this.clearValidationStates()
+      this.validateAllFields()
+      
       this.showEditUserModal = true
+    },
+    
+    // Validação em tempo real
+    validateField(fieldName, value) {
+      this.fieldValidation[fieldName].isTouched = true
+      
+      switch (fieldName) {
+        case 'name':
+          if (!value || value.trim().length < 2) {
+            this.validationErrors.name = 'Nome deve ter pelo menos 2 caracteres'
+            this.fieldValidation.name.isValid = false
+          } else {
+            this.validationErrors.name = ''
+            this.fieldValidation.name.isValid = true
+          }
+          break
+          
+        case 'email':
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          if (!value || !emailRegex.test(value)) {
+            this.validationErrors.email = 'Email deve ter um formato válido'
+            this.fieldValidation.email.isValid = false
+          } else {
+            this.validationErrors.email = ''
+            this.fieldValidation.email.isValid = true
+            // Validar se email já existe (exceto para o próprio usuário)
+            this.validateEmailUniqueness(value)
+          }
+          break
+          
+        case 'account_type':
+          if (!value) {
+            this.validationErrors.account_type = 'Tipo de conta é obrigatório'
+            this.fieldValidation.account_type.isValid = false
+          } else {
+            this.validationErrors.account_type = ''
+            this.fieldValidation.account_type.isValid = true
+          }
+          break
+      }
+    },
+    
+    // Validar se email já existe
+    async validateEmailUniqueness(email) {
+      if (!email || this.isValidatingEmail) return
+      
+      this.isValidatingEmail = true
+      try {
+        // Verificar se o email já existe (exceto para o usuário atual)
+        const existingUser = this.users.find(user => 
+          user.email.toLowerCase() === email.toLowerCase() && 
+          user.id !== this.editingUser.id
+        )
+        
+        if (existingUser) {
+          this.validationErrors.email = 'Este email já está sendo usado por outro usuário'
+          this.fieldValidation.email.isValid = false
+        } else {
+          this.validationErrors.email = ''
+          this.fieldValidation.email.isValid = true
+        }
+      } catch (error) {
+        console.error('Erro ao validar email:', error)
+      } finally {
+        this.isValidatingEmail = false
+      }
+    },
+    
+    // Validar todos os campos
+    validateAllFields() {
+      this.validateField('name', this.editingUser.name)
+      this.validateField('email', this.editingUser.email)
+      this.validateField('account_type', this.editingUser.account_type)
+    },
+    
+    // Verificar se todos os campos obrigatórios são válidos
+    isFormValid() {
+      return this.fieldValidation.name.isValid && 
+             this.fieldValidation.email.isValid && 
+             this.fieldValidation.account_type.isValid &&
+             !this.isSaving
     },
     
     async saveUser() {
       try {
-        // Validar dados
-        if (!this.editingUser.name || !this.editingUser.email) {
-          alert('Por favor, preencha todos os campos obrigatórios.')
+        // Validar todos os campos antes de enviar
+        this.validateAllFields()
+        
+        // Verificar se o formulário é válido
+        if (!this.isFormValid()) {
+          this.showToastNotification('Por favor, corrija os erros nos campos obrigatórios', 'error')
           return
         }
         
+        // Verificar se está salvando
+        if (this.isSaving) {
+          return
+        }
+        
+        this.isSaving = true
+        
         // Preparar dados para a API
         const userData = {
-          name: this.editingUser.name,
-          email: this.editingUser.email,
-          account_type: this.editingUser.plan || 'basic',
+          name: this.editingUser.name.trim(),
+          email: this.editingUser.email.toLowerCase().trim(),
+          account_type: this.editingUser.account_type || 'user',
           status: this.editingUser.status
         }
+        
+        console.log('Frontend: Dados sendo enviados:', userData)
         
         // Chamar API para atualizar usuário
         const response = await axios.put(`/api/users/${this.editingUser.id}`, userData)
@@ -1006,13 +1810,35 @@ export default {
           // Recarregar lista de usuários
           await this.loadUsers()
           this.closeEditUserModal()
-          alert('Usuário atualizado com sucesso!')
+          this.showToastNotification('Usuário atualizado com sucesso!', 'success')
+          
+          // Log da ação para auditoria
+          console.log('✅ [ADMIN] Usuário atualizado:', {
+            userId: this.editingUser.id,
+            admin: this.currentUser?.email || 'Unknown',
+            timestamp: new Date().toISOString(),
+            changes: userData
+          })
         } else {
-          alert('Erro ao atualizar usuário: ' + (response.data.error || 'Erro desconhecido'))
+          this.showToastNotification('Erro ao atualizar usuário: ' + (response.data.error || 'Erro desconhecido'), 'error')
         }
       } catch (error) {
         console.error('Erro ao atualizar usuário:', error)
-        alert('Erro ao atualizar usuário: ' + (error.response?.data?.error || error.message))
+        
+        // Tratar diferentes tipos de erro
+        let errorMessage = 'Erro ao atualizar usuário. Tente novamente.'
+        
+        if (error.response?.status === 409) {
+          errorMessage = 'Este email já está sendo usado por outro usuário.'
+        } else if (error.response?.status === 404) {
+          errorMessage = 'Usuário não encontrado.'
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error
+        }
+        
+        this.showToastNotification(errorMessage, 'error')
+      } finally {
+        this.isSaving = false
       }
     },
     
@@ -1073,6 +1899,15 @@ export default {
       return statusMap[status] || status
     },
     
+    getUserRoleText(role) {
+      const roleMap = {
+        user: 'Usuário',
+        admin: 'Admin',
+        moderator: 'Moderador'
+      }
+      return roleMap[role] || 'Usuário'
+    },
+    
     getStatusText(status) {
       const statusMap = {
         open: 'Aberto',
@@ -1105,6 +1940,223 @@ export default {
       return categoryMap[category] || category
     },
     
+    // Payment management methods
+    viewPaymentDetails(payment) {
+      this.selectedPayment = payment
+      this.showPaymentDetailModal = true
+    },
+    
+    closePaymentDetailModal() {
+      this.showPaymentDetailModal = false
+      this.selectedPayment = null
+    },
+    
+    async approvePayment(payment) {
+      if (!confirm(`Tem certeza que deseja aprovar o pagamento #${payment.id} de ${payment.userName}?`)) {
+        return
+      }
+      
+      try {
+        const response = await axios.patch(`/api/admin/payments/${payment.id}/approve`)
+        
+        if (response.data.success) {
+          payment.status = 'approved'
+          this.showToastNotification('Pagamento aprovado com sucesso!', 'success')
+          await this.loadPayments() // Recarregar lista
+        } else {
+          this.showToastNotification('Erro ao aprovar pagamento', 'error')
+        }
+      } catch (error) {
+        console.error('Erro ao aprovar pagamento:', error)
+        this.showToastNotification('Erro ao aprovar pagamento', 'error')
+      }
+    },
+    
+    async rejectPayment(payment) {
+      if (!confirm(`Tem certeza que deseja rejeitar o pagamento #${payment.id} de ${payment.userName}?`)) {
+        return
+      }
+      
+      try {
+        const response = await axios.patch(`/api/admin/payments/${payment.id}/reject`)
+        
+        if (response.data.success) {
+          payment.status = 'rejected'
+          this.showToastNotification('Pagamento rejeitado com sucesso!', 'success')
+          await this.loadPayments() // Recarregar lista
+        } else {
+          this.showToastNotification('Erro ao rejeitar pagamento', 'error')
+        }
+      } catch (error) {
+        console.error('Erro ao rejeitar pagamento:', error)
+        this.showToastNotification('Erro ao rejeitar pagamento', 'error')
+      }
+    },
+    
+    getPaymentStatusText(status) {
+      const statusMap = {
+        approved: 'Aprovado',
+        pending: 'Pendente',
+        rejected: 'Rejeitado',
+        cancelled: 'Cancelado'
+      }
+      return statusMap[status] || status
+    },
+    
+    getPaymentMethodText(method) {
+      const methodMap = {
+        pix: 'PIX',
+        credit_card: 'Cartão de Crédito',
+        debit_card: 'Cartão de Débito',
+        boleto: 'Boleto',
+        manual: 'Manual'
+      }
+      return methodMap[method] || method
+    },
+    
+    getPlanDisplayName(planId) {
+      // Prioridade 1: Store Vuex (dados mais atualizados)
+      if (this.$store.getters.plansLoaded) {
+        const plan = this.$store.getters.getPlanByType(planId) || this.$store.getters.getPlanById(planId)
+        if (plan) {
+          return plan.display_name || plan.name || planId
+        }
+      }
+      
+      // Prioridade 2: Dados locais do componente
+      if (this.plans.length > 0) {
+        const plan = this.plans.find(p => p.type === planId || p.id === planId)
+        if (plan) {
+          return plan.display_name || plan.name || planId
+        }
+      }
+      
+      // Prioridade 3: Fallback para mapeamento hardcoded (compatibilidade)
+      const planNames = {
+        'basic': 'Plano Básico',
+        'premium': 'Plano Premium', 
+        'vip': 'Plano VIP',
+        'pre-daily': 'Pré-Jogo Diário',
+        'pre-weekly': 'Pré-Jogo Semanal',
+        'pre-monthly': 'Pré-Jogo Mensal',
+        'pre-yearly': 'Pré-Jogo Anual',
+        'live-daily': 'Live Diário',
+        'live-weekly': 'Live Semanal',
+        'live-monthly': 'Live Mensal',
+        'live-yearly': 'Live Anual',
+        'prelive-daily': 'Pré+Live Diário',
+        'prelive-weekly': 'Pré+Live Semanal',
+        'prelive-monthly': 'Pré+Live Mensal',
+        'prelive-yearly': 'Pré+Live Anual',
+        'valuebet-daily': 'Valuebet Diário',
+        'valuebet-weekly': 'Valuebet Semanal',
+        'valuebet-monthly': 'Valuebet Mensal',
+        'valuebet-yearly': 'Valuebet Anual',
+        'full-daily': 'Full Diário',
+        'full-weekly': 'Full Semanal',
+        'full-monthly': 'Full Mensal',
+        'full-yearly': 'Full Anual'
+      }
+      return planNames[planId] || planId || 'Plano Desconhecido'
+    },
+    
+    // Funções auxiliares para mapeamento de planos (atualizadas para usar dados dinâmicos)
+    getPlanId(planType) {
+      // Prioridade 1: Store Vuex
+      if (this.$store.getters.plansLoaded) {
+        const plan = this.$store.getters.getPlanByType(planType)
+        if (plan) {
+          return plan.id
+        }
+      }
+      
+      // Prioridade 2: Dados locais
+      if (this.plans.length > 0) {
+        const plan = this.plans.find(p => p.type === planType)
+        if (plan) {
+          return plan.id
+        }
+      }
+      
+      // Prioridade 3: Fallback hardcoded
+      const planIdMap = {
+        'basic': 1,
+        'premium': 2,
+        'vip': 3,
+        'pre-daily': 4,
+        'pre-weekly': 5,
+        'pre-monthly': 6,
+        'pre-yearly': 7,
+        'live-daily': 8,
+        'live-weekly': 9,
+        'live-monthly': 10,
+        'live-yearly': 11,
+        'prelive-daily': 12,
+        'prelive-weekly': 13,
+        'prelive-monthly': 14,
+        'prelive-yearly': 15,
+        'valuebet-daily': 16,
+        'valuebet-weekly': 17,
+        'valuebet-monthly': 18,
+        'valuebet-yearly': 19,
+        'full-daily': 20,
+        'full-weekly': 21,
+        'full-monthly': 22,
+        'full-yearly': 23
+      }
+      return planIdMap[planType] || 2 // Default para premium
+    },
+    
+    getPlanTypeFromName(planName) {
+      // Prioridade 1: Store Vuex
+      if (this.$store.getters.plansLoaded) {
+        const plan = this.$store.getters.getPlanByName(planName)
+        if (plan) {
+          return plan.type
+        }
+      }
+      
+      // Prioridade 2: Dados locais
+      if (this.plans.length > 0) {
+        const plan = this.plans.find(p => 
+          p.display_name === planName || 
+          p.name === planName ||
+          p.type === planName
+        )
+        if (plan) {
+          return plan.type
+        }
+      }
+      
+      // Prioridade 3: Fallback hardcoded
+      const nameToTypeMap = {
+        'Plano Básico': 'basic',
+        'Plano Premium': 'premium',
+        'Plano VIP': 'vip',
+        'Pré-Jogo Diário': 'pre-daily',
+        'Pré-Jogo Semanal': 'pre-weekly',
+        'Pré-Jogo Mensal': 'pre-monthly',
+        'Pré-Jogo Anual': 'pre-yearly',
+        'Live Diário': 'live-daily',
+        'Live Semanal': 'live-weekly',
+        'Live Mensal': 'live-monthly',
+        'Live Anual': 'live-yearly',
+        'Pré+Live Diário': 'prelive-daily',
+        'Pré+Live Semanal': 'prelive-weekly',
+        'Pré+Live Mensal': 'prelive-monthly',
+        'Pré+Live Anual': 'prelive-yearly',
+        'Valuebet Diário': 'valuebet-daily',
+        'Valuebet Semanal': 'valuebet-weekly',
+        'Valuebet Mensal': 'valuebet-monthly',
+        'Valuebet Anual': 'valuebet-yearly',
+        'Full Diário': 'full-daily',
+        'Full Semanal': 'full-weekly',
+        'Full Mensal': 'full-monthly',
+        'Full Anual': 'full-yearly'
+      }
+      return nameToTypeMap[planName] || 'premium'
+    },
+    
     formatDate(date) {
       return new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
@@ -1116,15 +2168,15 @@ export default {
     },
 
     showToastNotification(message, type = 'info') {
-      // Sistema de notificação simples usando alert temporariamente
-      // TODO: Implementar sistema de toast mais elegante
-      if (type === 'error') {
-        alert(`❌ ${message}`)
-      } else if (type === 'success') {
-        alert(`✅ ${message}`)
-      } else {
-        alert(`ℹ️ ${message}`)
-      }
+      // Sistema de notificação melhorado
+      const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'
+      const title = type === 'error' ? 'Erro' : type === 'success' ? 'Sucesso' : 'Informação'
+      
+      // Usar alert melhorado com título
+      alert(`${icon} ${title}\n\n${message}`)
+      
+      // Log da notificação
+      console.log(`[NOTIFICATION] ${type.toUpperCase()}: ${message}`)
     },
     
     // Forçar atualização PWA para todos os usuários
@@ -1225,7 +2277,7 @@ export default {
 .page-title {
   font-size: 32px;
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-primary);
   margin: 0;
 }
 
@@ -1268,8 +2320,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 8px;
   padding: 12px 20px;
@@ -1280,7 +2332,7 @@ export default {
 }
 
 .new-user-btn:hover {
-  background: #00cc6a;
+  background: var(--accent-secondary);
   transform: translateY(-1px);
 }
 
@@ -1288,8 +2340,8 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--warning), var(--warning-light));
+  color: var(--text-primary);
   border: none;
   border-radius: 8px;
   padding: 12px 20px;
@@ -1302,9 +2354,9 @@ export default {
 }
 
 .force-update-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #e55a2b, #e57a3a);
+  background: linear-gradient(135deg, var(--warning-dark), var(--warning));
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+  box-shadow: 0 4px 12px var(--warning-shadow);
 }
 
 .force-update-btn:disabled {
@@ -1314,7 +2366,7 @@ export default {
 }
 
 .force-update-btn:disabled:hover {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
+  background: linear-gradient(135deg, var(--warning), var(--warning-light));
   transform: none;
   box-shadow: none;
 }
@@ -1327,7 +2379,7 @@ export default {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, var(--text-primary-alpha), transparent);
   animation: loading-shimmer 1.5s infinite;
 }
 
@@ -1357,7 +2409,7 @@ export default {
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 25px var(--shadow-primary);
 }
 
 .stat-icon {
@@ -1371,34 +2423,34 @@ export default {
 }
 
 .tickets-icon {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
 }
 
 .open-icon {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
 }
 
 .pending-icon,
 .in-progress-icon {
-  background: linear-gradient(135deg, #ff6b35, #ff8c42);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--warning), var(--warning-light));
+  color: var(--text-primary);
 }
 
 .time-icon {
-  background: linear-gradient(135deg, #007bff, #0056b3);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--info), var(--info-dark));
+  color: var(--text-primary);
 }
 
 .users-icon {
-  background: linear-gradient(135deg, #6f42c1, #5a32a3);
-  color: #ffffff;
+  background: linear-gradient(135deg, var(--purple), var(--purple-dark));
+  color: var(--text-primary);
 }
 
 .vip-icon {
-  background: linear-gradient(135deg, #ffc107, #e0a800);
-  color: #1a1a1a;
+  background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+  color: var(--bg-primary);
 }
 
 .stat-content {
@@ -1445,13 +2497,13 @@ export default {
 
 .tab-btn:hover {
   color: var(--text-primary, #ffffff);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--text-primary-alpha-light);
 }
 
 .tab-btn.active {
-  color: #00ff88;
-  border-bottom-color: #00ff88;
-  background: rgba(0, 255, 136, 0.05);
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+  background: var(--accent-light);
 }
 
 .tab-content {
@@ -1475,7 +2527,7 @@ export default {
   width: 40px;
   height: 40px;
   border: 4px solid var(--bg-tertiary, #3a3a3a);
-  border-top: 4px solid #007bff;
+  border-top: 4px solid var(--info);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 16px;
@@ -1516,7 +2568,7 @@ export default {
 }
 
 .user-card:hover {
-  border-color: rgba(0, 255, 136, 0.3);
+  border-color: var(--accent-strong);
   transform: translateY(-1px);
 }
 
@@ -1572,6 +2624,29 @@ export default {
   color: var(--text-secondary, #888888);
 }
 
+.user-role {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.user-role.user {
+  background: var(--info-light);
+  color: var(--info);
+}
+
+.user-role.admin {
+  background: var(--warning-light);
+  color: var(--warning);
+}
+
+.user-role.moderator {
+  background: var(--success-light);
+  color: var(--success);
+}
+
 .user-actions {
   display: flex;
   gap: 8px;
@@ -1591,39 +2666,48 @@ export default {
 }
 
 .edit-btn {
-  background: rgba(0, 123, 255, 0.2);
-  color: #007bff;
+  background: var(--info-light);
+  color: var(--info);
 }
 
 .edit-btn:hover {
-  background: rgba(0, 123, 255, 0.3);
+  background: var(--info-medium);
 }
 
 .delete-btn {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
+  background: var(--error-light);
+  color: var(--error);
 }
 
 .delete-btn:hover {
-  background: rgba(220, 53, 69, 0.3);
+  background: var(--error-medium);
 }
 
 .activate-btn {
-  background: rgba(40, 167, 69, 0.2);
-  color: #28a745;
+  background: var(--success-light);
+  color: var(--success);
 }
 
 .activate-btn:hover {
-  background: rgba(40, 167, 69, 0.3);
+  background: var(--success-medium);
 }
 
 .deactivate-btn {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  background: var(--warning-light);
+  color: var(--warning);
 }
 
 .deactivate-btn:hover {
-  background: rgba(255, 193, 7, 0.3);
+  background: var(--warning-medium);
+}
+
+.password-btn {
+  background: var(--purple-light);
+  color: var(--purple);
+}
+
+.password-btn:hover {
+  background: var(--purple-medium);
 }
 
 /* Tickets Management */
@@ -1678,7 +2762,7 @@ export default {
 .priority-filter:focus,
 .category-filter:focus {
   outline: none;
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
 /* Tickets List */
@@ -1719,7 +2803,7 @@ export default {
 }
 
 .ticket-card:hover {
-  border-color: rgba(0, 255, 136, 0.3);
+  border-color: var(--accent-strong);
   transform: translateY(-1px);
 }
 
@@ -1728,23 +2812,23 @@ export default {
 }
 
 .admin-ticket.priority-urgent {
-  border-left-color: #dc3545;
+  border-left-color: var(--error);
 }
 
 .admin-ticket.priority-high {
-  border-left-color: #ff6b35;
+  border-left-color: var(--warning);
 }
 
 .admin-ticket.priority-medium {
-  border-left-color: #ffc107;
+  border-left-color: var(--warning-light);
 }
 
 .admin-ticket.status-in_progress {
-  border-left-color: #ff6b35;
+  border-left-color: var(--warning);
 }
 
 .admin-ticket.priority-low {
-  border-left-color: #6c757d;
+  border-left-color: var(--text-secondary);
 }
 
 .ticket-header {
@@ -1775,7 +2859,7 @@ export default {
 
 .ticket-user {
   font-size: 12px;
-  color: #00ff88;
+  color: var(--accent-primary);
   font-weight: 600;
 }
 
@@ -1788,19 +2872,19 @@ export default {
 }
 
 .status-badge.open {
-  background: rgba(0, 255, 136, 0.2);
-  color: #00ff88;
+  background: var(--success-light);
+  color: var(--accent-primary);
 }
 
 .status-badge.pending,
 .status-badge.in_progress {
-  background: rgba(255, 107, 53, 0.2);
-  color: #ff6b35;
+  background: var(--warning-light);
+  color: var(--warning);
 }
 
 .status-badge.closed {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: var(--text-secondary-alpha);
+  color: var(--text-secondary);
 }
 
 .ticket-content {
@@ -1842,23 +2926,23 @@ export default {
 }
 
 .priority-badge.low {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
+  background: var(--text-secondary-alpha);
+  color: var(--text-secondary);
 }
 
 .priority-badge.medium {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
+  background: var(--warning-alpha);
+  color: var(--warning);
 }
 
 .priority-badge.high {
-  background: rgba(255, 107, 53, 0.2);
-  color: #ff6b35;
+  background: var(--warning-light);
+  color: var(--warning);
 }
 
 .priority-badge.urgent {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
+  background: var(--error-light);
+  color: var(--error);
 }
 
 /* Modal Styles */
@@ -1868,7 +2952,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--overlay-dark);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1883,7 +2967,7 @@ export default {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px var(--shadow-modal);
 }
 
 .admin-modal {
@@ -1897,7 +2981,7 @@ export default {
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px var(--shadow-modal);
 }
 
 .confirmation-modal {
@@ -1905,7 +2989,7 @@ export default {
   border-radius: 12px;
   max-width: 400px;
   width: 100%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 40px var(--shadow-modal);
 }
 
 .modal-header {
@@ -1930,8 +3014,8 @@ export default {
 }
 
 .close-ticket-btn {
-  background: #dc3545;
-  color: #ffffff;
+  background: var(--error);
+  color: var(--text-primary);
   border: none;
   border-radius: 6px;
   padding: 8px 16px;
@@ -1942,7 +3026,7 @@ export default {
 }
 
 .close-ticket-btn:hover {
-  background: #c82333;
+  background: var(--error-dark);
 }
 
 .close-btn {
@@ -1962,7 +3046,7 @@ export default {
 }
 
 .close-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--text-primary-alpha);
   color: var(--text-primary, #ffffff);
 }
 
@@ -1986,8 +3070,8 @@ export default {
   border-radius: 4px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(0, 123, 255, 0.2);
-  color: #007bff;
+  background: var(--info-alpha);
+  color: var(--info);
 }
 
 .ticket-info-grid {
@@ -2056,14 +3140,14 @@ export default {
 }
 
 .message-item.user {
-  background: rgba(0, 255, 136, 0.1);
-  border-left-color: #00ff88;
+  background: var(--accent-alpha);
+  border-left-color: var(--accent-primary);
 }
 
 .message-item.support,
 .message-item.admin {
-  background: rgba(255, 107, 53, 0.1);
-  border-left-color: #ff6b35;
+  background: var(--warning-alpha);
+  border-left-color: var(--warning);
 }
 
 .message-header {
@@ -2110,13 +3194,13 @@ export default {
 
 .message-input:focus {
   outline: none;
-  border-color: #00ff88;
+  border-color: var(--accent-primary);
 }
 
 .send-message-btn {
   align-self: flex-end;
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 6px;
   padding: 10px 16px;
@@ -2127,7 +3211,7 @@ export default {
 }
 
 .send-message-btn:hover:not(:disabled) {
-  background: #00cc6a;
+  background: var(--accent-secondary);
 }
 
 .send-message-btn:disabled {
@@ -2163,8 +3247,155 @@ export default {
 .form-input:focus,
 .form-select:focus {
   outline: none;
-  border-color: #00ff88;
-  background: rgba(0, 255, 136, 0.05);
+  border-color: var(--accent-primary);
+  background: var(--accent-light);
+}
+
+.form-help {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Password Change Modal Styles */
+.password-user-info {
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.password-user-info p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--text-primary, #ffffff);
+}
+
+.password-user-info p:last-child {
+  margin-bottom: 0;
+}
+
+.password-user-info strong {
+  color: var(--accent-primary);
+}
+
+/* Estados de validação dos campos */
+.field-valid {
+  border-color: var(--success) !important;
+  background: var(--success-alpha) !important;
+}
+
+.field-invalid {
+  border-color: var(--error) !important;
+  background: var(--error-alpha) !important;
+}
+
+.field-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--error);
+  font-weight: 500;
+}
+
+.field-loading {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--info);
+  font-style: italic;
+}
+
+/* Spinner pequeno para botões */
+.loading-spinner-small {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 8px;
+}
+
+/* Estados dos botões */
+.submit-btn.loading {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--text-secondary-alpha);
+  color: var(--text-secondary);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Select Options and Optgroups Styling */
+.form-select option {
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  padding: 8px 12px;
+  border: none;
+}
+
+.form-select optgroup {
+  background: var(--bg-secondary, #2a2a2a);
+  color: var(--text-primary, #ffffff);
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 12px;
+  border: none;
+  border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.form-select optgroup option {
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  padding: 6px 20px;
+  font-weight: 400;
+  font-size: 14px;
+}
+
+.form-select option:hover {
+  background: var(--accent-alpha);
+  color: var(--text-primary, #ffffff);
+}
+
+.form-select option:checked {
+  background: var(--accent-primary);
+  color: var(--bg-primary, #1a1a1a);
+  font-weight: 600;
+}
+
+/* Status Filter Selects */
+.status-filter option,
+.priority-filter option,
+.category-filter option {
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  padding: 8px 12px;
+}
+
+.status-filter option:hover,
+.priority-filter option:hover,
+.category-filter option:hover {
+  background: var(--accent-alpha);
+}
+
+.status-filter option:checked,
+.priority-filter option:checked,
+.category-filter option:checked {
+  background: var(--accent-primary);
+  color: var(--bg-primary, #1a1a1a);
 }
 
 .form-actions {
@@ -2175,7 +3406,7 @@ export default {
 }
 
 .cancel-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--text-primary-alpha);
   color: var(--text-primary, #ffffff);
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
   border-radius: 6px;
@@ -2187,12 +3418,12 @@ export default {
 }
 
 .cancel-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--text-primary-alpha-medium);
 }
 
 .submit-btn {
-  background: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
   border: none;
   border-radius: 6px;
   padding: 12px 20px;
@@ -2203,7 +3434,7 @@ export default {
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #00cc6a;
+  background: var(--accent-secondary);
 }
 
 .submit-btn:disabled {
@@ -2212,8 +3443,8 @@ export default {
 }
 
 .delete-btn {
-  background: #dc3545;
-  color: #ffffff;
+  background: var(--error);
+  color: var(--text-primary);
   border: none;
   border-radius: 6px;
   padding: 12px 20px;
@@ -2224,7 +3455,305 @@ export default {
 }
 
 .delete-btn:hover {
-  background: #c82333;
+  background: var(--error-dark);
+}
+
+/* Payment Management Styles */
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loading-payments {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary, #a0a0a0);
+}
+
+.empty-payments {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-secondary, #888888);
+}
+
+.empty-payments svg {
+  opacity: 0.5;
+  margin-bottom: 16px;
+}
+
+.empty-payments h4 {
+  font-size: 20px;
+  margin: 0 0 8px 0;
+}
+
+.empty-payments p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.payment-card {
+  background: var(--bg-primary, #1a1a1a);
+  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.payment-card:hover {
+  border-color: var(--accent-strong);
+  transform: translateY(-1px);
+}
+
+.payment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.payment-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payment-user {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
+}
+
+.payment-email {
+  font-size: 14px;
+  color: var(--text-secondary, #888888);
+}
+
+.payment-id {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+  font-family: monospace;
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+}
+
+.payment-content {
+  margin-bottom: 16px;
+}
+
+.payment-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.payment-plan,
+.payment-amount,
+.payment-method {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.plan-label,
+.amount-label,
+.method-label {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+  font-weight: 600;
+}
+
+.plan-name,
+.amount-value,
+.method-name {
+  font-size: 14px;
+  color: var(--text-primary, #ffffff);
+}
+
+.amount-value {
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.payment-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.payment-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.payment-date,
+.payment-expires {
+  font-size: 12px;
+  color: var(--text-secondary, #888888);
+}
+
+.payment-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.view-btn {
+  background: var(--info-light);
+  color: var(--info);
+}
+
+.view-btn:hover {
+  background: var(--info-medium);
+}
+
+.approve-btn {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.approve-btn:hover {
+  background: var(--success-medium);
+}
+
+.reject-btn {
+  background: var(--error-light);
+  color: var(--error);
+}
+
+.reject-btn:hover {
+  background: var(--error-medium);
+}
+
+/* Payment Detail Modal Styles */
+.payment-detail-modal {
+  max-width: 800px;
+}
+
+.payment-detail-header {
+  margin-bottom: 24px;
+}
+
+.payment-detail-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.amount-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--success-light);
+  color: var(--accent-primary);
+}
+
+.plan-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--info-alpha);
+  color: var(--info);
+}
+
+.payment-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: var(--bg-primary, #1a1a1a);
+  border-radius: 8px;
+}
+
+.status-text {
+  font-weight: 600;
+}
+
+.status-text.approved {
+  color: var(--success);
+}
+
+.status-text.pending {
+  color: var(--warning);
+}
+
+.status-text.rejected {
+  color: var(--error);
+}
+
+.status-text.cancelled {
+  color: var(--text-secondary);
+}
+
+.payment-id-text {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--text-primary-alpha);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.payment-actions-section {
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+}
+
+.payment-actions-section h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #ffffff);
+  margin: 0 0 16px 0;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.approve-payment-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--success);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.approve-payment-btn:hover {
+  background: var(--success-dark);
+}
+
+.reject-payment-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--error);
+  color: var(--text-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reject-payment-btn:hover {
+  background: var(--error-dark);
 }
 
 /* Responsividade */
@@ -2283,6 +3812,34 @@ export default {
   .ticket-detail-meta {
     flex-direction: column;
     gap: 8px;
+  }
+  
+  .payment-details {
+    grid-template-columns: 1fr;
+  }
+  
+  .payment-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .payment-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .payment-actions {
+    flex-wrap: wrap;
+  }
+  
+  .payment-info-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .admin-actions {
+    flex-direction: column;
   }
 }
 

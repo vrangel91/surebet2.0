@@ -16,6 +16,11 @@ router.use(authenticateToken);
 // 1. Ativar VIP para usuário
 router.post('/activate', async (req, res) => {
   try {
+    console.log('🔍 [VIP] Rota de ativação VIP chamada')
+    console.log('🔍 [VIP] Request body:', req.body)
+    console.log('🔍 [VIP] Request headers:', req.headers)
+    console.log('🔍 [VIP] User from token:', req.user)
+    
     const {
       userId,
       planId,
@@ -30,6 +35,7 @@ router.post('/activate', async (req, res) => {
 
     // Validações básicas
     if (!userId || !planId || !planName || !planDays) {
+      console.log('❌ [VIP] Dados obrigatórios ausentes:', { userId: !!userId, planId: !!planId, planName: !!planName, planDays: !!planDays })
       return res.status(400).json({ 
         error: 'Dados obrigatórios não fornecidos: userId, planId, planName, planDays' 
       });
@@ -84,14 +90,21 @@ router.get('/status/:userId', async (req, res) => {
 // 3. Verificar status VIP do usuário atual
 router.get('/my-status', async (req, res) => {
   try {
+    console.log('🔍 [VIP] Rota de status VIP chamada')
+    console.log('🔍 [VIP] Request headers:', req.headers)
+    console.log('🔍 [VIP] User from token:', req.user)
+    
     const userId = req.user.id;
+    console.log('🔍 [VIP] User ID:', userId)
 
     const result = await VIPService.checkVIPStatus(userId);
+    console.log('🔍 [VIP] Resultado do status VIP:', result)
 
     res.json(result);
 
   } catch (error) {
-    console.error('Erro ao verificar status VIP:', error);
+    console.error('❌ [VIP] Erro ao verificar status VIP:', error);
+    console.error('❌ [VIP] Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Erro interno do servidor',
       details: error.message 

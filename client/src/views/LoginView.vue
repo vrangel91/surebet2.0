@@ -307,6 +307,14 @@ export default {
       }
     },
     mounted() {
+      console.log('🔍 [LoginView] Componente montado')
+      console.log('🔍 [LoginView] Store state:', {
+        isAuthenticated: this.$store.getters.isAuthenticated,
+        currentUser: this.$store.getters.currentUser,
+        isAdmin: this.$store.getters.isAdmin,
+        isVIP: this.$store.getters.isVIP
+      })
+      
       // Verifica se há dados salvos do "lembrar-me"
       this.checkRememberedUser()
       
@@ -315,6 +323,13 @@ export default {
       
       // Captura o referer_id da URL se existir
       this.captureRefererId()
+      
+      console.log('🔍 [LoginView] Estado inicial do componente:', {
+        email: this.email,
+        password: this.password ? 'Definida' : 'Não definida',
+        isLoginMode: this.isLoginMode,
+        refererId: this.refererId
+      })
     },
     methods: {
       validateEmail() {
@@ -422,10 +437,13 @@ export default {
             this.showLoginLoading = true
             
             // Salva o token e dados do usuário
-            this.$store.dispatch('login', {
+            await this.$store.dispatch('login', {
               token: response.token,
               user: response.user
             })
+            
+            // Aguardar o store ser atualizado
+            await this.$nextTick()
             
             // Atualiza o último login
             this.$store.dispatch('updateLastLogin', this.email)
@@ -436,14 +454,18 @@ export default {
             }
             
             // 🔒 VERIFICAÇÃO AUTOMÁTICA DE VIP APÓS LOGIN
-            await this.verifyVIPStatusAfterLogin(response.user)
+            try {
+              await this.verifyVIPStatusAfterLogin(response.user)
+            } catch (error) {
+              console.warn('⚠️ Erro na verificação VIP, continuando login:', error)
+            }
           
             // Verifica se há uma rota de redirecionamento salva
             const redirectAfterLogin = localStorage.getItem('redirectAfterLogin')
             const redirectAfterUpgrade = localStorage.getItem('redirectAfterUpgrade')
             
-            // Redireciona baseado no tipo de conta após 3 segundos
-             setTimeout(() => {
+            // Redireciona baseado no tipo de conta após 1 segundo (reduzido de 3)
+            setTimeout(() => {
                let targetRoute = '/'
                
                // Prioriza redirecionamento salvo
@@ -457,11 +479,16 @@ export default {
                  console.log('🔄 Redirecionando para rota de upgrade:', targetRoute)
                } else {
                  // Redirecionamento padrão baseado no tipo de conta
-                 if (response.user.accountType === 'basic') {
+                 console.log('🔄 Usuário logado:', response.user.email, 'Tipo:', response.user.accountType, 'Admin:', response.user.is_admin)
+                 if (response.user.is_admin === true) {
+                   // Administradores sempre vão para a página inicial
+                   targetRoute = '/'
+                 } else if (response.user.accountType === 'basic') {
                    targetRoute = '/plans'
                  } else {
                    targetRoute = '/'
                  }
+                 console.log('🔄 Redirecionando para:', targetRoute)
                }
                
                // Oculta a tela de loading antes do redirecionamento
@@ -469,9 +496,16 @@ export default {
                
                // Pequeno delay para garantir que a tela de loading seja ocultada
                setTimeout(() => {
+                 console.log('🔄 Executando redirecionamento para:', targetRoute)
+                 console.log('🔄 Store state:', {
+                   isAuthenticated: this.$store.getters.isAuthenticated,
+                   currentUser: this.$store.getters.currentUser,
+                   isAdmin: this.$store.getters.isAdmin,
+                   isVIP: this.$store.getters.isVIP
+                 })
                  this.$router.push(targetRoute)
                }, 100)
-                            }, 3000)
+            }, 1000) // Reduzido de 3000 para 1000ms
           } else {
             this.handleLoginFailure(response.message)
           }
@@ -488,28 +522,52 @@ export default {
   
       async authenticateUser() {
         try {
+          console.log('🔍 [Login] Iniciando autenticação...')
+          console.log('🔍 [Login] Email:', this.email)
+          console.log('🔍 [Login] Password:', this.password ? 'Definida' : 'Não definida')
+          
+          const requestBody = { email: this.email, password: this.password }
+          console.log('🔍 [Login] Request body JSON:', JSON.stringify(requestBody))
+          
           const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: this.email, password: this.password })
+            body: JSON.stringify(requestBody)
           })
           
-          const data = await response.json()
+          console.log('🔍 [Login] Response status:', response.status)
+          console.log('🔍 [Login] Response ok:', response.ok)
+          console.log('🔍 [Login] Response headers:', Object.fromEntries(response.headers.entries()))
+          
+          const responseText = await response.text()
+          console.log('🔍 [Login] Response text (raw):', responseText)
+          
+          let data
+          try {
+            data = JSON.parse(responseText)
+            console.log('🔍 [Login] Response data (parsed):', data)
+          } catch (parseError) {
+            console.error('❌ [Login] Erro ao fazer parse do JSON:', parseError)
+            console.error('❌ [Login] Response text que causou erro:', responseText)
+            throw new Error('Resposta do servidor não é um JSON válido')
+          }
           
           if (response.ok && data.success) {
+            console.log('✅ [Login] Autenticação bem-sucedida')
             return {
               success: true,
               token: data.token,
               user: data.user
             }
           } else {
+            console.log('❌ [Login] Autenticação falhou:', data.message)
             return {
               success: false,
               message: data.message || 'E-mail ou senha incorretos'
             }
           }
         } catch (error) {
-          console.error('Erro na autenticação:', error)
+          console.error('❌ [Login] Erro na autenticação:', error)
           return {
             success: false,
             message: 'Erro de conexão. Tente novamente.'
@@ -550,26 +608,48 @@ export default {
   
       async registerUser() {
         try {
+          const requestBody = {
+            name: this.registerForm.name,
+            email: this.registerForm.email,
+            password: this.registerForm.password,
+            referer_id: this.refererId // Inclui o ID do referenciador se existir
+          }
+          
+          console.log('🔍 [Register] Iniciando registro...')
+          console.log('🔍 [Register] Request body JSON:', JSON.stringify(requestBody))
+          
           const response = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: this.registerForm.name,
-              email: this.registerForm.email,
-              password: this.registerForm.password,
-              referer_id: this.refererId // Inclui o ID do referenciador se existir
-            })
+            body: JSON.stringify(requestBody)
           })
-  
-          const data = await response.json()
+          
+          console.log('🔍 [Register] Response status:', response.status)
+          console.log('🔍 [Register] Response ok:', response.ok)
+          console.log('🔍 [Register] Response headers:', Object.fromEntries(response.headers.entries()))
+          
+          const responseText = await response.text()
+          console.log('🔍 [Register] Response text (raw):', responseText)
+          
+          let data
+          try {
+            data = JSON.parse(responseText)
+            console.log('🔍 [Register] Response data (parsed):', data)
+          } catch (parseError) {
+            console.error('❌ [Register] Erro ao fazer parse do JSON:', parseError)
+            console.error('❌ [Register] Response text que causou erro:', responseText)
+            throw new Error('Resposta do servidor não é um JSON válido')
+          }
   
           if (response.ok && data.success) {
+            console.log('✅ [Register] Registro bem-sucedido')
             return { success: true }
           } else {
+            console.log('❌ [Register] Registro falhou:', data.message)
             return { success: false, message: data.message || 'Erro ao criar conta.' }
           }
         } catch (error) {
-          console.error('Erro no registro:', error)
+          console.error('❌ [Register] Erro no registro:', error)
           return { success: false, message: 'Erro de conexão. Tente novamente.' }
         }
       },

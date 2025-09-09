@@ -1009,9 +1009,16 @@ export default {
   border-radius: 8px;
   padding: 16px;
   margin-bottom: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
   
   &:last-child {
     margin-bottom: 0;
+  }
+  
+  &:hover {
+    border-color: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.1);
   }
 }
 
@@ -1020,6 +1027,8 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-primary);
 }
 
 .bookmaker {
@@ -1037,22 +1046,24 @@ export default {
 }
 
 .bet-details {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
+  padding: 8px 0;
 }
 
 .odds-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 80px;
+  justify-content: flex-start;
 }
 
 .odds-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .odds-value {
@@ -1065,12 +1076,13 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
+  justify-content: flex-start;
 }
 
 .stake-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .stake-value {
@@ -1082,16 +1094,20 @@ export default {
 .bet-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: var(--accent-primary);
   color: var(--bg-primary);
   border: none;
   border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 70px;
+  max-width: 70px;
+  white-space: nowrap;
   
   &:hover {
     transform: translateY(-1px);
@@ -1164,16 +1180,19 @@ export default {
   }
   
   .bet-details {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: 12px;
-    align-items: flex-start;
   }
   
   .odds-info,
   .stake-info {
-    min-width: auto;
-    width: 100%;
     justify-content: space-between;
+  }
+  
+  .bet-btn {
+    width: 100%;
+    max-width: none;
+    min-width: auto;
   }
 }
 
@@ -1207,17 +1226,29 @@ export default {
   }
   
   .bet-details {
-    gap: 8px;
+    gap: 10px;
   }
   
   .odds-info,
   .stake-info {
-    font-size: 11px;
+    gap: 6px;
   }
   
   .odds-label,
   .stake-label {
-    font-size: 10px;
+    font-size: 11px;
+  }
+  
+  .odds-value,
+  .stake-value {
+    font-size: 14px;
+  }
+  
+  .bet-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 80px;
+    max-width: 80px;
   }
 }
 

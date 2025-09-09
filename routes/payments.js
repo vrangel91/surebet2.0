@@ -4,20 +4,25 @@ const paymentService = require('../services/paymentService');
 const { logger } = require('../utils/logger');
 
 /**
- * Webhook para receber notificações de pagamento
+ * Webhook para receber notificações de pagamento do MercadoPago
  * POST /api/payments/webhook
  */
 router.post('/webhook', async (req, res) => {
   try {
-    const signature = req.headers['x-webhook-signature'] || req.headers['x-signature'];
-    const payload = JSON.stringify(req.body);
+    logger.info('Webhook recebido do MercadoPago:', {
+      headers: req.headers,
+      body: req.body
+    });
 
-    // Verificar assinatura do webhook (opcional, mas recomendado)
-    if (signature && !paymentService.verifyWebhookSignature(payload, signature)) {
-      logger.warn('Assinatura de webhook inválida');
-      return res.status(401).json({
+    // MercadoPago pode enviar diferentes tipos de notificações
+    const { type, action, data, id } = req.body;
+
+    // Verificar se é uma notificação válida do MercadoPago
+    if (!type || !data) {
+      logger.warn('Notificação inválida do MercadoPago:', req.body);
+      return res.status(400).json({
         success: false,
-        error: 'Assinatura inválida'
+        error: 'Notificação inválida'
       });
     }
 
@@ -41,6 +46,44 @@ router.post('/webhook', async (req, res) => {
 
   } catch (error) {
     logger.error('Erro no webhook de pagamento:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+/**
+ * Webhook específico para MercadoPago (rota alternativa)
+ * POST /webhook
+ */
+router.post('/', async (req, res) => {
+  try {
+    logger.info('Webhook MercadoPago recebido na rota principal:', {
+      headers: req.headers,
+      body: req.body
+    });
+
+    // Processar webhook
+    const result = await paymentService.processPaymentWebhook(req.body);
+
+    if (result.success) {
+      logger.info('Webhook MercadoPago processado com sucesso:', result);
+      res.json({
+        success: true,
+        message: 'Webhook processado com sucesso',
+        data: result
+      });
+    } else {
+      logger.error('Erro ao processar webhook MercadoPago:', result);
+      res.status(400).json({
+        success: false,
+        error: result.error || 'Erro ao processar webhook'
+      });
+    }
+
+  } catch (error) {
+    logger.error('Erro no webhook MercadoPago:', error);
     res.status(500).json({
       success: false,
       error: 'Erro interno do servidor'

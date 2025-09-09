@@ -68,6 +68,10 @@ module.exports = (sequelize) => {
       defaultValue: 'basic',
       allowNull: false
     },
+    // plan: {
+    //   type: DataTypes.STRING,
+    //   allowNull: true
+    // },
     last_login: {
       type: DataTypes.DATE,
       allowNull: true

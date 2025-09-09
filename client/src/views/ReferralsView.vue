@@ -258,7 +258,7 @@ export default {
       toastMessage: '',
       toastType: 'info',
       commissionBalance: 0,
-      affiliateLink: 'http://localhost:3001/login?referer_id=SEU_CODIGO_AQUI',
+      affiliateLink: 'https://surestake.com.br/login?referer_id=SEU_CODIGO_AQUI',
       linkCopied: false,
       referredUsers: [], // Array vazio para simular estado inicial
       withdrawalHistory: [] // Array para histórico de saques

@@ -8,10 +8,6 @@
   "theme_color": "#00ff88",
   "orientation": "portrait-primary",
   "scope": "/",
-  "display_override": ["window-controls-overlay"],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
   "lang": "pt-BR",
   "categories": ["sports", "finance", "entertainment"],
   "icons": [
@@ -62,58 +58,6 @@
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "short_name": "Dashboard",
-      "description": "Acessar o dashboard principal",
-      "url": "/dashboard",
-      "icons": [
-        {
-          "src": "/img/dashboard-icon.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Surebets",
-      "short_name": "Surebets",
-      "description": "Ver surebets disponíveis",
-      "url": "/surebets",
-      "icons": [
-        {
-          "src": "/img/surebets-icon.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Perfil",
-      "short_name": "Perfil",
-      "description": "Gerenciar perfil do usuário",
-      "url": "/profile",
-      "icons": [
-        {
-          "src": "/img/profile-icon.png",
-          "sizes": "96x96"
-        }
-      ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/img/screenshot-wide.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "/img/screenshot-narrow.png",
-      "sizes": "750x1334",
-      "type": "image/png",
-      "form_factor": "narrow"
     }
   ]
 }

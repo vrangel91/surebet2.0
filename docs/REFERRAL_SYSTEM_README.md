@@ -210,7 +210,7 @@ commission_balance: DataTypes.DECIMAL(10, 2)
 ### 1. Testar API de Status
 ```bash
 curl -H "Authorization: Bearer {token}" \
-     http://localhost:3001/api/referrals/my-status
+     https://surestake.com.br/api/referrals/my-status
 ```
 
 ### 2. Testar Solicitação de Saque
@@ -219,7 +219,7 @@ curl -X POST \
      -H "Authorization: Bearer {token}" \
      -H "Content-Type: application/json" \
      -d '{"amount": 50.00}' \
-     http://localhost:3001/api/referrals/withdraw
+     https://surestake.com.br/api/referrals/withdraw
 ```
 
 ### 3. Verificar Banco de Dados

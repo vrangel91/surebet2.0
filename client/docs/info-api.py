@@ -1,1 +1,0 @@
-https://sempregreen.net.br/api/fetch_surebets/

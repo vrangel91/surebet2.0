@@ -23,9 +23,22 @@ const ticketsRoutes = require('./routes/tickets');
 const adminRoutes = require('./routes/admin');
 const notificationRoutes = require('./routes/notifications');
 const paymentRoutes = require('./routes/payments');
+const manualPaymentRoutes = require('./routes/manualPayments');
+const paymentStatusRoutes = require('./routes/paymentStatus');
+let plansRoutes;
+try {
+  plansRoutes = require('./routes/plans');
+  console.log('✅ Módulo plans carregado com sucesso');
+} catch (error) {
+  console.error('❌ Erro ao carregar módulo plans:', error);
+  process.exit(1);
+}
 
 // Importar cron jobs VIP
 const vipCronJobs = require('./utils/vipCronJobs');
+
+// Importar verificador de pagamentos
+const paymentChecker = require('./utils/paymentChecker');
 
 // Importar sistemas de otimização
 const { backendCache } = require('./utils/cache');
@@ -43,6 +56,11 @@ const { surebetsService } = require('./utils/surebetsService');
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HTTPS_PORT = 3443; // Porta para HTTPS
+
+// Log do diretório atual para debug
+console.log('🔍 [SERVER] __dirname:', __dirname);
+console.log('🔍 [SERVER] process.cwd():', process.cwd());
+console.log('🔍 [SERVER] Verificando se index.html existe:', require('fs').existsSync(path.join(__dirname, 'client', 'dist', 'index.html')));
 
 // Middleware
 app.use(cors({
@@ -82,44 +100,117 @@ app.use(backendRateLimiter.middleware());
 
 // Middleware de compressão
 app.use(compressionManager.middleware());
-// Servir arquivos estáticos com tratamento de erros
-app.use(express.static(path.join(__dirname, 'client/dist'), {
-  setHeaders: (res, path, stat) => {
-    // Definir headers corretos para diferentes tipos de arquivo
-    if (path.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    } else if (path.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css; charset=utf-8');
-    } else if (path.endsWith('.html')) {
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-    }
-  }
-}));
+
+    // Rota específica para webhook do MercadoPago (DEVE vir antes dos arquivos estáticos)
+    app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+      try {
+        // Converter body raw para JSON
+        const webhookBody = JSON.parse(req.body.toString('utf8'));
+        
+        console.log('Webhook MercadoPago recebido:', {
+          headers: req.headers,
+          body: webhookBody
+        });
+
+        // Verificar se é um evento de teste do MercadoPago
+        const isTestEvent = webhookBody.id === '123456' || 
+                           webhookBody.data?.id === '123456' ||
+                           webhookBody.live_mode === false;
+        
+        console.log('É evento de teste?', isTestEvent);
+
+        // Validar assinatura do webhook (opcional - pode ser desabilitado para testes)
+        const PaymentService = require('./services/paymentService');
+        const paymentService = new PaymentService();
+        const signature = req.headers['x-signature'];
+        
+        // Pular validação de assinatura para eventos de teste
+        if (!isTestEvent && signature && process.env.NODE_ENV === 'production') {
+          const isValid = paymentService.verifyWebhookSignature(webhookBody, signature, req.headers);
+          
+          if (!isValid) {
+            console.error('Assinatura do webhook inválida:', signature);
+            return res.status(401).json({
+              success: false,
+              error: 'Assinatura inválida'
+            });
+          }
+        } else if (isTestEvent) {
+          console.log('Evento de teste detectado - pulando validação de assinatura');
+        }
+
+        // Processar webhook usando o serviço de pagamentos
+        const result = await paymentService.processPaymentWebhook(webhookBody, req.headers, JSON.stringify(webhookBody));
+
+        if (result.success) {
+          console.log('Webhook processado com sucesso:', result);
+          res.json({
+            success: true,
+            message: 'Webhook processado com sucesso',
+            data: result
+          });
+        } else {
+          console.error('Erro ao processar webhook:', result);
+          res.status(400).json({
+            success: false,
+            error: result.error || 'Erro ao processar webhook'
+          });
+        }
+
+      } catch (error) {
+        console.error('Erro no webhook MercadoPago:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Erro interno do servidor'
+        });
+      }
+    });
+
+    // Rota para verificar pagamento específico (para testes)
+    app.post('/api/payments/check/:orderId', async (req, res) => {
+      try {
+        const { orderId } = req.params;
+        console.log(`🔍 Verificando pagamento ${orderId} manualmente...`);
+        
+        await paymentChecker.checkSpecificPayment(orderId);
+        
+        res.json({
+          success: true,
+          message: `Pagamento ${orderId} verificado`,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Erro ao verificar pagamento'
+        });
+      }
+    });
+
+// Servir arquivos estáticos será movido para depois das rotas da API
 
 // Configurar headers para UTF-8 (apenas para rotas da API)
 app.use('/api', (req, res, next) => {
+  console.log(`🔍 [API MIDDLEWARE] Interceptando: ${req.method} ${req.path}`);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   next();
 });
 
-// Middleware para interceptar requisições problemáticas
+// Middleware para interceptar requisições problemáticas (SIMPLIFICADO)
 app.use((req, res, next) => {
   // Log de todas as requisições para debug
   console.log(`📡 ${req.method} ${req.path} - ${req.get('User-Agent') || 'Sem User-Agent'}`);
   
-  // Verificar se é um refresh forçado (Ctrl+F5) tentando acessar rotas da API
-  const isForceRefresh = req.get('Cache-Control') === 'no-cache' || req.get('Pragma') === 'no-cache';
-  
   // Se for uma requisição para uma rota da API que não existe, tratar como 404
-  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/admin|api\/notifications|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
-    console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}${isForceRefresh ? ' (Refresh forçado detectado)' : ''}`);
+  if (req.path.startsWith('/api/') && !req.path.match(/^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/admin|api\/notifications|api\/plans|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/)) {
+    console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}`);
     return res.status(404).json({
       error: 'Endpoint não encontrado',
       message: `A rota ${req.method} ${req.path} não existe`,
       timestamp: new Date().toISOString(),
       path: req.path,
-      method: req.method,
-      isForceRefresh: isForceRefresh
+      method: req.method
     });
   }
   
@@ -127,6 +218,8 @@ app.use((req, res, next) => {
 });
 
 // Configurar rotas da API
+app.use('/api/plans', plansRoutes);
+console.log('✅ Rota /api/plans registrada');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/vip', vipRoutes);
@@ -205,6 +298,15 @@ app.use('/api/tickets', ticketsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/manual-payments', manualPaymentRoutes);
+app.use('/api/payment-status', paymentStatusRoutes);
+
+
+// Rota de teste simples
+app.get('/api/test', (req, res) => {
+  console.log('🔍 [TEST API] Rota /api/test executada');
+  res.json({ message: 'Teste funcionando!' });
+});
 
 // Rota de monitoramento do sistema
 app.get('/api/monitoring/stats', (req, res) => {
@@ -439,16 +541,176 @@ app.use((err, req, res, next) => {
   }
 });
 
-// Rota específica para favicon
+// Rotas específicas para arquivos estáticos
 app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client/dist/favicon.ico'));
+  const faviconPath = '/var/lib/postgresql/surebet/surebet/client/dist/favicon.ico';
+  console.log(`🔍 [FAVICON] Tentando servir: ${faviconPath}`);
+  if (require('fs').existsSync(faviconPath)) {
+    res.sendFile(faviconPath);
+  } else {
+    console.error(`❌ [FAVICON] Arquivo não encontrado: ${faviconPath}`);
+    res.status(404).send('Favicon not found');
+  }
 });
 
-// Rota para servir o SPA (deve vir DEPOIS de todas as rotas da API)
+// Rota para favicon SVG
+app.get('/img/icons/favicon.svg', (req, res) => {
+  const faviconPath = '/var/lib/postgresql/surebet/surebet/client/dist/img/icons/favicon.svg';
+  console.log(`🔍 [FAVICON SVG] Tentando servir: ${faviconPath}`);
+  if (require('fs').existsSync(faviconPath)) {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.sendFile(faviconPath);
+  } else {
+    console.error(`❌ [FAVICON SVG] Arquivo não encontrado: ${faviconPath}`);
+    res.status(404).send('Favicon SVG not found');
+  }
+});
+
+// Servir arquivos CSS
+app.get('/css/*', (req, res) => {
+  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  console.log(`🔍 [CSS] Tentando servir: ${filePath}`);
+  if (require('fs').existsSync(filePath)) {
+    res.setHeader('Content-Type', 'text/css; charset=utf-8');
+    res.sendFile(filePath);
+  } else {
+    console.error(`❌ [CSS] Arquivo não encontrado: ${filePath}`);
+    res.status(404).send('CSS file not found');
+  }
+});
+
+// Servir arquivos JS
+app.get('/js/*', (req, res) => {
+  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  console.log(`🔍 [JS] Tentando servir: ${filePath}`);
+  if (require('fs').existsSync(filePath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.sendFile(filePath);
+  } else {
+    console.error(`❌ [JS] Arquivo não encontrado: ${filePath}`);
+    res.status(404).send('JS file not found');
+  }
+});
+
+// Servir imagens
+app.get('/img/*', (req, res) => {
+  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  console.log(`🔍 [IMG] Tentando servir: ${filePath}`);
+  if (require('fs').existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    console.error(`❌ [IMG] Arquivo não encontrado: ${filePath}`);
+    res.status(404).send('Image not found');
+  }
+});
+
+// Servir fontes
+app.get('/fonts/*', (req, res) => {
+  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  console.log(`🔍 [FONTS] Tentando servir: ${filePath}`);
+  if (require('fs').existsSync(filePath)) {
+    // Definir Content-Type correto baseado na extensão
+    if (filePath.endsWith('.woff2')) {
+      res.setHeader('Content-Type', 'font/woff2');
+    } else if (filePath.endsWith('.woff')) {
+      res.setHeader('Content-Type', 'font/woff');
+    } else if (filePath.endsWith('.ttf')) {
+      res.setHeader('Content-Type', 'font/ttf');
+    } else if (filePath.endsWith('.eot')) {
+      res.setHeader('Content-Type', 'application/vnd.ms-fontobject');
+    }
+    res.sendFile(filePath);
+  } else {
+    console.error(`❌ [FONTS] Arquivo não encontrado: ${filePath}`);
+    res.status(404).send('Font not found');
+  }
+});
+
+// Rota específica para Service Worker
+app.get('/sw.js', (req, res) => {
+  const swPath = '/var/lib/postgresql/surebet/surebet/client/dist/sw.js';
+  console.log(`🔍 [SW] Tentando servir: ${swPath}`);
+  if (require('fs').existsSync(swPath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.sendFile(swPath);
+  } else {
+    console.error('❌ [SW] Service Worker não encontrado:', swPath);
+    res.status(404).send('Service Worker não encontrado');
+  }
+});
+
+// Rota específica para manifest.json
+app.get('/manifest.json', (req, res) => {
+  const manifestPath = '/var/lib/postgresql/surebet/surebet/client/dist/manifest.json';
+  console.log(`🔍 [MANIFEST] Tentando servir: ${manifestPath}`);
+  if (require('fs').existsSync(manifestPath)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.sendFile(manifestPath);
+  } else {
+    console.error('❌ [MANIFEST] Manifest não encontrado:', manifestPath);
+    res.status(404).send('Manifest não encontrado');
+  }
+});
+
+// Rota específica para pwa-config.js
+app.get('/pwa-config.js', (req, res) => {
+  const pwaConfigPath = '/var/lib/postgresql/surebet/surebet/client/dist/pwa-config.js';
+  console.log(`🔍 [PWA-CONFIG] Tentando servir: ${pwaConfigPath}`);
+  if (require('fs').existsSync(pwaConfigPath)) {
+    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+    res.sendFile(pwaConfigPath);
+  } else {
+    console.error('❌ [PWA-CONFIG] Arquivo não encontrado:', pwaConfigPath);
+    res.status(404).send('PWA Config não encontrado');
+  }
+});
+
+// Servir arquivos estáticos (TEMPORARIAMENTE DESABILITADO para debug)
+// app.use(express.static(path.join(__dirname, 'client/dist'), {
+//   setHeaders: (res, path, stat) => {
+//     // Definir headers corretos para diferentes tipos de arquivo
+//     if (path.endsWith('.js')) {
+//       res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+//     } else if (path.endsWith('.css')) {
+//       res.setHeader('Content-Type', 'text/css; charset=utf-8');
+//     } else if (path.endsWith('.html')) {
+//       res.setHeader('Content-Type', 'text/html; charset=utf-8');
+//     }
+//   }
+// }));
+
+// Rota para servir o SPA (deve vir DEPOIS de todas as rotas da API e arquivos estáticos)
 app.get('*', (req, res) => {
+  // Verificar se é uma rota da API que não foi encontrada
+  if (req.path.startsWith('/api/')) {
+    console.log(`🚫 [API] Rota da API não encontrada: ${req.method} ${req.path}`);
+    return res.status(404).json({
+      error: 'Endpoint não encontrado',
+      message: `A rota ${req.method} ${req.path} não existe`,
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method
+    });
+  }
+  
   // Para todas as outras rotas, servir o SPA
   console.log(`🌐 Servindo SPA para: ${req.path}`);
-  res.sendFile(path.join(__dirname, 'client/dist/index.html'));
+  console.log(`🔍 [SPA] __dirname: ${__dirname}`);
+  
+  const indexPath = '/var/lib/postgresql/surebet/surebet/client/dist/index.html';
+  console.log(`🔍 [SPA] Caminho completo: ${indexPath}`);
+  
+  // Verificar se o arquivo existe antes de tentar enviá-lo
+  if (require('fs').existsSync(indexPath)) {
+    console.log(`✅ [SPA] Arquivo encontrado, enviando...`);
+    res.sendFile(indexPath);
+  } else {
+    console.error(`❌ [SPA] Arquivo index.html não encontrado em: ${indexPath}`);
+    console.error(`❌ [SPA] __dirname atual: ${__dirname}`);
+    console.error(`❌ [SPA] Listando diretório:`, require('fs').readdirSync(__dirname));
+    res.status(500).send('Arquivo index.html não encontrado');
+  }
 });
 
 // Inicializar aplicação
@@ -608,9 +870,75 @@ async function initializeApp() {
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
     }));
     httpApp.use(express.json({ limit: '10mb' }));
-    httpApp.use(express.static(path.join(__dirname, 'client', 'dist')));
+    // httpApp.use(express.static(path.join(__dirname, 'client', 'dist'))); // REMOVIDO - causava conflito
     
+    // Rota específica para webhook do MercadoPago no servidor HTTP (DEVE vir antes dos arquivos estáticos)
+    httpApp.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+      try {
+        // Converter body raw para JSON
+        const webhookBody = JSON.parse(req.body.toString('utf8'));
+        
+        console.log('Webhook MercadoPago recebido (HTTP):', {
+          headers: req.headers,
+          body: webhookBody
+        });
+
+        // Verificar se é um evento de teste do MercadoPago
+        const isTestEvent = webhookBody.id === '123456' || 
+                           webhookBody.data?.id === '123456' ||
+                           webhookBody.live_mode === false;
+        
+        console.log('É evento de teste? (HTTP)', isTestEvent);
+
+        // Validar assinatura do webhook (opcional - pode ser desabilitado para testes)
+        const PaymentService = require('./services/paymentService');
+        const paymentService = new PaymentService();
+        const signature = req.headers['x-signature'];
+        
+        // Pular validação de assinatura para eventos de teste
+        if (!isTestEvent && signature && process.env.NODE_ENV === 'production') {
+          const isValid = paymentService.verifyWebhookSignature(webhookBody, signature, req.headers);
+          
+          if (!isValid) {
+            console.error('Assinatura do webhook inválida:', signature);
+            return res.status(401).json({
+              success: false,
+              error: 'Assinatura inválida'
+            });
+          }
+        } else if (isTestEvent) {
+          console.log('Evento de teste detectado - pulando validação de assinatura');
+        }
+
+        // Processar webhook usando o serviço de pagamentos
+        const result = await paymentService.processPaymentWebhook(webhookBody, req.headers, JSON.stringify(webhookBody));
+
+        if (result.success) {
+          console.log('Webhook processado com sucesso (HTTP):', result);
+          res.json({
+            success: true,
+            message: 'Webhook processado com sucesso',
+            data: result
+          });
+        } else {
+          console.error('Erro ao processar webhook (HTTP):', result);
+          res.status(400).json({
+            success: false,
+            error: result.error || 'Erro ao processar webhook'
+          });
+        }
+
+      } catch (error) {
+        console.error('Erro no webhook MercadoPago (HTTP):', error);
+        res.status(500).json({
+          success: false,
+          error: 'Erro interno do servidor'
+        });
+      }
+    });
+
     // Aplicar todas as rotas da API no servidor HTTP também
+    httpApp.use('/api/plans', plansRoutes);
     httpApp.use('/api/auth', authRoutes);
     httpApp.use('/api/users', userRoutes);
     httpApp.use('/api/vip', vipRoutes);
@@ -622,6 +950,8 @@ async function initializeApp() {
     httpApp.use('/api/admin', adminRoutes);
     httpApp.use('/api/notifications', notificationRoutes);
     httpApp.use('/api/payments', paymentRoutes);
+    httpApp.use('/api/manual-payments', manualPaymentRoutes);
+    httpApp.use('/api/payment-status', paymentStatusRoutes);
     
     // Rotas da API existentes
     // Rota de surebets com cache inteligente
@@ -778,14 +1108,140 @@ async function initializeApp() {
     });
     */
 
+    // Rota específica para Service Worker no servidor HTTP
+    httpApp.get('/sw.js', (req, res) => {
+      const swPath = '/var/lib/postgresql/surebet/surebet/client/dist/sw.js';
+      console.log(`🔍 [HTTP SW] Tentando servir: ${swPath}`);
+      if (require('fs').existsSync(swPath)) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.sendFile(swPath);
+      } else {
+        console.error('❌ [HTTP SW] Service Worker não encontrado:', swPath);
+        res.status(404).send('Service Worker não encontrado');
+      }
+    });
+
+    // Rota específica para manifest.json no servidor HTTP
+    httpApp.get('/manifest.json', (req, res) => {
+      const manifestPath = '/var/lib/postgresql/surebet/surebet/client/dist/manifest.json';
+      console.log(`🔍 [HTTP MANIFEST] Tentando servir: ${manifestPath}`);
+      if (require('fs').existsSync(manifestPath)) {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.sendFile(manifestPath);
+      } else {
+        console.error('❌ [HTTP MANIFEST] Manifest não encontrado:', manifestPath);
+        res.status(404).send('Manifest não encontrado');
+      }
+    });
+
+    // Rota específica para pwa-config.js no servidor HTTP
+    httpApp.get('/pwa-config.js', (req, res) => {
+      const pwaConfigPath = '/var/lib/postgresql/surebet/surebet/client/dist/pwa-config.js';
+      console.log(`🔍 [HTTP PWA-CONFIG] Tentando servir: ${pwaConfigPath}`);
+      if (require('fs').existsSync(pwaConfigPath)) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.sendFile(pwaConfigPath);
+      } else {
+        console.error('❌ [HTTP PWA-CONFIG] Arquivo não encontrado:', pwaConfigPath);
+        res.status(404).send('PWA Config não encontrado');
+      }
+    });
+
+    // Rotas específicas para arquivos estáticos no servidor HTTP
+    httpApp.get('/css/*', (req, res) => {
+      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      console.log(`🔍 [HTTP CSS] Tentando servir: ${filePath}`);
+      if (require('fs').existsSync(filePath)) {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        res.sendFile(filePath);
+      } else {
+        console.error(`❌ [HTTP CSS] Arquivo não encontrado: ${filePath}`);
+        res.status(404).send('CSS file not found');
+      }
+    });
+
+    httpApp.get('/js/*', (req, res) => {
+      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      console.log(`🔍 [HTTP JS] Tentando servir: ${filePath}`);
+      if (require('fs').existsSync(filePath)) {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.sendFile(filePath);
+      } else {
+        console.error(`❌ [HTTP JS] Arquivo não encontrado: ${filePath}`);
+        res.status(404).send('JS file not found');
+      }
+    });
+
+    httpApp.get('/img/*', (req, res) => {
+      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      console.log(`🔍 [HTTP IMG] Tentando servir: ${filePath}`);
+      if (require('fs').existsSync(filePath)) {
+        res.sendFile(filePath);
+      } else {
+        console.error(`❌ [HTTP IMG] Arquivo não encontrado: ${filePath}`);
+        res.status(404).send('Image not found');
+      }
+    });
+
+    httpApp.get('/fonts/*', (req, res) => {
+      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      console.log(`🔍 [HTTP FONTS] Tentando servir: ${filePath}`);
+      if (require('fs').existsSync(filePath)) {
+        // Definir Content-Type correto baseado na extensão
+        if (filePath.endsWith('.woff2')) {
+          res.setHeader('Content-Type', 'font/woff2');
+        } else if (filePath.endsWith('.woff')) {
+          res.setHeader('Content-Type', 'font/woff');
+        } else if (filePath.endsWith('.ttf')) {
+          res.setHeader('Content-Type', 'font/ttf');
+        } else if (filePath.endsWith('.eot')) {
+          res.setHeader('Content-Type', 'application/vnd.ms-fontobject');
+        }
+        res.sendFile(filePath);
+      } else {
+        console.error(`❌ [HTTP FONTS] Arquivo não encontrado: ${filePath}`);
+        res.status(404).send('Font not found');
+      }
+    });
+
     // Servir SPA para todas as outras rotas
     httpApp.get('*', (req, res) => {
-      console.log(`🌐 Servindo SPA para: ${req.path}`);
-      res.sendFile(path.join(__dirname, 'client', 'dist', 'index.html'));
+      // Verificar se é uma rota da API que não foi encontrada
+      if (req.path.startsWith('/api/')) {
+        console.log(`🚫 [HTTP API] Rota da API não encontrada: ${req.method} ${req.path}`);
+        return res.status(404).json({
+          error: 'Endpoint não encontrado',
+          message: `A rota ${req.method} ${req.path} não existe`,
+          timestamp: new Date().toISOString(),
+          path: req.path,
+          method: req.method
+        });
+      }
+      
+      console.log(`🌐 [HTTP] Servindo SPA para: ${req.path}`);
+      console.log(`🔍 [HTTP SPA] __dirname: ${__dirname}`);
+      
+      const indexPath = '/var/lib/postgresql/surebet/surebet/client/dist/index.html';
+      console.log(`🔍 [HTTP SPA] Caminho completo: ${indexPath}`);
+      
+      if (require('fs').existsSync(indexPath)) {
+        console.log(`✅ [HTTP SPA] Arquivo encontrado, enviando...`);
+        res.sendFile(indexPath);
+      } else {
+        console.error(`❌ [HTTP SPA] Arquivo index.html não encontrado em: ${indexPath}`);
+        console.error(`❌ [HTTP SPA] __dirname atual: ${__dirname}`);
+        console.error(`❌ [HTTP SPA] Listando diretório:`, require('fs').readdirSync(__dirname));
+        res.status(500).send('Arquivo index.html não encontrado');
+      }
     });
     
     httpApp.listen(3001, () => {
       console.log(`🌐 Servidor HTTP rodando na porta 3001`);
+      
+      // Iniciar verificador de pagamentos PIX
+      paymentChecker.start();
+      console.log('🔄 Verificador de pagamentos PIX iniciado');
     });
     
   } catch (error) {

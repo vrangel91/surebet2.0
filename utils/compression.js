@@ -102,6 +102,13 @@ class CompressionManager {
         // Atualizar estatísticas
         this.updateStats(originalSize, compressed.length);
 
+        // Verificar se headers já foram enviados
+        if (res.headersSent) {
+          logger.warn('Headers already sent, sending original response');
+          this.sendOriginalResponse(res, chunks);
+          return;
+        }
+
         // Configurar headers
         res.setHeader('Content-Encoding', 'gzip');
         res.setHeader('Content-Length', compressed.length);
@@ -127,9 +134,11 @@ class CompressionManager {
    * Envia resposta original
    */
   sendOriginalResponse(res, chunks) {
-    res.writeHead(res.statusCode);
-    chunks.forEach(chunk => res.write(chunk));
-    res.end();
+    if (!res.headersSent) {
+      res.writeHead(res.statusCode);
+      chunks.forEach(chunk => res.write(chunk));
+      res.end();
+    }
   }
 
   /**
