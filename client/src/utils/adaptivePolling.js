@@ -6,9 +6,9 @@
 
 class AdaptivePolling {
   constructor() {
-    this.baseInterval = 5000 // 5 segundos base
-    this.minInterval = 2000  // 2 segundos mínimo
-    this.maxInterval = 30000 // 30 segundos máximo
+    this.baseInterval = 300000 // 5 minutos base
+    this.minInterval = 60000  // 1 minuto mínimo
+    this.maxInterval = 600000 // 10 minutos máximo
     this.currentInterval = this.baseInterval
     this.userActivityThreshold = 30000 // 30 segundos de inatividade
     this.lastActivity = Date.now()

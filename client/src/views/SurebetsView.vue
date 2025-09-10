@@ -45,6 +45,25 @@
               </button>
               
               <button 
+                class="control-btn refresh-btn" 
+                @click="manualRefresh"
+                :disabled="loading"
+              >
+                <span class="control-text">
+                  <span v-if="!loading">🔄 Atualizar</span>
+                  <span v-else>⏳ Carregando...</span>
+                </span>
+              </button>
+              
+              <button 
+                class="control-btn debug-btn" 
+                @click="debugData"
+                title="Debug dos dados"
+              >
+                <span class="control-text">🔍 Debug</span>
+              </button>
+              
+              <button 
                 class="control-btn filter-toggle-btn"
                 @click="toggleFilterOverlay"
               >
@@ -81,31 +100,34 @@
                 </svg>
                 Live ({{ liveCount }})
               </button>
-            </div>
-            
-            <!-- Filtros de Data -->
-            <div class="date-filters">
-              <label class="date-filter-label">Filtrar por data:</label>
-              <input 
-                type="date" 
-                v-model="selectedDate"
-                class="date-filter-input"
-                @change="onDateChange"
-              />
-              <button 
-                v-if="selectedDate"
-                class="clear-date-btn"
-                @click="clearDateFilter"
-                title="Limpar filtro de data"
-              >
-                ×
-              </button>
+              
+              <!-- Filtros de Data -->
+              <div class="date-filters">
+                <label class="date-filter-label">Data:</label>
+                <input 
+                  type="date" 
+                  v-model="selectedDate"
+                  class="date-filter-input"
+                  @change="onDateChange"
+                />
+                <button 
+                  v-if="selectedDate"
+                  class="clear-date-btn"
+                  @click="clearDateFilter"
+                  title="Limpar filtro de data"
+                >
+                  ×
+                </button>
+              </div>
             </div>
             
             <!-- Total de surebets encontrados -->
             <div class="games-found-info">
               <div class="surebets-count">
-                Total de surebets encontrados: {{ filteredSurebetsByMarket.length }}
+                Mostrando {{ paginatedSurebets.length }} de {{ filteredSurebetsByMarket.length }} surebets
+                <span v-if="hasMoreItems" class="more-available">
+                  ({{ remainingItemsCount }} restantes)
+                </span>
               </div>
             </div>
             
@@ -245,7 +267,7 @@
           
           <div v-else class="surebets-grid">
             <SurebetCard 
-              v-for="(surebet, index) in filteredSurebetsByMarket" 
+              v-for="(surebet, index) in paginatedSurebets" 
               :key="index"
               :surebet="surebet"
               :isPinned="isPinned(surebet)"
@@ -256,6 +278,24 @@
               @balance-debited="handleBalanceDebited"
               @refresh-accounts="loadBookmakerAccounts"
             />
+          </div>
+
+          <!-- Botão "Ver mais" para paginação -->
+          <div v-if="hasMoreItems" class="load-more-container">
+            <button 
+              @click="loadMoreCards" 
+              :disabled="isLoadingMore"
+              class="load-more-btn"
+              :class="{ loading: isLoadingMore }"
+            >
+              <span v-if="!isLoadingMore">
+                Ver mais ({{ remainingItemsCount }} restantes)
+              </span>
+              <span v-else class="loading-content">
+                <div class="spinner"></div>
+                Carregando...
+              </span>
+            </button>
           </div>
         </div>
       </main>
@@ -550,8 +590,12 @@
         ws: null,
         sidebarCollapsed: false,
         updateInterval: null,
-        autoUpdateInterval: 5000, // Intervalo de atualização em milissegundos (padrão: 5s)
+        autoUpdateInterval: 300000, // Intervalo de atualização em milissegundos (padrão: 5 minutos)
         backgroundSearch: true, // Busca em segundo plano habilitada por padrão
+        // Paginação
+        itemsPerPage: 52, // Cards por página
+        currentPage: 1, // Página atual
+        isLoadingMore: false, // Estado de carregamento do "Ver mais"
         selectedHouses: [...filterOptions.houses], // Inicia com todas as casas selecionadas
         selectedSports: filterOptions.sports.map(sport => sport.value), // Inicia com todos os esportes selecionados
         selectedCurrencies: filterOptions.currencies.map(currency => currency.code), // Inicia com todas as moedas selecionadas
@@ -578,6 +622,10 @@
          websocketConnected: false,
          websocketRetryCount: 0,
          pollingInterval: null,
+         
+         // Debounce para evitar chamadas excessivas
+         debounceTimer: null,
+         
                savedFilters: [], // Lista de filtros salvos do usuário
                showSavedFiltersModal: false,
          showSaveFilterModal: false,
@@ -651,16 +699,50 @@
         }).length : 0
       },
       filteredSurebets() {
-        let surebetsArray = this.surebets ? Object.values(this.surebets) : []
-        console.log('🔍 DEBUG FILTROS:')
-        console.log('Total surebets inicial:', surebetsArray.length)
-        console.log('Selected houses:', this.selectedHouses.length, '/', this.filterOptions.houses.length)
-        console.log('Selected sports:', this.selectedSports.length, '/', this.filterOptions.sports.length)
-        console.log('Selected currencies:', this.selectedCurrencies.length, '/', this.filterOptions.currencies.length)
+        // Função robusta para extrair dados de surebets
+        const extractSurebetsData = (surebets) => {
+          if (!surebets || typeof surebets !== 'object') {
+            return []
+          }
+          
+          // Se já é um array, retornar diretamente
+          if (Array.isArray(surebets)) {
+            return surebets
+          }
+          
+          // Tentar extrair valores do objeto
+          try {
+            const values = Object.values(surebets)
+            if (values.length > 0) {
+              return values
+            }
+          } catch (error) {
+            console.warn('Erro ao extrair valores do objeto surebets:', error)
+          }
+          
+          // Tentar converter para objeto normal se for um Proxy
+          try {
+            const normalObject = JSON.parse(JSON.stringify(surebets))
+            if (normalObject && typeof normalObject === 'object') {
+              const values = Object.values(normalObject)
+              if (values.length > 0) {
+                console.log('✅ Dados extraídos via conversão JSON')
+                return values
+              }
+            }
+          } catch (error) {
+            console.warn('Erro ao converter surebets para objeto normal:', error)
+          }
+          
+          // Se chegou até aqui, retornar array vazio
+          return []
+        }
         
-        // Log de um surebet de exemplo para ver estrutura
-        if (surebetsArray.length > 0) {
-          console.log('Exemplo de surebet:', surebetsArray[0])
+        let surebetsArray = extractSurebetsData(this.surebets)
+        
+        // Log apenas se houver problema
+        if (surebetsArray.length === 0 && this.surebets) {
+          console.warn('⚠️ AVISO: Nenhum dado de surebets encontrado')
         }
         
         // REMOÇÃO DE DUPLICATAS - Remove surebets com dados 100% idênticos
@@ -846,11 +928,12 @@
       // Surebets filtradas por tipo de mercado
       filteredSurebetsByMarket() {
         if (!this.marketSearchTerm.trim()) {
+          console.log(`🔍 filteredSurebetsByMarket: sem busca, retornando ${this.filteredSurebets.length} surebets`)
           return this.filteredSurebets
         }
         
         const searchTerm = this.marketSearchTerm.toLowerCase().trim()
-        return this.filteredSurebets.filter(surebet => {
+        const filtered = this.filteredSurebets.filter(surebet => {
           if (!surebet || surebet.length === 0) return false
           
           // Buscar no campo market de todas as apostas do surebet
@@ -861,9 +944,28 @@
             return market.toLowerCase().includes(searchTerm)
           })
         })
+        console.log(`🔍 filteredSurebetsByMarket: com busca "${searchTerm}", retornando ${filtered.length} de ${this.filteredSurebets.length} surebets`)
+        return filtered
       },
-      
-  
+
+      // Surebets paginadas para exibição
+      paginatedSurebets() {
+        const startIndex = 0
+        const endIndex = this.currentPage * this.itemsPerPage
+        const paginated = this.filteredSurebetsByMarket.slice(startIndex, endIndex)
+        console.log(`📄 Paginação: página ${this.currentPage}, mostrando ${paginated.length} de ${this.filteredSurebetsByMarket.length} total`)
+        return paginated
+      },
+
+      // Verifica se há mais itens para carregar
+      hasMoreItems() {
+        return this.paginatedSurebets.length < this.filteredSurebetsByMarket.length
+      },
+
+      // Contador de itens restantes
+      remainingItemsCount() {
+        return this.filteredSurebetsByMarket.length - this.paginatedSurebets.length
+      },
       
       isUsingDefaultProfitFilters() {
         try {
@@ -898,6 +1000,23 @@
       }
     },
     watch: {
+      // Reset paginação apenas quando necessário (removido para evitar desaparecimento dos cards)
+      // selectedHouses() {
+      //   this.resetPagination()
+      // },
+      // selectedSports() {
+      //   this.resetPagination()
+      // },
+      // selectedCurrencies() {
+      //   this.resetPagination()
+      // },
+      // marketSearchTerm() {
+      //   this.resetPagination()
+      // },
+      // filteredSurebets() {
+      //   this.resetPagination()
+      // },
+
       // Monitorar mudanças nas configurações do localStorage
       '$store.state.settings': {
         handler() {
@@ -1020,20 +1139,18 @@
           
           // Verificar se o servidor está disponível antes de tentar WebSocket
           this.checkServerAvailability()
-          this.fetchSurebets()
+          this.debouncedFetchSurebets()
           
-          // Iniciar busca automática apenas se estiver habilitada
-          if (this.isSearching) {
-            this.startAutoUpdate()
-            console.log('🚀 Busca automática iniciada no mounted')
-          } else {
-            console.log('⏸️ Busca automática não iniciada (desabilitada nas configurações)')
-          }
+          // Busca automática desabilitada para melhor performance
+          // if (this.isSearching) {
+          //   this.startAutoUpdate()
+          //   console.log('🚀 Busca automática iniciada no mounted')
+          // } else {
+          //   console.log('⏸️ Busca automática não iniciada (desabilitada nas configurações)')
+          // }
+          console.log('⏸️ Busca automática desabilitada para melhor performance')
           
-          // Atualiza estatísticas a cada minuto
-          setInterval(() => {
-            this.updateStats()
-          }, 60000)
+          // Timer de estatísticas removido para melhor performance
           
           console.log('🔍 Resumo das configurações de busca automática aplicadas:')
           console.log('  - Busca habilitada:', this.isSearching)
@@ -1063,11 +1180,11 @@
               this.updateGridCSSVariables()
               this.updateFiltersCache() // Atualiza cache quando configurações mudam
               
-              // Reiniciar busca automática se necessário
-              if (this.isSearching && !this.updateInterval) {
-                this.startAutoUpdate()
-                console.log('🔄 Busca automática reiniciada após mudança nas configurações')
-              }
+              // Busca automática desabilitada para melhor performance
+              // if (this.isSearching && !this.updateInterval) {
+              //   this.startAutoUpdate()
+              //   console.log('🔄 Busca automática reiniciada após mudança nas configurações')
+              // }
             }
           })
           
@@ -1095,13 +1212,137 @@
       if (this.ws) {
         this.ws.close()
       }
-      this.stopAutoUpdate()
-      this.stopHttpPolling()
+      this.clearAllTimers()
       
     },
-       methods: {
+      methods: {
   
-       // Carrega contas de Bookmaker Accounts
+      // Debounce para evitar chamadas excessivas
+      debouncedFetchSurebets() {
+        if (this.debounceTimer) {
+          clearTimeout(this.debounceTimer)
+        }
+        
+        this.debounceTimer = setTimeout(() => {
+          this.fetchSurebets()
+        }, 1000) // 1 segundo de debounce
+      },
+      
+      // Método de debug para diagnosticar problemas
+      async debugData() {
+        console.log('🔍 === DEBUG DOS DADOS ===')
+        
+        // 1. Verificar estado atual
+        console.log('📊 Estado atual:', {
+          surebets: this.surebets ? Object.keys(this.surebets).length : 'N/A',
+          loading: this.loading,
+          isSearching: this.isSearching,
+          filteredSurebets: this.filteredSurebets.length,
+          paginatedSurebets: this.paginatedSurebets.length,
+          currentPage: this.currentPage,
+          itemsPerPage: this.itemsPerPage
+        })
+        
+        // 2. Testar API diretamente
+        console.log('🌐 Testando API diretamente...')
+        try {
+          const response = await fetch('http://localhost:3001/api/surebets')
+          const data = await response.json()
+          console.log('📡 Resposta da API:', {
+            success: data.success,
+            dataType: typeof data.data,
+            dataKeys: data.data ? Object.keys(data.data) : 'N/A',
+            dataLength: data.data ? Object.keys(data.data).length : 'N/A',
+            source: data.source,
+            timestamp: data.timestamp
+          })
+        } catch (error) {
+          console.error('❌ Erro na API:', error)
+        }
+        
+        // 3. Verificar filtros
+        console.log('🔍 Filtros ativos:', {
+          selectedHouses: this.selectedHouses,
+          selectedSports: this.selectedSports,
+          selectedCurrencies: this.selectedCurrencies,
+          activeFilter: this.activeFilter,
+          minProfit: this.minProfit,
+          maxProfit: this.maxProfit,
+          marketSearchTerm: this.marketSearchTerm
+        })
+        
+        // 4. Verificar elementos DOM
+        const cards = document.querySelectorAll('.surebet-card')
+        console.log('📊 Cards no DOM:', cards.length)
+        
+        // 5. Forçar atualização
+        console.log('🔄 Forçando atualização...')
+        await this.fetchSurebets()
+        
+        console.log('✅ Debug concluído')
+      },
+  
+      // Carrega mais cards para paginação
+      async loadMoreCards() {
+        if (this.isLoadingMore) return
+        
+        this.isLoadingMore = true
+        
+        try {
+          // Simular um pequeno delay para melhor UX
+          await new Promise(resolve => setTimeout(resolve, 500))
+          
+          // Incrementar página atual
+          this.currentPage++
+          
+          console.log(`📄 Carregando página ${this.currentPage}, mostrando ${this.paginatedSurebets.length} cards (52 por página)`)
+        } catch (error) {
+          console.error('Erro ao carregar mais cards:', error)
+        } finally {
+          this.isLoadingMore = false
+        }
+      },
+
+      // Reset paginação apenas quando necessário
+      resetPagination() {
+        this.currentPage = 1
+        console.log('🔄 Paginação resetada')
+      },
+
+      // Refresh manual dos dados
+      async manualRefresh() {
+        if (this.loading) return
+        
+        console.log('🔄 Refresh manual iniciado')
+        this.loading = true
+        
+        try {
+          // Reset paginação para mostrar novos dados
+          this.resetPagination()
+          
+          // Buscar novos dados
+          await this.fetchSurebets()
+          
+          console.log('✅ Refresh manual concluído')
+        } catch (error) {
+          console.error('❌ Erro no refresh manual:', error)
+        } finally {
+          this.loading = false
+        }
+      },
+
+      // Limpar todos os filtros
+      clearAllFilters() {
+        this.selectedHouses = [...this.filterOptions.houses]
+        this.selectedSports = this.filterOptions.sports.map(sport => sport.value)
+        this.selectedCurrencies = this.filterOptions.currencies.map(currency => currency.code)
+        this.selectedDate = ''
+        this.marketSearchTerm = ''
+        this.resetPagination()
+        console.log('🗑️ Todos os filtros foram limpos')
+      },
+  
+      // Carrega contas de Bookmaker Accounts
        async loadBookmakerAccounts() {
          try {
            // Verificar cache primeiro
@@ -1618,21 +1859,72 @@
             
             switch (data.type) {
               case 'initial_state':
-                this.surebets = data.surebets
-                this.isSearching = data.isSearching
-                this.soundEnabled = data.soundEnabled
+                // Processar dados de forma robusta
+                const processSurebetsData = (surebetsData) => {
+                  if (!surebetsData || typeof surebetsData !== 'object') {
+                    return {}
+                  }
+                  
+                  // Se já é um objeto válido, retornar
+                  if (Object.keys(surebetsData).length > 0) {
+                    return surebetsData
+                  }
+                  
+                  // Se é um array, converter para objeto
+                  if (Array.isArray(surebetsData)) {
+                    const obj = {}
+                    surebetsData.forEach((item, index) => {
+                      if (item && typeof item === 'object') {
+                        obj[`surebet_${index}`] = item
+                      }
+                    })
+                    return obj
+                  }
+                  
+                  return {}
+                }
+                
+                this.surebets = processSurebetsData(data.surebets)
+                this.isSearching = data.isSearching || false
+                this.soundEnabled = data.soundEnabled || false
                 this.loading = false
                 // Não toca som no estado inicial
                 break
                 
               case 'new_surebet':
+                // Processar dados de forma robusta
+                const processNewSurebetsData = (surebetsData) => {
+                  if (!surebetsData || typeof surebetsData !== 'object') {
+                    return this.surebets || {}
+                  }
+                  
+                  // Se já é um objeto válido, retornar
+                  if (Object.keys(surebetsData).length > 0) {
+                    return surebetsData
+                  }
+                  
+                  // Se é um array, converter para objeto
+                  if (Array.isArray(surebetsData)) {
+                    const obj = {}
+                    surebetsData.forEach((item, index) => {
+                      if (item && typeof item === 'object') {
+                        obj[`surebet_${index}`] = item
+                      }
+                    })
+                    return obj
+                  }
+                  
+                  return this.surebets || {}
+                }
+                
                 // Verifica se há novos dados antes de tocar o som
                 const currentKeys = this.surebets ? Object.keys(this.surebets) : []
-                const newKeys = data.surebets ? Object.keys(data.surebets) : []
+                const newSurebetsData = processNewSurebetsData(data.surebets)
+                const newKeys = Object.keys(newSurebetsData)
                 const hasNewData = newKeys.length > currentKeys.length || 
                                   newKeys.some(key => !currentKeys.includes(key))
                 
-                this.surebets = data.surebets || {}
+                this.surebets = newSurebetsData
                 
                 // Toca som apenas se há novos dados e o som está habilitado
                 if (this.soundEnabled && hasNewData) {
@@ -1640,17 +1932,46 @@
                 }
                 break
                 
+              case 'surebets_update':
+                // Processar dados de forma robusta
+                const processUpdateSurebetsData = (surebetsData) => {
+                  if (!surebetsData || typeof surebetsData !== 'object') {
+                    return this.surebets || {}
+                  }
+                  
+                  // Se já é um objeto válido, retornar
+                  if (Object.keys(surebetsData).length > 0) {
+                    return surebetsData
+                  }
+                  
+                  // Se é um array, converter para objeto
+                  if (Array.isArray(surebetsData)) {
+                    const obj = {}
+                    surebetsData.forEach((item, index) => {
+                      if (item && typeof item === 'object') {
+                        obj[`surebet_${index}`] = item
+                      }
+                    })
+                    return obj
+                  }
+                  
+                  return this.surebets || {}
+                }
+                
+                this.surebets = processUpdateSurebetsData(data.surebets)
+                break
+                
               case 'search_state_changed':
                 // Atualiza o estado de busca baseado na mensagem do servidor
                 this.isSearching = data.isSearching
                 console.log(`Estado de busca atualizado via WebSocket: ${this.isSearching ? 'Ativo' : 'Pausado'}`)
                 
-                // Atualiza a busca automática baseado no novo estado
-                if (this.isSearching) {
-                  this.startAutoUpdate()
-                } else {
-                  this.stopAutoUpdate()
-                }
+                // Busca automática desabilitada para melhor performance
+                // if (this.isSearching) {
+                //   this.startAutoUpdate()
+                // } else {
+                //   this.stopAutoUpdate()
+                // }
                 break
             }
           }
@@ -1698,7 +2019,7 @@
         
                 // Configurar polling usando o intervalo configurável
           this.pollingInterval = setInterval(() => {
-            this.fetchSurebets()
+            this.debouncedFetchSurebets()
           }, this.autoUpdateInterval)
           
           console.log('🔄 HTTP polling iniciado com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
@@ -1831,6 +2152,13 @@
       },
       
                async fetchSurebets() {
+        console.log('🚀 INICIANDO fetchSurebets...')
+        console.log('📊 Estado atual antes da requisição:', {
+          surebets: this.surebets ? Object.keys(this.surebets).length : 'N/A',
+          loading: this.loading,
+          isSearching: this.isSearching
+        })
+        
         try {
           // Verificar rate limiting
           if (!this.rateLimiter.canMakeRequest('/api/surebets')) {
@@ -1839,27 +2167,43 @@
             return
           }
 
-          // Verificar cache local primeiro
+          // Verificar cache local primeiro (desabilitado temporariamente para debug)
           const cachedData = this.smartCache.getSurebets()
-          if (cachedData && this.smartCache.has('surebets_data')) {
+          if (cachedData && this.smartCache.has('surebets_data') && false) { // Desabilitado para debug
             console.log('📦 Usando dados do cache local')
             this.surebets = cachedData
             this.loading = false
             return
           }
+          
+          console.log('🔄 Ignorando cache local para buscar dados frescos da API')
 
           // Preserva os filtros atuais antes da atualização
           this.updateFiltersCache()
           
           const startTime = Date.now()
           // Usar a nova API otimizada que serve dados do cache do servidor
-          const response = await fetch('/api/surebets')
+          console.log('🌐 Fazendo requisição para /api/surebets...')
+          const response = await fetch('http://localhost:3001/api/surebets')
+          
+          console.log('📡 Resposta recebida:', {
+            status: response.status,
+            ok: response.ok,
+            statusText: response.statusText
+          })
           
           if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`)
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
           }
           
           const data = await response.json()
+          console.log('📦 Dados JSON recebidos:', {
+            success: data.success,
+            hasData: !!data.data,
+            dataType: typeof data.data,
+            dataKeys: data.data ? Object.keys(data.data).length : 0,
+            fullData: data
+          })
           
           // Calcular latência
           this.requestLatency = Date.now() - startTime
@@ -1872,10 +2216,29 @@
           
           // Usar dados da resposta da API (sistema otimizado)
           if (data.success && data.data) {
+            console.log('🔍 DEBUG: Dados da API recebidos:', {
+              success: data.success,
+              dataType: typeof data.data,
+              dataKeys: Object.keys(data.data || {}),
+              dataLength: Object.keys(data.data || {}).length,
+              source: data.source,
+              timestamp: data.timestamp
+            })
             this.surebets = data.data
+            console.log('✅ this.surebets definido com sucesso:', {
+              type: typeof this.surebets,
+              keys: Object.keys(this.surebets).length,
+              isObject: this.surebets instanceof Object
+            })
           } else {
+            console.warn('⚠️ DEBUG: Formato de dados inesperado, usando fallback:', data)
             // Fallback para sistema original se a resposta não tiver o formato esperado
             this.surebets = data
+            console.log('⚠️ this.surebets definido com fallback:', {
+              type: typeof this.surebets,
+              keys: Object.keys(this.surebets).length,
+              isObject: this.surebets instanceof Object
+            })
           }
           
           // Verifica se há novos dados comparando com os dados atuais
@@ -1910,7 +2273,13 @@
           
           console.log(`✅ Dados atualizados: ${Object.keys(data).length} surebets (${this.requestLatency}ms)`)
         } catch (error) {
-          // Log silencioso para evitar spam no console
+          console.error('❌ ERRO no fetchSurebets:', error)
+          console.error('❌ Tipo do erro:', typeof error)
+          console.error('❌ Mensagem do erro:', error.message)
+          console.error('❌ Stack do erro:', error.stack)
+          
+          // Garantir que surebets seja um objeto vazio em caso de erro
+          this.surebets = {}
           this.loading = false
           this.updateStats() // Atualiza estatísticas mesmo em caso de erro
           
@@ -2046,13 +2415,15 @@
         this.isSearching = !this.isSearching
         this.sendWebSocketMessage('toggle_search', { isSearching: this.isSearching })
         
-        if (this.isSearching) {
-          this.startAutoUpdate()
-          console.log('🔍 Busca automática iniciada com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
-        } else {
-          this.stopAutoUpdate()
-          console.log('⏸️ Busca automática pausada')
-        }
+        // Busca automática desabilitada para melhor performance
+        // if (this.isSearching) {
+        //   this.startAutoUpdate()
+        //   console.log('🔍 Busca automática iniciada com intervalo de', this.autoUpdateInterval / 1000, 'segundos')
+        // } else {
+        //   this.stopAutoUpdate()
+        //   console.log('⏸️ Busca automática pausada')
+        // }
+        console.log('⏸️ Busca automática desabilitada - use refresh manual se necessário')
         
         // Salvar o estado da busca nas configurações
         this.saveSearchStateToSettings()
@@ -2206,7 +2577,7 @@
               console.log(`🔄 Intervalo adaptativo ajustado para ${this.autoUpdateInterval / 1000}s`)
             }
             
-            this.fetchSurebets()
+            this.debouncedFetchSurebets()
           }
         }, this.autoUpdateInterval)
         
@@ -2254,6 +2625,23 @@
         const now = Date.now()
         const uptimeMs = now - this.startTime
         this.uptimeMinutes = Math.floor(uptimeMs / (1000 * 60))
+      },
+      
+      // Gerenciamento de timers
+      clearAllTimers() {
+        if (this.updateInterval) {
+          clearInterval(this.updateInterval)
+          this.updateInterval = null
+        }
+        if (this.pollingInterval) {
+          clearInterval(this.pollingInterval)
+          this.pollingInterval = null
+        }
+        if (this.debounceTimer) {
+          clearTimeout(this.debounceTimer)
+          this.debounceTimer = null
+        }
+        console.log('🧹 Todos os timers limpos')
       },
       
       stopAutoUpdate() {
@@ -2855,8 +3243,8 @@
                      this.autoUpdateInterval = Number(settings.autoSearch.interval) * 1000 // Converter para milissegundos
                      console.log('⏱️ Intervalo de atualização carregado:', this.autoUpdateInterval / 1000, 'segundos')
                    } else {
-                     this.autoUpdateInterval = 5000 // Valor padrão: 5 segundos
-                     console.log('⏱️ Usando intervalo padrão de 5 segundos')
+                     this.autoUpdateInterval = 300000 // Valor padrão: 5 minutos
+                     console.log('⏱️ Usando intervalo padrão de 5 minutos')
                    }
                    
                    // Aplicar configuração de busca em segundo plano
@@ -2866,12 +3254,12 @@
                    }
                  } else {
                    console.log('⚠️ Nenhuma configuração de busca automática encontrada, usando valores padrão')
-                   this.autoUpdateInterval = 5000
+                   this.autoUpdateInterval = 300000
                    this.backgroundSearch = true
                  }
                } else {
                  console.log('⚠️ Nenhuma configuração salva encontrada, usando valores padrão')
-                 this.autoUpdateInterval = 5000
+                 this.autoUpdateInterval = 300000
                  this.backgroundSearch = true
                }
                
@@ -2883,7 +3271,7 @@
              } catch (error) {
                console.log('Erro ao carregar configurações de busca automática:', error)
                // Usar valores padrão em caso de erro
-               this.autoUpdateInterval = 5000
+               this.autoUpdateInterval = 300000
                this.backgroundSearch = true
              }
            },
@@ -2941,14 +3329,16 @@
   
   .surebets-container {
     display: flex;
-    min-height: 100vh; /* Mudança de height para min-height */
-    overflow: hidden; /* Remove scroll do container principal */
+    min-height: 100vh;
+    overflow: hidden;
     background: var(--bg-primary);
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
-    width: 100%; /* Garante que o container ocupe toda a largura disponível */
-    max-width: 100%; /* Previne overflow horizontal */
+    width: 100%;
+    max-width: 100%;
   }
+
+
   
   /* Scrollbar personalizada para o main-content */
   .main-content::-webkit-scrollbar {
@@ -3195,9 +3585,9 @@
     justify-content: space-between;
     padding: 24px 32px;
     border-bottom: 1px solid var(--border-primary);
-    width: 100%; /* Garante que o header ocupe toda a largura disponível */
-    max-width: 100%; /* Previne overflow horizontal */
-    overflow: hidden; /* Remove overflow do header */
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
   
   .header-left {
@@ -3302,9 +3692,9 @@
   .filters {
     padding: 20px 32px;
     border-bottom: 1px solid var(--border-primary);
-    width: 100%; /* Garante que os filtros ocupem toda a largura disponível */
-    max-width: 100%; /* Previne overflow horizontal */
-    overflow: hidden; /* Previne overflow */
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
   
   .search-controls {
@@ -3321,11 +3711,30 @@
      display: flex;
      gap: 8px;
      margin-bottom: 12px;
+     align-items: center;
+     justify-content: space-between;
    }
    
-   .games-found-info {
-     margin-bottom: 20px;
+   .filter-tabs .filter-tab {
+     flex-shrink: 0;
    }
+   
+  .games-found-info {
+    margin-bottom: 20px;
+  }
+
+  .surebets-count {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-primary);
+  }
+
+  .more-available {
+    color: var(--primary-color);
+    font-weight: 600;
+  }
    
    .games-count {
     font-size: 14px;
@@ -3521,27 +3930,34 @@
       color: var(--bg-primary);
       border-color: var(--accent-primary);
     }
-    
-    &.live-tab-locked {
-      background: rgba(var(--warning-color-rgb), 0.1);
-      border-color: var(--warning-color);
-      color: var(--warning-color);
-      cursor: not-allowed;
-      position: relative;
-      
-      &:hover {
-        background: rgba(var(--warning-color-rgb), 0.2);
-        transform: translateY(-1px);
-        box-shadow: 0 2px 8px rgba(var(--warning-color-rgb), 0.3);
-      }
-      
-      .lock-icon {
-        color: var(--warning-color);
-        animation: lockPulse 2s ease-in-out infinite;
-      }
-      
+  }
+
+  .refresh-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    border: none;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: translateY(-1px);
+  }
+
+  .refresh-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
   
-    }
+  .debug-btn {
+    background: linear-gradient(135deg, var(--info), var(--info-strong));
+    color: white;
+    border: none;
+  }
+  
+  .debug-btn:hover {
+    background: linear-gradient(135deg, var(--info-strong), var(--info));
+    transform: translateY(-1px);
   }
   
   
@@ -3802,6 +4218,71 @@
       margin-top: 8px;
     }
   }
+
+  /* Estilos para o botão "Ver mais" */
+  .load-more-container {
+    display: flex;
+    justify-content: center;
+    margin: 32px 0;
+    padding: 0 16px;
+  }
+
+  .load-more-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .load-more-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+  }
+
+  .load-more-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .load-more-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .load-more-btn.loading {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+  }
+
+  .loading-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
   
   /* Seção de Cards Fixos */
   .pinned-cards-section {
@@ -3959,6 +4440,17 @@
     .surebets-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */
       gap: 16px; /* Reduzido gap em mobile */
+    }
+
+    .load-more-container {
+      margin: 24px 0;
+      padding: 0 8px;
+    }
+
+    .load-more-btn {
+      padding: 14px 24px;
+      font-size: 14px;
+      min-width: 160px;
     }
     .pinned-cards-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */
@@ -4752,9 +5244,9 @@
   .date-filters {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-top: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+    flex-wrap: nowrap;
   }
   
   .date-filter-label {
@@ -4765,13 +5257,13 @@
   }
   
   .date-filter-input {
-    padding: 8px 12px;
-    border: 2px solid var(--border-primary);
+    padding: 6px 10px;
+    border: 1px solid var(--border-primary);
     background: var(--bg-secondary);
     color: var(--text-primary);
-    border-radius: 8px;
-    font-size: 0.9em;
-    min-width: 150px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    min-width: 120px;
     transition: all 0.3s ease;
   
     &:focus {
@@ -4794,17 +5286,17 @@
   }
   
   .clear-date-btn {
-    padding: 6px 10px;
-    border: 2px solid var(--error-color);
+    padding: 4px 8px;
+    border: 1px solid var(--error-color);
     background: transparent;
     color: var(--error-color);
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.1em;
+    font-size: 1em;
     font-weight: bold;
-    min-width: 32px;
-    height: 32px;
+    min-width: 24px;
+    height: 28px;
     display: flex;
     align-items: center;
     justify-content: center;

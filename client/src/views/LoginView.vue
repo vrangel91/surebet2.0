@@ -3,19 +3,8 @@
       <!-- Componente de Loading -->
       <LoginLoading :isVisible="showLoginLoading" />
       
-      <!-- Video Background -->
-      <video 
-        class="video-background" 
-        autoplay 
-        muted 
-        loop 
-        playsinline
-        ref="videoElement"
-        @loadedmetadata="setVideoStartTime"
-      >
-        <source src="../assets/movie/playvideo.mp4" type="video/mp4">
-        Seu navegador não suporta vídeos.
-      </video>
+      <!-- Background Image -->
+      <div class="background-image"></div>
       
       <!-- Overlay com gradiente para transparência -->
       <div class="video-overlay"></div>
@@ -747,13 +736,6 @@ export default {
         this.showRegisterPassword = false
         this.showConfirmPassword = false
       },
-      
-      setVideoStartTime() {
-        // Define o tempo inicial do vídeo para 6 segundos
-        if (this.$refs.videoElement) {
-          this.$refs.videoElement.currentTime = 6
-        }
-      },
 
       // 🔒 Verificar status VIP automaticamente após login
       async verifyVIPStatusAfterLogin(user) {
@@ -816,25 +798,30 @@ export default {
     overflow: hidden;
   }
   
-  /* Video Background */
-  .video-background {
+  /* Background Image */
+  .background-image {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    z-index: 0;
+    background-image: url('~@/assets/img/background-login.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    z-index: 2;
     filter: brightness(0.3) contrast(1.2) saturate(0.8);
-    animation: videoPulse 8s ease-in-out infinite;
+    animation: imagePulse 8s ease-in-out infinite;
   }
-  
-  @keyframes videoPulse {
+
+  @keyframes imagePulse {
     0%, 100% {
       filter: brightness(0.3) contrast(1.2) saturate(0.8);
+      transform: scale(1);
     }
     50% {
       filter: brightness(0.4) contrast(1.1) saturate(0.9);
+      transform: scale(1.02);
     }
   }
   
@@ -845,7 +832,7 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
+    z-index: 3;
     pointer-events: none;
   }
   
@@ -905,11 +892,11 @@ export default {
     bottom: 0;
     background: linear-gradient(
       135deg,
-      rgba(0, 0, 0, 0.6) 0%,
-      rgba(0, 0, 0, 0.4) 25%,
-      rgba(0, 0, 0, 0.3) 50%,
-      rgba(0, 0, 0, 0.4) 75%,
-      rgba(0, 0, 0, 0.6) 100%
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.05) 25%,
+      rgba(0, 0, 0, 0.02) 50%,
+      rgba(0, 0, 0, 0.05) 75%,
+      rgba(0, 0, 0, 0.1) 100%
     );
     z-index: 1;
     animation: overlayShift 12s ease-in-out infinite;
@@ -919,21 +906,21 @@ export default {
     0%, 100% {
       background: linear-gradient(
         135deg,
-        rgba(0, 0, 0, 0.6) 0%,
-        rgba(0, 0, 0, 0.4) 25%,
-        rgba(0, 0, 0, 0.3) 50%,
-        rgba(0, 0, 0, 0.4) 75%,
-        rgba(0, 0, 0, 0.6) 100%
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.05) 25%,
+        rgba(0, 0, 0, 0.02) 50%,
+        rgba(0, 0, 0, 0.05) 75%,
+        rgba(0, 0, 0, 0.1) 100%
       );
     }
     50% {
       background: linear-gradient(
         225deg,
-        rgba(0, 0, 0, 0.5) 0%,
-        rgba(0, 0, 0, 0.3) 25%,
-        rgba(0, 0, 0, 0.2) 50%,
-        rgba(0, 0, 0, 0.3) 75%,
-        rgba(0, 0, 0, 0.5) 100%
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.02) 25%,
+        rgba(0, 0, 0, 0.01) 50%,
+        rgba(0, 0, 0, 0.02) 75%,
+        rgba(0, 0, 0, 0.05) 100%
       );
     }
   }
@@ -947,9 +934,9 @@ export default {
     height: 60%;
     background: linear-gradient(
       to top,
-      rgba(0, 0, 0, 0.8) 0%,
-      rgba(0, 0, 0, 0.6) 30%,
-      rgba(0, 0, 0, 0.3) 70%,
+      rgba(0, 0, 0, 0.15) 0%,
+      rgba(0, 0, 0, 0.1) 30%,
+      rgba(0, 0, 0, 0.03) 70%,
       rgba(0, 0, 0, 0) 100%
     );
     z-index: 1;
@@ -960,36 +947,36 @@ export default {
     0%, 100% {
       background: linear-gradient(
         to top,
-        rgba(0, 0, 0, 0.8) 0%,
-        rgba(0, 0, 0, 0.6) 30%,
-        rgba(0, 0, 0, 0.3) 70%,
+        rgba(0, 0, 0, 0.15) 0%,
+        rgba(0, 0, 0, 0.1) 30%,
+        rgba(0, 0, 0, 0.03) 70%,
         rgba(0, 0, 0, 0) 100%
       );
     }
     50% {
       background: linear-gradient(
         to top,
-        rgba(0, 0, 0, 0.9) 0%,
-        rgba(0, 0, 0, 0.7) 30%,
-        rgba(0, 0, 0, 0.4) 70%,
-        rgba(0, 0, 0, 0.1) 100%
+        rgba(0, 0, 0, 0.2) 0%,
+        rgba(0, 0, 0, 0.15) 30%,
+        rgba(0, 0, 0, 0.05) 70%,
+        rgba(0, 0, 0, 0.01) 100%
       );
     }
   }
   
   .login-card {
-    background: rgba(26, 26, 26, 0.85);
-    backdrop-filter: blur(20px);
+    background: rgba(26, 26, 26, 0.6);
+    backdrop-filter: blur(15px);
     border-radius: clamp(12px, 3vw, 20px);
     padding: clamp(20px, 8vw, 40px);
     width: 100%;
     max-width: min(90vw, 400px);
     min-width: 280px;
     box-shadow: 
-      0 25px 50px rgba(0, 0, 0, 0.6),
-      0 0 0 1px rgba(255, 255, 255, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     position: relative;
     z-index: 2;
     animation: fadeInUp 0.8s ease-out;
@@ -999,10 +986,10 @@ export default {
   .login-card:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 30px 60px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(0, 255, 136, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border-color: rgba(0, 255, 136, 0.3);
+      0 30px 60px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(0, 255, 136, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-color: rgba(0, 255, 136, 0.2);
   }
   
   @keyframes fadeInUp {

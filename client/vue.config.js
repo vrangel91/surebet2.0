@@ -17,7 +17,7 @@ module.exports = defineConfig({
     startUrl: '/',
     
     // Usar nosso Service Worker personalizado
-    disable: false,
+    disable: true,
     workboxPluginMode: 'InjectManifest',
     workboxOptions: {
       // Usar nosso arquivo sw.js personalizado
@@ -123,7 +123,7 @@ module.exports = defineConfig({
   },
   
   // Configurações para produção
-  publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
+  publicPath: '/',
   
   // Configurações de build
   productionSourceMap: false,

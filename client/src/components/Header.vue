@@ -1382,7 +1382,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--overlay-light);
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -1396,7 +1396,7 @@ export default {
   border-radius: 12px;
   width: 320px;
   max-width: 90vw;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-modal);
   animation: slideIn 0.3s ease;
   margin-right: 20px;
   margin-top: 70px;
@@ -1987,7 +1987,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--overlay-light);
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
@@ -2002,7 +2002,7 @@ export default {
   width: 400px;
   max-width: 90vw;
   max-height: 80vh;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-modal);
   animation: slideIn 0.3s ease;
   margin-right: 20px;
   margin-top: 70px;
@@ -2103,7 +2103,7 @@ export default {
   }
 
   &.unread {
-    background: rgba(0, 123, 255, 0.05);
+    background: var(--accent-light);
     border-left: 3px solid var(--accent-primary);
   }
 
@@ -2112,19 +2112,19 @@ export default {
   }
 
   &.priority-urgent {
-    border-left-color: #dc3545;
+    border-left-color: var(--error);
   }
 
   &.priority-high {
-    border-left-color: #ff6b35;
+    border-left-color: var(--warning-strong);
   }
 
   &.priority-normal {
-    border-left-color: #ffc107;
+    border-left-color: var(--warning);
   }
 
   &.priority-low {
-    border-left-color: #6c757d;
+    border-left-color: var(--text-tertiary);
   }
 }
 
@@ -2277,7 +2277,7 @@ export default {
   border: 1px solid var(--border-primary);
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-button-hover);
   transform: translateX(100%);
   opacity: 0;
   transition: all 0.3s ease;

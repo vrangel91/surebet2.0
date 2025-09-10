@@ -412,8 +412,33 @@ async function fetchSurebets() {
     if (response.data && typeof response.data === 'object') {
       const newSurebets = response.data;
       
-      // Verificar se há novos surebets
-      const currentSurebetCount = Object.keys(newSurebets).length;
+      // Processar dados de forma robusta
+      const processSurebetsData = (data) => {
+        if (!data || typeof data !== 'object') {
+          return {}
+        }
+        
+        // Se já é um objeto válido, retornar
+        if (Object.keys(data).length > 0) {
+          return data
+        }
+        
+        // Se é um array, converter para objeto
+        if (Array.isArray(data)) {
+          const obj = {}
+          data.forEach((item, index) => {
+            if (item && typeof item === 'object') {
+              obj[`surebet_${index}`] = item
+            }
+          })
+          return obj
+        }
+        
+        return {}
+      }
+      
+      const processedSurebets = processSurebetsData(newSurebets)
+      const currentSurebetCount = Object.keys(processedSurebets).length;
       
       if (currentSurebetCount > lastSurebetCount && soundEnabled) {
         // Enviar notificação para todos os clientes conectados
@@ -421,13 +446,24 @@ async function fetchSurebets() {
           if (client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
               type: 'new_surebet',
+              surebets: processedSurebets,
               count: currentSurebetCount - lastSurebetCount
             }));
           }
         });
       }
       
-      surebets = newSurebets;
+      // Sempre enviar atualização para todos os clientes conectados
+      wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify({
+            type: 'surebets_update',
+            surebets: processedSurebets
+          }));
+        }
+      });
+      
+      surebets = processedSurebets;
       global.surebets = surebets; // Atualizar variável global
       lastSurebetCount = currentSurebetCount;
       
@@ -797,8 +833,32 @@ async function initializeApp() {
         
         // Enviar estado atual para o novo cliente
         try {
-          // Garantir que surebets seja sempre um objeto válido
-          const safeSurebets = surebets && typeof surebets === 'object' ? surebets : {};
+          // Processar dados de forma robusta
+          const processSurebetsData = (data) => {
+            if (!data || typeof data !== 'object') {
+              return {}
+            }
+            
+            // Se já é um objeto válido, retornar
+            if (Object.keys(data).length > 0) {
+              return data
+            }
+            
+            // Se é um array, converter para objeto
+            if (Array.isArray(data)) {
+              const obj = {}
+              data.forEach((item, index) => {
+                if (item && typeof item === 'object') {
+                  obj[`surebet_${index}`] = item
+                }
+              })
+              return obj
+            }
+            
+            return {}
+          }
+          
+          const safeSurebets = processSurebetsData(surebets);
           
           ws.send(JSON.stringify({
             type: 'initial_state',
