@@ -11,6 +11,9 @@ const fs = require('fs');
 const { sequelize, testConnection } = require('./config/database');
 const { syncModels } = require('./models');
 
+// Importar WebSocket
+const { surebetsWebSocket } = require('./utils/surebetsWebSocket');
+
 // Importar rotas
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -102,12 +105,30 @@ app.use(backendRateLimiter.middleware());
 app.use(compressionManager.middleware());
 
     // Rota específica para webhook do MercadoPago (DEVE vir antes dos arquivos estáticos)
-    app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    app.post('/webhook', express.json(), async (req, res) => {
       try {
-        // Converter body raw para JSON
-        const webhookBody = JSON.parse(req.body.toString('utf8'));
+        // Debug: verificar o que está sendo recebido
+        console.log('🔍 Webhook recebido (HTTPS):', {
+          contentType: req.headers['content-type'],
+          contentLength: req.headers['content-length'],
+          bodyType: typeof req.body,
+          bodyKeys: req.body ? Object.keys(req.body) : [],
+          bodyPreview: req.body ? JSON.stringify(req.body).substring(0, 200) : 'null'
+        });
+
+        // Verificar se o body existe
+        if (!req.body) {
+          console.log('⚠️ Webhook recebido sem body');
+          return res.status(400).json({
+            success: false,
+            error: 'Body vazio'
+          });
+        }
+
+        // O body já é um objeto JSON parseado pelo express.json()
+        const webhookBody = req.body;
         
-        console.log('Webhook MercadoPago recebido:', {
+        console.log('✅ Webhook MercadoPago processado (HTTPS):', {
           headers: req.headers,
           body: webhookBody
         });
@@ -828,8 +849,8 @@ async function initializeApp() {
         const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         console.log(`🔌 Cliente WebSocket conectado: ${clientId}`);
         
-        // Sistema WebSocket otimizado desabilitado
-        // surebetsWebSocket.addClient(clientId, ws);
+        // Sistema WebSocket otimizado habilitado
+        surebetsWebSocket.addClient(clientId, ws);
         
         // Enviar estado atual para o novo cliente
         try {
@@ -872,8 +893,8 @@ async function initializeApp() {
         
         ws.on('message', (message) => {
           try {
-            // Sistema WebSocket otimizado desabilitado
-            // surebetsWebSocket.handleClientMessage(clientId, message);
+            // Sistema WebSocket otimizado habilitado
+            surebetsWebSocket.handleClientMessage(clientId, message);
             
             // Manter compatibilidade com sistema legado
             const data = JSON.parse(message);
@@ -906,12 +927,12 @@ async function initializeApp() {
         
         ws.on('error', (error) => {
           console.error(`❌ Erro WebSocket para cliente ${clientId}:`, error);
-          // surebetsWebSocket.removeClient(clientId);
+          surebetsWebSocket.removeClient(clientId);
         });
         
         ws.on('close', () => {
           console.log(`🔌 Cliente WebSocket desconectado: ${clientId}`);
-          // surebetsWebSocket.removeClient(clientId);
+          surebetsWebSocket.removeClient(clientId);
         });
       });
     });
@@ -933,12 +954,30 @@ async function initializeApp() {
     // httpApp.use(express.static(path.join(__dirname, 'client', 'dist'))); // REMOVIDO - causava conflito
     
     // Rota específica para webhook do MercadoPago no servidor HTTP (DEVE vir antes dos arquivos estáticos)
-    httpApp.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    httpApp.post('/webhook', express.json(), async (req, res) => {
       try {
-        // Converter body raw para JSON
-        const webhookBody = JSON.parse(req.body.toString('utf8'));
+        // Debug: verificar o que está sendo recebido
+        console.log('🔍 Webhook recebido (HTTP):', {
+          contentType: req.headers['content-type'],
+          contentLength: req.headers['content-length'],
+          bodyType: typeof req.body,
+          bodyKeys: req.body ? Object.keys(req.body) : [],
+          bodyPreview: req.body ? JSON.stringify(req.body).substring(0, 200) : 'null'
+        });
+
+        // Verificar se o body existe
+        if (!req.body) {
+          console.log('⚠️ Webhook recebido sem body');
+          return res.status(400).json({
+            success: false,
+            error: 'Body vazio'
+          });
+        }
+
+        // O body já é um objeto JSON parseado pelo express.json()
+        const webhookBody = req.body;
         
-        console.log('Webhook MercadoPago recebido (HTTP):', {
+        console.log('✅ Webhook MercadoPago processado (HTTP):', {
           headers: req.headers,
           body: webhookBody
         });

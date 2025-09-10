@@ -50,12 +50,13 @@
                 :disabled="loading"
               >
                 <span class="control-text">
-                  <span v-if="!loading">🔄 Atualizar</span>
+                  <span v-if="!loading">Atualizar</span>
                   <span v-else>⏳ Carregando...</span>
                 </span>
               </button>
               
               <button 
+                v-if="isDevelopment"
                 class="control-btn debug-btn" 
                 @click="debugData"
                 title="Debug dos dados"
@@ -663,6 +664,11 @@
       }
     },
     computed: {
+      // Verificar se está em ambiente de desenvolvimento
+      isDevelopment() {
+        return process.env.NODE_ENV === 'development' || process.env.VUE_APP_DEBUG_MODE === 'true'
+      },
+      
       currentUser() {
         return this.$store.getters.currentUser
       },
@@ -3933,20 +3939,25 @@
   }
 
   .refresh-btn {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-    border: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--vorder-primary);
+    transition: all 0.3s ease;
   }
 
   .refresh-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    background: var(--accent-secondary);
+    border-color: var(--accent-secondary);
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
   }
 
   .refresh-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: var(--text-tertiary);
+    border-color: var(--text-tertiary);
   }
   
   .debug-btn {
@@ -4228,25 +4239,27 @@
   }
 
   .load-more-btn {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-    border: none;
-    border-radius: 12px;
-    padding: 16px 32px;
-    font-size: 16px;
-    font-weight: 600;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 200px;
+    box-shadow: none;
+    min-width: 120px;
     position: relative;
     overflow: hidden;
   }
 
   .load-more-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: var(--bg-overlay);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
   }
 
   .load-more-btn:active:not(:disabled) {
@@ -4254,13 +4267,18 @@
   }
 
   .load-more-btn:disabled {
-    opacity: 0.7;
+    opacity: 0.5;
     cursor: not-allowed;
     transform: none;
+    background: var(--bg-tertiary);
+    border-color: var(--border-secondary);
+    color: var(--text-tertiary);
   }
 
   .load-more-btn.loading {
-    background: linear-gradient(135deg, #6c757d, #5a6268);
+    background: var(--bg-tertiary);
+    border-color: var(--border-secondary);
+    color: var(--text-tertiary);
   }
 
   .loading-content {
@@ -4448,9 +4466,9 @@
     }
 
     .load-more-btn {
-      padding: 14px 24px;
-      font-size: 14px;
-      min-width: 160px;
+      padding: 8px 16px;
+      font-size: 13px;
+      min-width: 100px;
     }
     .pinned-cards-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */

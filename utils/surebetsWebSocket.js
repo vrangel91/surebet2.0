@@ -219,6 +219,45 @@ class SurebetsWebSocket {
   }
 
   /**
+   * Notifica atualização de status de pagamento
+   */
+  notifyPaymentStatusUpdate(paymentData) {
+    const message = {
+      type: 'payment_status_update',
+      data: paymentData,
+      timestamp: Date.now()
+    };
+    
+    // Enviar para todos os clientes (ou apenas para o usuário específico se necessário)
+    this.broadcast(message);
+    
+    logger.info('Payment status update broadcasted', {
+      paymentId: paymentData.paymentId,
+      status: paymentData.status,
+      orderId: paymentData.orderId
+    });
+  }
+
+  /**
+   * Notifica pagamento confirmado
+   */
+  notifyPaymentConfirmed(paymentData) {
+    const message = {
+      type: 'payment_confirmed',
+      data: paymentData,
+      timestamp: Date.now()
+    };
+    
+    this.broadcast(message);
+    
+    logger.info('Payment confirmed notification sent', {
+      paymentId: paymentData.paymentId,
+      orderId: paymentData.orderId,
+      planName: paymentData.planName
+    });
+  }
+
+  /**
    * Processa mensagem recebida do cliente
    */
   handleClientMessage(clientId, message) {

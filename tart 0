@@ -1,0 +1,21 @@
+                                         Table "public.orders"
+     Column     |           Type           | Collation | Nullable |              Default               
+----------------+--------------------------+-----------+----------+------------------------------------
+ id             | integer                  |           | not null | nextval('orders_id_seq'::regclass)
+ user_id        | integer                  |           | not null | 
+ plan_id        | character varying(255)   |           | not null | 
+ plan_name      | character varying(255)   |           | not null | 
+ plan_days      | integer                  |           | not null | 
+ amount         | numeric(10,2)            |           | not null | 
+ status         | character varying(255)   |           | not null | 'pending'::character varying
+ payment_method | character varying(255)   |           | not null | 
+ installments   | integer                  |           | not null | 1
+ customer_data  | json                     |           |          | 
+ payment_data   | json                     |           |          | 
+ created_at     | timestamp with time zone |           | not null | 
+ updated_at     | timestamp with time zone |           | not null | 
+Indexes:
+    "orders_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "orders_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
+

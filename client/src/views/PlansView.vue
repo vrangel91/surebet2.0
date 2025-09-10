@@ -532,6 +532,12 @@
         <div class="modal-body">
           <div class="timer-section">
             <p class="timer-text">Tempo restante: <span class="timer">{{ formatTime(timeRemaining) }}</span></p>
+            
+            <!-- Indicador de verificação de pagamento -->
+            <div v-if="checkingPaymentStatus" class="payment-checking">
+              <div class="checking-spinner"></div>
+              <p class="checking-text">🔍 Verificando pagamento...</p>
+            </div>
           </div>
           
           <div class="qr-code-section">
@@ -585,6 +591,80 @@
             <p class="payment-wait">Aguardando confirmação do pagamento</p>
             
             <button class="secondary-btn" @click="closePixModal">Voltar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modern Payment Confirmation Modal -->
+    <div v-if="showPaymentConfirmationModal && paymentConfirmationData.paymentId" class="modern-modal-overlay" @click="handleOverlayClick">
+      <div class="modern-payment-modal" @click.stop>
+        <!-- Botão de fechar -->
+        <button class="modal-close-btn" @click="closePaymentConfirmationModal" title="Fechar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        
+        <div class="modal-background">
+          <div class="success-animation">
+            <div class="success-circle">
+              <div class="success-checkmark">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <path d="M9 12l2 2 4-4"/>
+                </svg>
+              </div>
+            </div>
+            <div class="confetti-container">
+              <div class="confetti" v-for="n in 12" :key="n" :style="{ '--delay': n * 0.1 + 's' }"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="modal-content">
+          <div class="modal-header-modern">
+            <h2 class="success-title">🎉 Pagamento Confirmado!</h2>
+            <p class="success-subtitle">Seu PIX foi aprovado com sucesso</p>
+          </div>
+          
+          <div class="payment-details">
+            <div class="detail-item">
+              <div class="detail-icon">📦</div>
+              <div class="detail-content">
+                <span class="detail-label">Plano</span>
+                <span class="detail-value">{{ paymentConfirmationData.planName || 'Plano VIP' }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <div class="detail-icon">💰</div>
+              <div class="detail-content">
+                <span class="detail-label">Valor</span>
+                <span class="detail-value">R$ {{ paymentConfirmationData.amount || '0,00' }}</span>
+              </div>
+            </div>
+            
+            <div class="detail-item">
+              <div class="detail-icon">🚀</div>
+              <div class="detail-content">
+                <span class="detail-label">Status</span>
+                <span class="detail-value success-status">VIP Ativado</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="success-message">
+            <p>Agora você tem acesso completo às surebets!</p>
+            <p class="redirect-message">Redirecionando em alguns segundos...</p>
+          </div>
+          
+          <div class="modal-actions">
+            <button class="modern-btn primary" @click="handleContinueClick">
+              <span>Continuar</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -707,6 +787,22 @@ export default {
       showPaymentModal: false,
       showPaymentMethodModal: false,
       showProcessingModal: false,
+      
+      // Payment status checking
+      checkingPaymentStatus: false,
+      
+      // WebSocket connection
+      websocket: null,
+      websocketConnected: false,
+      
+      // Modern payment confirmation modal
+      showPaymentConfirmationModal: false,
+      paymentConfirmationData: {
+        planName: '',
+        amount: '',
+        paymentId: '',
+        orderId: ''
+      },
       showPixModal: false,
       showRedirectModal: false,
       showLoginRequiredModal: false,
@@ -1091,6 +1187,16 @@ export default {
   },
   
   mounted() {
+    // Limpar estado dos modais ao carregar a página
+    this.resetModalStates()
+    
+    // Verificar estado inicial dos modais
+    console.log('🔍 Estado inicial dos modais:', {
+      showPaymentConfirmationModal: this.showPaymentConfirmationModal,
+      showPixModal: this.showPixModal,
+      showPaymentModal: this.showPaymentModal
+    })
+    
     // Preencher dados do usuário logado se disponível
     if (this.currentUser) {
       this.checkoutData.firstName = this.currentUser.firstName || ''
@@ -1104,6 +1210,39 @@ export default {
   },
   
   methods: {
+    resetModalStates() {
+      // Garantir que todos os modais estejam fechados ao carregar a página
+      this.showPaymentConfirmationModal = false
+      this.showPixModal = false
+      this.showPaymentModal = false
+      this.showProcessingModal = false
+      this.showRedirectModal = false
+      this.showLoginRequiredModal = false
+      
+      // Limpar dados de confirmação
+      this.paymentConfirmationData = {
+        planName: '',
+        amount: '',
+        paymentId: '',
+        orderId: ''
+      }
+      
+      // Fechar WebSocket se estiver aberto
+      if (this.websocket) {
+        this.websocket.close()
+        this.websocket = null
+        this.websocketConnected = false
+      }
+      
+      // Limpar timers
+      if (this.timerInterval) {
+        clearInterval(this.timerInterval)
+        this.timerInterval = null
+      }
+      
+      console.log('🧹 Estados dos modais resetados')
+    },
+
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
     },
@@ -1378,12 +1517,23 @@ export default {
           this.checkPixPaymentStatus(orderId)
         }
       }, 1000)
+      
+      // Conectar ao WebSocket para escutar notificações em tempo real
+      this.connectWebSocket(orderId)
+      
+      // Iniciar verificação imediata do status (fallback)
+      setTimeout(() => {
+        this.checkPixPaymentStatus(orderId)
+      }, 3000) // Verificar após 3 segundos
     },
     
     async checkPixPaymentStatus(orderId) {
       try {
+        this.checkingPaymentStatus = true
+        console.log('🔍 Verificando status do pagamento PIX...', orderId)
+        
         // Verificar status real do pagamento via API
-        const response = await fetch(`/api/orders/${orderId}`, {
+        const response = await fetch(`/api/payment-status/pending/${orderId}`, {
           headers: {
             'Authorization': `Bearer ${this.$store.state.authToken}`
           }
@@ -1394,27 +1544,140 @@ export default {
         }
 
         const result = await response.json()
-        const order = result.order
+        const paymentData = result.data
         
-        if (order.status === 'approved') {
+        console.log('📱 Status do pagamento recebido:', paymentData)
+        
+        if (paymentData.status === 'approved') {
+          // ✅ PAGAMENTO APROVADO - Mostrar mensagem de sucesso
+          this.checkingPaymentStatus = false
+          
+          // Parar o timer
+          if (this.timerInterval) {
+            clearInterval(this.timerInterval)
+            this.timerInterval = null
+          }
+          
+          this.showPaymentConfirmedMessage(paymentData)
           await this.activateVIP(orderId)
-          this.showSuccessMessage('PIX aprovado! Seu VIP foi ativado com sucesso.')
-          this.closePixModal()
-        } else if (order.status === 'pending') {
-          // Continuar verificando se ainda há tempo
+          
+          // Aguardar um pouco antes de fechar o modal para o usuário ver a confirmação
+          setTimeout(() => {
+            this.closePixModal()
+          }, 3000)
+          
+        } else if (paymentData.status === 'pending') {
+          // ⏳ PAGAMENTO PENDENTE - Continuar verificando
           if (this.timeRemaining > 0) {
-            this.showSuccessMessage('PIX ainda pendente. Aguarde a confirmação.')
+            console.log('⏳ Pagamento ainda pendente, continuando verificação...')
+            this.checkingPaymentStatus = false
+            // Continuar o polling
+            setTimeout(() => {
+              this.checkPixPaymentStatus(orderId)
+            }, 5000) // Verificar a cada 5 segundos
           } else {
-            this.showErrorMessage('Tempo expirado. PIX não foi confirmado.')
+            this.checkingPaymentStatus = false
+            this.showErrorMessage('⏰ Tempo expirado. PIX não foi confirmado.')
             this.closePixModal()
           }
-        } else if (order.status === 'rejected') {
-          this.showErrorMessage('PIX foi rejeitado. Tente novamente.')
+          
+        } else if (paymentData.status === 'rejected') {
+          this.checkingPaymentStatus = false
+          this.showErrorMessage('❌ PIX foi rejeitado. Tente novamente.')
+          this.closePixModal()
+          
+        } else if (paymentData.status === 'cancelled') {
+          this.checkingPaymentStatus = false
+          this.showErrorMessage('🚫 PIX foi cancelado.')
           this.closePixModal()
         }
+        
       } catch (error) {
-        console.error('Erro ao verificar status PIX:', error)
+        this.checkingPaymentStatus = false
+        console.error('❌ Erro ao verificar status PIX:', error)
         this.showErrorMessage('Erro ao verificar status do PIX')
+      }
+    },
+
+    connectWebSocket(orderId) {
+      try {
+        // Fechar conexão anterior se existir
+        if (this.websocket) {
+          this.websocket.close()
+        }
+
+        // Conectar ao WebSocket
+        const wsUrl = `ws://localhost:3002`
+        this.websocket = new WebSocket(wsUrl)
+        
+        this.websocket.onopen = () => {
+          console.log('🔌 WebSocket conectado para escutar pagamentos')
+          this.websocketConnected = true
+          
+          // Subscrever a notificações de pagamento
+          this.websocket.send(JSON.stringify({
+            type: 'subscribe',
+            subscription: 'payment_notifications'
+          }))
+        }
+        
+        this.websocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            console.log('📨 Mensagem WebSocket recebida:', data)
+            
+            // Verificar se é notificação de pagamento confirmado
+            if (data.type === 'payment_confirmed') {
+              this.handlePaymentConfirmedWebSocket(data.data, orderId)
+            }
+          } catch (error) {
+            console.error('❌ Erro ao processar mensagem WebSocket:', error)
+          }
+        }
+        
+        this.websocket.onclose = () => {
+          console.log('🔌 WebSocket desconectado')
+          this.websocketConnected = false
+        }
+        
+        this.websocket.onerror = (error) => {
+          console.error('❌ Erro WebSocket:', error)
+          this.websocketConnected = false
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao conectar WebSocket:', error)
+      }
+    },
+
+    handlePaymentConfirmedWebSocket(paymentData, orderId) {
+      console.log('🎉 Pagamento confirmado via WebSocket:', paymentData)
+      
+      // Verificar se é o pagamento que estamos aguardando
+      if (paymentData.orderId && paymentData.orderId.toString() === orderId.toString()) {
+        console.log('✅ Pagamento confirmado é o que estamos aguardando!')
+        
+        // Parar verificações manuais
+        this.checkingPaymentStatus = false
+        if (this.timerInterval) {
+          clearInterval(this.timerInterval)
+          this.timerInterval = null
+        }
+        
+        // Mostrar confirmação
+        this.showPaymentConfirmedMessage(paymentData)
+        this.activateVIP(orderId)
+        
+        // Fechar modal após delay
+        setTimeout(() => {
+          this.closePixModal()
+        }, 3000)
+        
+        // Fechar WebSocket
+        if (this.websocket) {
+          this.websocket.close()
+          this.websocket = null
+        }
       }
     },
     
@@ -1819,10 +2082,140 @@ export default {
       // Implementar notificação de sucesso
       alert(message) // Substituir por sistema de notificação real
     },
-    
+
     showErrorMessage(message) {
       // Implementar notificação de erro
       alert(message) // Substituir por sistema de notificação real
+    },
+
+    showPaymentConfirmedMessage(paymentData) {
+      // Verificar se os dados são válidos antes de mostrar o modal
+      if (!paymentData || (!paymentData.paymentId && !paymentData.orderId)) {
+        console.log('⚠️ Dados de pagamento inválidos, não mostrando modal:', paymentData)
+        return
+      }
+      
+      console.log('✅ Mostrando modal de confirmação com dados válidos:', paymentData)
+      
+      // Preparar dados para o modal moderno
+      this.paymentConfirmationData = {
+        planName: paymentData.planName || 'Plano VIP',
+        amount: paymentData.amount || '0,00',
+        paymentId: paymentData.paymentId || '',
+        orderId: paymentData.orderId || ''
+      }
+      
+      // Mostrar modal moderno
+      this.showPaymentConfirmationModal = true
+      
+      // Fechar modal PIX
+      this.closePixModal()
+      
+      // Log no console para debug
+      console.log('🎉 PAGAMENTO CONFIRMADO:', {
+        orderId: paymentData.orderId,
+        paymentId: paymentData.paymentId,
+        planName: paymentData.planName,
+        amount: paymentData.amount,
+        vipActivated: paymentData.vipActivated
+      })
+    },
+
+    handleContinueClick() {
+      console.log('🟡 Botão Continuar clicado')
+      this.closePaymentConfirmationModal()
+    },
+
+    handleOverlayClick(event) {
+      // Só fechar se clicou no overlay, não no modal
+      if (event.target === event.currentTarget) {
+        console.log('🟡 Overlay clicado, fechando modal')
+        this.closePaymentConfirmationModal()
+      }
+    },
+
+    closePaymentConfirmationModal() {
+      console.log('🔴 Fechando modal de confirmação de pagamento')
+      
+      // Forçar fechamento do modal
+      this.$nextTick(() => {
+        this.showPaymentConfirmationModal = false
+        this.paymentConfirmationData = {
+          planName: '',
+          amount: '',
+          paymentId: '',
+          orderId: ''
+        }
+        console.log('✅ Modal fechado, showPaymentConfirmationModal:', this.showPaymentConfirmationModal)
+        
+        // Verificar se o modal ainda está visível após 100ms
+        setTimeout(() => {
+          if (this.showPaymentConfirmationModal) {
+            console.log('⚠️ Modal ainda visível, forçando fechamento')
+            this.showPaymentConfirmationModal = false
+          }
+        }, 100)
+      })
+    },
+
+    updateModalWithConfirmation(planName, amount) {
+      // Atualizar o conteúdo do modal para mostrar confirmação
+      const timerSection = document.querySelector('.timer-section')
+      if (timerSection) {
+        timerSection.innerHTML = `
+          <div class="payment-confirmed">
+            <div class="success-icon">✅</div>
+            <h3 class="success-title">Pagamento Confirmado!</h3>
+            <p class="success-details">
+              <strong>Plano:</strong> ${planName}<br>
+              <strong>Valor:</strong> R$ ${amount}<br>
+              <strong>Status:</strong> VIP Ativado
+            </p>
+            <p class="success-message">Redirecionando em alguns segundos...</p>
+          </div>
+        `
+      }
+    },
+
+    showSuccessNotification(message, type = 'success') {
+      // Implementar notificação visual mais elaborada
+      // Por enquanto usando alert, mas pode ser substituído por toast/notification
+      
+      if (type === 'success') {
+        // Notificação de sucesso com estilo especial
+        const notification = document.createElement('div')
+        notification.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #4CAF50, #45a049);
+          color: white;
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          z-index: 10000;
+          max-width: 400px;
+          font-family: Arial, sans-serif;
+          font-size: 14px;
+          line-height: 1.4;
+          white-space: pre-line;
+        `
+        notification.innerHTML = message
+        
+        document.body.appendChild(notification)
+        
+        // Remover após 8 segundos
+        setTimeout(() => {
+          if (notification.parentNode) {
+            notification.parentNode.removeChild(notification)
+          }
+        }, 8000)
+        
+        // Também mostrar alert como fallback
+        alert(message)
+      } else {
+        alert(message)
+      }
     },
     
     cancelProcessing() {
@@ -3573,5 +3966,462 @@ export default {
   
 
 
+
+/* Estilos para indicador de verificação de pagamento */
+.payment-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+  border-radius: 8px;
+  border: 1px solid #2196f3;
+}
+
+.checking-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e3f2fd;
+  border-top: 2px solid #2196f3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.checking-text {
+  margin: 0;
+  color: #1976d2;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Estilos para confirmação de pagamento no modal */
+.payment-confirmed {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #e8f5e8, #c8e6c9);
+  border-radius: 10px;
+  border: 2px solid #4caf50;
+  margin-top: 15px;
+}
+
+.success-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.success-title {
+  color: #2e7d32;
+  font-size: 24px;
+  font-weight: bold;
+  margin: 0 0 15px 0;
+}
+
+.success-details {
+  color: #1b5e20;
+  font-size: 16px;
+  line-height: 1.6;
+  margin: 0 0 15px 0;
+}
+
+.success-message {
+  color: #388e3c;
+  font-size: 14px;
+  font-style: italic;
+  margin: 0;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* ========================================
+   MODAL MODERNO DE CONFIRMAÇÃO DE PAGAMENTO
+   ======================================== */
+
+.modern-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.modern-payment-modal {
+  position: relative;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--bg-card);
+  box-shadow: 
+    0 25px 50px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: slideInUp 0.4s ease-out;
+  overflow-y: auto;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.modal-close-btn:active {
+  transform: scale(0.95);
+}
+
+.modal-background {
+  position: relative;
+  height: 200px;
+  background: var(--bg-gradient-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.success-animation {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--bg-gradient-primary-button);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: scaleIn 0.6s ease-out;
+  box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+}
+
+.success-checkmark {
+  color: white;
+  animation: checkmarkDraw 0.8s ease-out 0.3s both;
+}
+
+.success-checkmark svg {
+  width: 50px;
+  height: 50px;
+}
+
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent-primary);
+  animation: confettiFall 2s ease-out var(--delay) both;
+}
+
+.confetti:nth-child(odd) {
+  background: var(--accent-secondary);
+  left: 20%;
+}
+
+.confetti:nth-child(even) {
+  background: var(--accent-tertiary);
+  left: 80%;
+}
+
+.confetti:nth-child(3n) {
+  background: var(--accent-quaternary);
+  left: 50%;
+}
+
+.modal-content {
+  padding: 30px;
+  background: var(--bg-card);
+}
+
+.modal-header-modern {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.success-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 10px 0;
+  background: var(--bg-gradient-primary-button);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.success-subtitle {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.payment-details {
+  margin-bottom: 30px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-icon {
+  font-size: 24px;
+  margin-right: 15px;
+  width: 40px;
+  text-align: center;
+}
+
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.detail-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.success-status {
+  color: var(--accent-primary);
+}
+
+.success-message {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.success-message p {
+  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0 0 10px 0;
+}
+
+.redirect-message {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.modern-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  min-width: 140px;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.modern-btn.primary {
+  background: var(--bg-gradient-primary-button);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.modern-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+}
+
+.modern-btn.primary:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+   ANIMAÇÕES
+   ======================================== */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes checkmarkDraw {
+  from {
+    stroke-dasharray: 0 100;
+  }
+  to {
+    stroke-dasharray: 100 0;
+  }
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-100px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(200px) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* ========================================
+   RESPONSIVIDADE
+   ======================================== */
+
+@media (max-width: 768px) {
+  .modern-payment-modal {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .modal-content {
+    padding: 20px;
+  }
+  
+  .success-title {
+    font-size: 24px;
+  }
+  
+  .modal-background {
+    height: 150px;
+  }
+  
+  .success-circle {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .success-checkmark svg {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modern-payment-modal {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    max-height: none;
+  }
+  
+  .modal-content {
+    padding: 15px;
+  }
+  
+  .success-title {
+    font-size: 20px;
+  }
+  
+  .detail-item {
+    padding: 12px 0;
+  }
+  
+  .detail-icon {
+    font-size: 20px;
+    margin-right: 12px;
+  }
+}
 
 </style>

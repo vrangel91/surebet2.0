@@ -77,8 +77,9 @@ module.exports = defineConfig({
           url: '/dashboard',
           icons: [
             {
-              src: '/img/dashboard-icon.png',
-              sizes: '96x96'
+              src: '/img/dashboard-icon.svg',
+              sizes: '96x96',
+              type: 'image/svg+xml'
             }
           ]
         },
@@ -89,8 +90,9 @@ module.exports = defineConfig({
           url: '/surebets',
           icons: [
             {
-              src: '/img/surebets-icon.png',
-              sizes: '96x96'
+              src: '/img/surebets-icon.svg',
+              sizes: '96x96',
+              type: 'image/svg+xml'
             }
           ]
         }

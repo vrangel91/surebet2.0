@@ -260,25 +260,53 @@ class PaymentService {
    */
   async getMercadoPagoPaymentDetails(paymentId) {
     try {
-      // Em produção, você faria uma requisição real para a API do MercadoPago
-      // const response = await axios.get(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      //   headers: { 'Authorization': `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}` }
-      // });
+      logger.info('🔍 Consultando API real do MercadoPago para paymentId:', paymentId);
       
-      // Simulação para testes
-      logger.info('Buscando detalhes do pagamento:', paymentId);
+      // Consultar API real do MercadoPago
+      const mercadopagoService = require('../config/mercadopago');
+      const realPaymentDetails = await mercadopagoService.getPaymentStatus(paymentId);
       
+      if (!realPaymentDetails) {
+        logger.error('❌ Erro ao consultar API do MercadoPago para paymentId:', paymentId);
+        return null;
+      }
+
+      logger.info('📱 Resposta real da API do MercadoPago:', {
+        paymentId: realPaymentDetails.id,
+        status: realPaymentDetails.status,
+        externalReference: realPaymentDetails.externalReference,
+        amount: realPaymentDetails.amount
+      });
+
+      // Buscar dados do pedido no banco para complementar informações
+      const { Order, sequelize } = require('../models');
+      const [results] = await sequelize.query(
+        `SELECT * FROM orders WHERE payment_data->>'paymentId' = :paymentId LIMIT 1`,
+        {
+          replacements: { paymentId: paymentId.toString() },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      if (!results) {
+        logger.error('❌ Pedido não encontrado no banco para payment_id:', paymentId);
+        return null;
+      }
+
+      // Retornar dados reais da API do MercadoPago
       return {
-        id: paymentId,
-        status: 'approved',
-        transaction_amount: 99.90,
-        description: 'Plano VIP - 30 dias',
-        external_reference: '1', // ID do usuário
-        payment_method_id: 'credit_card'
+        id: realPaymentDetails.id,
+        status: realPaymentDetails.status, // ✅ STATUS REAL DA API
+        transaction_amount: realPaymentDetails.amount,
+        description: `${results.plan_name} - ${results.plan_days} dias`,
+        external_reference: results.id.toString(), // ✅ Usar orderId como external_reference
+        payment_method_id: results.payment_method,
+        date_created: realPaymentDetails.createdAt,
+        date_last_updated: realPaymentDetails.updatedAt
       };
       
     } catch (error) {
-      logger.error('Erro ao buscar detalhes do pagamento:', error);
+      logger.error('❌ Erro ao consultar API do MercadoPago:', error);
       return null;
     }
   }
@@ -288,20 +316,35 @@ class PaymentService {
    */
   async updateOrderStatus(paymentId, status) {
     try {
-      const { Order } = require('../models');
+      const { Order, sequelize } = require('../models');
       
-      const order = await Order.findOne({
-        where: { payment_id: paymentId }
-      });
+      // Buscar pedido usando consulta SQL raw para evitar problemas com JSON
+      const [results] = await sequelize.query(
+        `SELECT * FROM orders WHERE payment_data->>'paymentId' = :paymentId LIMIT 1`,
+        {
+          replacements: { paymentId: paymentId.toString() },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
 
-      if (order) {
-        await order.update({ status: status });
-        logger.info('Status do pedido atualizado:', { paymentId, status });
+      if (results) {
+        // Atualizar status usando SQL raw
+        await sequelize.query(
+          `UPDATE orders SET status = :status WHERE id = :orderId`,
+          {
+            replacements: { 
+              status: status,
+              orderId: results.id 
+            }
+          }
+        );
+        logger.info('Status do pedido atualizado:', { paymentId, status, orderId: results.id });
       } else {
-        logger.warn('Pedido não encontrado para atualizar:', paymentId);
+        logger.warn('Pedido não encontrado para payment_id:', paymentId);
       }
     } catch (error) {
       logger.error('Erro ao atualizar status do pedido:', error);
+      throw error;
     }
   }
 
@@ -310,26 +353,60 @@ class PaymentService {
    */
   async activateVIPForPayment(paymentDetails) {
     try {
-      const userId = paymentDetails.external_reference;
-      const plan = this.extractPlanFromDescription(paymentDetails.description) || 'vip';
+      const orderId = paymentDetails.external_reference; // external_reference é o orderId
+      
+      logger.info('🔄 Ativando VIP para pagamento aprovado:', {
+        paymentId: paymentDetails.id,
+        orderId: orderId,
+        status: paymentDetails.status
+      });
+
+      // Buscar o pedido no banco para obter o userId
+      const { Order, sequelize } = require('../models');
+      const [orderResult] = await sequelize.query(
+        `SELECT * FROM orders WHERE id = :orderId LIMIT 1`,
+        {
+          replacements: { orderId: orderId },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      if (!orderResult) {
+        logger.error('❌ Pedido não encontrado para orderId:', orderId);
+        return;
+      }
+
+      const userId = orderResult.user_id;
+      const plan = this.extractPlanFromDescription(paymentDetails.description) || orderResult.plan_id;
       
       const user = await User.findByPk(userId);
       if (!user) {
-        logger.error('Usuário não encontrado para ativar VIP:', userId);
+        logger.error('❌ Usuário não encontrado para ativar VIP:', userId);
         return;
       }
 
       const planInfo = this.plans[plan];
       if (!planInfo) {
-        logger.error('Plano não encontrado:', plan);
+        logger.error('❌ Plano não encontrado:', plan);
         return;
       }
 
-      await this.activateVIP(user, planInfo, paymentDetails.id);
-      logger.info('VIP ativado para pagamento:', { userId, plan, paymentId: paymentDetails.id });
+      // Ativar VIP
+      const vipResult = await this.activateVIP(user, planInfo, paymentDetails.id);
+      
+      if (vipResult.success) {
+        logger.info('✅ VIP ativado com sucesso:', { 
+          userId, 
+          orderId, 
+          plan, 
+          paymentId: paymentDetails.id 
+        });
+      } else {
+        logger.error('❌ Erro ao ativar VIP:', vipResult);
+      }
       
     } catch (error) {
-      logger.error('Erro ao ativar VIP para pagamento:', error);
+      logger.error('❌ Erro ao ativar VIP para pagamento:', error);
     }
   }
 
@@ -338,87 +415,143 @@ class PaymentService {
    */
   async processPaymentWebhook(webhookData, headers = {}, rawBody = '') {
     try {
-      logger.info('Processando webhook do MercadoPago:', webhookData);
+      logger.info('🔔 Processando webhook do MercadoPago:', {
+        webhookId: webhookData.id,
+        type: webhookData.type,
+        action: webhookData.action,
+        paymentId: webhookData.data?.id
+      });
 
-      // 1. Captura dos headers
+      // 1. Verificar se webhook já foi processado (proteção contra duplicação)
+      const webhookId = webhookData.id;
+      if (await this.isWebhookAlreadyProcessed(webhookId)) {
+        logger.info('⚠️ Webhook já foi processado anteriormente:', webhookId);
+        return { success: true, message: 'Webhook já processado' };
+      }
+
+      // 2. Captura dos headers
       const headerSignature = headers['x-signature'];
       const headerTimestamp = headers['x-request-ts'];
       
-      // 2. Validar assinatura HMAC (se disponível)
+      // 3. Validar assinatura HMAC (se disponível)
       if (headerSignature && headerTimestamp && rawBody) {
         const notificationId = webhookData.id;
         const stringBase = `ts=${headerTimestamp},id=${notificationId}`;
         const calculatedSignature = this.calculateHMAC(stringBase);
         
         if (calculatedSignature !== headerSignature) {
-          logger.error('Assinatura inválida:', { headerSignature, calculatedSignature });
+          logger.error('❌ Assinatura inválida:', { headerSignature, calculatedSignature });
           return { success: false, error: 'Invalid signature' };
         }
       }
 
-      // 3. Extrair dados do evento
+      // 4. Extrair dados do evento
       const eventId = webhookData.data?.id;
       const eventType = webhookData.type;
+      const eventAction = webhookData.action;
 
-      // 4. Ignorar eventos de teste
+      // 5. Ignorar eventos de teste
       if (!eventId || typeof eventId === 'string' && (
         eventId.startsWith('TEST_') || 
         eventId.startsWith('SIMPLE_TEST_') ||
         eventId.startsWith('TEST_PAYMENT_')
       )) {
-        logger.info('Evento de teste ignorado:', eventId);
+        logger.info('⚠️ Evento de teste ignorado:', eventId);
         return { success: true, message: 'Evento de teste ignorado' };
       }
 
-      // 5. Validar tipo do evento
+      // 6. Validar tipo do evento
       if (eventType !== 'payment') {
-        logger.info('Tipo de evento não suportado:', eventType);
+        logger.info('⚠️ Tipo de evento não suportado:', eventType);
         return { success: true, message: 'Tipo não tratado' };
       }
 
-      // 6. Consultar detalhes do pagamento na API do MercadoPago
+      // 7. Log do tipo de evento recebido
+      logger.info('📋 Evento recebido:', {
+        action: eventAction,
+        paymentId: eventId,
+        type: eventType
+      });
+
+      // 8. Consultar detalhes do pagamento na API do MercadoPago
       const paymentDetails = await this.getMercadoPagoPaymentDetails(eventId);
       
       if (!paymentDetails) {
-        logger.error('Erro ao buscar detalhes do pagamento:', eventId);
+        logger.error('❌ Erro ao buscar detalhes do pagamento:', eventId);
         return { success: false, error: 'Erro ao buscar pagamento' };
       }
 
-      // 7. Processar status do pagamento
+      // 9. Validar e processar status do pagamento
       const paymentStatus = paymentDetails.status;
       
+      logger.info('🔍 Status real do pagamento (da API):', {
+        paymentId: eventId,
+        status: paymentStatus,
+        action: eventAction,
+        amount: paymentDetails.transaction_amount,
+        externalReference: paymentDetails.external_reference,
+        details: paymentDetails
+      });
+
+      // 10. Validação adicional de segurança
+      if (!this.isValidPaymentStatus(paymentStatus)) {
+        logger.error('❌ Status de pagamento inválido:', paymentStatus);
+        return { success: false, error: 'Status de pagamento inválido' };
+      }
+
+      // 11. Log específico para payment.created vs payment.updated
+      if (eventAction === 'payment.created') {
+        logger.info('📋 Evento payment.created recebido - PIX foi gerado, aguardando pagamento');
+      } else if (eventAction === 'payment.updated') {
+        logger.info('📋 Evento payment.updated recebido - Status do pagamento foi alterado');
+      }
+      
+      // 12. Processar baseado no status real da API
       switch (paymentStatus) {
         case 'approved':
+          // ✅ CRÍTICO: Só liberar VIP se status for realmente 'approved'
+          logger.info('✅ Processando pagamento APROVADO:', eventId);
           await this.updateOrderStatus(eventId, 'pago');
           await this.activateVIPForPayment(paymentDetails);
-          logger.info('Pagamento aprovado e VIP ativado:', eventId);
+          
+          // Notificar via WebSocket que o pagamento foi confirmado
+          this.notifyPaymentConfirmedViaWebSocket(paymentDetails);
+          
+          logger.info('✅ Pagamento aprovado e VIP ativado:', eventId);
           break;
           
         case 'pending':
+          logger.info('⏳ Pagamento PENDENTE - apenas atualizando status:', eventId);
           await this.updateOrderStatus(eventId, 'pendente');
-          logger.info('Pagamento pendente:', eventId);
+          logger.info('⏳ Status atualizado para pendente:', eventId);
           break;
           
         case 'rejected':
+          logger.info('❌ Pagamento REJEITADO:', eventId);
           await this.updateOrderStatus(eventId, 'rejeitado');
-          logger.info('Pagamento rejeitado:', eventId);
+          logger.info('❌ Status atualizado para rejeitado:', eventId);
           break;
           
         case 'cancelled':
+          logger.info('🚫 Pagamento CANCELADO:', eventId);
           await this.updateOrderStatus(eventId, 'cancelado');
-          logger.info('Pagamento cancelado:', eventId);
+          logger.info('🚫 Status atualizado para cancelado:', eventId);
           break;
           
         case 'refunded':
+          logger.info('💰 Pagamento REEMBOLSADO:', eventId);
           await this.updateOrderStatus(eventId, 'reembolsado');
-          logger.info('Pagamento reembolsado:', eventId);
+          logger.info('💰 Status atualizado para reembolsado:', eventId);
           break;
           
         default:
-          logger.warn('Status desconhecido recebido:', paymentStatus);
+          logger.warn('⚠️ Status desconhecido recebido:', paymentStatus);
       }
 
-      // 8. Retornar sucesso ao MercadoPago
+      // 11. Marcar webhook como processado
+      await this.markWebhookAsProcessed(webhookId, eventId, paymentStatus);
+
+      // 12. Retornar sucesso ao MercadoPago
       return { success: true, message: 'Webhook processado com sucesso' };
 
     } catch (error) {
@@ -566,19 +699,33 @@ class PaymentService {
    */
   async getMercadoPagoPayment(paymentId) {
     try {
-      // Aqui você faria uma requisição para a API do MercadoPago
-      // Por enquanto, vamos simular com dados de exemplo
+      // Buscar dados reais do pedido no banco de dados
+      const { Order, sequelize } = require('../models');
       
-      logger.info('Buscando pagamento no MercadoPago:', paymentId);
+      logger.info('Buscando pagamento no banco de dados:', paymentId);
       
-      // Simulação - em produção, você faria uma requisição real
+      // Buscar pedido usando consulta SQL raw para evitar problemas com JSON
+      const [results] = await sequelize.query(
+        `SELECT * FROM orders WHERE payment_data->>'paymentId' = :paymentId LIMIT 1`,
+        {
+          replacements: { paymentId: paymentId.toString() },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      if (!results) {
+        logger.error('Pedido não encontrado para payment_id:', paymentId);
+        return null;
+      }
+
+      // Retornar dados do pedido real
       return {
         id: paymentId,
-        status: 'approved',
-        transaction_amount: 99.90,
-        description: 'Plano VIP - 30 dias',
-        external_reference: '1', // ID do usuário
-        payment_method_id: 'credit_card'
+        status: 'approved', // Assumindo que chegou até aqui, está aprovado
+        transaction_amount: parseFloat(results.amount),
+        description: `${results.plan_name} - ${results.plan_days} dias`,
+        external_reference: results.user_id.toString(),
+        payment_method_id: results.payment_method
       };
       
     } catch (error) {
@@ -853,6 +1000,119 @@ class PaymentService {
       logger.error('Erro ao criar notificação de pagamento confirmado:', error);
       // Não falhar o processo de pagamento por causa da notificação
       return null;
+    }
+  }
+
+  /**
+   * Verificar se webhook já foi processado
+   */
+  async isWebhookAlreadyProcessed(webhookId) {
+    try {
+      const { sequelize } = require('../models');
+      
+      // Verificar se a tabela existe antes de consultar
+      const [tableExists] = await sequelize.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'webhook_events'
+        )`
+      );
+      
+      if (!tableExists[0].exists) {
+        logger.warn('⚠️ Tabela webhook_events não existe, pulando verificação de duplicação');
+        return false;
+      }
+      
+      const [results] = await sequelize.query(
+        `SELECT id FROM webhook_events WHERE id = :webhookId LIMIT 1`,
+        {
+          replacements: { webhookId: webhookId },
+          type: sequelize.QueryTypes.SELECT
+        }
+      );
+
+      return results !== undefined;
+    } catch (error) {
+      logger.error('Erro ao verificar webhook processado:', error);
+      return false; // Em caso de erro, permitir processamento
+    }
+  }
+
+  /**
+   * Marcar webhook como processado
+   */
+  async markWebhookAsProcessed(webhookId, paymentId, status) {
+    try {
+      const { sequelize } = require('../models');
+      
+      // Verificar se a tabela existe antes de inserir
+      const [tableExists] = await sequelize.query(
+        `SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'webhook_events'
+        )`
+      );
+      
+      if (!tableExists[0].exists) {
+        logger.warn('⚠️ Tabela webhook_events não existe, pulando marcação de processamento');
+        return;
+      }
+      
+      await sequelize.query(
+        `INSERT INTO webhook_events (id, payment_id, status, processed_at) 
+         VALUES (:webhookId, :paymentId, :status, NOW())
+         ON CONFLICT (id) DO NOTHING`,
+        {
+          replacements: { 
+            webhookId: webhookId,
+            paymentId: paymentId,
+            status: status
+          }
+        }
+      );
+
+      logger.info('✅ Webhook marcado como processado:', {
+        webhookId,
+        paymentId,
+        status
+      });
+    } catch (error) {
+      logger.error('Erro ao marcar webhook como processado:', error);
+      // Não falhar o processo por causa do controle de duplicação
+    }
+  }
+
+  /**
+   * Validar se o status do pagamento é válido
+   */
+  isValidPaymentStatus(status) {
+    const validStatuses = ['pending', 'approved', 'rejected', 'cancelled', 'refunded'];
+    return validStatuses.includes(status);
+  }
+
+  /**
+   * Notificar pagamento confirmado via WebSocket
+   */
+  notifyPaymentConfirmedViaWebSocket(paymentDetails) {
+    try {
+      const { surebetsWebSocket } = require('../utils/surebetsWebSocket');
+      
+      const webSocketData = {
+        paymentId: paymentDetails.id,
+        orderId: paymentDetails.external_reference,
+        status: paymentDetails.status,
+        planName: this.extractPlanFromDescription(paymentDetails.description),
+        amount: paymentDetails.transaction_amount,
+        timestamp: new Date().toISOString()
+      };
+      
+      surebetsWebSocket.notifyPaymentConfirmed(webSocketData);
+      
+      logger.info('🔔 WebSocket notification sent for payment confirmation:', webSocketData);
+      
+    } catch (error) {
+      logger.error('❌ Erro ao enviar notificação WebSocket:', error);
+      // Não falhar o processo por causa do WebSocket
     }
   }
 }
