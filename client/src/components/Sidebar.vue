@@ -1,8 +1,9 @@
 <template>
-    <!-- Botão de Menu Mobile (sempre visível em mobile) -->
+
+    <!-- Botão de fallback para mobile (sempre visível) -->
     <button 
-      v-if="isMobile || isTablet" 
-      class="mobile-menu-button" 
+      v-if="windowWidth < 1024" 
+      class="mobile-fallback-button" 
       @click="toggleMobileMenu"
       :class="{ active: mobileMenuOpen }"
       :title="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
@@ -29,15 +30,31 @@
       <!-- Logo e Header -->
       <div class="sidebar-header">
         <div class="logo">
-          <img class="logo-icon" v-show="!shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
+          <img class="logo-icon" v-show="shouldShowTexts" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
           <img class="logo-icon" v-show="shouldBeCollapsed" src="@/assets/img/logo.png" alt="SureStake Logo" width="31" height="31">
-          <h1 v-show="!shouldBeCollapsed">
+          <h1 v-show="shouldShowTexts">
             <span class="sure-text">Sure</span><span class="stake-text">Stake</span>
           </h1>
         </div>
-        <button class="sidebar-toggle" @click="toggleSidebar" :title="shouldBeCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'">
+        <!-- Toggle para desktop -->
+        <button 
+          v-if="isDesktop" 
+          class="sidebar-toggle" 
+          @click="toggleSidebar" 
+          :title="shouldBeCollapsed ? 'Expandir sidebar' : 'Colapsar sidebar'"
+        >
           <Menu v-if="!shouldBeCollapsed" size="16" />
           <ChevronRight v-else size="16" />
+        </button>
+        <!-- Toggle para mobile/tablet -->
+        <button 
+          v-if="isMobile || isTablet" 
+          class="mobile-toggle" 
+          @click="toggleMobileMenu" 
+          :title="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
+        >
+          <Menu v-if="!mobileMenuOpen" size="16" />
+          <X v-else size="16" />
         </button>
       </div>
   
@@ -50,10 +67,10 @@
           <li class="nav-item" :class="{ active: $route.path === '/' }">
             <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
               <Target class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Surebets</span>
+              <span class="nav-text" v-show="shouldShowTexts">Surebets</span>
               <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
                 <Lock class="vip-icon" size="14" />
-                <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
               </div>
             </div>
           </li>
@@ -62,10 +79,10 @@
           <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
             <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
               <Calculator class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Juros Compostos</span>
+              <span class="nav-text" v-show="shouldShowTexts">Juros Compostos</span>
               <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
                 <Lock class="vip-icon" size="14" />
-                <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
               </div>
             </div>
           </li>
@@ -74,7 +91,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/referrals' }">
             <router-link to="/referrals" class="nav-link" :title="shouldBeCollapsed ? 'Indicações' : ''">
               <Users class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Indicações</span>
+              <span class="nav-text" v-show="shouldShowTexts">Indicações</span>
             </router-link>
           </li>
   
@@ -82,7 +99,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/plans' }">
             <router-link to="/plans" class="nav-link" :title="shouldBeCollapsed ? 'Planos' : ''">
               <CreditCard class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Planos</span>
+              <span class="nav-text" v-show="shouldShowTexts">Planos</span>
             </router-link>
           </li>
   
@@ -90,10 +107,10 @@
           <li class="nav-item" :class="{ active: $route.path === '/reports' }">
             <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
               <BarChart3 class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Relatórios</span>
+              <span class="nav-text" v-show="shouldShowTexts">Relatórios</span>
               <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
                 <Lock class="vip-icon" size="14" />
-                <span v-show="!shouldBeCollapsed" class="vip-text">VIP</span>
+                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
               </div>
             </div>
           </li>
@@ -102,7 +119,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/ranking' }">
             <router-link to="/ranking" class="nav-link" :title="shouldBeCollapsed ? 'Ranking' : ''">
               <Trophy class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Ranking</span>
+              <span class="nav-text" v-show="shouldShowTexts">Ranking</span>
             </router-link>
           </li>
   
@@ -110,7 +127,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
             <div class="nav-link accounts-locked" @click="showAccountsRestrictedMessage" :title="shouldBeCollapsed ? 'Contas' : ''">
               <Building2 class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Contas</span>
+              <span class="nav-text" v-show="shouldShowTexts">Contas</span>
               <div class="lock-indicator" :title="shouldBeCollapsed ? 'Acesso Restrito' : 'Funcionalidade em manutenção'">
                 <svg class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                   <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
@@ -125,7 +142,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/support' }">
             <router-link to="/support" class="nav-link" :title="shouldBeCollapsed ? 'Suporte' : ''">
               <HelpCircle class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Suporte</span>
+              <span class="nav-text" v-show="shouldShowTexts">Suporte</span>
             </router-link>
           </li>
   
@@ -133,7 +150,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/guia-apostas' }">
             <router-link to="/guia-apostas" class="nav-link" :title="shouldBeCollapsed ? 'Guia de Apostas' : ''">
               <i class="bi bi-shield-check nav-icon"></i>
-              <span class="nav-text" v-show="!shouldBeCollapsed">
+              <span class="nav-text" v-show="shouldShowTexts">
                 Guia de Apostas
                 <span class="nav-badge important">(importante)</span>
               </span>
@@ -144,7 +161,7 @@
           <li class="nav-item" :class="{ active: $route.path === '/glossary' }">
             <router-link to="/glossary" class="nav-link" :title="shouldBeCollapsed ? 'Glosário' : ''">
               <BookOpen class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Glosário</span>
+              <span class="nav-text" v-show="shouldShowTexts">Glosário</span>
             </router-link>
           </li>
   
@@ -152,7 +169,7 @@
           <li class="nav-item">
             <button class="nav-link logout-btn" @click="logout" :title="shouldBeCollapsed ? 'Sair' : ''">
               <LogOut class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">Sair</span>
+              <span class="nav-text" v-show="shouldShowTexts">Sair</span>
             </button>
           </li>
           
@@ -165,7 +182,7 @@
               :title="shouldBeCollapsed ? 'Instalar App' : ''"
             >
               <Download class="nav-icon" size="18" />
-              <span class="nav-text" v-show="!shouldBeCollapsed">
+              <span class="nav-text" v-show="shouldShowTexts">
                 {{ installingPWA ? 'Instalando...' : 'Instalar App' }}
               </span>
               <div v-if="shouldBeCollapsed" class="pwa-badge">
@@ -243,16 +260,31 @@
         // Mobile menu state
         mobileMenuOpen: false,
         windowWidth: window.innerWidth,
-        isMobile: false,
-        isTablet: false,
-        isDesktop: false
+        isMobile: window.innerWidth < 768,
+        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
+        isDesktop: window.innerWidth >= 1024
       }
     },
     computed: {
   
       // Computed para determinar se a sidebar deve estar colapsada
       shouldBeCollapsed() {
+        // Em mobile/tablet, nunca colapsar (sempre mostrar textos quando aberto)
+        if (this.isMobile || this.isTablet) {
+          return false
+        }
+        // Em desktop, usar a lógica normal de colapso
         return this.sidebarCollapsed || this.internalCollapsed
+      },
+
+      // Computed para determinar se deve mostrar os textos
+      shouldShowTexts() {
+        // Em mobile/tablet, mostrar textos apenas quando menu estiver aberto
+        if (this.isMobile || this.isTablet) {
+          return this.mobileMenuOpen
+        }
+        // Em desktop, mostrar textos quando não estiver colapsado
+        return !this.shouldBeCollapsed
       },
   
   
@@ -2090,7 +2122,33 @@
   /* ===== ESTILOS PARA MOBILE ===== */
   
   /* Botão de Menu Mobile */
-  .mobile-menu-button {
+  /* Botão de toggle mobile dentro do header */
+  .mobile-toggle {
+    background: var(--bg-secondary, #2a2a2a);
+    border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+    border-radius: 6px;
+    padding: 8px;
+    color: var(--text-primary, #ffffff);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 32px;
+  }
+
+  .mobile-toggle:hover {
+    background: var(--bg-hover, #3a3a3a);
+    transform: scale(1.05);
+  }
+
+  .mobile-toggle:active {
+    transform: scale(0.95);
+  }
+
+  /* Botão de fallback para mobile (sempre visível) */
+  .mobile-fallback-button {
     position: fixed;
     top: 20px;
     left: 20px;
@@ -2106,12 +2164,12 @@
     display: none;
   }
 
-  .mobile-menu-button:hover {
+  .mobile-fallback-button:hover {
     background: var(--bg-hover, #3a3a3a);
     transform: scale(1.05);
   }
 
-  .mobile-menu-button.active {
+  .mobile-fallback-button.active {
     background: var(--accent-primary, #00ff88);
     color: var(--bg-primary, #1a1a1a);
   }
@@ -2152,7 +2210,7 @@
 
   /* Media queries para mobile */
   @media (max-width: 1023px) {
-    .mobile-menu-button {
+    .mobile-fallback-button {
       display: block;
     }
     
@@ -2190,11 +2248,6 @@
       max-width: 320px;
     }
     
-    .mobile-menu-button {
-      top: 15px;
-      left: 15px;
-      padding: 10px;
-    }
   }
 
   /* Melhorias para touch em mobile */
@@ -2213,6 +2266,28 @@
     
     .nav-text {
       font-size: 16px;
+    }
+
+    /* Estilos específicos para o header mobile */
+    .sidebar-header {
+      padding: 12px 16px;
+      gap: 12px;
+    }
+    
+    .logo {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .logo h1 {
+      font-size: 16px;
+      margin: 0;
+    }
+    
+    .mobile-toggle {
+      flex-shrink: 0;
     }
   }
 
