@@ -97,7 +97,21 @@ router.get('/my-status', async (req, res) => {
     const userId = req.user.id;
     console.log('🔍 [VIP] User ID:', userId)
 
-    const result = await VIPService.checkVIPStatus(userId);
+    // Resposta simplificada para teste
+    const result = {
+      success: true,
+      hasVIP: req.user.is_vip || false,
+      isVIP: req.user.is_vip || false, // Manter compatibilidade
+      userId: userId,
+      vipStatus: {
+        hasVIP: req.user.is_vip || false,
+        isVIP: req.user.is_vip || false,
+        dataFim: req.user.vip_expires_at || null,
+        planId: req.user.account_type || 'basic'
+      },
+      message: 'Status VIP verificado com sucesso'
+    };
+    
     console.log('🔍 [VIP] Resultado do status VIP:', result)
 
     res.json(result);

@@ -3325,7 +3325,7 @@
   </script>
   
   <style lang="scss" scoped>
-  @import '@/assets/styles/themes.scss';
+  /* Importação removida para evitar conflitos de build */
   
   .surebets-container {
     display: flex;

@@ -1,0 +1,9 @@
+ id | user_id |                                                                                                              token                                                                                                              |         expires_at         
+----+---------+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+----------------------------
+  1 |       1 | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5Ac3VyZXN0YWtlLmNvbSIsImlzX2FkbWluIjp0cnVlLCJpc192aXAiOnRydWUsImlhdCI6MTc1NzQ3MjY0MSwiZXhwIjoxNzU4MDc3NDQxfQ.JWdTG3UFkEn5zVUi85N5DIWvzC3qtova6QednMnpUwc | 2025-09-17 02:50:41.337+00
+  2 |       1 | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5Ac3VyZXN0YWtlLmNvbSIsImlzX2FkbWluIjp0cnVlLCJpc192aXAiOnRydWUsImlhdCI6MTc1NzQ3MjY0OSwiZXhwIjoxNzU4MDc3NDQ5fQ.lBxluLfnernyzSRA29VO27JyZwnnuFM6cxEbNIN2z8I | 2025-09-17 02:50:49.53+00
+  3 |       1 | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5Ac3VyZXN0YWtlLmNvbSIsImlzX2FkbWluIjp0cnVlLCJpc192aXAiOnRydWUsImlhdCI6MTc1NzQ3MjY3MywiZXhwIjoxNzU4MDc3NDczfQ.7mkz1yRGfFwx-Piq3GerdtLSIDo_1hq1xZ5qDfCNTJA | 2025-09-17 02:51:13.65+00
+  4 |       1 | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5Ac3VyZXN0YWtlLmNvbSIsImlzX2FkbWluIjp0cnVlLCJpc192aXAiOnRydWUsImlhdCI6MTc1NzQ3MjcyOSwiZXhwIjoxNzU4MDc3NTI5fQ.ogsD_DEt9c6MOVpqs4Ey3EFCQFsi8fEf8qDy5FR2qc0 | 2025-09-17 02:52:09.163+00
+  5 |       1 | eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5Ac3VyZXN0YWtlLmNvbSIsImlzX2FkbWluIjp0cnVlLCJpc192aXAiOnRydWUsImlhdCI6MTc1NzQ3MjgzNSwiZXhwIjoxNzU4MDc3NjM1fQ.IDcIR_Z90nTTS6JGvqsnI2j2KNagB9_1R03DmzUTwGw | 2025-09-17 02:53:55.086+00
+(5 rows)
+

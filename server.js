@@ -217,14 +217,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Configurar rotas da API
-app.use('/api/plans', plansRoutes);
-console.log('✅ Rota /api/plans registrada');
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/vip', vipRoutes);
-app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
-app.use('/api/surebet-stats', surebetStatsRoutes);
+// Configurar rotas da API (movidas para httpApp)
+// app.use('/api/plans', plansRoutes);
+// console.log('✅ Rota /api/plans registrada');
+// app.use('/api/auth', authRoutes);
+// app.use('/api/users', userRoutes);
+// app.use('/api/vip', vipRoutes);
+// app.use('/api/bookmaker-accounts', bookmakerAccountsRoutes);
+// app.use('/api/surebet-stats', surebetStatsRoutes);
 
 // Rate limiting específico para surebets (desabilitado)
 // app.use('/api/surebets', surebetsRateLimiter.middleware());
@@ -292,90 +292,90 @@ async function getSurebetsFromAPI(filters) {
     timestamp: new Date().toISOString()
   };
 }
-app.use('/api/orders', ordersRoutes);
-app.use('/api/referrals', referralsRoutes);
-app.use('/api/tickets', ticketsRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/payments', paymentRoutes);
-app.use('/api/manual-payments', manualPaymentRoutes);
-app.use('/api/payment-status', paymentStatusRoutes);
+// app.use('/api/orders', ordersRoutes);
+// app.use('/api/referrals', referralsRoutes);
+// app.use('/api/tickets', ticketsRoutes);
+// app.use('/api/admin', adminRoutes);
+// app.use('/api/notifications', notificationRoutes);
+// app.use('/api/payments', paymentRoutes);
+// app.use('/api/manual-payments', manualPaymentRoutes);
+// app.use('/api/payment-status', paymentStatusRoutes);
 
 
-// Rota de teste simples
-app.get('/api/test', (req, res) => {
-  console.log('🔍 [TEST API] Rota /api/test executada');
-  res.json({ message: 'Teste funcionando!' });
-});
+// Rota de teste simples (movida para httpApp)
+// app.get('/api/test', (req, res) => {
+//   console.log('🔍 [TEST API] Rota /api/test executada');
+//   res.json({ message: 'Teste funcionando!' });
+// });
 
-// Rota de monitoramento do sistema
-app.get('/api/monitoring/stats', (req, res) => {
-  try {
-    const stats = systemMonitor.getSystemStats();
-    res.json(stats);
-  } catch (error) {
-    console.error('❌ Erro ao obter estatísticas:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+// Rota de monitoramento do sistema (movida para httpApp)
+// app.get('/api/monitoring/stats', (req, res) => {
+//   try {
+//     const stats = systemMonitor.getSystemStats();
+//     res.json(stats);
+//   } catch (error) {
+//     console.error('❌ Erro ao obter estatísticas:', error);
+//     res.status(500).json({ error: 'Erro interno do servidor' });
+//   }
+// });
 
-// Rota de alertas
-app.get('/api/monitoring/alerts', (req, res) => {
-  try {
-    const alerts = systemMonitor.getActiveAlerts();
-    res.json(alerts);
-  } catch (error) {
-    console.error('❌ Erro ao obter alertas:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+// Rota de alertas (movida para httpApp)
+// app.get('/api/monitoring/alerts', (req, res) => {
+//   try {
+//     const alerts = systemMonitor.getActiveAlerts();
+//     res.json(alerts);
+//   } catch (error) {
+//     console.error('❌ Erro ao obter alertas:', error);
+//     res.status(500).json({ error: 'Erro interno do servidor' });
+//   }
+// });
 
-// Rota de health check
-app.get('/api/health', async (req, res) => {
-  try {
-    const health = await healthChecker.runAllChecks();
-    const statusCode = health.status === 'healthy' ? 200 : 
-                      health.status === 'warning' ? 200 : 503;
-    res.status(statusCode).json(health);
-  } catch (error) {
-    logger.error('Health check failed', { error: error.message });
-    res.status(503).json({ 
-      status: 'unhealthy', 
-      message: 'Health check falhou',
-      error: error.message 
-    });
-  }
-});
+// Rota de health check (movida para httpApp)
+// app.get('/api/health', async (req, res) => {
+//   try {
+//     const health = await healthChecker.runAllChecks();
+//     const statusCode = health.status === 'healthy' ? 200 : 
+//                       health.status === 'warning' ? 200 : 503;
+//     res.status(statusCode).json(health);
+//   } catch (error) {
+//     logger.error('Health check failed', { error: error.message });
+//     res.status(503).json({ 
+//       status: 'unhealthy', 
+//       message: 'Health check falhou',
+//       error: error.message 
+//     });
+//   }
+// });
 
-// Rota de health check rápido
-app.get('/api/health/quick', async (req, res) => {
-  try {
-    const health = await healthChecker.quickCheck();
-    const statusCode = health.status === 'healthy' ? 200 : 503;
-    res.status(statusCode).json(health);
-  } catch (error) {
-    logger.error('Quick health check failed', { error: error.message });
-    res.status(503).json({ 
-      status: 'unhealthy', 
-      message: 'Quick health check falhou',
-      error: error.message 
-    });
-  }
-});
+// Rota de health check rápido (movida para httpApp)
+// app.get('/api/health/quick', async (req, res) => {
+//   try {
+//     const health = await healthChecker.quickCheck();
+//     const statusCode = health.status === 'healthy' ? 200 : 503;
+//     res.status(statusCode).json(health);
+//   } catch (error) {
+//     logger.error('Quick health check failed', { error: error.message });
+//     res.status(503).json({ 
+//       status: 'unhealthy', 
+//       message: 'Quick health check falhou',
+//       error: error.message 
+//     });
+//   }
+// });
 
-// Rota de análise de erros
-app.get('/api/errors/analysis', (req, res) => {
-  try {
-    const report = errorAnalyzer.getErrorReport();
-    res.json(report);
-  } catch (error) {
-    logger.error('Error analysis failed', { error: error.message });
-    res.status(500).json({ 
-      error: 'Erro ao gerar análise de erros',
-      message: error.message 
-    });
-  }
-});
+// Rota de análise de erros (movida para httpApp)
+// app.get('/api/errors/analysis', (req, res) => {
+//   try {
+//     const report = errorAnalyzer.getErrorReport();
+//     res.json(report);
+//   } catch (error) {
+//     logger.error('Error analysis failed', { error: error.message });
+//     res.status(500).json({ 
+//       error: 'Erro ao gerar análise de erros',
+//       message: error.message 
+//     });
+//   }
+// });
 
 // WebSocket server será configurado após HTTPS
 let wss = null;
@@ -504,23 +504,23 @@ app.get('/api/surebets', async (req, res) => {
 });
 */
 
-app.get('/api/status', (req, res) => {
-  res.json({
-    isSearching,
-    soundEnabled,
-    surebetCount: surebets && typeof surebets === 'object' ? Object.keys(surebets).length : 0
-  });
-});
+// app.get('/api/status', (req, res) => {
+//   res.json({
+//     isSearching,
+//     soundEnabled,
+//     surebetCount: surebets && typeof surebets === 'object' ? Object.keys(surebets).length : 0
+//   });
+// });
 
-app.post('/api/toggle-search', (req, res) => {
-  isSearching = req.body.isSearching;
-  res.json({ isSearching });
-});
+// app.post('/api/toggle-search', (req, res) => {
+//   isSearching = req.body.isSearching;
+//   res.json({ isSearching });
+// });
 
-app.post('/api/toggle-sound', (req, res) => {
-  soundEnabled = req.body.soundEnabled;
-  res.json({ soundEnabled });
-});
+// app.post('/api/toggle-sound', (req, res) => {
+//   soundEnabled = req.body.soundEnabled;
+//   res.json({ soundEnabled });
+// });
 
 // Este middleware foi movido para cima para interceptar requisições antes das rotas específicas
 
@@ -579,7 +579,7 @@ app.use((err, req, res, next) => {
 
 // Rotas específicas para arquivos estáticos
 app.get('/favicon.ico', (req, res) => {
-  const faviconPath = '/var/lib/postgresql/surebet/surebet/client/dist/favicon.ico';
+  const faviconPath = '/var/www/surebet/client/dist/favicon.ico';
   console.log(`🔍 [FAVICON] Tentando servir: ${faviconPath}`);
   if (require('fs').existsSync(faviconPath)) {
     res.sendFile(faviconPath);
@@ -591,7 +591,7 @@ app.get('/favicon.ico', (req, res) => {
 
 // Rota para favicon SVG
 app.get('/img/icons/favicon.svg', (req, res) => {
-  const faviconPath = '/var/lib/postgresql/surebet/surebet/client/dist/img/icons/favicon.svg';
+  const faviconPath = '/var/www/surebet/client/dist/img/icons/favicon.svg';
   console.log(`🔍 [FAVICON SVG] Tentando servir: ${faviconPath}`);
   if (require('fs').existsSync(faviconPath)) {
     res.setHeader('Content-Type', 'image/svg+xml');
@@ -604,7 +604,7 @@ app.get('/img/icons/favicon.svg', (req, res) => {
 
 // Servir arquivos CSS
 app.get('/css/*', (req, res) => {
-  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  const filePath = path.join('/var/www/surebet/client/dist', req.path);
   console.log(`🔍 [CSS] Tentando servir: ${filePath}`);
   if (require('fs').existsSync(filePath)) {
     res.setHeader('Content-Type', 'text/css; charset=utf-8');
@@ -617,7 +617,7 @@ app.get('/css/*', (req, res) => {
 
 // Servir arquivos JS
 app.get('/js/*', (req, res) => {
-  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  const filePath = path.join('/var/www/surebet/client/dist', req.path);
   console.log(`🔍 [JS] Tentando servir: ${filePath}`);
   if (require('fs').existsSync(filePath)) {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -630,7 +630,7 @@ app.get('/js/*', (req, res) => {
 
 // Servir imagens
 app.get('/img/*', (req, res) => {
-  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  const filePath = path.join('/var/www/surebet/client/dist', req.path);
   console.log(`🔍 [IMG] Tentando servir: ${filePath}`);
   if (require('fs').existsSync(filePath)) {
     res.sendFile(filePath);
@@ -642,7 +642,7 @@ app.get('/img/*', (req, res) => {
 
 // Servir fontes
 app.get('/fonts/*', (req, res) => {
-  const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+  const filePath = path.join('/var/www/surebet/client/dist', req.path);
   console.log(`🔍 [FONTS] Tentando servir: ${filePath}`);
   if (require('fs').existsSync(filePath)) {
     // Definir Content-Type correto baseado na extensão
@@ -664,7 +664,7 @@ app.get('/fonts/*', (req, res) => {
 
 // Rota específica para Service Worker
 app.get('/sw.js', (req, res) => {
-  const swPath = '/var/lib/postgresql/surebet/surebet/client/dist/sw.js';
+  const swPath = '/var/www/surebet/client/dist/sw.js';
   console.log(`🔍 [SW] Tentando servir: ${swPath}`);
   if (require('fs').existsSync(swPath)) {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -678,7 +678,7 @@ app.get('/sw.js', (req, res) => {
 
 // Rota específica para manifest.json
 app.get('/manifest.json', (req, res) => {
-  const manifestPath = '/var/lib/postgresql/surebet/surebet/client/dist/manifest.json';
+  const manifestPath = '/var/www/surebet/client/dist/manifest.json';
   console.log(`🔍 [MANIFEST] Tentando servir: ${manifestPath}`);
   if (require('fs').existsSync(manifestPath)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -691,7 +691,7 @@ app.get('/manifest.json', (req, res) => {
 
 // Rota específica para pwa-config.js
 app.get('/pwa-config.js', (req, res) => {
-  const pwaConfigPath = '/var/lib/postgresql/surebet/surebet/client/dist/pwa-config.js';
+  const pwaConfigPath = '/var/www/surebet/client/dist/pwa-config.js';
   console.log(`🔍 [PWA-CONFIG] Tentando servir: ${pwaConfigPath}`);
   if (require('fs').existsSync(pwaConfigPath)) {
     res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -734,7 +734,7 @@ app.get('*', (req, res) => {
   console.log(`🌐 Servindo SPA para: ${req.path}`);
   console.log(`🔍 [SPA] __dirname: ${__dirname}`);
   
-  const indexPath = '/var/lib/postgresql/surebet/surebet/client/dist/index.html';
+  const indexPath = '/var/www/surebet/client/dist/index.html';
   console.log(`🔍 [SPA] Caminho completo: ${indexPath}`);
   
   // Verificar se o arquivo existe antes de tentar enviá-lo
@@ -1116,6 +1116,81 @@ async function initializeApp() {
       res.json({ soundEnabled });
     });
     
+    // Rota de teste simples
+    httpApp.get('/api/test', (req, res) => {
+      console.log('🔍 [TEST API] Rota /api/test executada');
+      res.json({ message: 'Teste funcionando!' });
+    });
+
+    // Rota de monitoramento do sistema
+    httpApp.get('/api/monitoring/stats', (req, res) => {
+      try {
+        const stats = systemMonitor.getSystemStats();
+        res.json(stats);
+      } catch (error) {
+        console.error('❌ Erro ao obter estatísticas:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+      }
+    });
+
+    // Rota de alertas
+    httpApp.get('/api/monitoring/alerts', (req, res) => {
+      try {
+        const alerts = systemMonitor.getActiveAlerts();
+        res.json(alerts);
+      } catch (error) {
+        console.error('❌ Erro ao obter alertas:', error);
+        res.status(500).json({ error: 'Erro interno do servidor' });
+      }
+    });
+
+    // Rota de health check
+    httpApp.get('/api/health', async (req, res) => {
+      try {
+        const health = await healthChecker.runAllChecks();
+        const statusCode = health.status === 'healthy' ? 200 : 
+                          health.status === 'warning' ? 200 : 503;
+        res.status(statusCode).json(health);
+      } catch (error) {
+        logger.error('Health check failed', { error: error.message });
+        res.status(503).json({ 
+          status: 'unhealthy', 
+          message: 'Health check falhou',
+          error: error.message 
+        });
+      }
+    });
+
+    // Rota de health check rápido
+    httpApp.get('/api/health/quick', async (req, res) => {
+      try {
+        const health = await healthChecker.quickCheck();
+        const statusCode = health.status === 'healthy' ? 200 : 503;
+        res.status(statusCode).json(health);
+      } catch (error) {
+        logger.error('Quick health check failed', { error: error.message });
+        res.status(503).json({ 
+          status: 'unhealthy', 
+          message: 'Quick health check falhou',
+          error: error.message 
+        });
+      }
+    });
+
+    // Rota de análise de erros
+    httpApp.get('/api/errors/analysis', (req, res) => {
+      try {
+        const report = errorAnalyzer.getErrorReport();
+        res.json(report);
+      } catch (error) {
+        logger.error('Error analysis failed', { error: error.message });
+        res.status(500).json({ 
+          error: 'Erro ao gerar análise de erros',
+          message: error.message 
+        });
+      }
+    });
+    
     // Rota de estatísticas do cache
     // Rotas de cache desabilitadas
     /*
@@ -1170,7 +1245,7 @@ async function initializeApp() {
 
     // Rota específica para Service Worker no servidor HTTP
     httpApp.get('/sw.js', (req, res) => {
-      const swPath = '/var/lib/postgresql/surebet/surebet/client/dist/sw.js';
+      const swPath = '/var/www/surebet/client/dist/sw.js';
       console.log(`🔍 [HTTP SW] Tentando servir: ${swPath}`);
       if (require('fs').existsSync(swPath)) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -1184,7 +1259,7 @@ async function initializeApp() {
 
     // Rota específica para manifest.json no servidor HTTP
     httpApp.get('/manifest.json', (req, res) => {
-      const manifestPath = '/var/lib/postgresql/surebet/surebet/client/dist/manifest.json';
+      const manifestPath = '/var/www//surebet/client/dist/manifest.json';
       console.log(`🔍 [HTTP MANIFEST] Tentando servir: ${manifestPath}`);
       if (require('fs').existsSync(manifestPath)) {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -1197,7 +1272,7 @@ async function initializeApp() {
 
     // Rota específica para pwa-config.js no servidor HTTP
     httpApp.get('/pwa-config.js', (req, res) => {
-      const pwaConfigPath = '/var/lib/postgresql/surebet/surebet/client/dist/pwa-config.js';
+      const pwaConfigPath = '/var/www/surebet/client/dist/pwa-config.js';
       console.log(`🔍 [HTTP PWA-CONFIG] Tentando servir: ${pwaConfigPath}`);
       if (require('fs').existsSync(pwaConfigPath)) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -1210,7 +1285,7 @@ async function initializeApp() {
 
     // Rotas específicas para arquivos estáticos no servidor HTTP
     httpApp.get('/css/*', (req, res) => {
-      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      const filePath = path.join('/var/www/surebet/client/dist', req.path);
       console.log(`🔍 [HTTP CSS] Tentando servir: ${filePath}`);
       if (require('fs').existsSync(filePath)) {
         res.setHeader('Content-Type', 'text/css; charset=utf-8');
@@ -1222,7 +1297,7 @@ async function initializeApp() {
     });
 
     httpApp.get('/js/*', (req, res) => {
-      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      const filePath = path.join('/var/www/surebet/client/dist', req.path);
       console.log(`🔍 [HTTP JS] Tentando servir: ${filePath}`);
       if (require('fs').existsSync(filePath)) {
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
@@ -1234,7 +1309,7 @@ async function initializeApp() {
     });
 
     httpApp.get('/img/*', (req, res) => {
-      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      const filePath = path.join('/var/www/surebet/client/dist', req.path);
       console.log(`🔍 [HTTP IMG] Tentando servir: ${filePath}`);
       if (require('fs').existsSync(filePath)) {
         res.sendFile(filePath);
@@ -1245,7 +1320,7 @@ async function initializeApp() {
     });
 
     httpApp.get('/fonts/*', (req, res) => {
-      const filePath = path.join('/var/lib/postgresql/surebet/surebet/client/dist', req.path);
+      const filePath = path.join('/var/www/surebet/client/dist', req.path);
       console.log(`🔍 [HTTP FONTS] Tentando servir: ${filePath}`);
       if (require('fs').existsSync(filePath)) {
         // Definir Content-Type correto baseado na extensão
@@ -1282,7 +1357,7 @@ async function initializeApp() {
       console.log(`🌐 [HTTP] Servindo SPA para: ${req.path}`);
       console.log(`🔍 [HTTP SPA] __dirname: ${__dirname}`);
       
-      const indexPath = '/var/lib/postgresql/surebet/surebet/client/dist/index.html';
+      const indexPath = '/var/www/surebet/client/dist/index.html';
       console.log(`🔍 [HTTP SPA] Caminho completo: ${indexPath}`);
       
       if (require('fs').existsSync(indexPath)) {

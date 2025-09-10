@@ -1,5 +1,6 @@
 const express = require('express');
 const { User, UserSession } = require('../models');
+const { Op } = require('sequelize');
 const { authenticateToken, requireAdmin } = require('../utils/auth');
 const { Pool } = require('pg');
 
@@ -584,67 +585,87 @@ router.get('/vip-statistics', requireAdmin, async (req, res) => {
   try {
     console.log('📊 Buscando estatísticas VIP...');
     
+    // Usar Sequelize para buscar estatísticas
+    const { UserVIP } = require('../models');
+    
     // Total de usuários VIP ativos
-    const activeVIPsQuery = `
-      SELECT COUNT(*) as count FROM user_vip 
-      WHERE status = 'ativo' AND data_fim > NOW()
-    `;
-
-    const activeVIPsResult = await pool.query(activeVIPsQuery);
-    const activeVIPs = parseInt(activeVIPsResult.rows[0].count);
+    const activeVIPs = await UserVIP.count({
+      where: {
+        status: 'ativo',
+        data_fim: {
+          [Op.gt]: new Date()
+        }
+      }
+    });
     console.log('👑 VIPs ativos:', activeVIPs);
 
     // VIPs que expiram nos próximos 7 dias
-    const expiringSoonQuery = `
-      SELECT COUNT(*) as count FROM user_vip 
-      WHERE status = 'ativo' 
-      AND data_fim BETWEEN NOW() AND NOW() + INTERVAL '7 days'
-    `;
-
-    const expiringSoonResult = await pool.query(expiringSoonQuery);
-    const expiringSoon = parseInt(expiringSoonResult.rows[0].count);
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    
+    const expiringSoon = await UserVIP.count({
+      where: {
+        status: 'ativo',
+        data_fim: {
+          [Op.between]: [new Date(), sevenDaysFromNow]
+        }
+      }
+    });
     console.log('⏰ Expirando em 7 dias:', expiringSoon);
 
     // VIPs expirados hoje
-    const expiredTodayQuery = `
-      SELECT COUNT(*) as count FROM user_vip 
-      WHERE status = 'ativo' 
-      AND DATE(data_fim) = CURRENT_DATE
-    `;
-
-    const expiredTodayResult = await pool.query(expiredTodayQuery);
-    const expiredToday = parseInt(expiredTodayResult.rows[0].count);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const expiredToday = await UserVIP.count({
+      where: {
+        status: 'ativo',
+        data_fim: {
+          [Op.between]: [today, tomorrow]
+        }
+      }
+    });
     console.log('❌ Expirados hoje:', expiredToday);
 
-    // Receita total (soma de todos os valores pagos)
-    const totalRevenueQuery = `
-      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(10,2))), 0) as total FROM user_vip 
-      WHERE amount IS NOT NULL AND amount > 0
-    `;
-
-    const totalRevenueResult = await pool.query(totalRevenueQuery);
-    const totalRevenue = parseFloat(totalRevenueResult.rows[0].total) || 0;
+    // Receita total
+    const totalRevenueResult = await UserVIP.sum('amount', {
+      where: {
+        amount: {
+          [Op.gt]: 0
+        }
+      }
+    });
+    const totalRevenue = parseFloat(totalRevenueResult) || 0;
     console.log('💰 Receita total:', totalRevenue);
 
     // Receita deste mês
-    const thisMonthRevenueQuery = `
-      SELECT COALESCE(SUM(CAST(amount AS DECIMAL(10,2))), 0) as total FROM user_vip 
-      WHERE amount IS NOT NULL AND amount > 0
-      AND DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
-    `;
-
-    const thisMonthRevenueResult = await pool.query(thisMonthRevenueQuery);
-    const thisMonthRevenue = parseFloat(thisMonthRevenueResult.rows[0].total) || 0;
+    const thisMonthStart = new Date();
+    thisMonthStart.setDate(1);
+    thisMonthStart.setHours(0, 0, 0, 0);
+    
+    const thisMonthRevenueResult = await UserVIP.sum('amount', {
+      where: {
+        amount: {
+          [Op.gt]: 0
+        },
+        created_at: {
+          [Op.gte]: thisMonthStart
+        }
+      }
+    });
+    const thisMonthRevenue = parseFloat(thisMonthRevenueResult) || 0;
     console.log('📅 Receita deste mês:', thisMonthRevenue);
 
     // Total de VIPs criados este mês
-    const thisMonthQuery = `
-      SELECT COUNT(*) as count FROM user_vip 
-      WHERE DATE_TRUNC('month', created_at) = DATE_TRUNC('month', CURRENT_DATE)
-    `;
-
-    const thisMonthResult = await pool.query(thisMonthQuery);
-    const thisMonth = parseInt(thisMonthResult.rows[0].count);
+    const thisMonth = await UserVIP.count({
+      where: {
+        created_at: {
+          [Op.gte]: thisMonthStart
+        }
+      }
+    });
     console.log('📊 VIPs criados este mês:', thisMonth);
 
     const statistics = {

@@ -89,7 +89,7 @@ export default {
 
 <style lang="scss" scoped>
 /* Importar sistema de temas */
-@import '@/assets/styles/themes.scss';
+/* Importação removida para evitar conflitos de build */
 
 /* Tela de Acesso Restrito */
 .restricted-access {

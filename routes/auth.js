@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
     // Buscar usuário diretamente no banco
     const user = await User.findOne({
       where: { email: email.toLowerCase() },
-      attributes: ['id', 'username', 'first_name', 'last_name', 'email', 'password_hash', 'is_admin', 'is_vip', 'account_type', 'plan', 'created_at']
+      attributes: ['id', 'username', 'first_name', 'last_name', 'email', 'password_hash', 'is_admin', 'is_vip', 'account_type', 'created_at']
     });
 
     if (!user) {
@@ -83,7 +83,7 @@ router.post('/login', async (req, res) => {
       is_admin: user.is_admin,
       is_vip: user.is_vip,
       account_type: user.account_type || 'basic',
-      plan: user.plan || user.account_type || 'basic', // Incluir campo plan
+      plan: user.account_type || 'basic', // Usar account_type como plan
       can_use_system: true, // Todos os usuários podem usar o sistema
       // Mapeamento para propriedades esperadas pelo frontend
       role: user.is_admin ? 'admin' : 'user',

@@ -48,11 +48,12 @@ export default {
     }
   },
   setup() {
-    const { loadTheme, applyTheme } = useTheme()
+    const { loadTheme, applyTheme, currentTheme } = useTheme()
     
     // Inicializar tema
     loadTheme()
-    applyTheme('dark') // Tema padrão
+    // Aplicar tema carregado (não forçar dark)
+    applyTheme(currentTheme.value)
     
     return {}
   }

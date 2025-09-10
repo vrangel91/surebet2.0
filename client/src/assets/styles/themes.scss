@@ -1,50 +1,50 @@
-// ========================================
-// ARQUIVO DE ÍNDICE DOS TEMAS
-// ========================================
-// Este arquivo importa todos os temas disponíveis
-// Para usar, importe este arquivo no seu main.scss ou main.js
+/* ========================================
+   ARQUIVO DE ÍNDICE DOS TEMAS
+   ========================================
+   Este arquivo importa todos os temas disponíveis
+   Para usar, importe este arquivo no seu main.scss ou main.js */
 
-// Importar tema escuro (padrão)
+/* Importar tema escuro (padrão) */
 @import './dark-theme.scss';
 
-// Importar tema claro
+/* Importar tema claro */
 @import './light-theme.scss';
 
-// ========================================
-// UTILITÁRIOS PARA TROCA DE TEMAS
-// ========================================
+/* ========================================
+   UTILITÁRIOS PARA TROCA DE TEMAS
+   ======================================== */
 
-// Função para aplicar tema escuro
+/* Função para aplicar tema escuro */
 @mixin apply-dark-theme {
   :root {
-    // Todas as variáveis do tema escuro já estão definidas em :root
-    // Este mixin pode ser usado para sobrescrever ou adicionar estilos específicos
+    /* Todas as variáveis do tema escuro já estão definidas em :root */
+    /* Este mixin pode ser usado para sobrescrever ou adicionar estilos específicos */
   }
 }
 
-// Função para aplicar tema claro
+/* Função para aplicar tema claro */
 @mixin apply-light-theme {
   [data-theme="light"] {
-    // Todas as variáveis do tema claro já estão definidas em [data-theme="light"]
-    // Este mixin pode ser usado para sobrescrever ou adicionar estilos específicos
+    /* Todas as variáveis do tema claro já estão definidas em [data-theme="light"] */
+    /* Este mixin pode ser usado para sobrescrever ou adicionar estilos específicos */
   }
 }
 
-// Classe utilitária para forçar tema escuro
+/* Classe utilitária para forçar tema escuro */
 .force-dark-theme {
   @include apply-dark-theme;
 }
 
-// Classe utilitária para forçar tema claro
+/* Classe utilitária para forçar tema claro */
 .force-light-theme {
   @include apply-light-theme;
 }
 
-// ========================================
-// TRANSIÇÕES SUAVES ENTRE TEMAS
-// ========================================
+/* ========================================
+   TRANSIÇÕES SUAVES ENTRE TEMAS
+   ======================================== */
 
-// Aplicar transições suaves para todas as propriedades de cor
+/* Aplicar transições suaves para todas as propriedades de cor */
 * {
   transition: 
     background-color 0.3s ease,
@@ -52,45 +52,3 @@
     border-color 0.3s ease,
     box-shadow 0.3s ease;
 }
-
-// ========================================
-// EXEMPLOS DE USO
-// ========================================
-
-// Para usar em componentes Vue:
-// 
-// <template>
-//   <div class="card">
-//     <h2>Meu Card</h2>
-//     <p>Conteúdo do card</p>
-//   </div>
-// </template>
-//
-// <style lang="scss" scoped>
-// @import '@/assets/styles/themes.scss';
-//
-// .card {
-//   background: var(--bg-card);
-//   color: var(--text-primary);
-//   border: 1px solid var(--border-card);
-//   box-shadow: var(--shadow-card);
-//   
-//   h2 {
-//     color: var(--text-accent);
-//   }
-//   
-//   p {
-//     color: var(--text-secondary);
-//   }
-// }
-// </style>
-
-// Para alternar temas via JavaScript:
-//
-// // Aplicar tema claro
-// document.documentElement.setAttribute('data-theme', 'light');
-//
-// // Aplicar tema escuro (padrão)
-// document.documentElement.removeAttribute('data-theme');
-// // ou
-// document.documentElement.setAttribute('data-theme', 'dark');

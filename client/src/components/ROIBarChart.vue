@@ -1,457 +1,385 @@
 <template>
-  <div class="chart-container">
-    <canvas ref="chartCanvas"></canvas>
+  <div class="roi-bar-chart">
+    <div class="chart-header">
+      <h3>ROI por Período</h3>
+      <div class="chart-controls">
+        <button @click="refreshChart" :disabled="isLoading" class="btn-refresh">
+          <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="chart-container">
+      <canvas 
+        ref="chartCanvas" 
+        :key="chartKey"
+        class="chart-canvas"
+      ></canvas>
+    </div>
+    
+    <div v-if="isLoading" class="chart-loading">
+      <div class="spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+    
+    <div v-if="error" class="chart-error">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>{{ error }}</p>
+      <button @click="refreshChart" class="btn-retry">Tentar Novamente</button>
+    </div>
   </div>
 </template>
 
 <script>
-import { Chart, registerables } from 'chart.js'
-
-Chart.register(...registerables)
+import Chart from 'chart.js/auto'
 
 export default {
   name: 'ROIBarChart',
   props: {
-    bets: {
+    data: {
       type: Array,
-      required: true
+      default: () => []
+    },
+    isLoading: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
     return {
-      chart: null
+      chart: null,
+      chartKey: 0,
+      error: null,
+      chartInstance: null
     }
   },
   watch: {
-    bets: {
-      handler: 'updateChart',
-      deep: true,
-      immediate: true
+    data: {
+      handler() {
+        this.updateChart()
+      },
+      deep: true
+    },
+    isLoading(newVal) {
+      if (!newVal && this.data.length > 0) {
+        this.updateChart()
+      }
     }
   },
   mounted() {
-    this.$nextTick(() => {
-      this.createChart()
-      this.forceChartBackground()
-      this.forceChartColors()
-      
-      // Observar mudanças de tema
-      this.observeThemeChanges()
-    })
+    this.initializeChart()
   },
   beforeUnmount() {
-    if (this.chart) {
-      this.chart.destroy()
-    }
-    
-    // Limpar observer de tema
-    if (this.themeObserver) {
-      this.themeObserver.disconnect()
-    }
-    
-    // Limpar intervalo de verificação
-    if (this.backgroundCheckInterval) {
-      clearInterval(this.backgroundCheckInterval)
-    }
+    this.destroyChart()
   },
   methods: {
-    // Método para obter cor do tema atual
-    getThemeColor(cssVariable, fallback) {
+    initializeChart() {
       try {
-        const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable)
-        return value || fallback
+        this.destroyChart()
+        this.chartKey++
+        this.$nextTick(() => {
+          this.createChart()
+        })
       } catch (error) {
-        return fallback
+        console.error('Erro ao inicializar gráfico ROI:', error)
+        this.error = 'Erro ao inicializar gráfico'
       }
-    },
-    
-    // Método para destruir gráfico de forma segura
-    destroyChartSafely() {
-      try {
-        if (this.chart) {
-          // Verificar se o gráfico ainda está ativo e tem método destroy
-          if (typeof this.chart.destroy === 'function') {
-            // Verificar se o canvas ainda existe e está no DOM
-            if (this.chart.canvas && this.chart.canvas.parentNode) {
-              this.chart.destroy()
-              console.log('✅ Gráfico de ROI destruído com sucesso')
-            } else {
-              console.log('⚠️ Canvas não encontrado, forçando limpeza')
-            }
-          }
-          this.chart = null
-        }
-      } catch (error) {
-        console.warn('⚠️ Erro ao destruir gráfico de ROI:', error.message)
-        // Forçar limpeza mesmo com erro
-        this.chart = null
-      }
-    },
-    
-    // Método para forçar o fundo do gráfico
-    forceChartBackground() {
-      if (!this.chart) return
-      
-      const canvas = this.chart.canvas
-      
-      // Aplicar fundo via CSS inline com !important
-      canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2d2d2d'), 'important')
-      canvas.style.setProperty('background', this.getThemeColor('--bg-tertiary', '#2d2d2d'), 'important')
-      
-      // Forçar redraw do gráfico
-      this.chart.update('none')
-      
-      // Aplicar fundo diretamente no contexto 2D após um delay
-      setTimeout(() => {
-        if (this.chart && this.chart.ctx) {
-          const chartCtx = this.chart.ctx
-          const chartArea = this.chart.chartArea
-          
-          if (chartArea) {
-            chartCtx.save()
-            chartCtx.globalCompositeOperation = 'destination-over'
-            chartCtx.fillStyle = this.getThemeColor('--bg-tertiary', '#2d2d2d')
-            chartCtx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top)
-            chartCtx.restore()
-          }
-        }
-      }, 200)
-    },
-    
-    // Método para forçar atualização das cores
-    forceChartColors() {
-      if (!this.chart) return
-      
-      // Atualizar cores dos eixos
-      this.chart.options.scales.x.grid.color = this.getThemeColor('--border-primary', '#404040')
-      this.chart.options.scales.x.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-      this.chart.options.scales.y.grid.color = this.getThemeColor('--border-primary', '#404040')
-      this.chart.options.scales.y.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-      
-      // Atualizar cores dos tooltips
-      this.chart.options.plugins.tooltip.backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
-      this.chart.options.plugins.tooltip.titleColor = this.getThemeColor('--text-primary', '#ffffff')
-      this.chart.options.plugins.tooltip.bodyColor = this.getThemeColor('--text-primary', '#ffffff')
-      this.chart.options.plugins.tooltip.borderColor = this.getThemeColor('--accent-secondary', '#00cc6a')
-      
-      // Forçar redraw
-      this.chart.update('none')
-    },
-    
-    // Observar mudanças de tema
-    observeThemeChanges() {
-      if (typeof MutationObserver !== 'undefined') {
-        const observer = new MutationObserver((mutations) => {
-          mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-              console.log('🎨 Tema mudou detectado! Aplicando novas cores...')
-              // Aguardar um pouco para o tema ser aplicado
-              setTimeout(() => {
-                this.forceChartBackground()
-                this.forceChartColors()
-              }, 100)
-            }
-          })
-        })
-        
-        // Observar mudanças no atributo data-theme do html
-        observer.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ['data-theme']
-        })
-        
-        // Guardar referência para limpeza
-        this.themeObserver = observer
-      }
-      
-      // Usar MutationObserver em vez de timer para detectar mudanças de tema
-      this.setupThemeObserver()
-      
-      // Verificar tema atual e aplicar cores
-      this.checkAndApplyTheme()
-    },
-    
-    // Configurar observer para mudanças de tema
-    setupThemeObserver() {
-      if (this.themeObserver) {
-        this.themeObserver.disconnect()
-      }
-      
-      this.themeObserver = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-          if (mutation.type === 'attributes' && 
-              (mutation.attributeName === 'data-theme' || 
-               mutation.attributeName === 'class')) {
-            console.log('🎨 [ROIBarChart] Mudança de tema detectada')
-            this.checkAndApplyTheme()
-          }
-        })
-      })
-      
-      // Observar mudanças no elemento html
-      this.themeObserver.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme', 'class']
-      })
-    },
-
-    // Verificar e aplicar tema atual
-    checkAndApplyTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark'
-      console.log(`🎯 Tema atual detectado: ${currentTheme}`)
-      
-      // Aplicar cores baseadas no tema atual
-      if (this.chart) {
-        this.forceChartColors()
-      }
-    },
-    
-    // Método público para forçar atualização de tema
-    forceThemeUpdate() {
-      console.log('🔄 Forçando atualização de tema...')
-      this.forceChartBackground()
-      this.forceChartColors()
     },
     
     createChart() {
       const ctx = this.$refs.chartCanvas
       if (!ctx) return
       
-      // Destruir gráfico existente de forma segura
-      this.destroyChartSafely()
-      
-      // Aguardar um pouco para garantir que o canvas esteja limpo
-      setTimeout(() => {
-        if (!this.$refs.chartCanvas) return
+      try {
+        // Destruir gráfico existente
+        this.destroyChart()
         
-        this.chart = new Chart(ctx, {
-        type: 'bar',
-        data: this.getChartData(),
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          indexAxis: 'y',
-          // Configuração do fundo do gráfico
-          backgroundColor: this.getThemeColor('--bg-tertiary', '#2d2d2d'),
-          plugins: {
-            // Plugin personalizado para fundo do canvas
-            customCanvasBackgroundColor: {
-              id: 'customCanvasBackgroundColor',
-              beforeDraw: (chart) => {
-                const ctx = chart.ctx;
-                const chartArea = chart.chartArea;
-                
-                // Forçar fundo da área de plotagem
-                if (chartArea) {
-                  ctx.save();
-                  ctx.globalCompositeOperation = 'destination-over';
-                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2d2d2d');
-                  ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top);
-                  ctx.restore();
-                }
-              }
-            },
-            legend: {
-              display: false
-            },
-            tooltip: {
-              backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'),
-              titleColor: this.getThemeColor('--text-primary', '#ffffff'),
-              bodyColor: this.getThemeColor('--text-primary', '#ffffff'),
-              borderColor: this.getThemeColor('--accent-secondary', '#00cc6a'),
-              borderWidth: 1,
-              callbacks: {
-                title: (context) => {
-                  return context[0].label
+        // Aguardar um frame para garantir que o canvas esteja limpo
+        requestAnimationFrame(() => {
+          if (!this.$refs.chartCanvas) return
+          
+          const chartData = this.prepareChartData()
+          
+          this.chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                title: {
+                  display: true,
+                  text: 'ROI por Período',
+                  color: this.getThemeColor('text-primary'),
+                  font: {
+                    size: 16,
+                    weight: 'bold'
+                  }
                 },
-                label: (context) => {
-                  return `ROI: ${context.parsed.x.toFixed(2)}%`
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: {
+                    color: this.getThemeColor('text-primary'),
+                    usePointStyle: true,
+                    padding: 20
+                  }
                 }
+              },
+              scales: {
+                x: {
+                  display: true,
+                  title: {
+                    display: true,
+                    text: 'Período',
+                    color: this.getThemeColor('text-secondary')
+                  },
+                  ticks: {
+                    color: this.getThemeColor('text-secondary')
+                  },
+                  grid: {
+                    color: this.getThemeColor('border-primary'),
+                    drawBorder: false
+                  }
+                },
+                y: {
+                  display: true,
+                  title: {
+                    display: true,
+                    text: 'ROI (%)',
+                    color: this.getThemeColor('text-secondary')
+                  },
+                  ticks: {
+                    color: this.getThemeColor('text-secondary')
+                  },
+                  grid: {
+                    color: this.getThemeColor('border-primary'),
+                    drawBorder: false
+                  }
+                }
+              },
+              interaction: {
+                intersect: false,
+                mode: 'index'
               }
             }
-          },
-          scales: {
-            x: {
-              grid: {
-                color: this.getThemeColor('--border-primary', '#404040')
-              },
-              ticks: {
-                color: this.getThemeColor('--text-primary', '#ffffff'),
-                callback: (value) => {
-                  return `${value.toFixed(1)}%`
-                }
-              }
-            },
-            y: {
-              grid: {
-                color: this.getThemeColor('--border-primary', '#404040')
-              },
-              ticks: {
-                color: this.getThemeColor('--text-primary', '#ffffff'),
-                maxTicksLimit: 10
-              }
-            }
-          },
-          elements: {
-            bar: {
-              backgroundColor: (context) => {
-                const value = context.parsed.x
-                if (value >= 0) {
-                  return this.getThemeColor('--accent-primary', '#00ff88')
-                } else {
-                  return this.getThemeColor('--error-color', '#ff4444')
-                }
-              },
-              borderColor: (context) => {
-                const value = context.parsed.x
-                if (value >= 0) {
-                  return this.getThemeColor('--accent-secondary', '#00cc6a')
-                } else {
-                  return this.getThemeColor('--error-hover', '#ff6666')
-                }
-              },
-              borderWidth: 1
-            }
-          }
-        }
-      })
-      
-      // Aplicar fundo e cores após criação
-      setTimeout(() => {
-        this.forceChartBackground()
-        this.forceChartColors()
-      }, 100)
-      
-      }, 50) // Pequeno delay para garantir limpeza do canvas
-    },
-    
-    getChartData() {
-      if (!this.bets || this.bets.length === 0) {
-        return {
-          labels: ['Sem dados'],
-          datasets: [{
-            data: [0],
-            label: 'ROI por Aposta'
-          }]
-        }
-      }
-
-      // Pega as últimas 10 apostas para o gráfico
-      const recentBets = [...this.bets]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 10)
-        .reverse()
-      
-      const labels = recentBets.map(bet => {
-        const matchName = bet.match && bet.match.length > 20 
-          ? bet.match.substring(0, 20) + '...' 
-          : bet.match || 'Partida'
-        return `${matchName} (${bet.sport || 'Esporte'})`
-      })
-      
-      const data = recentBets.map(bet => bet.roi || 0)
-      
-      return {
-        labels,
-        datasets: [{
-          data,
-          label: 'ROI por Aposta'
-        }]
+          })
+          
+          console.log('✅ Gráfico de ROI criado com sucesso')
+        })
+      } catch (error) {
+        console.error('Erro ao criar gráfico ROI:', error)
+        this.error = 'Erro ao criar gráfico'
       }
     },
     
     updateChart() {
-      if (this.chart && typeof this.chart.update === 'function') {
-        try {
-          this.chart.data = this.getChartData()
-          this.chart.update('active')
-          
-          // Forçar fundo após atualização
-          setTimeout(() => {
-            this.forceChartBackground()
-          }, 100)
-        } catch (error) {
-          console.warn('⚠️ Erro ao atualizar gráfico de ROI, recriando:', error.message)
-          this.destroyChartSafely()
-          this.$nextTick(() => {
-            this.createChart()
-          })
-        }
-      } else {
-        this.$nextTick(() => {
-          this.createChart()
-        })
+      if (!this.chartInstance) {
+        this.createChart()
+        return
       }
+      
+      try {
+        const chartData = this.prepareChartData()
+        this.chartInstance.data = chartData
+        this.chartInstance.update('none')
+        console.log('✅ Gráfico de ROI atualizado')
+      } catch (error) {
+        console.error('Erro ao atualizar gráfico ROI:', error)
+        this.error = 'Erro ao atualizar gráfico'
+      }
+    },
+    
+    prepareChartData() {
+      if (!this.data || this.data.length === 0) {
+        return {
+          labels: [],
+          datasets: [{
+            label: 'ROI',
+            data: [],
+            backgroundColor: this.getThemeColor('accent-light'),
+            borderColor: this.getThemeColor('accent-primary'),
+            borderWidth: 1
+          }]
+        }
+      }
+      
+      const labels = this.data.map(item => item.period || 'Período')
+      const roiData = this.data.map(item => item.roi || 0)
+      
+      return {
+        labels,
+        datasets: [{
+          label: 'ROI (%)',
+          data: roiData,
+          backgroundColor: this.getThemeColor('accent-light'),
+          borderColor: this.getThemeColor('accent-primary'),
+          borderWidth: 1
+        }]
+      }
+    },
+    
+    destroyChart() {
+      try {
+        if (this.chartInstance) {
+          this.chartInstance.destroy()
+          this.chartInstance = null
+          console.log('✅ Gráfico de ROI destruído')
+        }
+      } catch (error) {
+        console.warn('⚠️ Erro ao destruir gráfico ROI:', error)
+        this.chartInstance = null
+      }
+    },
+    
+    refreshChart() {
+      this.error = null
+      this.initializeChart()
+    },
+    
+    getThemeColor(colorName) {
+      // Função para obter cores do tema atual
+      const computedStyle = getComputedStyle(document.documentElement)
+      return computedStyle.getPropertyValue(`--${colorName}`).trim() || this.getFallbackColor(colorName)
+    },
+    
+    getFallbackColor(colorName) {
+      // Cores de fallback caso as variáveis CSS não estejam disponíveis
+      const fallbackColors = {
+        'accent-primary': '#00ff88',
+        'accent-light': 'rgba(0, 255, 136, 0.1)',
+        'text-primary': '#ffffff',
+        'text-secondary': '#cccccc',
+        'border-primary': '#404040'
+      }
+      return fallbackColors[colorName] || '#00ff88'
     }
   }
 }
 </script>
 
 <style scoped>
-.chart-container {
-  height: 100%;
-  width: 100%;
+/* Importação removida para evitar conflitos de build */
+
+.roi-bar-chart {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: var(--shadow);
   position: relative;
-  min-height: 200px;
-  max-height: 100%;
-  overflow: hidden;
+  border: 1px solid var(--border-primary);
 }
 
-canvas {
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.2em;
+  font-weight: 600;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-refresh {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-refresh:disabled {
+  background: var(--text-tertiary);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.chart-container {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.chart-canvas {
   max-width: 100%;
   max-height: 100%;
 }
 
-/* Forçar fundo do gráfico via CSS */
-.chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.chart-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-secondary);
 }
 
-/* Estilos específicos para modo dark */
-[data-theme="dark"] .chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.spinner {
+  border: 3px solid var(--border-primary);
+  border-top: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 10px;
 }
 
-/* Estilos específicos para modo light */
-[data-theme="light"] .chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-/* Forçar fundo também no container */
-.chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.chart-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--error);
 }
 
-/* Estilos específicos para modo dark no container */
-[data-theme="dark"] .chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.chart-error i {
+  font-size: 2em;
+  margin-bottom: 10px;
 }
 
-/* Estilos específicos para modo light no container */
-[data-theme="light"] .chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.btn-retry {
+  background: var(--error);
+  color: var(--bg-primary);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+  font-weight: 500;
 }
 
-/* Regras adicionais para forçar o fundo */
-.chart-container canvas[style*="background"] {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
-}
-
-/* Forçar fundo em todos os elementos do gráfico */
-.chart-container * {
-  background-color: var(--bg-tertiary) !important;
-}
-
-/* Regra específica para o canvas do Chart.js */
-.chart-container canvas[width][height] {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+.btn-retry:hover {
+  background: var(--error-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hover);
 }
 </style>

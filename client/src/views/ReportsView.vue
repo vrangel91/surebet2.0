@@ -76,7 +76,11 @@
          <div class="chart-card">
            <h3>Evolução do Lucro Acumulado</h3>
            <div class="chart-container">
-             <ProfitEvolutionChart ref="profitChart" :bets="bets" />
+             <ProfitEvolutionChart 
+               ref="profitChart" 
+               :data="chartData" 
+               :isLoading="isLoadingCharts"
+             />
            </div>
          </div>
        </div>
@@ -86,7 +90,11 @@
          <div class="roi-chart-card">
            <h3>ROI por Aposta (Últimas 10)</h3>
            <div class="roi-chart-container">
-             <ROIBarChart ref="roiChart" :bets="bets" />
+             <ROIBarChart 
+               ref="roiChart" 
+               :data="roiChartData" 
+               :isLoading="isLoadingCharts"
+             />
            </div>
          </div>
        </div>
@@ -386,7 +394,9 @@ export default {
       // Dados das apostas processadas para relatórios
       bets: [],
       // Timer para verificar status das apostas
-      statusCheckTimer: null
+      statusCheckTimer: null,
+      // Estado de loading dos gráficos
+      isLoadingCharts: false
     }
   },
   computed: {
@@ -489,6 +499,37 @@ export default {
     },
     totalPages() {
       return Math.ceil(this.filteredBets.length / this.recordsPerPage)
+    },
+    // Dados para o gráfico de evolução de lucro
+    chartData() {
+      if (!this.bets || this.bets.length === 0) return []
+      
+      // Ordenar por data e calcular lucro acumulado
+      const sortedBets = [...this.bets].sort((a, b) => new Date(a.date) - new Date(b.date))
+      let cumulativeProfit = 0
+      
+      return sortedBets.map(bet => {
+        cumulativeProfit += bet.profit || 0
+        return {
+          date: bet.date,
+          profit: cumulativeProfit
+        }
+      })
+    },
+    // Dados para o gráfico de ROI
+    roiChartData() {
+      if (!this.bets || this.bets.length === 0) return []
+      
+      // Pegar as últimas 10 apostas
+      const lastBets = [...this.bets]
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, 10)
+        .reverse()
+      
+      return lastBets.map((bet, index) => ({
+        period: `Aposta ${index + 1}`,
+        roi: bet.roi || 0
+      }))
     }
   },
   mounted() {
@@ -496,11 +537,8 @@ export default {
     this.loadStoredBets()
     this.startStatusCheckTimer() // Inicia verificação automática de status das apostas
   },
-  beforeDestroy() {
+  beforeUnmount() {
     this.stopStatusCheckTimer() // Limpa o timer ao destruir o componente
-    
-    // Destruir gráficos de forma segura
-    this.destroyCharts()
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -789,13 +827,17 @@ color: var(--text-primary);
           refreshBtn.disabled = true
         }
         
+        // Ativar loading dos gráficos
+        this.isLoadingCharts = true
+        
         // Atualizar surebets da API
         await this.fetchSurebets()
         
         // Recarregar apostas armazenadas
         this.loadStoredBets()
         
-
+        // Simular um pequeno delay para mostrar o loading
+        await new Promise(resolve => setTimeout(resolve, 500))
         
         // Resetar paginação
         this.currentPage = 1
@@ -809,6 +851,9 @@ color: var(--text-primary);
         console.error('❌ Erro ao atualizar dados:', error)
         this.showNotification('❌ Erro ao atualizar dados. Tente novamente.')
       } finally {
+        // Desativar loading dos gráficos
+        this.isLoadingCharts = false
+        
         // Remover indicador de loading
         const refreshBtn = document.querySelector('.refresh-btn')
         if (refreshBtn) {
@@ -830,24 +875,6 @@ color: var(--text-primary);
       }
     },
     
-    // Destruir gráficos de forma segura
-    destroyCharts() {
-      try {
-        // Destruir gráfico de evolução de lucro
-        if (this.$refs.profitChart && typeof this.$refs.profitChart.destroyChartSafely === 'function') {
-          this.$refs.profitChart.destroyChartSafely()
-        }
-        
-        // Destruir gráfico de ROI
-        if (this.$refs.roiChart && typeof this.$refs.roiChart.destroyChartSafely === 'function') {
-          this.$refs.roiChart.destroyChartSafely()
-        }
-        
-        console.log('✅ Gráficos destruídos com sucesso')
-      } catch (error) {
-        console.warn('⚠️ Erro ao destruir gráficos:', error.message)
-      }
-    },
          // Método para verificar o status das apostas e atualizar automaticamente após 3 horas
      checkBetStatuses() {
        const now = new Date()
@@ -905,6 +932,8 @@ color: var(--text-primary);
 </script>
 
 <style lang="scss" scoped>
+/* Importação removida para evitar conflitos de build */
+
 .reports-container {
   display: flex;
   height: 100vh;

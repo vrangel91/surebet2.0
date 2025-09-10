@@ -1,12 +1,12 @@
-// ========================================
-// TEMA CLARO - VARIÁVEIS DE CORES
-// ========================================
+/* ========================================
+   TEMA CLARO - VARIÁVEIS DE CORES
+   ======================================== */
 
-// Backgrounds
+/* Backgrounds */
 [data-theme="light"] {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;
-  --bg-secondary-rgb: 248, 249, 250; // Para usar em rgba()
+  --bg-secondary-rgb: 248, 249, 250; /* Para usar em rgba() */
   --bg-tertiary: #e9ecef;
   --bg-overlay: #dee2e6;
   --bg-hover: rgba(0, 0, 0, 0.05);
@@ -41,7 +41,7 @@
   --bg-gradient-yellow-button: linear-gradient(135deg, #ffc107, #e0a800);
 }
 
-// Textos
+/* Textos */
 [data-theme="light"] {
   --text-primary: #1a1a1a;
   --text-secondary: #6c757d;
@@ -67,7 +67,7 @@
   --text-button-yellow: #1a1a1a;
 }
 
-// Bordas
+/* Bordas */
 [data-theme="light"] {
   --border-primary: #dee2e6;
   --border-secondary: #ced4da;
@@ -92,7 +92,7 @@
   --border-button-active: rgba(25, 135, 84, 0.5);
 }
 
-// Cores de destaque (Accent)
+/* Cores de destaque (Accent) */
 [data-theme="light"] {
   --accent-primary: #198754;
   --accent-secondary: #146c43;
@@ -105,7 +105,7 @@
   --accent-secondary-rgb: 20, 108, 67;
 }
 
-// Cores de status
+/* Cores de status */
 [data-theme="light"] {
   --success: #198754;
   --success-light: rgba(25, 135, 84, 0.1);
@@ -114,21 +114,21 @@
   --success-rgb: 25, 135, 84;
   
   --error: #dc3545;
-  --error-color: #dc3545; // Alias para compatibilidade
+  --error-color: #dc3545; 
   --error-light: rgba(220, 53, 69, 0.1);
   --error-medium: rgba(220, 53, 69, 0.2);
   --error-strong: rgba(220, 53, 69, 0.3);
   --error-rgb: 220, 53, 69;
-  --error-color-rgb: 220, 53, 69; // Alias para compatibilidade
+  --error-color-rgb: 220, 53, 69; 
   --error-hover: #e74c3c;
   
   --warning: #ffc107;
-  --warning-color: #ffc107; // Alias para compatibilidade
+  --warning-color: #ffc107; 
   --warning-light: rgba(255, 193, 7, 0.1);
   --warning-medium: rgba(255, 193, 7, 0.2);
   --warning-strong: rgba(255, 193, 7, 0.3);
   --warning-rgb: 255, 193, 7;
-  --warning-color-rgb: 255, 193, 7; // Alias para compatibilidade
+  --warning-color-rgb: 255, 193, 7; 
   
   --info: #007bff;
   --info-light: rgba(0, 123, 255, 0.1);
@@ -137,7 +137,7 @@
   --info-rgb: 0, 123, 255;
 }
 
-// Cores de botões
+
 [data-theme="light"] {
   --button-primary-bg: linear-gradient(135deg, #198754, #146c43);
   --button-primary-text: #ffffff;
@@ -171,7 +171,7 @@
   --button-danger-active: #bd2130;
 }
 
-// Sombras
+
 [data-theme="light"] {
   --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-hover: 0 4px 8px rgba(0, 0, 0, 0.15);
@@ -186,7 +186,7 @@
   --shadow-input-focus: 0 0 0 1px rgba(25, 135, 84, 0.3);
 }
 
-// Cores de gráficos
+
 [data-theme="light"] {
   --chart-bg: rgba(255, 255, 255, 0.95);
   --chart-title: #1a1a1a;
@@ -207,7 +207,7 @@
   --chart-info-border: rgba(0, 123, 255, 1);
 }
 
-// Cores de scrollbar
+
 [data-theme="light"] {
   --scrollbar-track: transparent;
   --scrollbar-thumb: rgba(0, 0, 0, 0.3);
@@ -215,7 +215,7 @@
   --scrollbar-thumb-active: rgba(25, 135, 84, 0.8);
 }
 
-// Cores de overlay e backdrop
+
 [data-theme="light"] {
   --backdrop: rgba(0, 0, 0, 0.5);
   --overlay: rgba(0, 0, 0, 0.3);
@@ -224,7 +224,7 @@
   --overlay-strong: rgba(0, 0, 0, 0.7);
 }
 
-// Cores de input e form
+
 [data-theme="light"] {
   --input-bg: rgba(255, 255, 255, 0.8);
   --input-bg-focus: rgba(255, 255, 255, 1);
@@ -238,7 +238,7 @@
   --input-shadow-focus: 0 0 0 1px rgba(25, 135, 84, 0.3);
 }
 
-// Cores de tabela
+
 [data-theme="light"] {
   --table-bg: #ffffff;
   --table-bg-striped: rgba(0, 0, 0, 0.02);
@@ -251,7 +251,7 @@
   --table-selected-border: rgba(25, 135, 84, 0.3);
 }
 
-// Cores de badge e tag
+
 [data-theme="light"] {
   --badge-success-bg: rgba(25, 135, 84, 0.2);
   --badge-success-text: #198754;
@@ -265,7 +265,7 @@
   --badge-neutral-text: #6c757d;
 }
 
-// Cores de loading e skeleton
+
 [data-theme="light"] {
   --skeleton-bg: rgba(0, 0, 0, 0.1);
   --skeleton-bg-animated: rgba(0, 0, 0, 0.05);
@@ -273,7 +273,7 @@
   --loading-overlay: rgba(255, 255, 255, 0.8);
 }
 
-// Cores de tooltip
+
 [data-theme="light"] {
   --tooltip-bg: rgba(0, 0, 0, 0.9);
   --tooltip-text: #ffffff;
@@ -281,7 +281,7 @@
   --tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-// Cores de notificação
+
 [data-theme="light"] {
   --notification-success-bg: rgba(25, 135, 84, 0.1);
   --notification-success-border: rgba(25, 135, 84, 0.3);
@@ -297,7 +297,7 @@
   --notification-info-text: #007bff;
 }
 
-// Cores de modal e popup
+
 [data-theme="light"] {
   --modal-bg: rgba(255, 255, 255, 0.95);
   --modal-border: rgba(0, 0, 0, 0.1);
@@ -308,7 +308,7 @@
   --modal-footer-border: rgba(0, 0, 0, 0.1);
 }
 
-// Cores de dropdown e menu
+
 [data-theme="light"] {
   --dropdown-bg: rgba(255, 255, 255, 0.98);
   --dropdown-border: rgba(25, 135, 84, 0.4);
@@ -322,7 +322,7 @@
   --dropdown-separator: rgba(0, 0, 0, 0.1);
 }
 
-// Cores de paginação
+
 [data-theme="light"] {
   --pagination-bg: #ffffff;
   --pagination-bg-hover: #f8f9fa;
@@ -334,7 +334,7 @@
   --pagination-border-active: #198754;
 }
 
-// Cores de progress bar
+
 [data-theme="light"] {
   --progress-bg: rgba(0, 0, 0, 0.1);
   --progress-fill: #198754;
@@ -344,7 +344,7 @@
   --progress-fill-info: #007bff;
 }
 
-// Cores de toggle e switch
+
 [data-theme="light"] {
   --toggle-bg: rgba(0, 0, 0, 0.1);
   --toggle-bg-active: #198754;
@@ -354,7 +354,7 @@
   --toggle-border-active: #198754;
 }
 
-// Cores de checkbox e radio
+
 [data-theme="light"] {
   --checkbox-bg: rgba(0, 0, 0, 0.1);
   --checkbox-bg-checked: #198754;
@@ -368,7 +368,7 @@
   --radio-dot: #ffffff;
 }
 
-// Cores de slider
+
 [data-theme="light"] {
   --slider-track: rgba(0, 0, 0, 0.1);
   --slider-track-fill: #198754;
@@ -378,7 +378,7 @@
   --slider-border: rgba(0, 0, 0, 0.2);
 }
 
-// Cores de código e pre
+
 [data-theme="light"] {
   --code-bg: rgba(0, 0, 0, 0.05);
   --code-text: #198754;
@@ -388,7 +388,7 @@
   --pre-border: rgba(0, 0, 0, 0.1);
 }
 
-// Cores de link
+
 [data-theme="light"] {
   --link-text: #198754;
   --link-text-hover: #146c43;
@@ -398,19 +398,19 @@
   --link-underline-hover: rgba(25, 135, 84, 0.6);
 }
 
-// Cores de seleção
+
 [data-theme="light"] {
   --selection-bg: rgba(25, 135, 84, 0.3);
   --selection-text: #1a1a1a;
 }
 
-// Cores de foco
+
 [data-theme="light"] {
   --focus-ring: rgba(25, 135, 84, 0.5);
   --focus-ring-inner: rgba(25, 135, 84, 0.3);
 }
 
-// Cores de transparência
+
 [data-theme="light"] {
   --transparent: transparent;
   --transparent-light: rgba(0, 0, 0, 0.05);
@@ -421,7 +421,7 @@
   --transparent-dark-strong: rgba(255, 255, 255, 0.5);
 }
 
-// Classes utilitárias para aplicar tema claro
+
 .theme-light {
   --bg-primary: #ffffff;
   --bg-secondary: #f8f9fa;

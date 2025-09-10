@@ -1,4 +1,4 @@
-// Variáveis SCSS para o sistema de toast
+/* Variáveis SCSS para o sistema de toast
 $toast-border-radius: 12px;
 $toast-padding: 16px 20px;
 $toast-width: 380px;
@@ -6,7 +6,7 @@ $toast-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
 $toast-backdrop-blur: blur(20px);
 $toast-transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-// Cores modernas
+/* Cores modernas
 $toast-colors: (
   success: (
     bg: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%),
@@ -38,7 +38,7 @@ $toast-colors: (
   )
 );
 
-// Mixins SCSS
+/* Mixins SCSS
 @mixin toast-type($type) {
   $colors: map-get($toast-colors, $type);
   
@@ -78,7 +78,7 @@ $toast-colors: (
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-// Container principal do toast
+/* Container principal do toast
 .toast-container {
   position: fixed;
   top: 24px;
@@ -91,7 +91,7 @@ $toast-colors: (
   max-width: calc(100vw - 48px);
 }
 
-// Notificação individual do toast
+/* Notificação individual do toast
 .toast-notification {
   @include glass-effect;
   pointer-events: auto;
@@ -111,25 +111,25 @@ $toast-colors: (
   overflow: hidden;
   margin-bottom: 0;
   
-  // Animação de entrada
+  /* Animação de entrada
   &[style*="translateX(0)"] {
     opacity: 1;
     transform: translateX(0) scale(1);
   }
   
-  // Animação de saída
+  /* Animação de saída
   &.toast-exit {
     opacity: 0;
     transform: translateX(100%) scale(0.95);
   }
   
-  // Hover effect
+  /* Hover effect
   &:hover {
     transform: translateX(0) scale(1.02);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
   }
   
-  // Tipos de toast
+  /* Tipos de toast
   &.success {
     @include toast-type(success);
   }
@@ -166,7 +166,7 @@ $toast-colors: (
   }
 }
 
-// Conteúdo do toast
+/* Conteúdo do toast
 .toast-content {
   flex-grow: 1;
   min-width: 0;
@@ -175,7 +175,7 @@ $toast-colors: (
   gap: 4px;
 }
 
-// Título do toast
+/* Título do toast
 .toast-title {
   font-weight: 700;
   font-size: 15px;
@@ -184,7 +184,7 @@ $toast-colors: (
   letter-spacing: -0.01em;
 }
 
-// Mensagem do toast
+/* Mensagem do toast
 .toast-message {
   font-size: 14px;
   line-height: 1.4;
@@ -193,7 +193,7 @@ $toast-colors: (
   word-wrap: break-word;
 }
 
-// Botão de fechar
+/* Botão de fechar
 .toast-close {
   background: rgba(0, 0, 0, 0.05);
   border: none;
@@ -226,7 +226,7 @@ $toast-colors: (
   }
 }
 
-// Barra de progresso
+/* Barra de progresso
 .toast-progress {
   position: absolute;
   bottom: 0;
@@ -257,7 +257,7 @@ $toast-colors: (
   }
 }
 
-// Responsividade
+/* Responsividade
 @media (max-width: 768px) {
   .toast-container {
     top: 16px;
@@ -302,7 +302,7 @@ $toast-colors: (
   }
 }
 
-// Animações de transição do Vue
+/* Animações de transição do Vue
 .toast-enter-active {
   transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
@@ -321,7 +321,7 @@ $toast-colors: (
   transform: translateX(100%) scale(0.95);
 }
 
-// Animações adicionais
+/* Animações adicionais
 @keyframes toastSlideIn {
   from {
     opacity: 0;

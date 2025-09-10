@@ -71,10 +71,17 @@ async function invalidateSession(token) {
 
 // Middleware de autenticação
 async function authenticateToken(req, res, next) {
+  console.log('🔍 [Auth] Middleware de autenticação chamado');
+  console.log('🔍 [Auth] Headers:', req.headers);
+  
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
+  console.log('🔍 [Auth] Auth header:', authHeader);
+  console.log('🔍 [Auth] Token extraído:', token ? 'Presente' : 'Ausente');
+
   if (!token) {
+    console.log('❌ [Auth] Token não fornecido');
     return res.status(401).json({ 
       error: 'Token de acesso não fornecido' 
     });
@@ -82,24 +89,34 @@ async function authenticateToken(req, res, next) {
 
   try {
     // Verificar token JWT
+    console.log('🔍 [Auth] Verificando token JWT...');
     const decoded = verifyToken(token);
+    console.log('🔍 [Auth] Token decodificado:', decoded);
+    
     if (!decoded) {
+      console.log('❌ [Auth] Token inválido');
       return res.status(401).json({ 
         error: 'Token inválido' 
       });
     }
 
-    // Verificar sessão no banco
-    const user = await verifyUserSession(token);
+    // Buscar usuário diretamente pelo ID (temporário - sem verificação de sessão)
+    console.log('🔍 [Auth] Buscando usuário com ID:', decoded.userId);
+    const user = await User.findByPk(decoded.userId);
+    console.log('🔍 [Auth] Usuário encontrado:', user ? 'Sim' : 'Não');
+    
     if (!user) {
+      console.log('❌ [Auth] Usuário não encontrado');
       return res.status(401).json({ 
-        error: 'Sessão expirada ou inválida' 
+        error: 'Usuário não encontrado' 
       });
     }
 
+    console.log('✅ [Auth] Autenticação bem-sucedida para usuário:', user.email);
     req.user = user;
     next();
   } catch (error) {
+    console.error('❌ [Auth] Erro na autenticação:', error);
     return res.status(401).json({ 
       error: 'Token inválido' 
     });

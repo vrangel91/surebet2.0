@@ -278,9 +278,14 @@
 
 <script>
 import axios from '@/utils/axios'
+import { useTheme } from '@/composables/useTheme'
 
 export default {
   name: 'Header',
+  setup() {
+    const { currentTheme, toggleTheme, loadTheme } = useTheme()
+    return { currentTheme, toggleTheme, loadTheme }
+  },
   data() {
     return {
       showUserModal: false,
@@ -289,7 +294,6 @@ export default {
       currentUserVIPPlan: null, // Plano VIP do usuário atual
       currentUserVIPExpiration: null, // Data de expiração do VIP do usuário atual
       countdownTimer: null,
-      currentTheme: 'dark', // Tema padrão
       
       // Sistema de notificações
       notifications: [],
@@ -874,38 +878,7 @@ export default {
       }
     },
     
-    toggleTheme() {
-      console.log('🔄 Toggle de tema chamado!')
-      console.log('Tema atual:', this.currentTheme)
-      
-      const newTheme = this.currentTheme === 'dark' ? 'light' : 'dark'
-      console.log('Novo tema:', newTheme)
-      
-      // Aplicar tema diretamente
-      const html = document.documentElement
-      const body = document.body
-      
-      html.classList.remove('theme-dark', 'theme-light')
-      body.classList.remove('theme-dark', 'theme-light')
-      
-      if (newTheme === 'light') {
-        html.setAttribute('data-theme', 'light')
-        html.classList.add('theme-light')
-        body.classList.add('theme-light')
-      } else {
-        html.setAttribute('data-theme', 'dark')
-        html.classList.add('theme-dark')
-        body.classList.add('theme-dark')
-      }
-      
-      // Atualizar estado local
-      this.currentTheme = newTheme
-      
-      // Salvar no localStorage
-      localStorage.setItem('app_theme', newTheme)
-      
-      console.log('Tema alterado para:', newTheme)
-    },
+    // toggleTheme agora vem do composable useTheme
     
     // Funções de mapeamento de planos
     getPlanDisplayName(planType) {
@@ -1193,13 +1166,7 @@ export default {
       unreadCount: this.unreadCount
     })
     
-    // Carregar tema do localStorage
-    const savedTheme = localStorage.getItem('app_theme')
-    console.log('🎨 [Header] Tema salvo no localStorage:', savedTheme)
-    if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
-      this.currentTheme = savedTheme
-      console.log('🎨 [Header] Tema aplicado:', this.currentTheme)
-    }
+    // Tema agora é gerenciado pelo composable useTheme
     
     // Carregar planos do banco de dados
     this.loadPlans()
@@ -1687,10 +1654,29 @@ export default {
 .vip-info-section {
   margin-bottom: 16px;
   padding: 12px;
-  background: var(--bg-gradient-yellow-button);
+  background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid var(--warning);
+  border: 1px solid var(--border-primary);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.vip-info-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--accent-primary));
+  background-size: 200% 100%;
+  animation: vipGradient 3s ease-in-out infinite;
+}
+
+@keyframes vipGradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 .vip-info-header {
@@ -1703,33 +1689,34 @@ export default {
   gap: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--text-button-yellow);
-  background: var(--bg-gradient-yellow-button);
+  color: var(--text-primary);
+  background: var(--bg-primary);
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid var(--warning);
+  border: 1px solid var(--accent-primary);
   transition: all 0.3s ease;
-  animation: vipGlow 2s ease-in-out infinite alternate;
+  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
 
   &:hover {
-    background: var(--warning);
-    border-color: var(--warning-strong);
+    background: var(--accent-light);
+    border-color: var(--accent-primary);
+    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    transform: translateY(-1px);
   }
 
   .vip-icon {
     font-size: 16px;
-    color: var(--text-button-yellow);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.5));
+    color: var(--accent-primary);
+    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
   }
 
   .vip-text {
-    color: var(--text-button-yellow);
+    color: var(--text-primary);
   }
 
   .vip-days {
     font-weight: 700;
-    color: var(--text-button-yellow);
+    color: var(--accent-primary);
   }
 }
 
@@ -1740,11 +1727,11 @@ export default {
 .expiration-text {
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-button-yellow);
+  color: var(--text-secondary);
   transition: color 0.3s ease;
   
   &.active {
-    color: var(--text-button-yellow);
+    color: var(--text-secondary);
   }
   
   &.warning {
@@ -1771,14 +1758,14 @@ export default {
 }
 
 .progress-label {
-  color: var(--text-button-yellow);
+  color: var(--text-secondary);
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .progress-percentage,
 .progress-days {
-  color: var(--text-button-yellow);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: 12px;
   transition: color 0.3s ease;

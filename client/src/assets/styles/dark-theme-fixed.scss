@@ -1,0 +1,497 @@
+/* ========================================
+   TEMA ESCURO - VARIÁVEIS DE CORES
+   ======================================== */
+
+/* Backgrounds */
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --bg-secondary-rgb: 42, 42, 42; /* Para usar em rgba() */
+  --bg-tertiary: #2d2d2d;
+  --bg-overlay: #404040;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-quaternary: #4a4a4a;
+  --bg-quinary: #5a5a5a;
+  --bg-card: #2a2a2a;
+  --bg-modal: rgba(26, 26, 26, 0.95);
+  --bg-gradient-primary: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+  --bg-gradient-secondary: linear-gradient(135deg, #2a2a2a, #3a3a3a);
+  --bg-gradient-accent: linear-gradient(135deg, #00ff88, #00cc6a);
+  --bg-gradient-success: linear-gradient(135deg, #00ff88, #00cc6a);
+  --bg-gradient-error: linear-gradient(135deg, #ff4444, #cc3333);
+  --bg-gradient-warning: linear-gradient(135deg, #ffaa00, #cc8800);
+  --bg-gradient-info: linear-gradient(135deg, #0066ff, #0044cc);
+  --bg-gradient-purple: linear-gradient(135deg, #6f42c1, #5a32a3);
+  --bg-gradient-yellow: linear-gradient(135deg, #ffc107, #e0a800);
+  --bg-gradient-button-primary: linear-gradient(135deg, #00ff88, #00cc6a);
+  --bg-gradient-button-secondary: linear-gradient(135deg, #404040, #505050);
+  --bg-gradient-button-success: linear-gradient(135deg, #00ff88, #00cc6a);
+  --bg-gradient-button-error: linear-gradient(135deg, #ff4444, #cc3333);
+  --bg-gradient-button-warning: linear-gradient(135deg, #ffaa00, #cc8800);
+  --bg-gradient-button-info: linear-gradient(135deg, #0066ff, #0044cc);
+  --bg-gradient-button-purple: linear-gradient(135deg, #6f42c1, #5a32a3);
+  --bg-gradient-button-yellow: linear-gradient(135deg, #ffc107, #e0a800);
+  --bg-button-primary: #00ff88;
+  --bg-button-secondary: #404040;
+  --bg-button-success: #00ff88;
+  --bg-button-error: #ff4444;
+  --bg-button-warning: #ffaa00;
+  --bg-button-info: #0066ff;
+  --bg-button-purple: #6f42c1;
+  --bg-button-yellow: #ffc107;
+  --bg-button-primary-hover: rgba(0, 255, 136, 0.1);
+  --bg-button-secondary-hover: rgba(64, 64, 64, 0.1);
+  --bg-button-success-hover: rgba(0, 255, 136, 0.1);
+  --bg-button-error-hover: rgba(255, 68, 68, 0.1);
+  --bg-button-warning-hover: rgba(255, 170, 0, 0.1);
+  --bg-button-info-hover: rgba(0, 102, 255, 0.1);
+  --bg-button-purple-hover: rgba(111, 66, 193, 0.1);
+  --bg-button-yellow-hover: rgba(255, 193, 7, 0.1);
+  --bg-gradient-info-button: linear-gradient(135deg, #007bff, #0056b3);
+  --bg-gradient-purple-button: linear-gradient(135deg, #6f42c1, #5a32a3);
+  --bg-gradient-yellow-button: linear-gradient(135deg, #ffc107, #e0a800);
+}
+
+/* Textos */
+:root {
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --text-muted: #cccccc;
+  --text-accent: #00ff88;
+  --text-success: #00ff88;
+  --text-error: #ff4444;
+  --text-warning: #ffaa00;
+  --text-info: #0066ff;
+  --text-button-primary: #1a1a1a;
+  --text-button-secondary: #ffffff;
+  --text-button-success: #1a1a1a;
+  --text-button-error: #ffffff;
+  --text-button-warning: #1a1a1a;
+  --text-button-info: #ffffff;
+  --text-button-purple: #ffffff;
+  --text-button-yellow: #1a1a1a;
+}
+
+/* Bordas */
+:root {
+  --border-primary: #404040;
+  --border-secondary: #505050;
+  --border-accent: #00ff88;
+  --border-accent-hover: rgba(0, 255, 136, 0.6);
+  --border-success: #00ff88;
+  --border-error: #ff4444;
+  --border-warning: #ffaa00;
+  --border-info: #0066ff;
+  --border-button: transparent;
+  --border-button-hover: rgba(0, 255, 136, 0.3);
+  --border-button-active: rgba(0, 255, 136, 0.5);
+}
+
+/* Cores de destaque (Accent) */
+:root {
+  --accent-primary: #00ff88;
+  --accent-secondary: #00cc6a;
+  --accent-hover: rgba(0, 255, 136, 0.1);
+  --accent-active: rgba(0, 255, 136, 0.2);
+  --accent-shadow: rgba(0, 255, 136, 0.3);
+  --accent-light: rgba(0, 255, 136, 0.1);
+  --accent-medium: rgba(0, 255, 136, 0.2);
+  --accent-strong: rgba(0, 255, 136, 0.3);
+  --accent-rgb: 0, 255, 136;
+}
+
+/* Cores de status */
+:root {
+  --success: #00ff88;
+  --success-light: rgba(0, 255, 136, 0.1);
+  --success-medium: rgba(0, 255, 136, 0.2);
+  --success-strong: rgba(0, 255, 136, 0.3);
+  --success-rgb: 0, 255, 136;
+  
+  --error: #ff4444;
+  --error-color: #ff4444; /* Alias para compatibilidade */
+  --error-light: rgba(255, 68, 68, 0.1);
+  --error-medium: rgba(255, 68, 68, 0.2);
+  --error-strong: rgba(255, 68, 68, 0.3);
+  --error-rgb: 255, 68, 68;
+  --error-color-rgb: 255, 68, 68; /* Alias para compatibilidade */
+  --error-hover: #ff6666;
+  
+  --warning: #ffaa00;
+  --warning-color: #ffaa00; /* Alias para compatibilidade */
+  --warning-light: rgba(255, 170, 0, 0.1);
+  --warning-medium: rgba(255, 170, 0, 0.2);
+  --warning-strong: rgba(255, 170, 0, 0.3);
+  --warning-rgb: 255, 170, 0;
+  --warning-color-rgb: 255, 170, 0; /* Alias para compatibilidade */
+  
+  --info: #0066ff;
+  --info-light: rgba(0, 102, 255, 0.1);
+  --info-medium: rgba(0, 102, 255, 0.2);
+  --info-strong: rgba(0, 102, 255, 0.3);
+  --info-rgb: 0, 102, 255;
+}
+
+/* Cores de botões */
+:root {
+  --button-primary-bg: linear-gradient(135deg, #00ff88, #00cc6a);
+  --button-secondary-bg: linear-gradient(135deg, #404040, #505050);
+  --button-success-bg: linear-gradient(135deg, #00ff88, #00cc6a);
+  --button-error-bg: linear-gradient(135deg, #ff4444, #cc3333);
+  --button-warning-bg: linear-gradient(135deg, #ffaa00, #cc8800);
+  --button-info-bg: linear-gradient(135deg, #0066ff, #0044cc);
+  --button-purple-bg: linear-gradient(135deg, #6f42c1, #5a32a3);
+  --button-yellow-bg: linear-gradient(135deg, #ffc107, #e0a800);
+  --button-primary-hover: rgba(0, 255, 136, 0.1);
+  --button-secondary-hover: rgba(64, 64, 64, 0.1);
+  --button-success-hover: rgba(0, 255, 136, 0.1);
+  --button-error-hover: rgba(255, 68, 68, 0.1);
+  --button-warning-hover: rgba(255, 170, 0, 0.1);
+  --button-info-hover: rgba(0, 102, 255, 0.1);
+  --button-purple-hover: rgba(111, 66, 193, 0.1);
+  --button-yellow-hover: rgba(255, 193, 7, 0.1);
+  --button-primary-active: rgba(0, 255, 136, 0.2);
+  --button-secondary-active: rgba(64, 64, 64, 0.2);
+  --button-success-active: rgba(0, 255, 136, 0.2);
+  --button-error-active: rgba(255, 68, 68, 0.2);
+  --button-warning-active: rgba(255, 170, 0, 0.2);
+  --button-info-active: rgba(0, 102, 255, 0.2);
+  --button-purple-active: rgba(111, 66, 193, 0.2);
+  --button-yellow-active: rgba(255, 193, 7, 0.2);
+}
+
+/* Sombras */
+:root {
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 8px 15px rgba(0, 0, 0, 0.4);
+  --shadow-active: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-modal: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-tooltip: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --shadow-notification: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-accent: 0 4px 12px rgba(0, 255, 136, 0.3);
+  --shadow-success: 0 4px 12px rgba(0, 255, 136, 0.3);
+  --shadow-error: 0 4px 12px rgba(255, 68, 68, 0.3);
+  --shadow-warning: 0 4px 12px rgba(255, 170, 0, 0.3);
+  --shadow-info: 0 4px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* Cores de gráficos */
+:root {
+  --chart-bg: rgba(0, 0, 0, 0.95);
+  --chart-grid: rgba(255, 255, 255, 0.1);
+  --chart-axis: rgba(255, 255, 255, 0.3);
+  --chart-text: #ffffff;
+  --chart-accent: #00ff88;
+  --chart-success: #00ff88;
+  --chart-error: #ff4444;
+  --chart-warning: #ffaa00;
+  --chart-info: #0066ff;
+  --chart-primary: #00ff88;
+  --chart-secondary: #0066ff;
+  --chart-tertiary: #ffaa00;
+  --chart-quaternary: #6f42c1;
+  --chart-quinary: #ffc107;
+}
+
+/* Cores de scrollbar */
+:root {
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+  --scrollbar-thumb-active: rgba(255, 255, 255, 0.4);
+}
+
+/* Cores de overlay e backdrop */
+:root {
+  --backdrop: rgba(0, 0, 0, 0.8);
+  --overlay: rgba(0, 0, 0, 0.5);
+  --overlay-light: rgba(0, 0, 0, 0.3);
+  --overlay-medium: rgba(0, 0, 0, 0.5);
+  --overlay-strong: rgba(0, 0, 0, 0.7);
+  --backdrop-blur: blur(8px);
+}
+
+/* Cores de input e form */
+:root {
+  --input-bg: rgba(26, 26, 26, 0.8);
+  --input-border: #404040;
+  --input-border-focus: #00ff88;
+  --input-text: #ffffff;
+  --input-placeholder: #808080;
+  --input-disabled: rgba(255, 255, 255, 0.1);
+  --input-error: #ff4444;
+  --input-success: #00ff88;
+  --input-warning: #ffaa00;
+  --input-info: #0066ff;
+  --form-bg: rgba(26, 26, 26, 0.9);
+  --form-border: #404040;
+  --form-text: #ffffff;
+  --form-label: #b0b0b0;
+  --form-help: #808080;
+}
+
+/* Cores de tabela */
+:root {
+  --table-bg: #1a1a1a;
+  --table-header-bg: #2a2a2a;
+  --table-row-bg: #1a1a1a;
+  --table-row-hover: rgba(255, 255, 255, 0.05);
+  --table-row-selected: rgba(0, 255, 136, 0.1);
+  --table-border: #404040;
+  --table-text: #ffffff;
+  --table-text-secondary: #b0b0b0;
+  --table-text-muted: #808080;
+  --table-accent: #00ff88;
+  --table-success: #00ff88;
+  --table-error: #ff4444;
+  --table-warning: #ffaa00;
+  --table-info: #0066ff;
+}
+
+/* Cores de badge e tag */
+:root {
+  --badge-success-bg: rgba(0, 255, 136, 0.2);
+  --badge-success-text: #00ff88;
+  --badge-error-bg: rgba(255, 68, 68, 0.2);
+  --badge-error-text: #ff4444;
+  --badge-warning-bg: rgba(255, 170, 0, 0.2);
+  --badge-warning-text: #ffaa00;
+  --badge-info-bg: rgba(0, 102, 255, 0.2);
+  --badge-info-text: #0066ff;
+  --badge-primary-bg: rgba(0, 255, 136, 0.2);
+  --badge-primary-text: #00ff88;
+  --badge-secondary-bg: rgba(255, 255, 255, 0.1);
+  --badge-secondary-text: #ffffff;
+  --tag-bg: rgba(0, 255, 136, 0.1);
+  --tag-text: #00ff88;
+  --tag-border: rgba(0, 255, 136, 0.3);
+}
+
+/* Cores de loading e skeleton */
+:root {
+  --skeleton-bg: rgba(255, 255, 255, 0.1);
+  --skeleton-shimmer: rgba(255, 255, 255, 0.2);
+  --loading-bg: rgba(0, 0, 0, 0.8);
+  --loading-text: #ffffff;
+  --loading-spinner: #00ff88;
+  --loading-progress: #00ff88;
+}
+
+/* Cores de tooltip */
+:root {
+  --tooltip-bg: rgba(0, 0, 0, 0.9);
+  --tooltip-text: #ffffff;
+  --tooltip-border: #404040;
+  --tooltip-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --tooltip-arrow: rgba(0, 0, 0, 0.9);
+}
+
+/* Cores de notificação */
+:root {
+  --notification-success-bg: rgba(0, 255, 136, 0.1);
+  --notification-success-text: #00ff88;
+  --notification-success-border: rgba(0, 255, 136, 0.3);
+  --notification-error-bg: rgba(255, 68, 68, 0.1);
+  --notification-error-text: #ff4444;
+  --notification-error-border: rgba(255, 68, 68, 0.3);
+  --notification-warning-bg: rgba(255, 170, 0, 0.1);
+  --notification-warning-text: #ffaa00;
+  --notification-warning-border: rgba(255, 170, 0, 0.3);
+  --notification-info-bg: rgba(0, 102, 255, 0.1);
+  --notification-info-text: #0066ff;
+  --notification-info-border: rgba(0, 102, 255, 0.3);
+  --notification-bg: rgba(26, 26, 26, 0.95);
+  --notification-text: #ffffff;
+  --notification-border: #404040;
+  --notification-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Cores de modal e popup */
+:root {
+  --modal-bg: rgba(26, 26, 26, 0.95);
+  --modal-text: #ffffff;
+  --modal-border: #404040;
+  --modal-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  --modal-header-bg: #2a2a2a;
+  --modal-header-text: #ffffff;
+  --modal-body-bg: #1a1a1a;
+  --modal-body-text: #ffffff;
+  --modal-footer-bg: #2a2a2a;
+  --modal-footer-text: #ffffff;
+  --popup-bg: rgba(26, 26, 26, 0.95);
+  --popup-text: #ffffff;
+  --popup-border: #404040;
+  --popup-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Cores de dropdown e menu */
+:root {
+  --dropdown-bg: rgba(42, 42, 42, 0.98);
+  --dropdown-text: #ffffff;
+  --dropdown-border: #404040;
+  --dropdown-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --dropdown-item-bg: transparent;
+  --dropdown-item-text: #ffffff;
+  --dropdown-item-hover: rgba(255, 255, 255, 0.1);
+  --dropdown-item-active: rgba(0, 255, 136, 0.1);
+  --dropdown-item-selected: rgba(0, 255, 136, 0.2);
+  --menu-bg: rgba(42, 42, 42, 0.98);
+  --menu-text: #ffffff;
+  --menu-border: #404040;
+  --menu-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --menu-item-bg: transparent;
+  --menu-item-text: #ffffff;
+  --menu-item-hover: rgba(255, 255, 255, 0.1);
+  --menu-item-active: rgba(0, 255, 136, 0.1);
+  --menu-item-selected: rgba(0, 255, 136, 0.2);
+}
+
+/* Cores de paginação */
+:root {
+  --pagination-bg: #1a1a1a;
+  --pagination-text: #ffffff;
+  --pagination-border: #404040;
+  --pagination-item-bg: transparent;
+  --pagination-item-text: #ffffff;
+  --pagination-item-hover: rgba(255, 255, 255, 0.1);
+  --pagination-item-active: rgba(0, 255, 136, 0.1);
+  --pagination-item-selected: rgba(0, 255, 136, 0.2);
+  --pagination-item-disabled: rgba(255, 255, 255, 0.1);
+  --pagination-item-disabled-text: #808080;
+}
+
+/* Cores de progress bar */
+:root {
+  --progress-bg: rgba(255, 255, 255, 0.1);
+  --progress-fill: #00ff88;
+  --progress-text: #ffffff;
+  --progress-border: #404040;
+  --progress-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --progress-success: #00ff88;
+  --progress-error: #ff4444;
+  --progress-warning: #ffaa00;
+  --progress-info: #0066ff;
+}
+
+/* Cores de toggle e switch */
+:root {
+  --toggle-bg: rgba(255, 255, 255, 0.1);
+  --toggle-fill: #00ff88;
+  --toggle-text: #ffffff;
+  --toggle-border: #404040;
+  --toggle-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --toggle-hover: rgba(255, 255, 255, 0.2);
+  --toggle-active: rgba(0, 255, 136, 0.2);
+  --switch-bg: rgba(255, 255, 255, 0.1);
+  --switch-fill: #00ff88;
+  --switch-text: #ffffff;
+  --switch-border: #404040;
+  --switch-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --switch-hover: rgba(255, 255, 255, 0.2);
+  --switch-active: rgba(0, 255, 136, 0.2);
+}
+
+/* Cores de checkbox e radio */
+:root {
+  --checkbox-bg: rgba(255, 255, 255, 0.1);
+  --checkbox-fill: #00ff88;
+  --checkbox-text: #ffffff;
+  --checkbox-border: #404040;
+  --checkbox-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --checkbox-hover: rgba(255, 255, 255, 0.2);
+  --checkbox-active: rgba(0, 255, 136, 0.2);
+  --checkbox-checked: #00ff88;
+  --radio-bg: rgba(255, 255, 255, 0.1);
+  --radio-fill: #00ff88;
+  --radio-text: #ffffff;
+  --radio-border: #404040;
+  --radio-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --radio-hover: rgba(255, 255, 255, 0.2);
+  --radio-active: rgba(0, 255, 136, 0.2);
+  --radio-checked: #00ff88;
+}
+
+/* Cores de slider */
+:root {
+  --slider-track: rgba(255, 255, 255, 0.1);
+  --slider-fill: #00ff88;
+  --slider-thumb: #00ff88;
+  --slider-text: #ffffff;
+  --slider-border: #404040;
+  --slider-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --slider-hover: rgba(255, 255, 255, 0.2);
+  --slider-active: rgba(0, 255, 136, 0.2);
+  --slider-disabled: rgba(255, 255, 255, 0.05);
+  --slider-disabled-text: #808080;
+}
+
+/* Cores de código e pre */
+:root {
+  --code-bg: rgba(0, 0, 0, 0.3);
+  --code-text: #ffffff;
+  --code-border: #404040;
+  --code-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --code-comment: #808080;
+  --code-keyword: #00ff88;
+  --code-string: #ffaa00;
+  --code-number: #0066ff;
+  --code-function: #6f42c1;
+  --code-variable: #ff4444;
+  --code-operator: #ffffff;
+  --code-punctuation: #b0b0b0;
+  --code-tag: #00ff88;
+  --code-attribute: #ffaa00;
+  --code-value: #0066ff;
+  --code-entity: #6f42c1;
+  --code-meta: #808080;
+  --code-builtin: #ff4444;
+  --code-class: #00ff88;
+  --code-constant: #0066ff;
+  --code-decorator: #6f42c1;
+  --code-important: #ff4444;
+  --code-regex: #ffaa00;
+  --code-symbol: #6f42c1;
+  --code-type: #00ff88;
+  --code-unit: #0066ff;
+  --code-value: #ffaa00;
+  --pre-bg: rgba(0, 0, 0, 0.3);
+  --pre-text: #ffffff;
+  --pre-border: #404040;
+  --pre-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Cores de link */
+:root {
+  --link-text: #00ff88;
+  --link-hover: #00cc6a;
+  --link-active: #00aa55;
+  --link-visited: #6f42c1;
+  --link-focus: rgba(0, 255, 136, 0.3);
+  --link-disabled: #808080;
+  --link-external: #0066ff;
+  --link-internal: #00ff88;
+  --link-button: #00ff88;
+  --link-button-hover: #00cc6a;
+  --link-button-active: #00aa55;
+}
+
+/* Cores de seleção */
+:root {
+  --selection-bg: rgba(0, 255, 136, 0.3);
+  --selection-text: #ffffff;
+}
+
+/* Cores de foco */
+:root {
+  --focus-ring: rgba(0, 255, 136, 0.5);
+  --focus-ring-inner: rgba(0, 255, 136, 0.3);
+}
+
+/* Cores de transparência */
+:root {
+  --transparent: transparent;
+}

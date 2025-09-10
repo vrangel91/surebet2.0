@@ -9,8 +9,8 @@ async function createAdminUser() {
     // Configuração da conexão com o banco SURESTAKE
     const sequelize = new Sequelize(
       process.env.DB_NAME || 'surestake',
-      process.env.DB_USER || 'postgres',
-      process.env.DB_PASSWORD || 'postgres',
+      process.env.DB_USER || 'admin',
+      process.env.DB_PASSWORD || '7nYi>q10v_:>8pz)^0dC',
       {
         host: process.env.DB_HOST || 'localhost',
         port: process.env.DB_PORT || 5432,
@@ -28,7 +28,7 @@ async function createAdminUser() {
       username: 'admin',
       email: 'admin@surestake.com',
       password: 'admin123',
-      first_name: 'Administrador',
+      first_name: 'Vinicius Rangel',
       last_name: 'Sistema',
       is_admin: true,
       is_vip: true

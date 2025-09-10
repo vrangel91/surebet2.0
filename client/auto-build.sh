@@ -26,7 +26,7 @@ echo "👀 Monitorando mudanças nos arquivos..."
 echo "Pressione Ctrl+C para parar"
 
 # Usar inotifywait para monitorar mudanças
-while inotifywait -r -e modify,create,delete /var/lib/postgresql/surebet/surebet/client/src/; do
+while inotifywait -r -e modify,create,delete /var/www/surebet/client/src/; do
     echo "🔄 Mudança detectada, fazendo rebuild..."
     build_frontend
 done
