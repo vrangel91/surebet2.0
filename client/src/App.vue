@@ -2,26 +2,21 @@
   <div id="app">
     <!-- Loading após login -->
     <LoginLoading :isVisible="showLoginLoading" />
-    
     <!-- 🔄 Loader global - apenas para área de conteúdo -->
     <LoaderOverlay :content-only="true" />
-    
     <router-view />
     <!-- Botão flutuante do guia interativo - aparece em todas as páginas -->
     <FloatingGuideButton />
-    
     <!-- Componentes PWA -->
     <PWAUpdateNotification />
   </div>
 </template>
-
 <script>
 import { useTheme } from './composables/useTheme'
 import LoginLoading from './components/LoginLoading.vue'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
 import LoaderOverlay from './components/LoaderOverlay.vue'
 import PWAUpdateNotification from './components/PWAUpdateNotification.vue'
-
 export default {
   name: 'App',
   components: {
@@ -49,17 +44,14 @@ export default {
   },
   setup() {
     const { loadTheme, applyTheme, currentTheme } = useTheme()
-    
     // Inicializar tema
     loadTheme()
     // Aplicar tema carregado (não forçar dark)
     applyTheme(currentTheme.value)
-    
     return {}
   }
 }
 </script>
-
 <style>
 #app {
   font-family: 'Inter', sans-serif;
@@ -71,19 +63,16 @@ export default {
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow: hidden; /* Remove scroll do app para evitar duplicação */
 }
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 html, body {
   height: 100%;
   overflow: hidden; /* Remove scroll do html/body para evitar duplicação */
   min-height: 100vh; /* Garantir altura mínima */
 }
-
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
@@ -91,7 +80,6 @@ body {
   min-height: 100vh; /* Garantir altura mínima */
   overflow: hidden; /* Remove scroll do body para evitar duplicação */
 }
-
 html {
   transition: background-color 0.3s ease;
   min-height: 100vh; /* Garantir altura mínima */

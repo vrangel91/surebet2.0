@@ -18,7 +18,7 @@ import ProfileView from '../views/ProfileView.vue'
 import VIPAdminView from '../views/VIPAdminView.vue'
 import MonitoringView from '../views/MonitoringView.vue'
 import PaymentConfirmation from '../views/PaymentConfirmation.vue'
-import { requireAuth, requireGuest, requireAdmin, requireVIP, requirePlanType, requireSurebetAccess, requireValuebetAccess, requireReportsAccess, requireCompoundInterestAccess, requireBookmakerAccountsAccess, requirePremiumAccess, checkAuthStatus } from './guards'
+import { requireAuth, requireGuest, requireAdmin, checkAuthStatus } from './guards'
 
 const routes = [
   {
@@ -31,19 +31,19 @@ const routes = [
     path: '/',
     name: 'surebets',
     component: SurebetsView,
-    beforeEnter: requireSurebetAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/reports',
     name: 'reports',
     component: ReportsView,
-    beforeEnter: requireReportsAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/settings',
     name: 'settings',
     component: SettingsView,
-    meta: { requiresAdmin: true }
+    meta: { requiresAuth: true }
   },
   {
     path: '/admin',
@@ -78,7 +78,7 @@ const routes = [
     path: '/compound-interest',
     name: 'compound-interest',
     component: CompoundInterestView,
-    beforeEnter: requireCompoundInterestAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/ranking',
@@ -90,25 +90,25 @@ const routes = [
     path: '/bookmaker-accounts',
     name: 'bookmaker-accounts',
     component: BookmakerAccountsView,
-    beforeEnter: requireBookmakerAccountsAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/guide',
     name: 'guide',
     component: SurebetsGuideView,
-    beforeEnter: requirePremiumAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/guia-apostas',
     name: 'guia-apostas',
     component: GuiaApostasView,
-    beforeEnter: requirePremiumAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/glossary',
     name: 'glossary',
     component: GlossaryView,
-    beforeEnter: requirePremiumAccess
+    meta: { requiresAuth: true }
   },
   {
     path: '/profile',
@@ -153,15 +153,11 @@ router.beforeEach((to, from, next) => {
   // Verifica se a rota requer guest (não autenticado)
   if (to.meta.requiresGuest && store.getters.isAuthenticated) {
     console.log('🔄 Usuário já autenticado, redirecionando...')
-    console.log('🔄 Usuário VIP?', store.getters.isVIP)
     console.log('🔄 Usuário admin?', store.getters.isAdmin)
     console.log('🔄 Usuário atual:', store.getters.currentUser)
     
-    if (store.getters.isVIP || store.getters.isAdmin) {
-      next('/')
-    } else {
-      next('/plans')
-    }
+    // Redirecionar para página inicial se já estiver logado
+    next('/')
     return
   }
   
@@ -173,20 +169,7 @@ router.beforeEach((to, from, next) => {
     return
   }
   
-  // Verifica se a rota requer VIP (mantido para compatibilidade)
-  if (to.meta.requiresVIP && (!store.getters.isAuthenticated || !store.getters.isVIP)) {
-    console.log('🚫 Rota VIP acessada sem permissão:', to.path)
-    localStorage.setItem('redirectAfterUpgrade', to.fullPath)
-    
-    // Se não está autenticado, redireciona para login
-    if (!store.getters.isAuthenticated) {
-      next('/login')
-    } else {
-      // Se está autenticado mas não é VIP, redireciona para plans
-      next('/plans')
-    }
-    return
-  }
+  // Verificação de VIP removida - agora apenas autenticação
   
   // Verifica se a rota requer admin
   if (to.meta.requiresAdmin && (!store.getters.isAuthenticated || !store.getters.isAdmin)) {

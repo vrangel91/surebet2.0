@@ -1,6 +1,6 @@
 <template>
   <RouteGuard :requiresVIP="true">
-    <div class="reports-container flex-container">
+    <div class="reports-container flex-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -645,7 +645,18 @@ export default {
     // Busca surebets da API
     async fetchSurebets() {
       try {
-        const response = await fetch('/api/surebets')
+        // Obter token de autenticação
+        const authToken = this.$store.getters.authToken
+        if (!authToken) {
+          throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+        }
+        
+        const response = await fetch('/api/surebets', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
         const data = await response.json()
         this.surebets = data
       } catch (error) {
@@ -940,8 +951,18 @@ color: var(--text-primary);
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
   min-height: 100vh; /* Garante altura mínima */
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .sidebar {
@@ -1857,6 +1878,12 @@ color: var(--text-primary);
 }
 
 /* Responsividade melhorada */
+@media (max-width: 1023px) {
+  .reports-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+  }
+}
+
 @media (max-width: 1200px) {
   .performance-cards {
     grid-template-columns: 1fr;

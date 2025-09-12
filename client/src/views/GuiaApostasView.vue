@@ -1,6 +1,6 @@
 <template>
   <RouteGuard>
-    <div class="guia-apostas-container">
+    <div class="guia-apostas-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <!-- Sidebar -->
       <Sidebar />
       
@@ -493,8 +493,17 @@ export default {
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  width: 100%;
-  max-width: 100%;
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .main-content {
@@ -896,6 +905,12 @@ export default {
 }
 
 // Responsividade
+@media (max-width: 1023px) {
+  .guia-apostas-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+  }
+}
+
 @media (max-width: 1200px) {
   .hero-section {
     flex-direction: column;

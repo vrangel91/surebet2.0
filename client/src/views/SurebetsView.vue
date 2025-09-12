@@ -1,6 +1,6 @@
 <template>
-    <RouteGuard :requiresVIP="true">
-      <div class="surebets-container">
+    <RouteGuard>
+      <div class="surebets-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
         <!-- Sidebar Reutilizável -->
         <Sidebar 
           :sidebarCollapsed="sidebarCollapsed"
@@ -55,14 +55,6 @@
                 </span>
               </button>
               
-              <button 
-                v-if="isDevelopment"
-                class="control-btn debug-btn" 
-                @click="debugData"
-                title="Debug dos dados"
-              >
-                <span class="control-text">🔍 Debug</span>
-              </button>
               
               <button 
                 class="control-btn filter-toggle-btn"
@@ -569,6 +561,9 @@
   import { useSmartCache } from '../utils/smartCache.js'
   import { useRateLimiter } from '../utils/rateLimiter.js'
   
+  // Desativar console.logs de forma silenciosa
+  const silentLog = () => {}
+  console.log = silentLog
   
   export default {
     name: 'SurebetsView',
@@ -664,11 +659,6 @@
       }
     },
     computed: {
-      // Verificar se está em ambiente de desenvolvimento
-      isDevelopment() {
-        return process.env.NODE_ENV === 'development' || process.env.VUE_APP_DEBUG_MODE === 'true'
-      },
-      
       currentUser() {
         return this.$store.getters.currentUser
       },
@@ -1092,6 +1082,33 @@
           // Atualizar variáveis CSS do grid
           this.updateGridCSSVariables()
           
+          // Inicializar adaptivePolling se não existir
+          if (!this.adaptivePolling) {
+            this.adaptivePolling = {
+              retryCount: 0,
+              maxRetries: 5,
+              baseInterval: 30000,
+              incrementRetryCount: function() {
+                this.retryCount++
+              },
+              resetRetryCount: function() {
+                this.retryCount = 0
+              },
+              getCurrentInterval: function() {
+                return this.baseInterval + (this.retryCount * 10000)
+              },
+              updateConnectionQuality: function(latency) {
+                // Implementação básica
+              },
+              getStats: function() {
+                return {
+                  retryCount: this.retryCount,
+                  currentInterval: this.getCurrentInterval()
+                }
+              }
+            }
+          }
+          
           // Carregar filtros salvos das configurações (inicializa com todas as opções marcadas por padrão)
           this.loadFiltersFromSettings()
           
@@ -1140,8 +1157,8 @@
             this.showSaveFilterModal = false
           }
           
-          // TESTE: Adicionar dados de teste para debug
-          this.addTestData()
+          // TESTE: Adicionar dados de teste para debug (DESABILITADO)
+          // this.addTestData() // Comentado para evitar sobrescrever dados reais
           
           // Verificar se o servidor está disponível antes de tentar WebSocket
           this.checkServerAvailability()
@@ -1234,59 +1251,6 @@
         }, 1000) // 1 segundo de debounce
       },
       
-      // Método de debug para diagnosticar problemas
-      async debugData() {
-        console.log('🔍 === DEBUG DOS DADOS ===')
-        
-        // 1. Verificar estado atual
-        console.log('📊 Estado atual:', {
-          surebets: this.surebets ? Object.keys(this.surebets).length : 'N/A',
-          loading: this.loading,
-          isSearching: this.isSearching,
-          filteredSurebets: this.filteredSurebets.length,
-          paginatedSurebets: this.paginatedSurebets.length,
-          currentPage: this.currentPage,
-          itemsPerPage: this.itemsPerPage
-        })
-        
-        // 2. Testar API diretamente
-        console.log('🌐 Testando API diretamente...')
-        try {
-          const response = await fetch('http://localhost:3001/api/surebets')
-          const data = await response.json()
-          console.log('📡 Resposta da API:', {
-            success: data.success,
-            dataType: typeof data.data,
-            dataKeys: data.data ? Object.keys(data.data) : 'N/A',
-            dataLength: data.data ? Object.keys(data.data).length : 'N/A',
-            source: data.source,
-            timestamp: data.timestamp
-          })
-        } catch (error) {
-          console.error('❌ Erro na API:', error)
-        }
-        
-        // 3. Verificar filtros
-        console.log('🔍 Filtros ativos:', {
-          selectedHouses: this.selectedHouses,
-          selectedSports: this.selectedSports,
-          selectedCurrencies: this.selectedCurrencies,
-          activeFilter: this.activeFilter,
-          minProfit: this.minProfit,
-          maxProfit: this.maxProfit,
-          marketSearchTerm: this.marketSearchTerm
-        })
-        
-        // 4. Verificar elementos DOM
-        const cards = document.querySelectorAll('.surebet-card')
-        console.log('📊 Cards no DOM:', cards.length)
-        
-        // 5. Forçar atualização
-        console.log('🔄 Forçando atualização...')
-        await this.fetchSurebets()
-        
-        console.log('✅ Debug concluído')
-      },
   
       // Carrega mais cards para paginação
       async loadMoreCards() {
@@ -1850,7 +1814,7 @@
             }
           }, 3000) // 3 segundos de timeout
   
-          this.ws = new WebSocket('ws://localhost:3002')
+          this.ws = new WebSocket('wss://surestake.com.br:3002')
           
           this.ws.onopen = () => {
             clearTimeout(wsTimeout)
@@ -2127,7 +2091,7 @@
       async checkServerAvailability() {
         try {
           // Tentar conectar ao WebSocket com timeout
-          const wsTest = new WebSocket('ws://localhost:3002')
+          const wsTest = new WebSocket('wss://surestake.com.br:3002')
           
           const wsPromise = new Promise((resolve, reject) => {
             const timeout = setTimeout(() => {
@@ -2190,7 +2154,19 @@
           const startTime = Date.now()
           // Usar a nova API otimizada que serve dados do cache do servidor
           console.log('🌐 Fazendo requisição para /api/surebets...')
-          const response = await fetch('http://localhost:3001/api/surebets')
+          
+          // Obter token de autenticação
+          const authToken = this.$store.getters.authToken
+          if (!authToken) {
+            throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+          }
+          
+          const response = await fetch('https://surestake.com.br/api/surebets', {
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json'
+            }
+          })
           
           console.log('📡 Resposta recebida:', {
             status: response.status,
@@ -2217,8 +2193,12 @@
           
           // Atualizar sistemas de otimização
           this.rateLimiter.recordRequest('/api/surebets')
-          this.adaptivePolling.updateConnectionQuality(this.requestLatency)
-          this.adaptivePolling.resetRetryCount()
+          if (this.adaptivePolling && typeof this.adaptivePolling.updateConnectionQuality === 'function') {
+            this.adaptivePolling.updateConnectionQuality(this.requestLatency)
+          }
+          if (this.adaptivePolling && typeof this.adaptivePolling.resetRetryCount === 'function') {
+            this.adaptivePolling.resetRetryCount()
+          }
           
           // Usar dados da resposta da API (sistema otimizado)
           if (data.success && data.data) {
@@ -2284,10 +2264,19 @@
           console.error('❌ Mensagem do erro:', error.message)
           console.error('❌ Stack do erro:', error.stack)
           
-          // Garantir que surebets seja um objeto vazio em caso de erro
-          this.surebets = {}
+          // NÃO limpar os dados em caso de erro - manter dados existentes
+          // this.surebets = {} // REMOVIDO - causa "aparecer e sumir"
+          console.log('⚠️ Mantendo dados existentes após erro:', {
+            surebetsCount: this.surebets ? Object.keys(this.surebets).length : 0
+          })
+          
           this.loading = false
           this.updateStats() // Atualiza estatísticas mesmo em caso de erro
+          
+          // Incrementar contador de erros para polling adaptativo
+          if (this.adaptivePolling && typeof this.adaptivePolling.incrementRetryCount === 'function') {
+            this.adaptivePolling.incrementRetryCount()
+          }
           
           // Restaura filtros do cache mesmo em caso de erro
           this.restoreFiltersFromCache()
@@ -2571,16 +2560,20 @@
         this.stopAutoUpdate() // Limpa qualquer intervalo existente
         
         // Usar polling adaptativo
-        const adaptiveInterval = this.adaptivePolling.getCurrentInterval()
+        const adaptiveInterval = this.adaptivePolling && typeof this.adaptivePolling.getCurrentInterval === 'function' 
+          ? this.adaptivePolling.getCurrentInterval() 
+          : 30000 // Fallback para 30 segundos
         this.autoUpdateInterval = adaptiveInterval
         
         this.updateInterval = setInterval(() => {
           if (this.isSearching) {
             // Atualizar intervalo adaptativo antes de cada requisição
-            const newInterval = this.adaptivePolling.getCurrentInterval()
-            if (newInterval !== this.autoUpdateInterval) {
-              this.autoUpdateInterval = newInterval
-              console.log(`🔄 Intervalo adaptativo ajustado para ${this.autoUpdateInterval / 1000}s`)
+            if (this.adaptivePolling && typeof this.adaptivePolling.getCurrentInterval === 'function') {
+              const newInterval = this.adaptivePolling.getCurrentInterval()
+              if (newInterval !== this.autoUpdateInterval) {
+                this.autoUpdateInterval = newInterval
+                console.log(`🔄 Intervalo adaptativo ajustado para ${this.autoUpdateInterval / 1000}s`)
+              }
             }
             
             this.debouncedFetchSurebets()
@@ -2605,7 +2598,9 @@
 
       // Log de estatísticas de performance
       logPerformanceStats() {
-        const pollingStats = this.adaptivePolling.getStats()
+        const pollingStats = this.adaptivePolling && typeof this.adaptivePolling.getStats === 'function' 
+          ? this.adaptivePolling.getStats() 
+          : {}
         const cacheStats = this.smartCache.getStats()
         const rateLimitStats = this.rateLimiter.getStats()
         
@@ -3339,9 +3334,17 @@
     overflow: hidden;
     background: var(--bg-primary);
     color: var(--text-primary);
-    transition: background-color 0.3s ease, color 0.3s ease;
-    width: 100%;
-    max-width: 100%;
+    transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
+    width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+    max-width: calc(100% - 280px);
+    margin-left: 280px; /* Espaço para o sidebar fixo */
+    box-sizing: border-box;
+    
+    &.sidebar-collapsed {
+      margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+      width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+      max-width: calc(100% - 80px);
+    }
   }
 
 
@@ -3938,47 +3941,41 @@
     }
   }
 
-  .refresh-btn {
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    border: 1px solid var(--vorder-primary);
+  .refresh-btn {    
+    color: white;
+    border: none;
     transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .refresh-btn:hover:not(:disabled) {
-    background: var(--accent-secondary);
-    border-color: var(--accent-secondary);
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .refresh-btn:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
   .refresh-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    background: var(--text-tertiary);
-    border-color: var(--text-tertiary);
+    background: linear-gradient(135deg, var(--text-muted), var(--text-muted));
   }
   
-  .debug-btn {
-    background: linear-gradient(135deg, var(--info), var(--info-strong));
-    color: white;
-    border: none;
-  }
   
-  .debug-btn:hover {
-    background: linear-gradient(135deg, var(--info-strong), var(--info));
-    transform: translateY(-1px);
-  }
   
   
   
   .surebets-list {
     flex: 1;
     padding: 24px 32px;
-    overflow: visible; /* Permite que o conteúdo cresça */
-    width: 100%; /* Garante que o container ocupe toda a largura disponível */
-    min-height: 0; /* Permite que o conteúdo cresça além da altura do container */
+    overflow: visible; 
+    width: 100%; 
+    min-height: 0; 
   }
   
   .loading {
@@ -3989,7 +3986,7 @@
     height: 200px;
     color: var(--text-secondary);
   }
-  
+
   .loading-spinner {
     width: 40px;
     height: 40px;
@@ -3999,7 +3996,7 @@
     animation: spin 1s linear infinite;
     margin-bottom: 16px;
   }
-  
+    
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -4239,46 +4236,50 @@
   }
 
   .load-more-btn {
-    background: var(--bg-secondary);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 10px 20px;
-    font-size: 14px;
-    font-weight: 500;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #000000;
+    border: 2px solid #10b981;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: none;
-    min-width: 120px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    min-width: 160px;
+    max-width: 180px;
     position: relative;
     overflow: hidden;
   }
 
   .load-more-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    background: var(--bg-overlay);
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669, #047857);
+    border-color: #059669;
   }
 
   .load-more-btn:active:not(:disabled) {
     transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    background: linear-gradient(135deg, #047857, #065f46);
   }
 
   .load-more-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-    background: var(--bg-tertiary);
-    border-color: var(--border-secondary);
-    color: var(--text-tertiary);
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    border-color: #6b7280;
+    color: #9ca3af;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   }
 
   .load-more-btn.loading {
-    background: var(--bg-tertiary);
-    border-color: var(--border-secondary);
-    color: var(--text-tertiary);
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    border-color: #6b7280;
+    color: #9ca3af;
+    cursor: not-allowed;
   }
 
   .loading-content {
@@ -4437,6 +4438,12 @@
   
   /* Grid responsivo automático - não precisa de media queries específicas */
   
+  @media (max-width: 1023px) {
+    .surebets-container {
+      margin-left: 0; /* Remove margem em mobile/tablet */
+    }
+  }
+  
   @media (max-width: 700px) {
     .sidebar {
       position: fixed;
@@ -4466,9 +4473,10 @@
     }
 
     .load-more-btn {
-      padding: 8px 16px;
-      font-size: 13px;
-      min-width: 100px;
+      padding: 12px 20px;
+      font-size: 14px;
+      min-width: 140px;
+      max-width: 160px;
     }
     .pinned-cards-grid {
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important; /* Grid automático com minmax menor para mobile */

@@ -1,5 +1,0 @@
- id |        email        | account_type | is_admin | is_vip 
-----+---------------------+--------------+----------+--------
-  1 | admin@surestake.com | vip          | t        | t
-(1 row)
-

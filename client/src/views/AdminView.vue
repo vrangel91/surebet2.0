@@ -1,6 +1,6 @@
 <template>
   <RouteGuard :requiresAuth="true" :requiresAdmin="true">
-    <div class="admin-container">
+    <div class="admin-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <!-- Sidebar Reutilizável -->
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
@@ -729,8 +729,9 @@
           
           <div class="modal-body">
             <div class="password-user-info">
-              <p><strong>Usuário:</strong> {{ userToChangePassword?.name }}</p>
-              <p><strong>Email:</strong> {{ userToChangePassword?.email }}</p>
+              <p><strong>Usuário:</strong> {{ userToChangePassword?.name || 'N/A' }}</p>
+              <p><strong>Email:</strong> {{ userToChangePassword?.email || 'N/A' }}</p>
+              <p><strong>ID:</strong> {{ userToChangePassword?.id || 'N/A' }}</p>
             </div>
             
             <form @submit.prevent="updatePassword">
@@ -1503,7 +1504,15 @@ export default {
     
     // Métodos para alteração de senha
     changePassword(user) {
-      this.userToChangePassword = user
+      // Verificar se o usuário é válido
+      if (!user || !user.id) {
+        this.showToastNotification('Erro: Usuário inválido selecionado', 'error')
+        return
+      }
+      
+      console.log('🔐 [ADMIN] Alterando senha para usuário:', user)
+      
+      this.userToChangePassword = { ...user } // Criar uma cópia para evitar referência
       this.newPassword = ''
       this.confirmPassword = ''
       this.resetPasswordValidation()
@@ -1511,11 +1520,13 @@ export default {
     },
     
     closeChangePasswordModal() {
+      console.log('🔐 [ADMIN] Fechando modal de alteração de senha...')
       this.showChangePasswordModal = false
       this.userToChangePassword = null
       this.newPassword = ''
       this.confirmPassword = ''
       this.resetPasswordValidation()
+      this.isUpdatingPassword = false // Garantir que o estado seja limpo
     },
     
     resetPasswordValidation() {
@@ -1574,6 +1585,13 @@ export default {
     
     async updatePassword() {
       try {
+        // Verificar se o usuário está definido
+        if (!this.userToChangePassword || !this.userToChangePassword.id) {
+          this.showToastNotification('Erro: Usuário não selecionado. Feche o modal e tente novamente.', 'error')
+          this.closeChangePasswordModal()
+          return
+        }
+        
         // Validar formulário
         this.validatePassword()
         this.validateConfirmPassword()
@@ -1590,14 +1608,15 @@ export default {
         this.isUpdatingPassword = true
         
         // Chamar API para alterar senha
+        console.log('🔐 [ADMIN] Enviando requisição de alteração de senha...')
         const response = await axios.patch(`/api/users/${this.userToChangePassword.id}/password`, {
           newPassword: this.newPassword
         })
         
+        console.log('🔐 [ADMIN] Resposta da API:', response.data)
+        console.log('🔐 [ADMIN] Status da resposta:', response.status)
+        
         if (response.data.success) {
-          this.closeChangePasswordModal()
-          this.showToastNotification('Senha alterada com sucesso!', 'success')
-          
           // Log da ação para auditoria
           console.log('✅ [ADMIN] Senha alterada:', {
             userId: this.userToChangePassword.id,
@@ -1605,6 +1624,12 @@ export default {
             admin: this.currentUser?.email || 'Unknown',
             timestamp: new Date().toISOString()
           })
+          
+          // Fechar modal primeiro
+          this.closeChangePasswordModal()
+          
+          // Mostrar notificação de sucesso
+          this.showToastNotification('Senha alterada com sucesso!', 'success')
         } else {
           this.showToastNotification('Erro ao alterar senha: ' + (response.data.error || 'Erro desconhecido'), 'error')
         }
@@ -1655,8 +1680,8 @@ export default {
           last_name: this.newUser.name.split(' ').slice(1).join(' ') || '',
           email: this.newUser.email,
           password: this.newUser.password,
-          account_type: this.newUser.plan || 'basic',
-          plan: this.newUser.plan || '', // Adicionar campo plan separadamente
+          account_type: 'user', // Sempre criar como 'user' por padrão
+          plan: this.newUser.plan || '', // Campo separado para plano
           status: 'active'
         }
         
@@ -1801,7 +1826,7 @@ export default {
           status: this.editingUser.status
         }
         
-        console.log('Frontend: Dados sendo enviados:', userData)
+        console.log('Frontend: Dados sendo enviados para atualização:', userData)
         
         // Chamar API para atualizar usuário
         const response = await axios.put(`/api/users/${this.editingUser.id}`, userData)
@@ -2241,7 +2266,17 @@ export default {
   overflow: hidden;
   background: var(--bg-primary, #1a1a1a);
   color: var(--text-primary, #ffffff);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 /* Main Content */
@@ -3757,6 +3792,12 @@ export default {
 }
 
 /* Responsividade */
+@media (max-width: 1023px) {
+  .admin-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+  }
+}
+
 @media (max-width: 768px) {
   .admin-main {
     padding: 24px 16px;

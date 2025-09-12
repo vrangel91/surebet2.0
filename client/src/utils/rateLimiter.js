@@ -215,7 +215,7 @@ export function createRateLimitInterceptor() {
       // Verificar se pode fazer a requisição
       if (!rateLimiter.canMakeRequest(endpoint)) {
         const waitTime = rateLimiter.getWaitTime(endpoint)
-        console.warn(`⏳ Rate limit atingido para ${endpoint}. Aguardando ${waitTime}ms`)
+        // Rate limit atingido
         
         return new Promise((resolve) => {
           setTimeout(() => {
@@ -227,7 +227,7 @@ export function createRateLimitInterceptor() {
       // Verificar backoff
       if (rateLimiter.isInBackoff(endpoint)) {
         const backoffTime = rateLimiter.getBackoffTime(endpoint)
-        console.warn(`⏳ Backoff ativo para ${endpoint}. Aguardando ${backoffTime}ms`)
+        // Backoff ativo
         
         return new Promise((resolve) => {
           setTimeout(() => {
@@ -250,7 +250,7 @@ export function createRateLimitInterceptor() {
       const endpoint = error.config?.url
       if (endpoint && error.response?.status >= 500) {
         rateLimiter.applyBackoff(endpoint)
-        console.warn(`⚠️ Erro do servidor para ${endpoint}, aplicando backoff`)
+        // Erro do servidor, aplicando backoff
       }
       return Promise.reject(error)
     }

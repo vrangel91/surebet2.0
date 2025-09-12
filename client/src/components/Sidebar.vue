@@ -65,13 +65,9 @@
         <ul class="nav-list">
           <!-- Dashboard/Surebets sempre em primeiro -->
           <li class="nav-item" :class="{ active: $route.path === '/' }">
-            <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
+            <div class="nav-link" @click="handleDashboardClick" :title="shouldBeCollapsed ? 'Surebets' : ''">
               <Target class="nav-icon" size="18" />
               <span class="nav-text" v-show="shouldShowTexts">Surebets</span>
-              <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-                <Lock class="vip-icon" size="14" />
-                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
-              </div>
             </div>
           </li>
   
@@ -192,6 +188,14 @@
           </li>
         </ul>
       </nav>
+      
+      <!-- Footer do Sidebar -->
+      <div class="sidebar-footer">
+        <div class="developer-info">
+          <span class="developer-text" v-show="shouldShowTexts">Desenvolvido por</span>
+          <span class="developer-name">d2i</span>
+        </div>
+      </div>
     </aside>
   </template>
   
@@ -576,12 +580,7 @@
     },
     methods: {
       handleDashboardClick() {
-        if (this.isVIP) {
-          this.$router.push('/')
-        } else {
-          this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
-          this.$router.push('/plans')
-        }
+        this.$router.push('/')
       },
       handleReportsClick() {
         if (this.isVIP) {
@@ -670,7 +669,8 @@
           const hasAccess = await this.checkVIPAccess();
           
           if (!hasAccess) {
-            console.log('❌ [Sidebar] Sem acesso VIP');
+            console.log('❌ [Sidebar] Sem acesso VIP - continuando normalmente');
+            this.userVIP = { isVIP: false, expiresAt: null };
             return;
           }
           
@@ -681,6 +681,7 @@
           
         } catch (error) {
           console.error('❌ [Sidebar] Erro ao carregar dados VIP:', error);
+          this.userVIP = { isVIP: false, expiresAt: null };
         }
       },
       
@@ -885,11 +886,17 @@
   
   .sidebar {
     width: 280px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
     background: var(--bg-secondary, #2a2a2a);
     display: flex;
     flex-direction: column;
     border-right: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
     flex-shrink: 0;
+    z-index: 100;
+    overflow-y: auto;
     transition: 
       width 0.3s ease,
       background-color 0.3s ease,
@@ -1270,6 +1277,54 @@
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  }
+  
+  /* Footer do Sidebar */
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+    background: var(--bg-secondary, #2a2a2a);
+  }
+  
+  .developer-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
+  }
+  
+  .developer-text {
+    font-size: 11px;
+    color: var(--text-muted, #888);
+    font-weight: 400;
+    opacity: 0.8;
+  }
+  
+  .developer-name {
+    font-size: 14px;
+    color: var(--accent-primary, #10b981);
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+  
+  .sidebar.collapsed .sidebar-footer {
+    padding: 12px 8px;
+  }
+  
+  .sidebar.collapsed .developer-info {
+    flex-direction: row;
+    justify-content: center;
+  }
+  
+  .sidebar.collapsed .developer-text {
+    display: none;
+  }
+  
+  .sidebar.collapsed .developer-name {
+    font-size: 12px;
+    font-weight: 700;
   }
   
   .sidebar-toggle {
@@ -1961,12 +2016,8 @@
   
   /* Responsividade */
   @media (max-width: 768px) {
-    .sidebar {
-      width: 80px;
-    }
-  
     .sidebar.collapsed {
-      width: 280px;
+      width: 80px;
     }
   }
   
@@ -2189,20 +2240,12 @@
   /* Sidebar em mobile */
   .sidebar.mobile-closed {
     transform: translateX(-100%);
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
     z-index: 1000;
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
   }
 
   .sidebar.mobile-open {
     transform: translateX(0);
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
     z-index: 1000;
     box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3);
     width: 280px !important;
@@ -2215,10 +2258,6 @@
     }
     
     .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      height: 100vh;
       z-index: 1000;
       transform: translateX(-100%);
       transition: transform 0.3s ease;

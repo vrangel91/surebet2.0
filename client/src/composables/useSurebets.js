@@ -5,10 +5,12 @@
 
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 import surebetsCache from '@/utils/surebetsCache'
 
 export function useSurebets() {
   const router = useRouter()
+  const store = useStore()
   
   // Estado reativo
   const surebets = ref([])
@@ -78,7 +80,19 @@ export function useSurebets() {
       stats.value.totalRequests++
 
       const startTime = Date.now()
-      const response = await fetch('/api/surebets')
+      
+      // Obter token de autenticação
+      const authToken = store.getters.authToken
+      if (!authToken) {
+        throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+      }
+      
+      const response = await fetch('/api/surebets', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)

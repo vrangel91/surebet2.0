@@ -928,16 +928,20 @@ export default createStore({
       const userPlan = state.user.accountType || state.user.plan
       const hasPaidPlan = paidPlans.includes(userPlan)
       
-      console.log('🔍 Verificando isVIP:', {
-        user: state.user?.email,
-        accountType: state.user?.accountType,
-        plan: state.user?.plan,
-        is_admin: state.user?.is_admin,
-        is_vip: state.user?.is_vip,
-        vipStatus: state.vipStatus.isVIP,
-        hasPaidPlan,
-        result: hasPaidPlan
-      })
+      // Log apenas se houver mudança significativa (reduzir spam de logs)
+      if (state.user?.email && (!state.lastVIPCheck || state.lastVIPCheck !== userPlan)) {
+        console.log('🔍 Verificando isVIP:', {
+          user: state.user?.email,
+          accountType: state.user?.accountType,
+          plan: state.user?.plan,
+          is_admin: state.user?.is_admin,
+          is_vip: state.user?.is_vip,
+          vipStatus: state.vipStatus.isVIP,
+          hasPaidPlan,
+          result: hasPaidPlan
+        })
+        state.lastVIPCheck = userPlan
+      }
       
       return hasPaidPlan
     },
@@ -984,11 +988,33 @@ export default createStore({
       if (!state.user) return false
       if (state.user.is_admin === true) return true
       
-      const surebetPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
+      const surebetPlans = ['basic', 'premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
                            'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
                            'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly']
       
-      return surebetPlans.includes(state.user.accountType || state.user.plan)
+      // Mapear nomes de planos para tipos
+      const planNameToType = {
+        'Plano Básico': 'basic',
+        'Plano Premium': 'premium',
+        'Plano VIP': 'vip',
+        'Pré-Jogo Diário': 'pre-daily',
+        'Pré-Jogo Semanal': 'pre-weekly',
+        'Pré-Jogo Mensal': 'pre-monthly',
+        'Pré-Jogo Anual': 'pre-yearly',
+        'Live Diário': 'live-daily',
+        'Live Semanal': 'live-weekly',
+        'Live Mensal': 'live-monthly',
+        'Live Anual': 'live-yearly',
+        'Pré+Live Diário': 'prelive-daily',
+        'Pré+Live Semanal': 'prelive-weekly',
+        'Pré+Live Mensal': 'prelive-monthly',
+        'Pré+Live Anual': 'prelive-yearly'
+      }
+      
+      const userPlan = state.user.accountType || state.user.plan
+      const planType = planNameToType[userPlan] || userPlan
+      
+      return surebetPlans.includes(planType)
     },
     
     hasValuebetAccess: state => {
@@ -1060,6 +1086,38 @@ export default createStore({
       const fullPlans = ['vip', 'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
       
       return fullPlans.includes(state.user.accountType || state.user.plan)
+    },
+    
+    // 🎯 Verificar se tem acesso a planos de pré-jogo
+    hasPreGameAccess: state => {
+      if (!state.user) return false
+      if (state.user.is_admin === true) return true
+      
+      const preGamePlans = [
+        'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly',
+        'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
+        'full-daily', 'full-weekly', 'full-monthly', 'full-yearly'
+      ]
+      
+      const planNameToType = {
+        'Pré-Jogo Diário': 'pre-daily',
+        'Pré-Jogo Semanal': 'pre-weekly', 
+        'Pré-Jogo Mensal': 'pre-monthly',
+        'Pré-Jogo Anual': 'pre-yearly',
+        'Pré+Live Diário': 'prelive-daily',
+        'Pré+Live Semanal': 'prelive-weekly',
+        'Pré+Live Mensal': 'prelive-monthly',
+        'Pré+Live Anual': 'prelive-yearly',
+        'Full Diário': 'full-daily',
+        'Full Semanal': 'full-weekly',
+        'Full Mensal': 'full-monthly',
+        'Full Anual': 'full-yearly'
+      }
+      
+      const userPlan = state.user.accountType || state.user.plan
+      const planType = planNameToType[userPlan] || userPlan
+      
+      return preGamePlans.includes(planType)
     },
     
     // 📋 Getters para planos

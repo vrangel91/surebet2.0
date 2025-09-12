@@ -1,5 +1,5 @@
 <template>
-  <div class="glossary-container">
+  <div class="glossary-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -542,6 +542,17 @@ export default {
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .main-content {
@@ -1035,6 +1046,12 @@ export default {
 }
 
 // Responsividade
+@media (max-width: 1023px) {
+  .glossary-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+  }
+}
+
 @media (max-width: 768px) {
   .page-content {
     padding: 20px;

@@ -7,30 +7,37 @@ const cron = require('node-cron');
 const path = require('path');
 const fs = require('fs');
 
+// Desativar console.logs de forma silenciosa
+const silentLog = () => {}
+console.log = silentLog
+console.error = silentLog
+console.warn = silentLog
+
 // Importar configurações do banco e modelos
-const { sequelize, testConnection } = require('./config/database');
-const { syncModels } = require('./models');
+const { sequelize, testConnection } = require('./server/config/database');
+const { syncModels } = require('./server/models');
 
 // Importar WebSocket
-const { surebetsWebSocket } = require('./utils/surebetsWebSocket');
+const { surebetsWebSocket } = require('./server/utils/surebetsWebSocket');
 
 // Importar rotas
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const vipRoutes = require('./routes/vip');
-const bookmakerAccountsRoutes = require('./routes/bookmakerAccounts');
-const surebetStatsRoutes = require('./routes/surebetStats');
-const ordersRoutes = require('./routes/orders');
-const referralsRoutes = require('./routes/referrals');
-const ticketsRoutes = require('./routes/tickets');
-const adminRoutes = require('./routes/admin');
-const notificationRoutes = require('./routes/notifications');
-const paymentRoutes = require('./routes/payments');
-const manualPaymentRoutes = require('./routes/manualPayments');
-const paymentStatusRoutes = require('./routes/paymentStatus');
+const authRoutes = require('./server/routes/auth');
+const userRoutes = require('./server/routes/users');
+const vipRoutes = require('./server/routes/vip');
+const bookmakerAccountsRoutes = require('./server/routes/bookmakerAccounts');
+const surebetStatsRoutes = require('./server/routes/surebetStats');
+const ordersRoutes = require('./server/routes/orders');
+const referralsRoutes = require('./server/routes/referrals');
+const ticketsRoutes = require('./server/routes/tickets');
+const adminRoutes = require('./server/routes/admin');
+const notificationRoutes = require('./server/routes/notifications');
+const paymentRoutes = require('./server/routes/payments');
+const manualPaymentRoutes = require('./server/routes/manualPayments');
+const paymentStatusRoutes = require('./server/routes/paymentStatus');
+const planVerificationRoutes = require('./server/routes/planVerification');
 let plansRoutes;
 try {
-  plansRoutes = require('./routes/plans');
+  plansRoutes = require('./server/routes/plans');
   console.log('✅ Módulo plans carregado com sucesso');
 } catch (error) {
   console.error('❌ Erro ao carregar módulo plans:', error);
@@ -38,23 +45,25 @@ try {
 }
 
 // Importar cron jobs VIP
-const vipCronJobs = require('./utils/vipCronJobs');
+const vipCronJobs = require('./server/utils/vipCronJobs');
 
 // Importar verificador de pagamentos
-const paymentChecker = require('./utils/paymentChecker');
+const paymentChecker = require('./server/utils/paymentChecker');
 
 // Importar sistemas de otimização
-const { backendCache } = require('./utils/cache');
-const { backendRateLimiter, surebetsRateLimiter } = require('./utils/rateLimiter');
-const { systemMonitor } = require('./utils/monitoring');
-const { logger } = require('./utils/logger');
-const { healthChecker } = require('./utils/healthCheck');
-const { errorAnalyzer } = require('./utils/errorAnalyzer');
-const { databaseOptimizer } = require('./utils/databaseOptimizer');
-const { compressionManager } = require('./utils/compression');
+const { backendCache } = require('./server/utils/cache');
+const { backendRateLimiter, surebetsRateLimiter } = require('./server/utils/rateLimiter');
+const { systemMonitor } = require('./server/utils/monitoring');
+const { logger } = require('./server/utils/logger');
+const { healthChecker } = require('./server/utils/healthCheck');
+const { errorAnalyzer } = require('./server/utils/errorAnalyzer');
+const { databaseOptimizer } = require('./server/utils/databaseOptimizer');
+const { compressionManager } = require('./server/utils/compression');
 // Sistema de cache para surebets
-const { surebetsCache } = require('./utils/surebetsCache');
-const { surebetsService } = require('./utils/surebetsService');
+const { surebetsCache } = require('./server/utils/surebetsCache');
+const { surebetsService } = require('./server/utils/surebetsService');
+// Middleware de autenticação
+const { authenticateToken } = require('./server/utils/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -141,7 +150,7 @@ app.use(compressionManager.middleware());
         console.log('É evento de teste?', isTestEvent);
 
         // Validar assinatura do webhook (opcional - pode ser desabilitado para testes)
-        const PaymentService = require('./services/paymentService');
+        const PaymentService = require('./server/services/paymentService');
         const paymentService = new PaymentService();
         const signature = req.headers['x-signature'];
         
@@ -240,7 +249,7 @@ app.use((req, res, next) => {
 
 // Configurar rotas da API (movidas para httpApp)
 // app.use('/api/plans', plansRoutes);
-// console.log('✅ Rota /api/plans registrada');
+console.log('✅ Rota /api/plans registrada');
 // app.use('/api/auth', authRoutes);
 // app.use('/api/users', userRoutes);
 // app.use('/api/vip', vipRoutes);
@@ -791,7 +800,7 @@ async function initializeApp() {
     
   // Sistema otimizado de surebets desabilitado
   // surebetsScheduler.start();
-  // console.log('🚀 Sistema otimizado de surebets iniciado');
+  console.log('🚀 Sistema otimizado de surebets iniciado');
     
     // Inicializar busca de surebets (legacy - manter para compatibilidade)
     fetchSurebets();
@@ -818,23 +827,41 @@ async function initializeApp() {
     await databaseOptimizer.initialize();
     console.log('🗄️ Otimizador de banco de dados iniciado');
     
-    // Configurar HTTPS
-    const httpsOptions = {
-      key: fs.readFileSync(path.join(__dirname, 'certs', 'key.pem')),
-      cert: fs.readFileSync(path.join(__dirname, 'certs', 'cert.pem'))
-    };
+    // Verificar se certificados SSL existem
+    const keyPath = path.join(__dirname, 'certs', 'key.pem');
+    const certPath = path.join(__dirname, 'certs', 'cert.pem');
     
-    // Criar servidor HTTPS
-    const httpsServer = https.createServer(httpsOptions, app);
-    
-    // Iniciar servidor HTTPS
-    httpsServer.listen(HTTPS_PORT, () => {
-      console.log(`🚀 Servidor HTTPS rodando na porta ${HTTPS_PORT}`);
-      console.log(`📊 API disponível em https://localhost:${HTTPS_PORT}/api`);
-      console.log(`🔐 Certificados SSL carregados com sucesso`);
-      console.log(`⚠️  Certificado autoassinado - aceite o aviso de segurança no navegador`);
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+      // Configurar HTTPS se certificados existem
+      const httpsOptions = {
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath)
+      };
       
-      // Configurar WebSocket após HTTPS estar rodando
+      // Criar servidor HTTPS
+      const httpsServer = https.createServer(httpsOptions, app);
+      
+      // Iniciar servidor HTTPS
+      httpsServer.listen(HTTPS_PORT, () => {
+        console.log(`🚀 Servidor HTTPS rodando na porta ${HTTPS_PORT}`);
+        console.log(`📊 API disponível em https://localhost:${HTTPS_PORT}/api`);
+        console.log(`🔐 Certificados SSL carregados com sucesso`);
+        console.log(`⚠️  Certificado autoassinado - aceite o aviso de segurança no navegador`);
+        
+        // Configurar WebSocket após HTTPS estar rodando
+        wss = new WebSocket.Server({ 
+          port: 3002,
+          verifyClient: (info) => {
+            return true;
+          }
+        });
+        
+        console.log(`🔌 WebSocket rodando na porta 3002`);
+      });
+    } else {
+      console.log(`⚠️  Certificados SSL não encontrados, usando apenas HTTP`);
+      
+      // Configurar WebSocket sem HTTPS
       wss = new WebSocket.Server({ 
         port: 3002,
         verifyClient: (info) => {
@@ -843,99 +870,101 @@ async function initializeApp() {
       });
       
       console.log(`🔌 WebSocket rodando na porta 3002`);
-      
-      // WebSocket connection handler otimizado
+    }
+    
+    // WebSocket connection handler otimizado (comum para HTTPS e HTTP)
+    if (wss) {
       wss.on('connection', (ws, req) => {
-        const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        console.log(`🔌 Cliente WebSocket conectado: ${clientId}`);
-        
-        // Sistema WebSocket otimizado habilitado
-        surebetsWebSocket.addClient(clientId, ws);
-        
-        // Enviar estado atual para o novo cliente
-        try {
-          // Processar dados de forma robusta
-          const processSurebetsData = (data) => {
-            if (!data || typeof data !== 'object') {
-              return {}
-            }
-            
-            // Se já é um objeto válido, retornar
-            if (Object.keys(data).length > 0) {
-              return data
-            }
-            
-            // Se é um array, converter para objeto
-            if (Array.isArray(data)) {
-              const obj = {}
-              data.forEach((item, index) => {
-                if (item && typeof item === 'object') {
-                  obj[`surebet_${index}`] = item
-                }
-              })
-              return obj
-            }
-            
+      const clientId = `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      console.log(`🔌 Cliente WebSocket conectado: ${clientId}`);
+      
+      // Sistema WebSocket otimizado habilitado
+      surebetsWebSocket.addClient(clientId, ws);
+      
+      // Enviar estado atual para o novo cliente
+      try {
+        // Processar dados de forma robusta
+        const processSurebetsData = (data) => {
+          if (!data || typeof data !== 'object') {
             return {}
           }
           
-          const safeSurebets = processSurebetsData(surebets);
+          // Se já é um objeto válido, retornar
+          if (Object.keys(data).length > 0) {
+            return data
+          }
           
-          ws.send(JSON.stringify({
-            type: 'initial_state',
-            surebets: safeSurebets,
-            isSearching: isSearching,
-            soundEnabled: soundEnabled
-          }));
-        } catch (error) {
-          console.error('Erro ao enviar estado inicial:', error);
+          // Se é um array, converter para objeto
+          if (Array.isArray(data)) {
+            const obj = {}
+            data.forEach((item, index) => {
+              if (item && typeof item === 'object') {
+                obj[`surebet_${index}`] = item
+              }
+            })
+            return obj
+          }
+          
+          return {}
         }
         
-        ws.on('message', (message) => {
-          try {
-            // Sistema WebSocket otimizado habilitado
-            surebetsWebSocket.handleClientMessage(clientId, message);
-            
-            // Manter compatibilidade com sistema legado
-            const data = JSON.parse(message);
-            
-            switch (data.type) {
-              case 'toggle_search':
-                isSearching = data.isSearching;
-                console.log(`Busca ${isSearching ? 'ativada' : 'pausada'}`);
-                
-                // Notificar todos os clientes sobre a mudança de estado
-                wss.clients.forEach(client => {
-                  if (client.readyState === WebSocket.OPEN) {
-                    client.send(JSON.stringify({
-                      type: 'search_state_changed',
-                      isSearching: isSearching
-                    }));
-                  }
-                });
-                break;
-                
-              case 'toggle_sound':
-                soundEnabled = data.soundEnabled;
-                console.log(`Som ${soundEnabled ? 'ativado' : 'desativado'}`);
-                break;
-            }
-          } catch (error) {
-            console.error('Erro ao processar mensagem:', error);
+        const safeSurebets = processSurebetsData(surebets);
+        
+        ws.send(JSON.stringify({
+          type: 'initial_state',
+          surebets: safeSurebets,
+          isSearching: isSearching,
+          soundEnabled: soundEnabled
+        }));
+      } catch (error) {
+        console.error('Erro ao enviar estado inicial:', error);
+      }
+      
+      ws.on('message', (message) => {
+        try {
+          // Sistema WebSocket otimizado habilitado
+          surebetsWebSocket.handleClientMessage(clientId, message);
+          
+          // Manter compatibilidade com sistema legado
+          const data = JSON.parse(message);
+          
+          switch (data.type) {
+            case 'toggle_search':
+              isSearching = data.isSearching;
+              console.log(`Busca ${isSearching ? 'ativada' : 'pausada'}`);
+              
+              // Notificar todos os clientes sobre a mudança de estado
+              wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                  client.send(JSON.stringify({
+                    type: 'search_state_changed',
+                    isSearching: isSearching
+                  }));
+                }
+              });
+              break;
+              
+            case 'toggle_sound':
+              soundEnabled = data.soundEnabled;
+              console.log(`Som ${soundEnabled ? 'ativado' : 'desativado'}`);
+              break;
           }
-        });
-        
-        ws.on('error', (error) => {
-          console.error(`❌ Erro WebSocket para cliente ${clientId}:`, error);
-          surebetsWebSocket.removeClient(clientId);
-        });
-        
-        ws.on('close', () => {
-          console.log(`🔌 Cliente WebSocket desconectado: ${clientId}`);
-          surebetsWebSocket.removeClient(clientId);
-        });
+        } catch (error) {
+          console.error('Erro ao processar mensagem:', error);
+        }
       });
-    });
+      
+      ws.on('error', (error) => {
+        console.error(`❌ Erro WebSocket para cliente ${clientId}:`, error);
+        surebetsWebSocket.removeClient(clientId);
+      });
+      
+      ws.on('close', () => {
+        console.log(`🔌 Cliente WebSocket desconectado: ${clientId}`);
+        surebetsWebSocket.removeClient(clientId);
+      });
+      });
+    }
     
     // Manter servidor HTTP para compatibilidade na porta 3000
     app.listen(3000, () => {
@@ -990,7 +1019,7 @@ async function initializeApp() {
         console.log('É evento de teste? (HTTP)', isTestEvent);
 
         // Validar assinatura do webhook (opcional - pode ser desabilitado para testes)
-        const PaymentService = require('./services/paymentService');
+        const PaymentService = require('./server/services/paymentService');
         const paymentService = new PaymentService();
         const signature = req.headers['x-signature'];
         
@@ -1051,10 +1080,11 @@ async function initializeApp() {
     httpApp.use('/api/payments', paymentRoutes);
     httpApp.use('/api/manual-payments', manualPaymentRoutes);
     httpApp.use('/api/payment-status', paymentStatusRoutes);
+    httpApp.use('/api/plan', planVerificationRoutes);
     
     // Rotas da API existentes
-    // Rota de surebets com cache inteligente
-    httpApp.get('/api/surebets', async (req, res) => {
+    // Rota de surebets com cache inteligente e controle de acesso apenas para usuários logados
+    httpApp.get('/api/surebets', authenticateToken, async (req, res) => {
       try {
         const filters = req.query;
         const result = await surebetsService.getSurebets(filters);
@@ -1145,12 +1175,12 @@ async function initializeApp() {
       });
     });
     
-    httpApp.post('/api/toggle-search', (req, res) => {
+    httpApp.post('/api/toggle-search', authenticateToken, (req, res) => {
       isSearching = req.body.isSearching;
       res.json({ isSearching });
     });
     
-    httpApp.post('/api/toggle-sound', (req, res) => {
+    httpApp.post('/api/toggle-sound', authenticateToken, (req, res) => {
       soundEnabled = req.body.soundEnabled;
       res.json({ soundEnabled });
     });
@@ -1160,6 +1190,7 @@ async function initializeApp() {
       console.log('🔍 [TEST API] Rota /api/test executada');
       res.json({ message: 'Teste funcionando!' });
     });
+
 
     // Rota de monitoramento do sistema
     httpApp.get('/api/monitoring/stats', (req, res) => {

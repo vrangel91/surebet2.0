@@ -39,9 +39,7 @@ class SmartCache {
       }
     }
     
-    if (cleaned > 0) {
-      console.log(`🧹 Cache limpo: ${cleaned} entradas removidas`)
-    }
+    // Cache limpo
   }
 
   /**
@@ -71,7 +69,7 @@ class SmartCache {
     // Notificar subscribers
     this.notifySubscribers(key, data)
     
-    console.log(`💾 Dados armazenados no cache: ${key}`)
+    // Dados armazenados no cache
   }
 
   /**
@@ -87,7 +85,7 @@ class SmartCache {
   delete(key) {
     this.cache.delete(key)
     this.cacheTimestamps.delete(key)
-    console.log(`🗑️ Entrada removida do cache: ${key}`)
+    // Entrada removida do cache
   }
 
   /**
@@ -96,7 +94,7 @@ class SmartCache {
   clear() {
     this.cache.clear()
     this.cacheTimestamps.clear()
-    console.log('🧹 Cache completamente limpo')
+    // Cache completamente limpo
   }
 
   /**
@@ -140,7 +138,7 @@ class SmartCache {
       try {
         callback(key, data)
       } catch (error) {
-        console.error('Erro ao notificar subscriber:', error)
+        // Erro ao notificar subscriber
       }
     })
   }
@@ -211,7 +209,7 @@ class SmartCache {
       }
     }
     
-    console.log(`🔄 Cache invalidado: ${invalidated} entradas removidas (padrão: ${pattern})`)
+    // Cache invalidado
     return invalidated
   }
 
@@ -220,7 +218,7 @@ class SmartCache {
    */
   forceRefresh(key) {
     this.delete(key)
-    console.log(`🔄 Forçando atualização: ${key}`)
+    // Forçando atualização
   }
 }
 

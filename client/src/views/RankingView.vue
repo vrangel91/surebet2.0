@@ -1,6 +1,6 @@
 <template>
     <RouteGuard :requiresAuth="true">
-      <div class="ranking-container">
+      <div class="ranking-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
         @toggle-sidebar="handleSidebarToggle"
@@ -812,9 +812,16 @@
           console.log('🌐 Buscando dados da API externa...')
           
           // Buscar dados da API externa via servidor
+          // Obter token de autenticação
+          const authToken = this.$store.getters.authToken
+          if (!authToken) {
+            throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+          }
+          
           const response = await fetch('/api/surebets', {
             method: 'GET',
             headers: {
+              'Authorization': `Bearer ${authToken}`,
               'Content-Type': 'application/json'
             }
           })
@@ -823,12 +830,20 @@
             throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
           }
           
-          const apiData = await response.json()
-          console.log('📡 Dados recebidos da API externa:', apiData)
+          const apiResponse = await response.json()
+          console.log('📡 Dados recebidos da API externa:', apiResponse)
           
           // Verificar se os dados têm a estrutura esperada
-          if (!apiData || typeof apiData !== 'object') {
+          if (!apiResponse || typeof apiResponse !== 'object') {
             throw new Error('Estrutura de dados inválida da API')
+          }
+          
+          // Extrair os dados reais da resposta da API
+          const apiData = apiResponse.data || apiResponse
+          
+          // Verificar se os dados extraídos têm a estrutura esperada
+          if (!apiData || typeof apiData !== 'object') {
+            throw new Error('Dados de surebets não encontrados na resposta da API')
           }
           
           // Processar dados da API externa
@@ -846,6 +861,22 @@
       processExternalAPIData(apiData) {
         const processedData = []
         const processedIds = new Set()
+        
+        // Verificar se apiData é um array (formato alternativo)
+        if (Array.isArray(apiData)) {
+          console.log('📊 Processando dados em formato de array')
+          apiData.forEach((surebet, index) => {
+            try {
+              const processedSurebet = this.processSingleSurebet(surebet, `array_${index}`)
+              if (processedSurebet) {
+                processedData.push(processedSurebet)
+              }
+            } catch (error) {
+              console.error(`Erro ao processar surebet do array (índice ${index}):`, error)
+            }
+          })
+          return processedData
+        }
         
         // Iterar sobre cada surebet_id na resposta da API
         Object.entries(apiData).forEach(([surebetId, surebetParts]) => {
@@ -959,12 +990,97 @@
               }
             })
           } else {
-            console.warn(`Formato inválido para surebet ${surebetId}:`, surebetParts)
+            console.warn(`Formato inválido para surebet ${surebetId}:`, {
+              type: typeof surebetParts,
+              isArray: Array.isArray(surebetParts),
+              value: surebetParts
+            })
           }
         })
         
         console.log(`🎯 Processados ${processedData.length} registros únicos de ${processedIds.size} IDs únicos`)
         return processedData
+      },
+
+      processSingleSurebet(surebet, surebetId) {
+        try {
+          // Extrair informações do surebet
+          const {
+            house,
+            profit,
+            roi,
+            timestamp,
+            sport,
+            event,
+            market,
+            selection1,
+            selection2,
+            selection3,
+            odds1,
+            odds2,
+            odds3,
+            stake = 100,
+            status = 'active'
+          } = surebet
+          
+          // Criar data e hora a partir do timestamp
+          const dateObj = timestamp ? new Date(timestamp) : new Date()
+          const date = dateObj.toISOString().split('T')[0]
+          const hour = dateObj.getHours()
+          
+          // Determinar se é Live ou Pre Live
+          let isLive = false
+          let minutes = surebet.minutes || 0
+          
+          // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
+          const anchorUrl = surebet.anchorh1 || surebet.anchorh2 || ''
+          
+          let isLiveParam = null
+          if (anchorUrl) {
+            const urlParams = new URLSearchParams(anchorUrl.split('?')[1] || '')
+            isLiveParam = urlParams.get('is_live')
+            if (isLiveParam !== null) {
+              isLive = isLiveParam === 'true' || isLiveParam === '1'
+            }
+          }
+          
+          // Se não conseguiu determinar via URL, usar lógica baseada em minutos
+          if (isLiveParam === null) {
+            isLive = minutes > 0 && minutes <= 90
+          }
+          
+          // Criar objeto processado
+          const processedSurebet = {
+            id: surebetId,
+            house: house || 'Casa não informada',
+            profit: parseFloat(profit) || 0,
+            roi: parseFloat(roi) || 0,
+            timestamp: timestamp || Date.now(),
+            date: date,
+            hour: hour,
+            sport: sport || 'Esporte não informado',
+            event: event || 'Evento não informado',
+            market: market || 'Mercado não informado',
+            selection1: selection1 || '',
+            selection2: selection2 || '',
+            selection3: selection3 || '',
+            odds1: parseFloat(odds1) || 0,
+            odds2: parseFloat(odds2) || 0,
+            odds3: parseFloat(odds3) || 0,
+            isLive: isLive,
+            minutes: minutes,
+            stake: parseFloat(stake) || 100,
+            status: status || 'active',
+            processed_at: new Date().toISOString()
+          }
+          
+          // Aplicar sanitização UTF-8
+          return this.sanitizeJSONForUTF8(processedSurebet)
+          
+        } catch (error) {
+          console.error(`Erro ao processar surebet ${surebetId}:`, error)
+          return null
+        }
       },
   
       generateSampleData() {
@@ -3907,9 +4023,19 @@
     background: var(--bg-primary);
     overflow: hidden;
     position: relative;
-    width: 100%;
+    width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+    max-width: calc(100% - 280px);
     align-items: stretch;
     height: 100vh;
+    margin-left: 280px; /* Espaço para o sidebar fixo */
+    transition: margin-left 0.3s ease;
+    box-sizing: border-box;
+    
+    &.sidebar-collapsed {
+      margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+      width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+      max-width: calc(100% - 80px);
+    }
   }
   
   .main-content {
@@ -4308,6 +4434,12 @@
   }
   
   /* 18. ESTILOS PARA DARK MODE E ALTO CONTRASTE */
+  @media (max-width: 1023px) {
+    .ranking-container {
+      margin-left: 0; /* Remove margem em mobile/tablet */
+    }
+  }
+  
   @media (prefers-color-scheme: dark) {
     .filter-select {
       background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));

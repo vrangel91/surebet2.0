@@ -254,7 +254,18 @@ export default {
     // Métodos
     const fetchSurebets = async () => {
       try {
-        const response = await fetch('/api/surebets')
+        // Obter token de autenticação
+        const authToken = store.getters.authToken
+        if (!authToken) {
+          throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+        }
+        
+        const response = await fetch('/api/surebets', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         
         const data = await response.json()

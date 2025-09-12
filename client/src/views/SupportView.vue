@@ -1,6 +1,6 @@
 <template>
   <RouteGuard :requiresAuth="true">
-    <div class="support-container">
+    <div class="support-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -687,7 +687,17 @@ export default {
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 /* Main Content */
@@ -1387,6 +1397,12 @@ export default {
 }
 
 /* Responsividade */
+@media (max-width: 1023px) {
+  .support-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+  }
+}
+
 @media (max-width: 768px) {
   .support-main {
     padding: 24px 16px;

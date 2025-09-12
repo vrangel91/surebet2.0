@@ -1,6 +1,6 @@
 <template>
   <RouteGuard :requiresVIP="true">
-    <div class="compound-interest-container">
+    <div class="compound-interest-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
       @sidebar-state-loaded="handleSidebarStateLoaded"
@@ -240,11 +240,40 @@ export default {
       return getComputedStyle(document.documentElement).getPropertyValue(cssVariable) || fallback
     },
     
+    // Método para obter cor de fundo do gráfico baseada no tema
+    getChartBackgroundColor() {
+      // Usar sempre o fundo do tema, sem cores hardcoded
+      return this.getThemeColor('--bg-tertiary', '#1a1a1a')
+    },
+    
     // Método para atualizar o fundo do gráfico quando o tema mudar
     updateChartBackground() {
-      if (this.chart) {
-        // Apenas atualizar as cores do gráfico
-        this.chart.update('none');
+      if (this.chart && this.chartData) {
+        // Regenerar dados com as novas cores do tema
+        this.generateChartData()
+        
+        // Atualizar o gráfico com os novos dados
+        this.chart.data = JSON.parse(JSON.stringify(this.chartData))
+        
+        // Obter cores do tema atual
+        const textColor = this.getThemeColor('--text-primary', '#ffffff')
+        const borderColor = this.getThemeColor('--border-primary', '#666666')
+        const bgColor = this.getChartBackgroundColor() // Usar método personalizado para fundo
+        
+        // Atualizar opções do gráfico
+        this.chart.options.backgroundColor = bgColor
+        this.chart.options.plugins.legend.labels.color = textColor
+        this.chart.options.scales.x.ticks.color = textColor
+        this.chart.options.scales.x.backgroundColor = bgColor
+        this.chart.options.scales.y.ticks.color = textColor
+        this.chart.options.scales.y.backgroundColor = bgColor
+        this.chart.options.scales.x.grid.color = borderColor + '20'
+        this.chart.options.scales.y.grid.color = borderColor + '20'
+        this.chart.options.scales.x.border.color = borderColor + '40'
+        this.chart.options.scales.y.border.color = borderColor + '40'
+        
+        // Atualizar o gráfico
+        this.chart.update('none')
       }
     },
 
@@ -423,38 +452,39 @@ export default {
         return
       }
       
+      // Obter cores do tema atual
+      const accentColor = this.getThemeColor('--accent-primary', '#10b981')
+      const errorColor = this.getThemeColor('--error-color', '#ef4444')
+      const bgColor = this.getThemeColor('--bg-tertiary', '#1a1a1a')
+      
       this.chartData = {
         labels: this.evolutionTable.map(row => row.period),
         datasets: [
           {
             label: 'Capital Total',
             data: this.evolutionTable.map(row => row.total),
-            borderColor: this.getThemeColor('--accent-primary', '#00ff88'),
-            backgroundColor: this.getThemeColor('--accent-primary', '#00ff88') + '15',
+            borderColor: accentColor,
+            backgroundColor: accentColor + '20',
             fill: true,
             tension: 0.4,
             borderWidth: 3,
-            // Configurações para área preenchida mais bonita
-            fillColor: this.getThemeColor('--accent-primary', '#00ff88') + '10',
-            // Gradiente personalizado para a área
-            fillGradient: {
-              type: 'linear',
-              colors: [
-                this.getThemeColor('--accent-primary', '#00ff88') + '20',
-                this.getThemeColor('--accent-primary', '#00ff88') + '08',
-                this.getThemeColor('--accent-primary', '#00ff88') + '05'
-              ]
-            }
+            pointBackgroundColor: accentColor,
+            pointBorderColor: accentColor,
+            pointHoverBackgroundColor: accentColor,
+            pointHoverBorderColor: accentColor
           },
           {
             label: 'Capital Inicial',
             data: this.evolutionTable.map(() => this.formData.initialValue),
-            borderColor: this.getThemeColor('--error-color', '#ff4444'),
-            backgroundColor: this.getThemeColor('--error-color', '#ff4444') + '15',
+            borderColor: errorColor,
+            backgroundColor: errorColor + '20',
             borderDash: [5, 5],
-            fill: true,
-            fillColor: this.getThemeColor('--error-color', '#ff4444') + '08',
-            borderWidth: 2
+            fill: false,
+            borderWidth: 2,
+            pointBackgroundColor: errorColor,
+            pointBorderColor: errorColor,
+            pointHoverBackgroundColor: errorColor,
+            pointHoverBorderColor: errorColor
           }
         ]
       }
@@ -489,20 +519,44 @@ export default {
       this.destroyChartSafely()
       
       try {
+        // Obter cores do tema atual
+        const textColor = this.getThemeColor('--text-primary', '#ffffff')
+        const borderColor = this.getThemeColor('--border-primary', '#666666')
+        const bgColor = this.getChartBackgroundColor() // Usar método personalizado para fundo
+        
+        // Plugin para aplicar fundo do tema
+        const backgroundPlugin = {
+          id: 'backgroundPlugin',
+          beforeDraw: (chart) => {
+            const ctx = chart.ctx
+            const chartArea = chart.chartArea
+            if (chartArea) {
+              ctx.save()
+              // Usar cor de fundo do tema atual
+              ctx.fillStyle = bgColor
+              ctx.fillRect(chartArea.left, chartArea.top, chartArea.right - chartArea.left, chartArea.bottom - chartArea.top)
+              ctx.restore()
+            }
+          }
+        }
+        
         // Criar novo gráfico
         this.chart = new Chart(ctx, {
           type: 'line',
           data: JSON.parse(JSON.stringify(this.chartData)), // Deep copy dos dados
+          plugins: [backgroundPlugin],
           options: {
             responsive: true,
             maintainAspectRatio: false,
             animation: {
               duration: 500
             },
+            // Configuração do fundo do gráfico
+            backgroundColor: bgColor,
             plugins: {
               legend: {
                 labels: {
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  color: textColor,
                   font: {
                     size: 12,
                     weight: '500'
@@ -515,25 +569,24 @@ export default {
             scales: {
               x: {
                 ticks: {
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  color: textColor,
                   maxTicksLimit: 10,
                   font: {
                     size: 11
                   }
                 },
                 grid: {
-                  color: this.getThemeColor('--border-primary', '#666666') + '20',
+                  color: borderColor + '20',
                   drawBorder: false
                 },
                 border: {
-                  color: this.getThemeColor('--border-primary', '#666666') + '40'
+                  color: borderColor + '40'
                 },
-                // Fundo do eixo X
-                backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                backgroundColor: bgColor
               },
               y: {
                 ticks: {
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
+                  color: textColor,
                   maxTicksLimit: 10,
                   font: {
                     size: 11
@@ -546,21 +599,24 @@ export default {
                   }
                 },
                 grid: {
-                  color: this.getThemeColor('--border-primary', '#666666') + '20',
+                  color: borderColor + '20',
                   drawBorder: false
                 },
                 border: {
-                  color: this.getThemeColor('--border-primary', '#666666') + '40'
+                  color: borderColor + '40'
                 },
-                // Fundo do eixo Y
-                backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                backgroundColor: bgColor
               }
+            },
+            // Configuração adicional para fundo da área de plotagem
+            onHover: (event, activeElements) => {
+              // Manter fundo verde durante hover
             },
             elements: {
               point: {
                 radius: 0,
                 hoverRadius: 4,
-                hoverBackgroundColor: this.getThemeColor('--bg-primary', '#ffffff')
+                hoverBackgroundColor: textColor
               }
             },
             // Configuração do fundo da área de plotagem
@@ -621,6 +677,17 @@ export default {
   height: 100vh;
   background: var(--bg-primary);
   color: var(--text-primary);
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .main-content {
@@ -678,6 +745,12 @@ export default {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 24px;
+  
+  @media (max-width: 1023px) {
+    .compound-interest-container {
+      margin-left: 0; /* Remove margem em mobile/tablet */
+    }
+  }
   
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
@@ -940,40 +1013,20 @@ export default {
   position: relative;
 }
 
-/* Forçar fundo do gráfico via CSS - VERSÃO SUPER AGRESSIVA */
-.chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
-}
-
-/* Estilos específicos para modo dark */
-[data-theme="dark"] .chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
-}
-
-/* Estilos específicos para modo light */
-[data-theme="light"] .chart-container canvas {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
-}
-
-/* Forçar fundo também no container */
+/* Container do gráfico com fundo do tema */
 .chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+  background-color: var(--bg-tertiary);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
-/* Estilos específicos para modo dark no container */
-[data-theme="dark"] .chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
-}
-
-/* Estilos específicos para modo light no container */
-[data-theme="light"] .chart-container {
-  background-color: var(--bg-tertiary) !important;
-  background: var(--bg-tertiary) !important;
+/* Container do gráfico adaptado ao tema */
+.chart-container {
+  background-color: var(--bg-tertiary);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
 }
 
 @media (max-width: 768px) {

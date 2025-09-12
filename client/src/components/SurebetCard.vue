@@ -74,7 +74,14 @@
       <div v-for="(bet, index) in surebet" :key="index" class="bet-option">
         <div class="bet-header">
           <span class="bookmaker">{{ bet.house || 'Bet365' }}</span>
-                     <span class="market">{{ formatMarket(bet.market, surebet[0]?.sport) || 'Resultado Final' }}</span>
+          <span 
+            class="market" 
+            :class="{ 'has-translation': hasMarketTranslation(bet.market) }"
+            @mouseenter="showTooltip($event, bet.market)"
+            @mouseleave="hideTooltip"
+          >
+            {{ bet.market || 'Resultado Final' }}
+          </span>
         </div>
         
         <div class="bet-details">
@@ -106,6 +113,7 @@
 <script>
 import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
 import { http } from '../utils/http.js'
+import marketTranslations from '../config/marketTranslations.json'
 
 export default {
   name: 'SurebetCard',
@@ -133,7 +141,9 @@ export default {
   },
   data() {
     return {
-      defaultStake: 100.00 // Valor padrão, será carregado das configurações
+      defaultStake: 100.00, // Valor padrão, será carregado das configurações
+      tooltipTimeout: null,
+      currentTooltip: null
     }
   },
   computed: {
@@ -210,6 +220,19 @@ export default {
   },
   mounted() {
     this.loadSettings()
+    this.setupTooltipCleanup()
+  },
+  beforeDestroy() {
+    // Limpa tooltips ao destruir o componente
+    this.hideTooltip()
+    this.removeTooltipCleanup()
+    this.clearAllTooltips()
+  },
+  beforeUnmount() {
+    // Limpa tooltips ao desmontar o componente (Vue 3)
+    this.hideTooltip()
+    this.removeTooltipCleanup()
+    this.clearAllTooltips()
   },
   methods: {
     formatProfit(profit) {
@@ -233,14 +256,6 @@ export default {
       })
     },
     
-             formatMarket(market, sport = null) {
-      if (!market) {
-        return 'Resultado Final'
-      }
-      
-      // Retorna o market original sem tradução
-      return market
-    },
     
     
     
@@ -647,6 +662,348 @@ export default {
       )
     },
 
+    // Busca tradução do market
+    getMarketTranslation(market) {
+      if (!market) return null
+      
+      // Busca tradução exata primeiro
+      if (marketTranslations.translations[market]) {
+        let translation = marketTranslations.translations[market]
+        // Substitui Team 1 e Team 2 pelos nomes reais dos times
+        translation = this.replaceTeamNames(translation)
+        return translation
+      }
+      
+      // Busca tradução dinâmica para padrões
+      const dynamicTranslation = this.getDynamicTranslation(market)
+      if (dynamicTranslation) {
+        return dynamicTranslation
+      }
+      
+      // Se não encontrar tradução exata, retorna o market original
+      return null
+    },
+
+    // Substitui "Team 1" e "Team 2" pelos nomes reais dos times
+    replaceTeamNames(translation) {
+      if (!translation) return translation
+      
+      const teams = this.getTeamNames()
+      
+      // Debug: verificar se está funcionando
+      if (translation.includes('Time 1') || translation.includes('Time 2')) {
+        console.log('🔄 Substituindo times:', {
+          original: translation,
+          teams: teams,
+          result: translation
+            .replace(/Time 1/g, teams.team1)
+            .replace(/Team 1/g, teams.team1)
+            .replace(/Time 2/g, teams.team2)
+            .replace(/Team 2/g, teams.team2)
+        })
+      }
+      
+      return translation
+        .replace(/Time 1/g, teams.team1)
+        .replace(/Team 1/g, teams.team1)
+        .replace(/Time 2/g, teams.team2)
+        .replace(/Team 2/g, teams.team2)
+    },
+
+    // Verifica se existe tradução para o market
+    hasMarketTranslation(market) {
+      return marketTranslations.translations.hasOwnProperty(market) || this.getDynamicTranslation(market) !== null
+    },
+
+    // Gera tradução dinâmica para padrões
+    getDynamicTranslation(market) {
+      if (!market) return null
+
+      // Padrão para TO/TU com valores dinâmicos - Sets
+      const toTuSetsMatch = market.match(/^(TO|TU)\(([0-9.]+)\)\s*-\s*Sets$/)
+      if (toTuSetsMatch) {
+        const [, type, value] = toTuSetsMatch
+        const prefix = type === 'TO' ? 'Mais de' : 'Menos de'
+        return `${prefix} ${value} Sets`
+      }
+
+      // Padrão para TO/TU com valores dinâmicos - Tie Break
+      const toTuTieBreakMatch = market.match(/^(TO|TU)\(([0-9.]+)\)\s*-\s*Tie Break$/)
+      if (toTuTieBreakMatch) {
+        const [, type, value] = toTuTieBreakMatch
+        const prefix = type === 'TO' ? 'Mais de' : 'Menos de'
+        return `${prefix} ${value} Tie Break`
+      }
+
+      // Padrão para Exact com valores dinâmicos - Sets
+      const exactSetsMatch = market.match(/^Exact\s*\(([0-9]+)\)\s*-\s*Sets$/)
+      if (exactSetsMatch) {
+        const [, value] = exactSetsMatch
+        return `Exato ${value} Sets`
+      }
+
+      // Padrão para Sets exatos com valores dinâmicos
+      const setsExactMatch = market.match(/^Sets\s*\(([0-9]+):([0-9]+)\)$/)
+      if (setsExactMatch) {
+        const [, home, away] = setsExactMatch
+        return `Sets Exatos (${home}:${away})`
+      }
+
+      // Padrão para AH com valores dinâmicos - Sets
+      const ahSetsMatch = market.match(/^(AH[12])\(([+-]?[0-9.]+)\)\s*-\s*Sets$/)
+      if (ahSetsMatch) {
+        const [, team, value] = ahSetsMatch
+        const teamName = this.getTeamName(team)
+        return `Handicap Asiático ${value} - Sets - ${teamName}`
+      }
+
+      // Padrão para AH com valores dinâmicos - Hóquei [with OT & SO]
+      const ahHockeyOtMatch = market.match(/^(AH[12])\(([+-]?[0-9.]+)\)\s*\[\s*with\s*OT\s*&\s*SO\s*\]$/)
+      if (ahHockeyOtMatch) {
+        const [, team, value] = ahHockeyOtMatch
+        const teamName = this.getTeamName(team)
+        return `Handicap Asiático ${value} - ${teamName} (com OT e SO)`
+      }
+
+      // Padrão para AH com valores dinâmicos - Hóquei [60 mins]
+      const ahHockey60Match = market.match(/^(AH[12])\(([+-]?[0-9.]+)\)\s*\[\s*60\s*mins\s*\]$/)
+      if (ahHockey60Match) {
+        const [, team, value] = ahHockey60Match
+        const teamName = this.getTeamName(team)
+        return `Handicap Asiático ${value} - ${teamName} (60 min)`
+      }
+
+      // Padrão para AH com valores dinâmicos - LoL Maps
+      const ahLoLMapsMatch = market.match(/^(AH[12])\(([+-]?[0-9.]+)\)\s*-\s*Maps$/)
+      if (ahLoLMapsMatch) {
+        const [, team, value] = ahLoLMapsMatch
+        const teamName = this.getTeamName(team)
+        return `Handicap Asiático ${value} - Maps - ${teamName}`
+      }
+
+      return null
+    },
+
+    // Extrai nomes dos times do campo match
+    getTeamNames() {
+      if (!this.surebet || !this.surebet[0] || !this.surebet[0].match) {
+        return { team1: 'Time 1', team2: 'Time 2' }
+      }
+
+      const matchString = this.surebet[0].match
+      console.log('🔍 Analisando match:', matchString)
+      
+      // Foca especificamente no caractere \u2013 (traço longo)
+      const separators = /[\u2013\u2014]/g
+      const teams = matchString.split(separators).map(team => team.trim()).filter(team => team.length > 0)
+      
+      console.log('📋 Times extraídos:', teams)
+      
+      if (teams.length >= 2) {
+        const result = {
+          team1: teams[0],
+          team2: teams[1]
+        }
+        console.log('✅ Times finais:', result)
+        return result
+      }
+      
+      // Fallback: tenta outros separadores se o traço longo não funcionar
+      const fallbackSeparators = /[\-\s+vs\s+]/i
+      const fallbackTeams = matchString.split(fallbackSeparators).map(team => team.trim()).filter(team => team.length > 0)
+      
+      if (fallbackTeams.length >= 2) {
+        const result = {
+          team1: fallbackTeams[0],
+          team2: fallbackTeams[1]
+        }
+        console.log('🔄 Fallback - Times finais:', result)
+        return result
+      }
+      
+      console.log('❌ Não foi possível extrair nomes dos times')
+      return { team1: 'Time 1', team2: 'Time 2' }
+    },
+
+    // Retorna o nome do time baseado no código (AH1, AH2, etc.)
+    getTeamName(teamCode) {
+      const teams = this.getTeamNames()
+      
+      if (teamCode === 'AH1' || teamCode === 'EH1' || teamCode === 'Team1') {
+        return teams.team1
+      } else if (teamCode === 'AH2' || teamCode === 'EH2' || teamCode === 'Team2') {
+        return teams.team2
+      }
+      
+      return teamCode === 'AH1' ? 'Time 1' : 'Time 2'
+    },
+
+    // Mostra tooltip customizado
+    showTooltip(event, market) {
+      if (!this.hasMarketTranslation(market)) return
+      
+      const translation = this.getMarketTranslation(market)
+      if (!translation) return
+      
+      // Previne múltiplos tooltips
+      if (this.tooltipTimeout) {
+        clearTimeout(this.tooltipTimeout)
+        this.tooltipTimeout = null
+      }
+      
+      // Remove tooltip existente imediatamente
+      this.hideTooltip()
+      
+      // Delay para evitar piscar
+      this.tooltipTimeout = setTimeout(() => {
+        this.createTooltip(event, translation)
+      }, 150)
+    },
+
+    // Cria o tooltip
+    createTooltip(event, translation) {
+      // Verifica se ainda existe o elemento target
+      if (!event.target || !event.target.parentNode) return
+      
+      // Remove tooltip existente
+      this.hideTooltip()
+      
+      // Cria elemento do tooltip
+      const tooltip = document.createElement('div')
+      tooltip.className = 'market-tooltip'
+      tooltip.textContent = translation
+      tooltip.id = 'market-tooltip'
+      
+      // Adiciona ao body
+      document.body.appendChild(tooltip)
+      
+      // Posiciona o tooltip
+      const rect = event.target.getBoundingClientRect()
+      const tooltipRect = tooltip.getBoundingClientRect()
+      
+      let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2)
+      let top = rect.top - tooltipRect.height - 8
+      let isAbove = true
+      
+      // Ajusta se sair da tela
+      if (left < 8) left = 8
+      if (left + tooltipRect.width > window.innerWidth - 8) {
+        left = window.innerWidth - tooltipRect.width - 8
+      }
+      
+      // Se não couber acima, coloca abaixo
+      if (top < 8) {
+        top = rect.bottom + 8
+        isAbove = false
+      }
+      
+      // Adiciona classe para posicionamento da seta
+      if (isAbove) {
+        tooltip.classList.add('above')
+      }
+      
+      tooltip.style.left = left + 'px'
+      tooltip.style.top = top + 'px'
+      
+      // Adiciona animação
+      requestAnimationFrame(() => {
+        if (tooltip && tooltip.parentNode) {
+          tooltip.classList.add('show')
+        }
+      })
+      
+      // Armazena referência para limpeza
+      this.currentTooltip = tooltip
+    },
+
+    // Esconde tooltip customizado
+    hideTooltip() {
+      // Limpa timeout se existir
+      if (this.tooltipTimeout) {
+        clearTimeout(this.tooltipTimeout)
+        this.tooltipTimeout = null
+      }
+      
+      // Remove tooltip atual
+      if (this.currentTooltip) {
+        this.currentTooltip.classList.remove('show')
+        setTimeout(() => {
+          if (this.currentTooltip && this.currentTooltip.parentNode) {
+            this.currentTooltip.parentNode.removeChild(this.currentTooltip)
+          }
+          this.currentTooltip = null
+        }, 200)
+      }
+      
+      // Remove tooltip por ID (fallback)
+      const tooltip = document.getElementById('market-tooltip')
+      if (tooltip) {
+        tooltip.classList.remove('show')
+        setTimeout(() => {
+          if (tooltip && tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip)
+          }
+        }, 200)
+      }
+    },
+
+    // Limpa todos os tooltips órfãos
+    clearAllTooltips() {
+      const tooltips = document.querySelectorAll('.market-tooltip')
+      tooltips.forEach(tooltip => {
+        if (tooltip.parentNode) {
+          tooltip.parentNode.removeChild(tooltip)
+        }
+      })
+    },
+
+    // Configura limpeza automática de tooltips
+    setupTooltipCleanup() {
+      // Limpa tooltips ao clicar fora
+      this.clickHandler = (event) => {
+        if (!event.target.closest('.market.has-translation')) {
+          this.hideTooltip()
+        }
+      }
+      document.addEventListener('click', this.clickHandler)
+
+      // Limpa tooltips ao rolar a página
+      this.scrollHandler = () => {
+        this.hideTooltip()
+      }
+      window.addEventListener('scroll', this.scrollHandler, { passive: true })
+
+      // Limpa tooltips ao redimensionar a janela
+      this.resizeHandler = () => {
+        this.hideTooltip()
+      }
+      window.addEventListener('resize', this.resizeHandler, { passive: true })
+
+      // Limpa tooltips ao mudar de rota (Vue Router)
+      if (this.$router) {
+        this.routerHandler = () => {
+          this.clearAllTooltips()
+        }
+        this.$router.beforeEach(this.routerHandler)
+      }
+    },
+
+    // Remove listeners de limpeza
+    removeTooltipCleanup() {
+      if (this.clickHandler) {
+        document.removeEventListener('click', this.clickHandler)
+      }
+      if (this.scrollHandler) {
+        window.removeEventListener('scroll', this.scrollHandler)
+      }
+      if (this.resizeHandler) {
+        window.removeEventListener('resize', this.resizeHandler)
+      }
+      if (this.routerHandler && this.$router) {
+        this.$router.beforeEach(this.routerHandler)
+      }
+    }
+
   }
 }
 </script>
@@ -763,6 +1120,7 @@ export default {
     opacity: 0;
   }
 }
+
 
 .card-header {
   display: flex;
@@ -1043,6 +1401,20 @@ export default {
   background: var(--bg-overlay);
   padding: 2px 6px;
   border-radius: 4px;
+  transition: all 0.3s ease;
+  position: relative;
+  cursor: default;
+  
+  &.has-translation {
+    cursor: help;
+    
+    &:hover {
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+    }
+  }
 }
 
 .bet-details {
@@ -1318,4 +1690,50 @@ export default {
 }
 </style>
 
-
+<!-- Estilos globais para o tooltip customizado -->
+<style lang="scss">
+.market-tooltip {
+  position: fixed;
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-primary, #333333);
+  z-index: 10000;
+  max-width: 300px;
+  word-wrap: break-word;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+  
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  // Seta do tooltip
+  &::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--bg-primary, #1a1a1a);
+  }
+  
+  // Seta do tooltip quando está acima
+  &.above::before {
+    top: -6px;
+    border-top: none;
+    border-bottom: 6px solid var(--bg-primary, #1a1a1a);
+  }
+}
+</style>

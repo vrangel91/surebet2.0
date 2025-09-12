@@ -1,5 +1,5 @@
 <template>
-  <div class="profile-container">
+    <div class="profile-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -428,7 +428,17 @@ export default {
   overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .main-content {
@@ -753,6 +763,12 @@ input:checked + .toggle-slider:before {
   .profile-layout {
     max-width: 100%;
     margin: 0 16px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .profile-container {
+    margin-left: 0; /* Remove margem em mobile/tablet */
   }
 }
 
