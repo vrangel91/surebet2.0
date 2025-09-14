@@ -1,16 +1,5 @@
 <template>
 
-    <!-- Botão de fallback para mobile (sempre visível) -->
-    <button 
-      v-if="windowWidth < 1024" 
-      class="mobile-fallback-button" 
-      @click="toggleMobileMenu"
-      :class="{ active: mobileMenuOpen }"
-      :title="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
-    >
-      <Menu v-if="!mobileMenuOpen" size="20" />
-      <X v-else size="20" />
-    </button>
 
     <!-- Overlay para mobile -->
     <div 
@@ -73,14 +62,10 @@
   
           <!-- Juros Compostos -->
           <li class="nav-item" :class="{ active: $route.path === '/compound-interest' }">
-            <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleCompoundInterestClick" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
+            <router-link to="/compound-interest" class="nav-link" :title="shouldBeCollapsed ? 'Juros Compostos' : ''">
               <Calculator class="nav-icon" size="18" />
               <span class="nav-text" v-show="shouldShowTexts">Juros Compostos</span>
-              <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-                <Lock class="vip-icon" size="14" />
-                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
-              </div>
-            </div>
+            </router-link>
           </li>
   
           <!-- Indicações -->
@@ -101,14 +86,10 @@
   
           <!-- Relatórios -->
           <li class="nav-item" :class="{ active: $route.path === '/reports' }">
-            <div class="nav-link" :class="{ 'locked': !isVIP }" @click="handleReportsClick" :title="shouldBeCollapsed ? 'Relatórios' : ''">
+            <router-link to="/reports" class="nav-link" :title="shouldBeCollapsed ? 'Relatórios' : ''">
               <BarChart3 class="nav-icon" size="18" />
               <span class="nav-text" v-show="shouldShowTexts">Relatórios</span>
-              <div v-if="!isVIP" class="vip-indicator" :title="shouldBeCollapsed ? 'Acesso VIP' : 'Acesso exclusivo para contas Premium/VIP'">
-                <Lock class="vip-icon" size="14" />
-                <span v-show="shouldShowTexts" class="vip-text">VIP</span>
-              </div>
-            </div>
+            </router-link>
           </li>
   
           <!-- Ranking -->
@@ -121,15 +102,18 @@
   
           <!-- Contas de Casas de Apostas -->
           <li class="nav-item" :class="{ active: $route.path === '/bookmaker-accounts' }">
-            <div class="nav-link accounts-locked" @click="showAccountsRestrictedMessage" :title="shouldBeCollapsed ? 'Contas' : ''">
+            <router-link to="/bookmaker-accounts" class="nav-link" :title="shouldBeCollapsed ? 'Contas' : ''">
               <Building2 class="nav-icon" size="18" />
               <span class="nav-text" v-show="shouldShowTexts">Contas</span>
-              <div class="lock-indicator" :title="shouldBeCollapsed ? 'Acesso Restrito' : 'Funcionalidade em manutenção'">
-                <svg class="lock-icon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
-                </svg>
-              </div>
-            </div>
+            </router-link>
+          </li>
+
+          <!-- Relatórios de Surebets -->
+          <li class="nav-item" :class="{ active: $route.path === '/surebet-reports' }">
+            <router-link to="/surebet-reports" class="nav-link" :title="shouldBeCollapsed ? 'Relatórios de Surebets' : ''">
+              <FileText class="nav-icon" size="18" />
+              <span class="nav-text" v-show="shouldShowTexts">Relatórios de Surebets</span>
+            </router-link>
           </li>
   
   
@@ -195,6 +179,7 @@
           <span class="developer-text" v-show="shouldShowTexts">Desenvolvido por</span>
           <span class="developer-name">d2i</span>
         </div>
+        
       </div>
     </aside>
   </template>
@@ -206,22 +191,20 @@
     X,
     ChevronRight, 
     Target, 
-    Lock, 
     Calculator, 
     Users, 
     CreditCard, 
     BarChart3, 
     Trophy, 
     Building2, 
+    FileText,
     HelpCircle, 
     BookOpen, 
     LogOut,
     Download
   } from 'lucide-vue-next'
   
-  import axios from '@/utils/axios'
-  import vipSecurityManager from '@/utils/vipSecurityManager'
-  import { useSidebarState } from '@/composables/useSidebarState'
+import { useSidebarState } from '@/composables/useSidebarState'
   
   export default {
     name: 'Sidebar',
@@ -229,13 +212,13 @@
       Menu,
       ChevronRight,
       Target,
-      Lock,
       Calculator,
       Users,
       CreditCard,
       BarChart3,
       Trophy,
       Building2,
+      FileText,
       HelpCircle,
       BookOpen,
       LogOut,
@@ -257,19 +240,31 @@
     data() {
       return {
         internalCollapsed: false,
-        countdownTimer: null,
-        userVIPData: null,
         installingPWA: false,
-        pwaInstallable: false,
-        // Mobile menu state
-        mobileMenuOpen: false,
-        windowWidth: window.innerWidth,
-        isMobile: window.innerWidth < 768,
-        isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
-        isDesktop: window.innerWidth >= 1024
+        pwaInstallable: false
       }
     },
     computed: {
+      // Mobile menu state from store
+      mobileMenuOpen() {
+        return this.$store.getters.mobileMenuOpen
+      },
+      
+      windowWidth() {
+        return this.$store.getters.windowWidth
+      },
+      
+      isDesktop() {
+        return this.$store.getters.isDesktop
+      },
+      
+      isMobile() {
+        return this.$store.getters.isMobile
+      },
+      
+      isTablet() {
+        return this.$store.getters.isTablet
+      },
   
       // Computed para determinar se a sidebar deve estar colapsada
       shouldBeCollapsed() {
@@ -299,209 +294,6 @@
       isAdmin() {
         return this.$store.getters.isAdmin
       },
-  
-      isVIP() {
-        return this.$store.getters.isVIP
-      },
-  
-      userAccountType() {
-        return this.$store.getters.userAccountType
-      },
-      
-      // Sistema de Expiração da Conta
-      accountExpiration() {
-        // Retornar apenas dados reais da API
-        return this.userVIPData?.dataFim || null
-      },
-      
-      accountStatusClass() {
-        if (!this.accountExpiration) return 'status-active'
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (timeDiff < 0) return 'status-expired'
-        if (daysUntilExpiration <= 7) return 'status-warning'
-        return 'status-active'
-      },
-      
-      accountStatusText() {
-        if (!this.accountExpiration) return 'Ativo'
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        
-        if (timeDiff < 0) return 'Expirado'
-        return 'Ativo'
-      },
-      
-      expirationStatusClass() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (timeDiff < 0) return 'expired'
-        if (daysUntilExpiration <= 7) return 'warning'
-        return 'normal'
-      },
-      
-      expirationDisplayText() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        
-        if (timeDiff < 0) {
-          return 'Conta expirada'
-        }
-        
-        // Calcular dias e horas restantes
-        const totalHours = Math.floor(timeDiff / (1000 * 60 * 60))
-        const days = Math.floor(totalHours / 24)
-        const hours = totalHours % 24
-        
-        if (days === 0) {
-          if (hours === 0) {
-            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60))
-            return `Expira em ${minutes} min`
-          }
-          return `Expira em ${hours}h`
-        } else if (days === 1) {
-          return `Expira em ${days}d ${hours}h`
-        } else {
-          return `Expira em ${days}d ${hours}h`
-        }
-      },
-      
-  
-      
-      showExpirationAlert() {
-        if (!this.accountExpiration) return false
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        return timeDiff < 0 || daysUntilExpiration <= 7
-      },
-      
-      expirationAlertClass() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        
-        return timeDiff < 0 ? 'alert-expired' : 'alert-warning'
-      },
-      
-      expirationAlertText() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        
-        if (timeDiff < 0) {
-          return 'Renovação necessária!'
-        }
-        
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (daysUntilExpiration <= 1) {
-          return 'Renovação urgente!'
-        } else if (daysUntilExpiration <= 3) {
-          return 'Renovação recomendada'
-        } else {
-          return 'Considere renovar'
-        }
-      },
-      
-      showRenewButton() {
-        if (!this.accountExpiration) return false
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        return timeDiff < 0 || daysUntilExpiration <= 7
-      },
-      
-      renewButtonTitle() {
-        if (!this.accountExpiration) return 'Renovar conta'
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        
-        if (timeDiff < 0) {
-          return 'Conta expirada - Renovar agora'
-        }
-        
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (daysUntilExpiration <= 1) {
-          return 'Renovação urgente - Expira em breve'
-        } else {
-          return `Renovar conta - Expira em ${daysUntilExpiration} dias`
-        }
-      },
-  
-      // Computed para a barra de progresso de expiração
-      expirationProgressClass() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (timeDiff < 0) return 'progress-expired'
-        if (daysUntilExpiration <= 7) return 'progress-warning'
-        return 'progress-active'
-      },
-  
-      expirationProgressPercent() {
-        if (!this.accountExpiration) return 0
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const totalDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (totalDays <= 0) return 100
-        return ((totalDays / 7) * 100)
-      },
-  
-      expirationProgressText() {
-        if (!this.accountExpiration) return ''
-        
-        const now = new Date()
-        const expiration = new Date(this.accountExpiration)
-        const timeDiff = expiration - now
-        const daysUntilExpiration = Math.ceil(timeDiff / (1000 * 60 * 60 * 24))
-        
-        if (timeDiff < 0) {
-          return 'Conta expirada'
-        }
-        
-        if (daysUntilExpiration <= 1) {
-          return 'Expira em breve'
-        } else if (daysUntilExpiration <= 3) {
-          return 'Renovação recomendada'
-        } else {
-          return 'Conta ativa'
-        }
-      },
       
       // Computed para mostrar botão de instalação PWA
       showPWAInstall() {
@@ -523,37 +315,22 @@
   
   
       
-      // Observar mudanças no usuário atual para recarregar dados VIP
-      currentUser: {
-        handler(newUser) {
-          if (newUser && newUser.id) {
-            this.loadUserVIPData()
-          } else {
-            this.userVIPData = null
-          }
-        },
-        immediate: true
-      }
     },
     mounted() {
       console.log('🔧 [Sidebar] Componente montado')
       console.log('🔧 [Sidebar] Store state:', {
         isAuthenticated: this.$store.getters.isAuthenticated,
         currentUser: this.$store.getters.currentUser,
-        isAdmin: this.$store.getters.isAdmin,
-        isVIP: this.$store.getters.isVIP
+        isAdmin: this.$store.getters.isAdmin
       })
       console.log('🔧 [Sidebar] Props recebidas:', {
         sidebarCollapsed: this.sidebarCollapsed
       })
       console.log('🔧 [Sidebar] Estado inicial do componente:', {
-        shouldBeCollapsed: this.shouldBeCollapsed,
-        userVIPData: this.userVIPData
+        shouldBeCollapsed: this.shouldBeCollapsed
       })
       
       this.loadSidebarState()
-      this.startCountdownTimer()
-      this.loadUserVIPData()
       
       // Monitorar mudanças no localStorage para configurações
       window.addEventListener('storage', (event) => {
@@ -582,35 +359,9 @@
       handleDashboardClick() {
         this.$router.push('/')
       },
-      handleReportsClick() {
-        if (this.isVIP) {
-          // Se já estiver na página de relatórios, força o refresh
-          if (this.$route.path === '/reports') {
-            // Força o refresh da página
-            window.location.reload()
-          } else {
-            // Navega para a página de relatórios
-            this.$router.push('/reports')
-          }
-        } else {
-          this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
-          this.$router.push('/plans')
-        }
-      },
-      handleCompoundInterestClick() {
-        if (this.isVIP) {
-          this.$router.push('/compound-interest')
-        } else {
-          this.showNotification('Acesso exclusivo para contas Premium/VIP. Faça upgrade da sua conta para continuar.', 'error')
-          this.$router.push('/plans')
-        }
-      },
       
   
       
-      showAccountsRestrictedMessage() {
-        this.showNotification('A funcionalidade de Contas está temporariamente indisponível para manutenção', 'warning')
-      },
       
   
       showNotification(message, type = 'info') {
@@ -626,87 +377,6 @@
       logout() {
         this.$store.dispatch('logout')
         this.$router.push('/login')
-      },
-      renewAccount() {
-        // Redireciona para a página de planos para renovação
-        this.$router.push('/plans')
-        this.showNotification('Redirecionando para renovação da conta...', 'info')
-      },
-      
-      // 🔒 Verificar acesso VIP com sistema de segurança
-      async checkVIPAccess() {
-        try {
-          console.log('🔒 [Sidebar] Verificando acesso VIP...');
-          
-          const result = await vipSecurityManager.checkVIPAccess();
-          
-          if (result.access) {
-            console.log('✅ [Sidebar] Acesso VIP autorizado:', result.source);
-            this.userVIP = {
-              isVIP: result.data.isValid,
-              expiresAt: result.data.expiration
-            };
-            return true;
-          } else {
-            console.log('❌ [Sidebar] Acesso VIP bloqueado:', result.reason);
-            this.userVIP = { isVIP: false, expiresAt: null };
-            return false;
-          }
-          
-        } catch (error) {
-          console.error('❌ [Sidebar] Erro ao verificar acesso VIP:', error);
-          this.userVIP = { isVIP: false, expiresAt: null };
-          return false;
-        }
-      },
-      
-      // 🔄 Carregar dados VIP com sistema de segurança
-      async loadUserVIPData() {
-        try {
-          console.log('🔄 [Sidebar] Carregando dados VIP...');
-          
-          // Verificar acesso VIP primeiro
-          const hasAccess = await this.checkVIPAccess();
-          
-          if (!hasAccess) {
-            console.log('❌ [Sidebar] Sem acesso VIP - continuando normalmente');
-            this.userVIP = { isVIP: false, expiresAt: null };
-            return;
-          }
-          
-          // Se tem acesso, carregar dados adicionais se necessário
-          if (this.userVIP?.isVIP) {
-            console.log('✅ [Sidebar] Dados VIP carregados com sucesso');
-          }
-          
-        } catch (error) {
-          console.error('❌ [Sidebar] Erro ao carregar dados VIP:', error);
-          this.userVIP = { isVIP: false, expiresAt: null };
-        }
-      },
-      
-  
-      
-  
-      
-      startCountdownTimer() {
-        // Limpa timer anterior se existir
-        this.stopCountdownTimer()
-        
-        // Inicia timer para atualizar countdown a cada 5 minutos
-        this.countdownTimer = setInterval(() => {
-          // Recarregar dados do VIP a cada 5 minutos
-          if (this.isVIP && this.currentUser) {
-            this.loadUserVIPData()
-          }
-        }, 300000) // Aumentado para 5 minutos (era 30 segundos)
-      },
-      
-      stopCountdownTimer() {
-        if (this.countdownTimer) {
-          clearInterval(this.countdownTimer)
-          this.countdownTimer = null
-        }
       },
       
       // Carregar estado da sidebar das configurações
@@ -809,24 +479,21 @@
 
       // Métodos para controle do menu mobile
       toggleMobileMenu() {
-        this.mobileMenuOpen = !this.mobileMenuOpen;
+        this.$store.commit('toggleMobileMenu');
         if (this.mobileMenuOpen) {
           document.body.style.overflow = 'hidden';
         } else {
           document.body.style.overflow = '';
         }
       },
-
+      
       closeMobileMenu() {
-        this.mobileMenuOpen = false;
+        this.$store.commit('setMobileMenuOpen', false);
         document.body.style.overflow = '';
       },
 
       detectScreenSize() {
-        this.windowWidth = window.innerWidth;
-        this.isMobile = this.windowWidth < 768;
-        this.isTablet = this.windowWidth >= 768 && this.windowWidth < 1024;
-        this.isDesktop = this.windowWidth >= 1024;
+        this.$store.commit('setWindowWidth', window.innerWidth);
         
         // Fechar menu mobile se mudou para desktop
         if (this.isDesktop && this.mobileMenuOpen) {
@@ -854,8 +521,6 @@
         this.pwaInstallable = false;
       }
       
-      // Carregar dados VIP do usuário
-      this.loadUserVIPData();
     },
 
     beforeUnmount() {
@@ -863,10 +528,6 @@
       window.removeEventListener('beforeinstallprompt', this.capturePWAInstallPrompt);
       window.removeEventListener('storage', this.handleStorageChange);
       
-      // Limpar timer se existir
-      if (this.countdownTimer) {
-        clearInterval(this.countdownTimer);
-      }
       
       // Restaurar overflow do body
       document.body.style.overflow = '';
@@ -896,7 +557,7 @@
     border-right: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
     flex-shrink: 0;
     z-index: 100;
-    overflow-y: auto;
+    overflow: hidden;
     transition: 
       width 0.3s ease,
       background-color 0.3s ease,
@@ -1021,9 +682,10 @@
   
   .sidebar.collapsed .nav-link {
     justify-content: center;
-    padding: 12px 8px;
+    padding: 10px 8px;
     position: relative;
     transition: all 0.3s ease;
+    min-height: 44px;
   }
   
   .sidebar.collapsed .nav-link:hover {
@@ -1125,8 +787,8 @@
   /* Ajuste para nav-link com badge VIP no sidebar colapsado */
   .sidebar.collapsed .nav-link:has(.vip-indicator) {
     padding-right: 8px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    padding-top: 6px;
+    padding-bottom: 6px;
   }
   
   /* Tooltip para badges VIP no sidebar colapsado */
@@ -1277,6 +939,7 @@
     align-items: center;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+    flex-shrink: 0;
   }
   
   /* Footer do Sidebar */
@@ -1285,6 +948,7 @@
     padding: 16px 20px;
     border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
     background: var(--bg-secondary, #2a2a2a);
+    flex-shrink: 0;
   }
   
   .developer-info {
@@ -1326,6 +990,7 @@
     font-size: 12px;
     font-weight: 700;
   }
+
   
   .sidebar-toggle {
     background: none;
@@ -1781,6 +1446,9 @@
   .sidebar-nav {
     padding: 16px 20px;
     flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
   
   .nav-list {
@@ -1796,20 +1464,21 @@
   .nav-link {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 10px;
+    padding: 10px 14px;
     background: var(--bg-secondary, #2a2a2a);
     border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
     border-radius: 8px;
     color: var(--text-primary, #ffffff);
     text-decoration: none;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     transition: all 0.3s ease;
     cursor: pointer;
     width: 100%;
     text-align: left;
     position: relative;
+    min-height: 44px;
   }
   
   .nav-link:hover {
@@ -2292,19 +1961,20 @@
   /* Melhorias para touch em mobile */
   @media (max-width: 1023px) {
     .nav-link {
-      padding: 16px 20px;
-      min-height: 56px;
+      padding: 12px 16px;
+      min-height: 48px;
       display: flex;
       align-items: center;
+      touch-action: manipulation; /* Melhorar responsividade do touch */
     }
     
     .nav-icon {
-      width: 20px;
-      height: 20px;
+      width: 18px;
+      height: 18px;
     }
     
     .nav-text {
-      font-size: 16px;
+      font-size: 14px;
     }
 
     /* Estilos específicos para o header mobile */
@@ -2327,6 +1997,26 @@
     
     .mobile-toggle {
       flex-shrink: 0;
+      touch-action: manipulation; /* Melhorar responsividade do touch */
+    }
+
+    /* Corrigir problemas de overflow em mobile */
+    .sidebar {
+      max-width: 100vw;
+      overflow: hidden;
+    }
+
+    /* Corrigir problemas de posicionamento em mobile */
+    .sidebar.mobile-open {
+      width: min(280px, 90vw) !important;
+      max-width: 90vw;
+    }
+
+    /* Melhorar área de toque para botões */
+    .mobile-fallback-button {
+      min-width: 44px;
+      min-height: 44px;
+      touch-action: manipulation;
     }
   }
 

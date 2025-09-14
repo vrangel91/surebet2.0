@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresVIP="true">
-    <div class="surebets-container">
+  <div class="surebets-container">
       <!-- Sidebar -->
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
@@ -160,7 +159,6 @@
         </div>
       </main>
     </div>
-  </RouteGuard>
 </template>
 
 <script>
@@ -170,7 +168,6 @@ import SurebetCard from '../components/SurebetCard.vue'
 import VirtualScroll from '../components/VirtualScroll.vue'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
-import RouteGuard from '../components/RouteGuard.vue'
 
 // Composables
 import { useOptimizedFilters } from '../composables/useOptimizedFilters'
@@ -184,8 +181,7 @@ export default {
     SurebetCard,
     VirtualScroll,
     Sidebar,
-    Header,
-    RouteGuard
+    Header
   },
   setup() {
     const store = useStore()

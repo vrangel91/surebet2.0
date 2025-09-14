@@ -21,17 +21,25 @@ export class PWAAutoRefresh {
         this.forceRefresh();
       });
 
-      // Força atualização quando a página ganha foco (usuário volta para a aba)
+      // Verifica atualizações apenas quando a página ganha foco após estar inativa por mais de 5 minutos
+      let lastFocusTime = Date.now();
       window.addEventListener('focus', () => {
-        console.log('🔄 [PWA] Página ganhou foco, verificando atualizações...');
-        this.checkForUpdates();
+        const now = Date.now();
+        const timeSinceLastFocus = now - lastFocusTime;
+        
+        // Só verifica se passou mais de 5 minutos desde o último foco
+        if (timeSinceLastFocus > 300000) { // 5 minutos
+          console.log('🔄 [PWA] Página ganhou foco após inatividade, verificando atualizações...');
+          this.checkForUpdates();
+        }
+        lastFocusTime = now;
       });
 
-      // Força atualização quando a página é carregada
-      window.addEventListener('load', () => {
-        console.log('🔄 [PWA] Página carregada, verificando atualizações...');
-        this.checkForUpdates();
-      });
+      // Remove verificação automática no load - só verifica quando necessário
+      // window.addEventListener('load', () => {
+      //   console.log('🔄 [PWA] Página carregada, verificando atualizações...');
+      //   this.checkForUpdates();
+      // });
     }
   }
 

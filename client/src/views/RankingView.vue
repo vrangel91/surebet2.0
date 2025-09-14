@@ -1,5 +1,4 @@
 <template>
-    <RouteGuard :requiresAuth="true">
       <div class="ranking-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
@@ -603,7 +602,6 @@
   
       <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary"     />
     </div>
-      </RouteGuard>
   </template>
   
   <script>
@@ -611,7 +609,6 @@
   import Sidebar from '../components/Sidebar.vue'
   import Header from '../components/Header.vue'
   import GlossaryModal from '../components/GlossaryModal.vue'
-  import RouteGuard from '../components/RouteGuard.vue'
   import { Chart, registerables } from 'chart.js'
   import { filterOptions } from '../config/filters.js'
   import { 
@@ -624,7 +621,7 @@
   
   export default {
     name: 'RankingView',
-    components: { Sidebar, Header, GlossaryModal, RouteGuard },
+    components: { Sidebar, Header, GlossaryModal },
     
     data() {
       return {
@@ -4437,6 +4434,14 @@
   @media (max-width: 1023px) {
     .ranking-container {
       margin-left: 0; /* Remove margem em mobile/tablet */
+      width: 100%;
+      max-width: 100%;
+      
+      &.sidebar-collapsed {
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
+      }
     }
   }
   
@@ -5297,6 +5302,9 @@
      flex-direction: column;
      height: 100%;
      min-height: 400px;
+     justify-content: center;
+     align-items: center;
+     text-align: center;
    }
   
    .chart-container-compact {
@@ -5320,6 +5328,9 @@
      flex-direction: column;
      height: 100%;
      min-height: 400px;
+     justify-content: center;
+     align-items: center;
+     text-align: center;
    }
   
       .ranking-header {
@@ -5835,6 +5846,147 @@
   
   
   
+  /* Media queries para telas muito grandes */
+  @media (min-width: 1400px) {
+    .ranking-container {
+      width: calc(100% - 280px);
+      max-width: calc(100% - 280px);
+    }
+    
+    .content-header {
+      padding: 32px 40px;
+    }
+    
+    .page-title {
+      font-size: 36px;
+    }
+    
+    .page-subtitle {
+      font-size: 18px;
+    }
+    
+    .stats-dashboard {
+      padding: 32px 40px;
+      gap: 24px;
+    }
+    
+    .charts-grid {
+      padding: 0 40px 32px;
+      gap: 32px;
+    }
+    
+    .chart-wrapper .chart-container {
+      height: 350px;
+      min-height: 350px;
+    }
+    
+    .chart-section {
+      min-height: 600px;
+    }
+    
+    .chart-container {
+      height: 350px;
+      min-height: 350px;
+    }
+    
+    .markets-layout {
+      padding: 0 40px 32px;
+      gap: 32px;
+    }
+    
+    .ranking-section,
+    .insights-section,
+    .markets-analysis-section {
+      margin: 0 40px 40px;
+    }
+  }
+
+  /* Media queries para telas médias */
+  @media (min-width: 1200px) and (max-width: 1399px) {
+    .content-header {
+      padding: 28px 32px;
+    }
+    
+    .page-title {
+      font-size: 32px;
+    }
+    
+    .stats-dashboard {
+      padding: 28px 32px;
+      gap: 20px;
+    }
+    
+    .charts-grid {
+      padding: 0 32px 28px;
+      gap: 24px;
+    }
+    
+    .markets-layout {
+      padding: 0 32px 28px;
+      gap: 24px;
+    }
+    
+    .ranking-section,
+    .insights-section,
+    .markets-analysis-section {
+      margin: 0 32px 32px;
+    }
+  }
+
+  /* Media queries para tablets em landscape */
+  @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+    .charts-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    
+    .markets-layout {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    
+    .markets-summary {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .chart-wrapper .chart-container {
+      height: 300px;
+      min-height: 300px;
+    }
+    
+    .chart-container {
+      height: 300px;
+      min-height: 300px;
+    }
+  }
+
+  /* Media queries para tablets em portrait */
+  @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+    .charts-grid {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .markets-layout {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    
+    .markets-summary {
+      grid-template-columns: 1fr;
+    }
+    
+    .chart-wrapper .chart-container {
+      height: 280px;
+      min-height: 280px;
+    }
+    
+    .chart-container {
+      height: 280px;
+      min-height: 280px;
+    }
+  }
+
   @media (max-width: 1200px) {
     .main-content { margin-left: 0; }
     .charts-grid { grid-template-columns: repeat(2, 1fr); }
@@ -5860,24 +6012,99 @@
     .markets-ranking-compact {
       min-height: 380px;
       height: 100%;
+      justify-content: flex-start;
+      align-items: stretch;
+      text-align: left;
     }
     .markets-chart-section {
       min-height: 380px;
       height: 100%;
+      justify-content: flex-start;
+      align-items: stretch;
+      text-align: left;
     }
   }
   
    @media (max-width: 768px) {
-    .main-content { padding-bottom: 120px; }
+    .main-content { 
+      padding-bottom: 120px; 
+      -webkit-overflow-scrolling: touch;
+    }
+    
     .content-header { 
       flex-direction: column; 
       align-items: flex-start; 
       gap: 16px; 
       padding: 16px 20px; 
     }
-    .filters-section { flex-direction: column; align-items: center; padding: 0 20px; }
-    .stats-dashboard { grid-template-columns: 1fr; padding: 0 20px; }
-    .charts-grid { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
+    
+    .page-title {
+      font-size: 24px;
+    }
+    
+    .page-subtitle {
+      font-size: 14px;
+    }
+    
+    .data-status-indicator {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .filters-section { 
+      flex-direction: column; 
+      align-items: center; 
+      padding: 0 20px; 
+      gap: 16px;
+    }
+    
+    .filter-group {
+      width: 100%;
+    }
+    
+    .filter-select {
+      width: 100%;
+      font-size: 16px;
+      padding: 12px 16px;
+    }
+    
+    .stats-dashboard { 
+      grid-template-columns: 1fr; 
+      padding: 0 20px; 
+      gap: 16px;
+    }
+    
+    .stat-card {
+      padding: 16px;
+    }
+    
+    .stat-icon {
+      font-size: 24px;
+    }
+    
+    .stat-number {
+      font-size: 20px;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+    }
+    
+    .charts-grid { 
+      grid-template-columns: 1fr; 
+      padding: 0 20px; 
+      gap: 16px;
+    }
+    
+    .chart-wrapper {
+      padding: 16px;
+    }
+    
+    .chart-wrapper h4 {
+      font-size: 16px;
+    }
+    
     .insights-grid { grid-template-columns: 1fr; }
     .ranking-table { font-size: 12px; }
     .ranking-table th, .ranking-table td { padding: 8px 4px; }
@@ -5914,10 +6141,37 @@
      .markets-ranking-compact {
        min-height: 350px;
        height: 100%;
+       justify-content: flex-start;
+       align-items: stretch;
+       text-align: left;
+       padding: 16px;
      }
      .markets-chart-section {
        min-height: 350px;
        height: 100%;
+       justify-content: flex-start;
+       align-items: stretch;
+       text-align: left;
+       padding: 16px;
+     }
+     
+     /* Melhorias para centralização em mobile */
+     .markets-main-layout {
+       grid-template-columns: 1fr;
+       gap: 16px;
+       align-items: stretch;
+     }
+     
+     .chart-header,
+     .ranking-header {
+       text-align: center;
+       margin-bottom: 16px;
+     }
+     
+     .chart-header h4,
+     .ranking-header h4 {
+       font-size: 16px;
+       margin: 0;
      }
      .chart-stats { 
        grid-template-columns: 1fr; 
@@ -6047,6 +6301,10 @@
   }
   
   @media (max-width: 480px) {
+    .content-header {
+      padding: 12px 16px;
+    }
+    
     .page-title {
       font-size: 20px;
     }
@@ -6055,12 +6313,26 @@
       font-size: 13px;
     }
     
-    /* Otimizações para dispositivos muito pequenos */
+    .data-status-indicator {
+      font-size: 12px;
+    }
+    
+    .filters-section {
+      padding: 0 16px;
+      gap: 12px;
+    }
+    
+    .filter-group label {
+      font-size: 14px;
+    }
+    
     .filter-select {
       font-size: 14px;
       padding: 10px 14px;
       border-radius: 8px;
       margin-bottom: 12px;
+      background-size: 16px;
+      padding-right: 44px;
     }
     
     .filter-select option {
@@ -6068,20 +6340,304 @@
       padding: 8px 14px;
     }
     
-    /* Ajustar tamanho do ícone para telas pequenas */
-    .filter-select {
-      background-size: 16px;
-      padding-right: 44px;
+    .stats-dashboard {
+      padding: 0 16px;
+      gap: 12px;
     }
-  }
-  
-  @media (max-width: 480px) {
-    .page-title {
+    
+    .stat-card {
+      padding: 12px;
+    }
+    
+    .stat-icon {
       font-size: 20px;
     }
     
+    .stat-number {
+      font-size: 18px;
+    }
+    
+    .stat-label {
+      font-size: 11px;
+    }
+    
+    .charts-grid {
+      padding: 0 16px;
+      gap: 12px;
+    }
+    
+    .chart-wrapper {
+      padding: 12px;
+    }
+    
+    .chart-wrapper h4 {
+      font-size: 14px;
+    }
+    
+    .chart-description {
+      font-size: 11px;
+    }
+    
+    .ranking-section,
+    .insights-section,
+    .markets-analysis-section {
+      margin: 0 16px 24px;
+    }
+    
+    /* Melhorias para centralização em mobile pequeno */
+    .markets-ranking-compact,
+    .markets-chart-section {
+      padding: 12px;
+      justify-content: flex-start;
+      align-items: stretch;
+      text-align: left;
+    }
+    
+    .chart-header,
+    .ranking-header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    
+    .chart-header h4,
+    .ranking-header h4 {
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .markets-main-layout {
+      gap: 12px;
+    }
+    
+    .section-header h3 {
+      font-size: 18px;
+    }
+    
+    .ranking-table {
+      font-size: 10px;
+    }
+    
+    .ranking-table th,
+    .ranking-table td {
+      padding: 6px 3px;
+    }
+    
+    .modern-table {
+      font-size: 10px;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+      padding: 6px 4px;
+    }
+    
+    .detail-table {
+      font-size: 10px;
+    }
+    
+    .detail-table th,
+    .detail-table td {
+      padding: 8px 4px;
+    }
+    
+    .market-name-cell {
+      min-width: 120px;
+    }
+    
+    .category-cell {
+      min-width: 80px;
+    }
+    
+    .detail-table .position {
+      width: 40px;
+      font-size: 12px;
+    }
+    
+    .detail-table .count {
+      width: 50px;
+      font-size: 11px;
+    }
+    
+    .detail-table .profit {
+      width: 80px;
+      font-size: 11px;
+    }
+    
+    .detail-table .score {
+      width: 60px;
+      font-size: 10px;
+      padding: 3px 6px;
+    }
+  }
+  
+  /* Media queries para telas muito pequenas */
+  @media (max-width: 320px) {
+    .content-header {
+      padding: 8px 12px;
+    }
+    
+    .page-title {
+      font-size: 18px;
+    }
+    
     .page-subtitle {
+      font-size: 12px;
+    }
+    
+    .data-status-indicator {
+      font-size: 11px;
+    }
+    
+    .filters-section {
+      padding: 0 12px;
+      gap: 8px;
+    }
+    
+    .filter-group label {
       font-size: 13px;
+    }
+    
+    .filter-select {
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background-size: 14px;
+      padding-right: 40px;
+    }
+    
+    .filter-select option {
+      font-size: 13px;
+      padding: 6px 12px;
+    }
+    
+    .stats-dashboard {
+      padding: 0 12px;
+      gap: 8px;
+    }
+    
+    .stat-card {
+      padding: 8px;
+    }
+    
+    .stat-icon {
+      font-size: 18px;
+    }
+    
+    .stat-number {
+      font-size: 16px;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+    }
+    
+    .charts-grid {
+      padding: 0 12px;
+      gap: 8px;
+    }
+    
+    .chart-wrapper {
+      padding: 8px;
+    }
+    
+    .chart-wrapper h4 {
+      font-size: 13px;
+    }
+    
+    .chart-description {
+      font-size: 10px;
+    }
+    
+    .ranking-section,
+    .insights-section,
+    .markets-analysis-section {
+      margin: 0 12px 20px;
+    }
+    
+    /* Melhorias para centralização em telas muito pequenas */
+    .markets-ranking-compact,
+    .markets-chart-section {
+      padding: 8px;
+      justify-content: flex-start;
+      align-items: stretch;
+      text-align: left;
+    }
+    
+    .chart-header,
+    .ranking-header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    
+    .chart-header h4,
+    .ranking-header h4 {
+      font-size: 13px;
+      margin: 0;
+    }
+    
+    .markets-main-layout {
+      gap: 8px;
+    }
+    
+    .section-header h3 {
+      font-size: 16px;
+    }
+    
+    .ranking-table {
+      font-size: 9px;
+    }
+    
+    .ranking-table th,
+    .ranking-table td {
+      padding: 4px 2px;
+    }
+    
+    .modern-table {
+      font-size: 9px;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+      padding: 4px 3px;
+    }
+    
+    .detail-table {
+      font-size: 9px;
+    }
+    
+    .detail-table th,
+    .detail-table td {
+      padding: 6px 3px;
+    }
+    
+    .market-name-cell {
+      min-width: 100px;
+    }
+    
+    .category-cell {
+      min-width: 70px;
+    }
+    
+    .detail-table .position {
+      width: 35px;
+      font-size: 11px;
+    }
+    
+    .detail-table .count {
+      width: 45px;
+      font-size: 10px;
+    }
+    
+    .detail-table .profit {
+      width: 70px;
+      font-size: 10px;
+    }
+    
+    .detail-table .score {
+      width: 55px;
+      font-size: 9px;
+      padding: 2px 4px;
     }
   }
   </style>

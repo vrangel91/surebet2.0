@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresVIP="true">
-    <div class="compound-interest-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="compound-interest-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
       @sidebar-state-loaded="handleSidebarStateLoaded"
@@ -170,23 +169,19 @@
     <!-- Modal do Glossário -->
     
   </div>
-    </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 import Chart from 'chart.js/auto'
 
 export default {
   name: 'CompoundInterestView',
   components: {
     Sidebar,
-    Header,
-
-    RouteGuard
+    Header
   },
   data() {
     return {
@@ -688,6 +683,20 @@ export default {
     width: calc(100% - 80px); /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
+  }
 }
 
 .main-content {
@@ -701,6 +710,18 @@ export default {
   min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb) transparent;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (max-width: 768px) {
+    min-height: auto;
+  }
 }
 
       .content-header {
@@ -738,6 +759,22 @@ export default {
   flex-direction: column;
   gap: 24px;
   padding: 0 32px 32px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 0 20px 20px;
+    gap: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 0 16px 16px;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0 12px 12px;
+    gap: 12px;
+  }
 }
 
 .main-layout {
@@ -746,14 +783,24 @@ export default {
   gap: 24px;
   margin-bottom: 24px;
   
-  @media (max-width: 1023px) {
-    .compound-interest-container {
-      margin-left: 0; /* Remove margem em mobile/tablet */
-    }
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1200px) {
+    gap: 20px;
   }
   
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 12px;
   }
 }
 
@@ -777,18 +824,52 @@ export default {
   padding: 24px;
   transition: all 0.3s ease;
   height: fit-content;
+  width: 100%;
+  box-sizing: border-box;
   
   &:hover {
     border-color: var(--accent-primary);
+  }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-radius: 6px;
   }
 }
 
 .calculator-card {
   min-height: 400px;
+  
+  @media (max-width: 768px) {
+    min-height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 250px;
+  }
 }
 
 .results-card {
   min-height: 400px;
+  
+  @media (max-width: 768px) {
+    min-height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    min-height: 250px;
+  }
 }
 
 .calculator-card h2,
@@ -799,12 +880,32 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 20px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
 }
 
 .calculator-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+  }
 }
 
 .form-row {
@@ -812,8 +913,18 @@ export default {
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1024px) {
+    gap: 16px;
+  }
+  
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
   }
 }
 
@@ -859,6 +970,7 @@ export default {
   color: var(--text-primary);
   font-size: 16px;
   transition: all 0.3s ease;
+  box-sizing: border-box;
   
   &:focus {
     outline: none;
@@ -868,6 +980,19 @@ export default {
   
   &::placeholder {
     color: var(--text-secondary);
+  }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    padding-left: 28px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    padding-left: 24px;
+    font-size: 13px;
   }
 }
 
@@ -914,10 +1039,24 @@ export default {
   cursor: pointer;
   transition: all 0.3s ease;
   min-width: 120px;
+  box-sizing: border-box;
   
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
+  }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 10px 14px;
+    font-size: 14px;
+    min-width: 100px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 80px;
   }
 }
 
@@ -928,8 +1067,18 @@ export default {
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1024px) {
+    gap: 14px;
+  }
+  
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 10px;
   }
 }
 
@@ -939,6 +1088,17 @@ export default {
   background: var(--bg-primary);
   border-radius: 8px;
   border: 1px solid var(--border-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 14px;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-radius: 4px;
+  }
 }
 
 .result-label {
@@ -966,12 +1126,31 @@ export default {
   &.profit-value {
     color: var(--warning-color);
   }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 }
 
 .table-container {
   overflow-x: auto;
   max-height: 400px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    max-height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    max-height: 250px;
+  }
 }
 
 .evolution-table {
@@ -1011,6 +1190,15 @@ export default {
 .chart-container {
   height: 400px;
   position: relative;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    height: 300px;
+  }
+  
+  @media (max-width: 480px) {
+    height: 250px;
+  }
 }
 
 /* Container do gráfico com fundo do tema */
@@ -1077,6 +1265,54 @@ export default {
   
   .page-subtitle {
     font-size: 13px;
+  }
+}
+
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .content-main {
+    padding: 0 48px 48px;
+  }
+  
+  .main-layout {
+    gap: 32px;
+  }
+  
+  .calculator-card,
+  .results-card,
+  .evolution-card,
+  .chart-card {
+    padding: 32px;
+  }
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .main-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .chart-container {
+    height: 350px;
+  }
+  
+  .table-container {
+    max-height: 350px;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  .table-container {
+    max-height: 300px;
   }
 }
 

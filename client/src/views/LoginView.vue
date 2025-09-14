@@ -5,17 +5,6 @@
       
       <!-- Background Image -->
       <div class="background-image"></div>
-      
-      <!-- Overlay com gradiente para transparência -->
-      <div class="video-overlay"></div>
-      
-      <!-- Overlay adicional de baixo para cima -->
-      <div class="bottom-overlay"></div>
-      
-      <!-- Partículas flutuantes -->
-      <div class="floating-particles">
-        <div class="particle" v-for="n in 20" :key="n"></div>
-      </div>
   
       <div class="login-card">
         <!-- Logo e Header -->
@@ -809,160 +798,10 @@ export default {
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    z-index: 2;
-    filter: brightness(0.3) contrast(1.2) saturate(0.8);
-    animation: imagePulse 8s ease-in-out infinite;
-  }
-
-  @keyframes imagePulse {
-    0%, 100% {
-      filter: brightness(0.3) contrast(1.2) saturate(0.8);
-      transform: scale(1);
-    }
-    50% {
-      filter: brightness(0.4) contrast(1.1) saturate(0.9);
-      transform: scale(1.02);
-    }
-  }
-  
-  /* Partículas flutuantes */
-  .floating-particles {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 3;
-    pointer-events: none;
-  }
-  
-  .particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: rgba(0, 255, 136, 0.3);
-    border-radius: 50%;
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 8s; }
-  .particle:nth-child(2) { left: 20%; animation-delay: 1s; animation-duration: 7s; }
-  .particle:nth-child(3) { left: 30%; animation-delay: 2s; animation-duration: 9s; }
-  .particle:nth-child(4) { left: 40%; animation-delay: 3s; animation-duration: 6s; }
-  .particle:nth-child(5) { left: 50%; animation-delay: 4s; animation-duration: 8s; }
-  .particle:nth-child(6) { left: 60%; animation-delay: 5s; animation-duration: 7s; }
-  .particle:nth-child(7) { left: 70%; animation-delay: 6s; animation-duration: 9s; }
-  .particle:nth-child(8) { left: 80%; animation-delay: 7s; animation-duration: 6s; }
-  .particle:nth-child(9) { left: 90%; animation-delay: 8s; animation-duration: 8s; }
-  .particle:nth-child(10) { left: 15%; animation-delay: 9s; animation-duration: 7s; }
-  .particle:nth-child(11) { left: 25%; animation-delay: 10s; animation-duration: 9s; }
-  .particle:nth-child(12) { left: 35%; animation-delay: 11s; animation-duration: 6s; }
-  .particle:nth-child(13) { left: 45%; animation-delay: 12s; animation-duration: 8s; }
-  .particle:nth-child(14) { left: 55%; animation-delay: 13s; animation-duration: 7s; }
-  .particle:nth-child(15) { left: 65%; animation-delay: 14s; animation-duration: 9s; }
-  .particle:nth-child(16) { left: 75%; animation-delay: 15s; animation-duration: 6s; }
-  .particle:nth-child(17) { left: 85%; animation-delay: 16s; animation-duration: 8s; }
-  .particle:nth-child(18) { left: 95%; animation-delay: 17s; animation-duration: 7s; }
-  .particle:nth-child(19) { left: 5%; animation-delay: 18s; animation-duration: 9s; }
-  .particle:nth-child(20) { left: 45%; animation-delay: 19s; animation-duration: 6s; }
-  
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(100vh) scale(0);
-      opacity: 0;
-    }
-    10% {
-      opacity: 1;
-    }
-    90% {
-      opacity: 1;
-    }
-    100% {
-      transform: translateY(-100px) scale(1);
-      opacity: 0;
-    }
-  }
-  
-  /* Overlay com gradiente para transparência */
-  .video-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(0, 0, 0, 0.1) 0%,
-      rgba(0, 0, 0, 0.05) 25%,
-      rgba(0, 0, 0, 0.02) 50%,
-      rgba(0, 0, 0, 0.05) 75%,
-      rgba(0, 0, 0, 0.1) 100%
-    );
     z-index: 1;
-    animation: overlayShift 12s ease-in-out infinite;
   }
   
-  @keyframes overlayShift {
-    0%, 100% {
-      background: linear-gradient(
-        135deg,
-        rgba(0, 0, 0, 0.1) 0%,
-        rgba(0, 0, 0, 0.05) 25%,
-        rgba(0, 0, 0, 0.02) 50%,
-        rgba(0, 0, 0, 0.05) 75%,
-        rgba(0, 0, 0, 0.1) 100%
-      );
-    }
-    50% {
-      background: linear-gradient(
-        225deg,
-        rgba(0, 0, 0, 0.05) 0%,
-        rgba(0, 0, 0, 0.02) 25%,
-        rgba(0, 0, 0, 0.01) 50%,
-        rgba(0, 0, 0, 0.02) 75%,
-        rgba(0, 0, 0, 0.05) 100%
-      );
-    }
-  }
   
-  /* Overlay adicional de baixo para cima */
-  .bottom-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 60%;
-    background: linear-gradient(
-      to top,
-      rgba(0, 0, 0, 0.15) 0%,
-      rgba(0, 0, 0, 0.1) 30%,
-      rgba(0, 0, 0, 0.03) 70%,
-      rgba(0, 0, 0, 0) 100%
-    );
-    z-index: 1;
-    animation: bottomOverlayPulse 10s ease-in-out infinite;
-  }
-  
-  @keyframes bottomOverlayPulse {
-    0%, 100% {
-      background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.15) 0%,
-        rgba(0, 0, 0, 0.1) 30%,
-        rgba(0, 0, 0, 0.03) 70%,
-        rgba(0, 0, 0, 0) 100%
-      );
-    }
-    50% {
-      background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.2) 0%,
-        rgba(0, 0, 0, 0.15) 30%,
-        rgba(0, 0, 0, 0.05) 70%,
-        rgba(0, 0, 0, 0.01) 100%
-      );
-    }
-  }
   
   .login-card {
     background: rgba(26, 26, 26, 0.6);

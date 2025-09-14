@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresAdmin="true">
-    <div class="vip-admin-page" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="vip-admin-page" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar -->
     <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="toggleSidebar" />
     
@@ -735,7 +734,6 @@
       </div>
     </div>
   </div>
-    </RouteGuard>
 </template>
 
 <script>
@@ -744,7 +742,6 @@ import { useStore } from 'vuex'
 import axios from '@/utils/axios'
 import Sidebar from '@/components/Sidebar.vue'
 import Header from '@/components/Header.vue'
-import RouteGuard from '@/components/RouteGuard.vue'
 import { 
   Crown, 
   RefreshCw, 
@@ -768,7 +765,6 @@ export default {
   components: {
     Sidebar,
     Header,
-    RouteGuard,
     Crown,
     RefreshCw,
     Plus,

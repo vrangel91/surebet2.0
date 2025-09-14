@@ -1,0 +1,282 @@
+{
+  "translations": {
+    // Futebol - Ligas Principais
+    "Premier League": "Premier League",
+    "English Premier League": "Premier League",
+    "EPL": "Premier League",
+    "Premier League England": "Premier League",
+
+    "La Liga": "La Liga",
+    "Spanish La Liga": "La Liga",
+    "Primera División": "La Liga",
+    "Liga BBVA": "La Liga",
+
+    "Serie A": "Serie A",
+    "Italian Serie A": "Serie A",
+    "Serie A Italy": "Serie A",
+    "Calcio": "Serie A",
+
+    "Bundesliga": "Bundesliga",
+    "German Bundesliga": "Bundesliga",
+    "Bundesliga Germany": "Bundesliga",
+
+    "Ligue 1": "Ligue 1",
+    "French Ligue 1": "Ligue 1",
+    "Ligue 1 France": "Ligue 1",
+
+    "Brasileirão": "Brasileirão",
+    "Brasileirão Série A": "Brasileirão",
+    "Campeonato Brasileiro": "Brasileirão",
+    "Brazilian Serie A": "Brasileirão",
+    "Série A": "Brasileirão",
+
+    "Champions League": "Champions League",
+    "UEFA Champions League": "Champions League",
+    "Champions League UEFA": "Champions League",
+    "UCL": "Champions League",
+
+    "Europa League": "Europa League",
+    "UEFA Europa League": "Europa League",
+    "Europa League UEFA": "Europa League",
+
+    "Copa do Brasil": "Copa do Brasil",
+    "Brazilian Cup": "Copa do Brasil",
+    "Copa do Brasil 2024": "Copa do Brasil",
+
+    "Copa Libertadores": "Copa Libertadores",
+    "Libertadores": "Copa Libertadores",
+    "Copa Libertadores da América": "Copa Libertadores",
+    "CONMEBOL Libertadores": "Copa Libertadores",
+
+    "Copa Sul-Americana": "Copa Sul-Americana",
+    "Sul-Americana": "Copa Sul-Americana",
+    "CONMEBOL Sudamericana": "Copa Sul-Americana",
+
+    "Copa do Mundo": "Copa do Mundo",
+    "World Cup": "Copa do Mundo",
+    "FIFA World Cup": "Copa do Mundo",
+
+    "Copa América": "Copa América",
+    "Copa América 2024": "Copa América",
+    "CONMEBOL Copa América": "Copa América",
+
+    "Eurocopa": "Eurocopa",
+    "UEFA Euro": "Eurocopa",
+    "European Championship": "Eurocopa",
+    "Euro 2024": "Eurocopa",
+
+    // Futebol - Ligas Menores
+    "Championship": "Championship",
+    "English Championship": "Championship",
+    "EFL Championship": "Championship",
+
+    "Segunda División": "Segunda División",
+    "La Liga 2": "Segunda División",
+    "Spanish Segunda": "Segunda División",
+
+    "Serie B": "Serie B",
+    "Italian Serie B": "Serie B",
+    "Serie B Italy": "Serie B",
+
+    "2. Bundesliga": "2. Bundesliga",
+    "German 2. Bundesliga": "2. Bundesliga",
+    "Bundesliga 2": "2. Bundesliga",
+
+    "Ligue 2": "Ligue 2",
+    "French Ligue 2": "Ligue 2",
+    "Ligue 2 France": "Ligue 2",
+
+    "Brasileirão Série B": "Série B",
+    "Série B": "Série B",
+    "Brazilian Serie B": "Série B",
+    "Campeonato Brasileiro Série B": "Série B",
+
+    // Basquete
+    "NBA": "NBA",
+    "National Basketball Association": "NBA",
+    "NBA Regular Season": "NBA",
+    "NBA Playoffs": "NBA Playoffs",
+    "NBA Finals": "NBA Finals",
+
+    "WNBA": "WNBA",
+    "Women's NBA": "WNBA",
+
+    "EuroLeague": "EuroLeague",
+    "Turkish Airlines EuroLeague": "EuroLeague",
+    "Euroleague": "EuroLeague",
+
+    "NBB": "NBB",
+    "Novo Basquete Brasil": "NBB",
+    "Brazilian Basketball League": "NBB",
+
+    "NCAA": "NCAA",
+    "College Basketball": "NCAA",
+    "NCAA Basketball": "NCAA",
+    "March Madness": "NCAA",
+
+    // Futebol Americano
+    "NFL": "NFL",
+    "National Football League": "NFL",
+    "NFL Regular Season": "NFL",
+    "NFL Playoffs": "NFL Playoffs",
+    "Super Bowl": "Super Bowl",
+
+    "NCAA Football": "NCAA Football",
+    "College Football": "NCAA Football",
+    "CFB": "NCAA Football",
+
+    // Tênis
+    "Wimbledon": "Wimbledon",
+    "Wimbledon Championships": "Wimbledon",
+    "The Championships": "Wimbledon",
+
+    "US Open": "US Open",
+    "US Open Tennis": "US Open",
+    "US Open Championships": "US Open",
+
+    "French Open": "Roland Garros",
+    "Roland Garros": "Roland Garros",
+    "French Open Tennis": "Roland Garros",
+
+    "Australian Open": "Australian Open",
+    "Australian Open Tennis": "Australian Open",
+    "AO": "Australian Open",
+
+    "ATP": "ATP",
+    "ATP Tour": "ATP",
+    "Association of Tennis Professionals": "ATP",
+
+    "WTA": "WTA",
+    "WTA Tour": "WTA",
+    "Women's Tennis Association": "WTA",
+
+    // Vôlei
+    "Superliga": "Superliga",
+    "Superliga Masculina": "Superliga",
+    "Superliga Feminina": "Superliga Feminina",
+    "Brazilian Volleyball League": "Superliga",
+
+    // Fórmula 1
+    "F1": "Fórmula 1",
+    "Formula 1": "Fórmula 1",
+    "F1 World Championship": "Fórmula 1",
+    "Formula One": "Fórmula 1",
+
+    // MMA/Boxe
+    "UFC": "UFC",
+    "Ultimate Fighting Championship": "UFC",
+    "UFC Fight Night": "UFC",
+    "UFC PPV": "UFC",
+
+    "Boxing": "Boxe",
+    "Professional Boxing": "Boxe",
+    "World Boxing": "Boxe",
+
+    // Esports
+    "CS2": "Counter-Strike 2",
+    "Counter-Strike 2": "Counter-Strike 2",
+    "CS:GO": "Counter-Strike 2",
+    "Counter-Strike": "Counter-Strike 2",
+
+    "LoL": "League of Legends",
+    "League of Legends": "League of Legends",
+    "LOL": "League of Legends",
+    "LCS": "League of Legends",
+    "LEC": "League of Legends",
+    "LCK": "League of Legends",
+    "LPL": "League of Legends",
+
+    "Dota 2": "Dota 2",
+    "DOTA2": "Dota 2",
+    "The International": "Dota 2",
+
+    "Valorant": "Valorant",
+    "VALORANT": "Valorant",
+    "VCT": "Valorant",
+
+    // Outros Esportes
+    "NHL": "NHL",
+    "National Hockey League": "NHL",
+    "Hockey": "NHL",
+
+    "MLB": "MLB",
+    "Major League Baseball": "MLB",
+    "Baseball": "MLB",
+
+    "MotoGP": "MotoGP",
+    "Moto GP": "MotoGP",
+    "Motorcycle Racing": "MotoGP",
+
+    "Rugby": "Rugby",
+    "Rugby Union": "Rugby",
+    "Rugby League": "Rugby League",
+    "Six Nations": "Six Nations",
+    "Rugby World Cup": "Copa do Mundo de Rugby"
+  },
+
+  "patterns": {
+    // Padrões para detecção automática
+    "brasileirao": [
+      "brasileirão",
+      "brasileirao",
+      "serie a",
+      "campeonato brasileiro"
+    ],
+    "premier_league": ["premier league", "epl", "english premier league"],
+    "champions_league": ["champions league", "ucl", "uefa champions"],
+    "nba": ["nba", "national basketball association"],
+    "nfl": ["nfl", "national football league"],
+    "f1": ["f1", "formula 1", "formula one"],
+    "ufc": ["ufc", "ultimate fighting championship"],
+    "cs2": ["cs2", "counter-strike", "cs:go"],
+    "lol": ["lol", "league of legends", "lcs", "lec", "lck", "lpl"]
+  },
+
+  "fallbacks": {
+    // Fallbacks para campeonatos não mapeados
+    "futebol": "Futebol",
+    "football": "Futebol",
+    "soccer": "Futebol",
+    "basquete": "Basquete",
+    "basketball": "Basquete",
+    "tenis": "Tênis",
+    "tennis": "Tênis",
+    "volei": "Vôlei",
+    "volleyball": "Vôlei",
+    "mma": "MMA",
+    "boxe": "Boxe",
+    "boxing": "Boxe",
+    "esports": "Esports",
+    "e-sports": "Esports"
+  },
+
+  "metadata": {
+    "version": "1.0.0",
+    "lastUpdated": "2024-12-19",
+    "description": "Traduções de nomes de campeonatos e torneios para português brasileiro",
+    "totalTranslations": 150,
+    "categories": {
+      "futebol": [
+        "Premier League",
+        "La Liga",
+        "Serie A",
+        "Bundesliga",
+        "Ligue 1",
+        "Brasileirão",
+        "Champions League"
+      ],
+      "basquete": ["NBA", "WNBA", "EuroLeague", "NBB", "NCAA"],
+      "tenis": [
+        "Wimbledon",
+        "US Open",
+        "Roland Garros",
+        "Australian Open",
+        "ATP",
+        "WTA"
+      ],
+      "futebol_americano": ["NFL", "NCAA Football"],
+      "esports": ["CS2", "LoL", "Dota 2", "Valorant"],
+      "outros": ["F1", "UFC", "NHL", "MLB", "MotoGP"]
+    }
+  }
+}

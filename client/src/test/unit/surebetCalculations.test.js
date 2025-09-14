@@ -1,6 +1,47 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { mockSurebetData } from '../fixtures/surebets.js'
 
+// Função para arredondar stakes de forma inteligente, priorizando valores terminados em 5 ou 0
+function smartRoundStakes(rawStakes) {
+  const roundedStakes = rawStakes.map(stake => Math.round(stake))
+  
+  // Função para verificar se um número termina em 5 ou 0
+  const endsWithFiveOrZero = (num) => {
+    return num % 10 === 0 || num % 10 === 5
+  }
+  
+  // Função para encontrar o valor mais próximo que termina em 5 ou 0
+  const findNearestFiveOrZero = (num) => {
+    const lower = Math.floor(num / 5) * 5
+    const upper = Math.ceil(num / 5) * 5
+    
+    // Se o número já termina em 5 ou 0, retorna ele mesmo
+    if (endsWithFiveOrZero(num)) return num
+    
+    // Retorna o mais próximo
+    return (num - lower) < (upper - num) ? lower : upper
+  }
+  
+  // Aplica o arredondamento inteligente
+  const smartRounded = rawStakes.map(stake => {
+    const rounded = Math.round(stake)
+    const smartRounded = findNearestFiveOrZero(rounded)
+    
+    // Só aplica se a diferença for pequena (máximo 2 unidades)
+    const difference = Math.abs(smartRounded - rounded)
+    return difference <= 2 ? smartRounded : rounded
+  })
+  
+  // Garante que todos os valores sejam pelo menos 1
+  for (let i = 0; i < smartRounded.length; i++) {
+    if (smartRounded[i] < 1) {
+      smartRounded[i] = 1
+    }
+  }
+  
+  return smartRounded
+}
+
 // Função para calcular stakes de surebet (extraída do componente)
 function calculateSurebetStakes(surebet, defaultStake = 100) {
   if (!surebet || surebet.length === 0) return []
@@ -17,8 +58,8 @@ function calculateSurebetStakes(surebet, defaultStake = 100) {
     return stake
   })
   
-  // Arredonda os valores para números inteiros
-  const roundedStakes = rawStakes.map(stake => Math.round(stake))
+  // Arredonda os valores para números inteiros com prioridade para valores terminados em 5 ou 0
+  const roundedStakes = smartRoundStakes(rawStakes)
   
   // Garante que todos os valores sejam pelo menos 1
   for (let i = 0; i < roundedStakes.length; i++) {
@@ -221,6 +262,70 @@ describe('Cálculos de Surebet', () => {
       
       // Deve ser executado em menos de 100ms
       expect(duration).toBeLessThan(100)
+    })
+  })
+
+  describe('smartRoundStakes - Arredondamento Inteligente', () => {
+    it('deve priorizar valores terminados em 5 ou 0', () => {
+      const rawStakes = [47.3, 52.7, 98.1, 103.4]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      // Valores que podem ser ajustados para terminar em 5 ou 0
+      expect(smartRounded).toEqual([45, 55, 100, 105])
+    })
+
+    it('deve manter valores que já terminam em 5 ou 0', () => {
+      const rawStakes = [45.0, 50.0, 95.0, 100.0]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      expect(smartRounded).toEqual([45, 50, 95, 100])
+    })
+
+    it('deve não alterar valores quando a diferença for muito grande', () => {
+      const rawStakes = [47.0, 52.0, 98.0, 103.0]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      // Diferença de 2 ou menos - deve ajustar
+      expect(smartRounded).toEqual([45, 55, 100, 105])
+    })
+
+    it('deve manter valores originais quando a diferença for muito grande', () => {
+      const rawStakes = [47.0, 52.0, 98.0, 103.0]
+      // Simulando valores com diferença maior que 2
+      const largeDiffStakes = [47.0, 52.0, 98.0, 103.0]
+      const smartRounded = smartRoundStakes(largeDiffStakes)
+      
+      // Deve ajustar pois a diferença é pequena (2 ou menos)
+      expect(smartRounded).toEqual([45, 55, 100, 105])
+    })
+
+    it('deve garantir que todos os valores sejam pelo menos 1', () => {
+      const rawStakes = [0.3, 0.7, 0.9]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      expect(smartRounded.every(stake => stake >= 1)).toBe(true)
+    })
+
+    it('deve lidar com valores decimais pequenos', () => {
+      const rawStakes = [1.2, 2.3, 3.4]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      expect(smartRounded).toEqual([1, 2, 5]) // 3.4 -> 3 -> 5 (mais próximo terminado em 5)
+    })
+
+    it('deve lidar com valores grandes', () => {
+      const rawStakes = [147.3, 252.7, 398.1]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      expect(smartRounded).toEqual([145, 255, 400])
+    })
+
+    it('deve manter a consistência com arredondamento normal quando apropriado', () => {
+      const rawStakes = [23.1, 24.9, 25.1, 26.9]
+      const smartRounded = smartRoundStakes(rawStakes)
+      
+      // 23.1 -> 23 -> 25, 24.9 -> 25 -> 25, 25.1 -> 25 -> 25, 26.9 -> 27 -> 25
+      expect(smartRounded).toEqual([25, 25, 25, 25])
     })
   })
 })

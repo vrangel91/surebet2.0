@@ -61,7 +61,8 @@ export default {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
-  overflow: hidden; /* Remove scroll do app para evitar duplicação */
+  overflow-x: hidden; /* Apenas esconder scroll horizontal */
+  overflow-y: auto; /* Permitir scroll vertical quando necessário */
 }
 * {
   margin: 0;
@@ -70,18 +71,78 @@ export default {
 }
 html, body {
   height: 100%;
-  overflow: hidden; /* Remove scroll do html/body para evitar duplicação */
   min-height: 100vh; /* Garantir altura mínima */
+  overflow-x: hidden; /* Apenas esconder scroll horizontal */
+  overflow-y: auto; /* Permitir scroll vertical quando necessário */
 }
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   min-height: 100vh; /* Garantir altura mínima */
-  overflow: hidden; /* Remove scroll do body para evitar duplicação */
+  overflow-x: hidden; /* Apenas esconder scroll horizontal */
+  overflow-y: auto; /* Permitir scroll vertical quando necessário */
 }
 html {
   transition: background-color 0.3s ease;
   min-height: 100vh; /* Garantir altura mínima */
+}
+
+/* Correções específicas para mobile */
+@media (max-width: 1023px) {
+  body {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  }
+  
+  #app {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  }
+}
+
+/* Correções para telas muito pequenas */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px; /* Reduzir tamanho da fonte base */
+    -webkit-text-size-adjust: 100%; /* Evitar zoom automático no iOS */
+    -ms-text-size-adjust: 100%;
+  }
+  
+  #app {
+    min-height: 100vh;
+    height: auto; /* Permitir altura dinâmica */
+    width: 100%;
+    max-width: 100vw; /* Evitar overflow horizontal */
+  }
+  
+  /* Corrigir problemas de viewport em iOS */
+  @supports (-webkit-touch-callout: none) {
+    body {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+}
+
+/* Correções específicas para problemas de layout em mobile */
+@media (max-width: 768px) {
+  /* Evitar que elementos saiam da tela */
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  /* Corrigir problemas de flexbox em mobile */
+  .flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Corrigir problemas de grid em mobile */
+  .grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
 }
 </style>

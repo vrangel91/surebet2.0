@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresVIP="true">
-    <div class="reports-container flex-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="reports-container flex-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -29,7 +28,7 @@
         </div>
       </header>
 
-             <!-- Cards de Performance -->
+       <!-- Cards de Performance -->
        <div class="performance-cards">
          <!-- Card de Resumo do Usuário -->
          <div class="user-summary-card">
@@ -72,7 +71,7 @@
            </div>
          </div>
 
-         <!-- Card do Gráfico Principal -->
+         <!-- Card do Gráfico de Evolução do Lucro -->
          <div class="chart-card">
            <h3>Evolução do Lucro Acumulado</h3>
            <div class="chart-container">
@@ -85,16 +84,31 @@
          </div>
        </div>
 
-       <!-- Gráfico de ROI por Aposta -->
-       <div class="roi-chart-section">
-         <div class="roi-chart-card">
-           <h3>ROI por Aposta (Últimas 10)</h3>
-           <div class="roi-chart-container">
-             <ROIBarChart 
-               ref="roiChart" 
-               :data="roiChartData" 
-               :isLoading="isLoadingCharts"
-             />
+       <!-- Seção de Gráficos de ROI -->
+       <div class="roi-charts-section">
+         <div class="roi-charts-grid">
+           <!-- Gráfico de ROI por Aposta -->
+           <div class="roi-chart-card">
+             <h3>ROI por Aposta (Últimas 10)</h3>
+             <div class="roi-chart-container">
+               <ROIBarChart 
+                 ref="roiChart" 
+                 :data="roiChartData" 
+                 :isLoading="isLoadingCharts"
+               />
+             </div>
+           </div>
+
+           <!-- Gráfico de ROI por Período -->
+           <div class="roi-period-card">
+             <h3>ROI por Período</h3>
+             <div class="roi-period-container">
+               <ROIBarChart 
+                 ref="roiPeriodChart" 
+                 :data="roiPeriodData" 
+                 :isLoading="isLoadingCharts"
+               />
+             </div>
            </div>
          </div>
        </div>
@@ -352,7 +366,6 @@
       </div>
     </div>
   </div>
-    </RouteGuard>
 </template>
 
 <script>
@@ -361,7 +374,6 @@ import ROIBarChart from '../components/ROIBarChart.vue'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 
 
 export default {
@@ -370,9 +382,7 @@ export default {
     ProfitEvolutionChart,
     ROIBarChart,
     Sidebar,
-    Header,
-
-    RouteGuard
+    Header
   },
   data() {
     return {
@@ -530,6 +540,52 @@ export default {
         period: `Aposta ${index + 1}`,
         roi: bet.roi || 0
       }))
+    },
+    // Dados para o gráfico de ROI por período
+    roiPeriodData() {
+      if (!this.bets || this.bets.length === 0) return []
+      
+      // Agrupar apostas por período (hoje, semana, mês)
+      const today = new Date()
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000)
+      
+      const todayBets = this.bets.filter(bet => {
+        const betDate = new Date(bet.date)
+        return betDate.toDateString() === today.toDateString()
+      })
+      
+      const weekBets = this.bets.filter(bet => {
+        const betDate = new Date(bet.date)
+        return betDate >= weekAgo
+      })
+      
+      const monthBets = this.bets.filter(bet => {
+        const betDate = new Date(bet.date)
+        return betDate >= monthAgo
+      })
+      
+      // Calcular ROI médio para cada período
+      const calculateAverageROI = (bets) => {
+        if (bets.length === 0) return 0
+        const totalROI = bets.reduce((sum, bet) => sum + (bet.roi || 0), 0)
+        return totalROI / bets.length
+      }
+      
+      return [
+        {
+          period: 'Hoje',
+          roi: calculateAverageROI(todayBets)
+        },
+        {
+          period: 'Semana',
+          roi: calculateAverageROI(weekBets)
+        },
+        {
+          period: 'Mês',
+          roi: calculateAverageROI(monthBets)
+        }
+      ]
     }
   },
   mounted() {
@@ -963,6 +1019,19 @@ color: var(--text-primary);
     width: calc(100% - 80px); /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
+  
+  /* Melhorias para responsividade */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
 }
 
 .sidebar {
@@ -1137,6 +1206,19 @@ color: var(--text-primary);
   overflow-y: auto; /* Habilita scroll vertical */
   overflow-x: hidden; /* Evita scroll horizontal */
   min-width: 0; /* Importante para evitar overflow */
+  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  
+  /* Melhorias para responsividade */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 }
 
 .content-header {
@@ -1347,7 +1429,9 @@ color: var(--text-primary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
-  min-height: 350px; /* Altura mínima para consistência */
+  min-height: 300px; /* Altura reduzida para melhor proporção */
+  position: relative;
+  z-index: 1;
   
   h3 {
     font-size: 18px;
@@ -1358,21 +1442,37 @@ color: var(--text-primary);
 }
 
 .chart-container {
-  height: 300px;
+  height: 250px; /* Altura reduzida */
   width: 100%;
+  position: relative;
+  z-index: 1;
 }
 
-.roi-chart-section {
+.roi-charts-section {
   padding: 0 32px 24px;
   flex-shrink: 0; /* Evita que a seção encolha */
+  position: relative;
+  z-index: 2;
+  clear: both;
 }
 
-.roi-chart-card {
+.roi-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+}
+
+.roi-chart-card,
+.roi-period-card {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
-  min-height: 450px; /* Altura mínima para consistência */
+  min-height: 350px; /* Altura reduzida para melhor proporção */
+  position: relative;
+  z-index: 2;
   
   h3 {
     font-size: 18px;
@@ -1382,10 +1482,14 @@ color: var(--text-primary);
   }
 }
 
-.roi-chart-container {
-  height: 400px;
+.roi-chart-container,
+.roi-period-container {
+  height: 300px; /* Altura reduzida */
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
+
 
 .bets-table-section {
   padding: 0 32px 24px;
@@ -1454,6 +1558,23 @@ color: var(--text-primary);
   border-radius: 8px;
   min-height: 300px; /* Altura mínima para a tabela */
   max-height: 400px; /* Altura máxima para a tabela */
+  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  
+  /* Melhorias para responsividade */
+  @media (max-width: 768px) {
+    max-height: 350px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (max-width: 480px) {
+    max-height: 300px;
+    min-height: 250px;
+  }
+  
+  @media (max-width: 320px) {
+    max-height: 250px;
+    min-height: 200px;
+  }
 }
 
 .table-summary {
@@ -1877,15 +1998,161 @@ color: var(--text-primary);
   }
 }
 
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .reports-container {
+    width: calc(100% - 280px);
+    max-width: calc(100% - 280px);
+  }
+  
+  .content-header {
+    padding: 32px 40px;
+  }
+  
+  .page-title {
+    font-size: 36px;
+  }
+  
+  .page-subtitle {
+    font-size: 18px;
+  }
+  
+  .performance-cards {
+    padding: 32px 40px;
+    gap: 32px;
+  }
+  
+  .user-summary-card,
+  .chart-card {
+    padding: 32px;
+  }
+  
+  .roi-charts-section {
+    padding: 0 40px 32px;
+  }
+  
+  .roi-chart-card,
+  .roi-period-card {
+    padding: 32px;
+  }
+  
+  .bets-table-section {
+    padding: 0 40px 32px;
+  }
+  
+  .chart-container {
+    height: 350px;
+  }
+  
+  .roi-chart-container {
+    height: 450px;
+  }
+}
+
+/* Media queries para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .content-header {
+    padding: 28px 32px;
+  }
+  
+  .page-title {
+    font-size: 32px;
+  }
+  
+  .performance-cards {
+    padding: 28px 32px;
+    gap: 24px;
+  }
+  
+  .roi-charts-section {
+    padding: 0 32px 28px;
+  }
+  
+  .bets-table-section {
+    padding: 0 32px 28px;
+  }
+}
+
+/* Media queries para laptops */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .content-header {
+    padding: 24px 28px;
+  }
+  
+  .page-title {
+    font-size: 28px;
+  }
+  
+  .performance-cards {
+    padding: 24px 28px;
+    gap: 20px;
+  }
+  
+  .roi-charts-section {
+    padding: 0 28px 24px;
+  }
+  
+  .bets-table-section {
+    padding: 0 28px 24px;
+  }
+  
+  .chart-container {
+    height: 280px;
+  }
+  
+  .roi-chart-container {
+    height: 380px;
+  }
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .performance-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .earnings-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .performance-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .earnings-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Responsividade melhorada */
 @media (max-width: 1023px) {
   .reports-container {
     margin-left: 0; /* Remove margem em mobile/tablet */
+    width: 100%;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 1200px) {
   .performance-cards {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .roi-charts-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
@@ -1911,12 +2178,86 @@ color: var(--text-primary);
     font-size: 24px;
   }
   
-  .performance-cards {
-    padding: 16px 20px;
+  .header-left .page-subtitle {
+    font-size: 14px;
   }
   
-  .roi-chart-section {
+  .header-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .control-btn {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .performance-cards {
+    padding: 16px 20px;
+    gap: 16px;
+  }
+  
+  .user-summary-card,
+  .chart-card {
+    padding: 20px;
+  }
+  
+  .card-header h3 {
+    font-size: 16px;
+  }
+  
+  .card-subtitle {
+    font-size: 13px;
+  }
+  
+  .earnings-grid {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .earning-label {
+    font-size: 11px;
+  }
+  
+  .earning-value {
+    font-size: 14px;
+  }
+  
+  .stats-grid {
+    gap: 12px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+  
+  .stat-value {
+    font-size: 14px;
+  }
+  
+  .chart-card h3,
+  .roi-chart-card h3,
+  .roi-period-card h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .chart-container {
+    height: 250px;
+  }
+  
+  .roi-charts-section {
     padding: 0 20px 16px;
+  }
+  
+  .roi-chart-card,
+  .roi-period-card {
+    padding: 20px;
+  }
+  
+  .roi-chart-container,
+  .roi-period-container {
+    height: 250px;
   }
   
   .bets-table-section {
@@ -1927,6 +2268,12 @@ color: var(--text-primary);
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
+  }
+  
+  .pagination-control {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
   
   .search-control .search-input {
@@ -1946,14 +2293,55 @@ color: var(--text-primary);
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    padding: 12px 16px;
   }
   
   .table-summary .right {
     justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  
+  .table-summary .summary-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .pagination-btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    margin: 10px;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 20px;
   }
 }
 
 @media (max-width: 480px) {
+  .content-header {
+    padding: 12px 16px;
+  }
+  
   .page-title {
     font-size: 20px;
   }
@@ -1962,21 +2350,336 @@ color: var(--text-primary);
     font-size: 13px;
   }
   
-  .bets-table {
-    min-width: 600px; /* Largura mínima ainda menor para telas muito pequenas */
-    font-size: 11px;
-    
-    th, td {
-      padding: 6px 8px;
-    }
+  .header-controls {
+    gap: 8px;
+  }
+  
+  .control-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .performance-cards {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+  
+  .user-summary-card,
+  .chart-card {
+    padding: 16px;
+  }
+  
+  .card-header h3 {
+    font-size: 14px;
+  }
+  
+  .card-subtitle {
+    font-size: 12px;
+  }
+  
+  .earnings-grid {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  .earning-label {
+    font-size: 10px;
+  }
+  
+  .earning-value {
+    font-size: 12px;
+  }
+  
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-label {
+    font-size: 10px;
+  }
+  
+  .stat-value {
+    font-size: 12px;
+  }
+  
+  .chart-card h3,
+  .roi-chart-card h3 {
+    font-size: 14px;
+    margin-bottom: 12px;
   }
   
   .chart-container {
-    height: 250px;
+    height: 200px;
+  }
+  
+  .roi-chart-section {
+    padding: 0 16px 12px;
+  }
+  
+  .roi-chart-card {
+    padding: 16px;
   }
   
   .roi-chart-container {
-    height: 300px;
+    height: 250px;
+  }
+  
+  .bets-table-section {
+    padding: 0 16px 12px;
+  }
+  
+  .table-controls {
+    gap: 12px;
+  }
+  
+  .pagination-control label {
+    font-size: 12px;
+  }
+  
+  .records-select {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .search-input {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+  
+  .bets-table {
+    min-width: 600px; /* Largura mínima ainda menor para telas muito pequenas */
+    font-size: 10px;
+    
+    th, td {
+      padding: 4px 6px;
+    }
+  }
+  
+  .table-summary {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+  
+  .table-summary .summary-item {
+    gap: 2px;
+  }
+  
+  .pagination {
+    gap: 8px;
+  }
+  
+  .pagination-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  .page-info {
+    font-size: 12px;
+  }
+  
+  .modal-content {
+    width: 98%;
+    max-width: 98%;
+    margin: 5px;
+  }
+  
+  .modal-header {
+    padding: 12px 16px;
+  }
+  
+  .modal-header h3 {
+    font-size: 14px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .detail-row {
+    padding: 8px 0;
+  }
+  
+  .detail-label {
+    font-size: 12px;
+  }
+  
+  .detail-value {
+    font-size: 12px;
+  }
+  
+  .action-btn {
+    padding: 4px;
+  }
+  
+  .action-icon {
+    font-size: 14px;
+  }
+  
+  .status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+  }
+  
+  .btn-cancel,
+  .btn-delete {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+/* Media queries para telas muito pequenas */
+@media (max-width: 320px) {
+  .content-header {
+    padding: 8px 12px;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  .page-subtitle {
+    font-size: 12px;
+  }
+  
+  .performance-cards {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+  
+  .user-summary-card,
+  .chart-card {
+    padding: 12px;
+  }
+  
+  .card-header h3 {
+    font-size: 13px;
+  }
+  
+  .card-subtitle {
+    font-size: 11px;
+  }
+  
+  .earnings-grid {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  
+  .earning-label {
+    font-size: 9px;
+  }
+  
+  .earning-value {
+    font-size: 11px;
+  }
+  
+  .stats-grid {
+    gap: 6px;
+  }
+  
+  .stat-label {
+    font-size: 9px;
+  }
+  
+  .stat-value {
+    font-size: 11px;
+  }
+  
+  .chart-card h3,
+  .roi-chart-card h3 {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+  
+  .chart-container {
+    height: 180px;
+  }
+  
+  .roi-chart-section {
+    padding: 0 12px 8px;
+  }
+  
+  .roi-chart-card {
+    padding: 12px;
+  }
+  
+  .roi-chart-container {
+    height: 220px;
+  }
+  
+  .bets-table-section {
+    padding: 0 12px 8px;
+  }
+  
+  .bets-table {
+    min-width: 500px;
+    font-size: 9px;
+    
+    th, td {
+      padding: 3px 4px;
+    }
+  }
+  
+  .table-summary {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  
+  .pagination-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  .page-info {
+    font-size: 11px;
+  }
+  
+  .modal-content {
+    width: 99%;
+    max-width: 99%;
+    margin: 2px;
+  }
+  
+  .modal-header {
+    padding: 8px 12px;
+  }
+  
+  .modal-header h3 {
+    font-size: 13px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .detail-row {
+    padding: 6px 0;
+  }
+  
+  .detail-label {
+    font-size: 11px;
+  }
+  
+  .detail-value {
+    font-size: 11px;
+  }
+  
+  .action-btn {
+    padding: 3px;
+  }
+  
+  .action-icon {
+    font-size: 12px;
+  }
+  
+  .status-badge {
+    font-size: 9px;
+    padding: 1px 4px;
+  }
+  
+  .btn-cancel,
+  .btn-delete {
+    padding: 6px 12px;
+    font-size: 11px;
   }
 }
 

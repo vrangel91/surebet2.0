@@ -1,36 +1,36 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { BookmakerAccount, TransactionHistory, User } = require('../models');
-const { authenticateToken } = require('../utils/auth');
+const { BookmakerAccount, TransactionHistory, User } = require("../models");
+const { authenticateToken } = require("../utils/auth");
 
 // Middleware de autenticação para todas as rotas
 router.use(authenticateToken);
 
 // GET /api/bookmaker-accounts - Listar todas as contas do usuário
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const accounts = await BookmakerAccount.findAll({
       where: { user_id: req.user.id },
-      order: [['created_at', 'DESC']]
+      order: [["created_at", "DESC"]],
     });
 
     res.json({
       success: true,
       data: {
-        accounts: accounts
-      }
+        accounts: accounts,
+      },
     });
   } catch (error) {
-    console.error('Erro ao listar contas:', error);
+    console.error("Erro ao listar contas:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // POST /api/bookmaker-accounts - Criar nova conta
-router.post('/', async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const { bookmaker_name, balance, currency, notes } = req.body;
 
@@ -38,14 +38,14 @@ router.post('/', async (req, res) => {
     if (!bookmaker_name) {
       return res.status(400).json({
         success: false,
-        message: 'Casa de apostas é obrigatória'
+        message: "Casa de apostas é obrigatória",
       });
     }
 
     if (balance && (isNaN(balance) || parseFloat(balance) < 0)) {
       return res.status(400).json({
         success: false,
-        message: 'Saldo deve ser um número positivo'
+        message: "Saldo deve ser um número positivo",
       });
     }
 
@@ -53,14 +53,14 @@ router.post('/', async (req, res) => {
     const existingAccount = await BookmakerAccount.findOne({
       where: {
         user_id: req.user.id,
-        bookmaker_name: bookmaker_name.trim()
-      }
+        bookmaker_name: bookmaker_name.trim(),
+      },
     });
 
     if (existingAccount) {
       return res.status(400).json({
         success: false,
-        message: 'Já existe uma conta para esta casa de apostas'
+        message: "Já existe uma conta para esta casa de apostas",
       });
     }
 
@@ -68,79 +68,82 @@ router.post('/', async (req, res) => {
     const account = await BookmakerAccount.create({
       user_id: req.user.id,
       bookmaker_name: bookmaker_name.trim(),
-      balance: balance || 0.00,
-      currency: currency || 'BRL',
-      notes: notes || null
+      balance: balance || 0.0,
+      currency: currency || "BRL",
+      notes: notes || null,
     });
 
-    res.status(201).json({
+    console.log("✅ [BookmakerAccounts] Conta criada com sucesso:", account);
+    const response = {
       success: true,
-      message: 'Conta criada com sucesso',
-      data: account
-    });
+      message: "Conta criada com sucesso",
+      data: account,
+    };
+    console.log("📤 [BookmakerAccounts] Enviando resposta:", response);
+    res.status(201).json(response);
   } catch (error) {
-    console.error('Erro ao criar conta:', error);
+    console.error("Erro ao criar conta:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // GET /api/bookmaker-accounts/:id - Obter detalhes de uma conta específica
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
+        user_id: req.user.id,
       },
       include: [
         {
           model: TransactionHistory,
-          as: 'transactions',
-          order: [['created_at', 'DESC']],
-          limit: 10
-        }
-      ]
+          as: "transactions",
+          order: [["created_at", "DESC"]],
+          limit: 10,
+        },
+      ],
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
     res.json({
       success: true,
-      data: account
+      data: account,
     });
   } catch (error) {
-    console.error('Erro ao buscar conta:', error);
+    console.error("Erro ao buscar conta:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // PUT /api/bookmaker-accounts/:id - Atualizar conta
-router.put('/:id', async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const { bookmaker_name, balance, currency, notes, status } = req.body;
 
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
@@ -148,14 +151,14 @@ router.put('/:id', async (req, res) => {
     if (bookmaker_name && bookmaker_name.trim().length < 2) {
       return res.status(400).json({
         success: false,
-        message: 'Casa de apostas deve ter pelo menos 2 caracteres'
+        message: "Casa de apostas deve ter pelo menos 2 caracteres",
       });
     }
 
     if (balance !== undefined && (isNaN(balance) || parseFloat(balance) < 0)) {
       return res.status(400).json({
         success: false,
-        message: 'Saldo deve ser um número positivo'
+        message: "Saldo deve ser um número positivo",
       });
     }
 
@@ -165,72 +168,76 @@ router.put('/:id', async (req, res) => {
         where: {
           user_id: req.user.id,
           bookmaker_name: bookmaker_name.trim(),
-          id: { [require('sequelize').Op.ne]: req.params.id }
-        }
+          id: { [require("sequelize").Op.ne]: req.params.id },
+        },
       });
 
       if (existingAccount) {
         return res.status(400).json({
           success: false,
-          message: 'Já existe uma conta para esta casa de apostas'
+          message: "Já existe uma conta para esta casa de apostas",
         });
       }
     }
 
     // Atualizar conta
     const updatedAccount = await account.update({
-      bookmaker_name: bookmaker_name ? bookmaker_name.trim() : account.bookmaker_name,
+      bookmaker_name: bookmaker_name
+        ? bookmaker_name.trim()
+        : account.bookmaker_name,
       balance: balance !== undefined ? parseFloat(balance) : account.balance,
       currency: currency || account.currency,
       notes: notes !== undefined ? notes : account.notes,
-      status: status || account.status
+      status: status || account.status,
     });
 
     res.json({
       success: true,
-      message: 'Conta atualizada com sucesso',
-      data: updatedAccount
+      message: "Conta atualizada com sucesso",
+      data: updatedAccount,
     });
   } catch (error) {
-    console.error('Erro ao atualizar conta:', error);
+    console.error("Erro ao atualizar conta:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // DELETE /api/bookmaker-accounts/:id - Excluir conta
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
     // Verificar se há transações associadas (apenas para log)
     const transactionCount = await TransactionHistory.count({
-      where: { bookmaker_account_id: req.params.id }
+      where: { bookmaker_account_id: req.params.id },
     });
 
     // Log da operação antes da exclusão
-    console.log(`🗑️ Excluindo conta: ${account.bookmaker_name} (ID: ${account.id})`);
+    console.log(
+      `🗑️ Excluindo conta: ${account.bookmaker_name} (ID: ${account.id})`
+    );
     console.log(`💰 Saldo da conta: ${account.balance}`);
     console.log(`📊 Transações associadas: ${transactionCount}`);
 
     // Excluir transações associadas primeiro (cascade delete)
     if (transactionCount > 0) {
       await TransactionHistory.destroy({
-        where: { bookmaker_account_id: req.params.id }
+        where: { bookmaker_account_id: req.params.id },
       });
       console.log(`🗑️ ${transactionCount} transação(ões) excluída(s)`);
     }
@@ -240,52 +247,52 @@ router.delete('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Conta excluída com sucesso',
+      message: "Conta excluída com sucesso",
       data: {
         deletedAccount: account.bookmaker_name,
         balance: account.balance,
-        transactionsDeleted: transactionCount
-      }
+        transactionsDeleted: transactionCount,
+      },
     });
   } catch (error) {
-    console.error('Erro ao excluir conta:', error);
+    console.error("Erro ao excluir conta:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // POST /api/bookmaker-accounts/:id/withdraw - Fazer saque (fictício)
-router.post('/:id/withdraw', async (req, res) => {
+router.post("/:id/withdraw", async (req, res) => {
   try {
     const { amount, description } = req.body;
 
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Valor do saque deve ser um número positivo'
+        message: "Valor do saque deve ser um número positivo",
       });
     }
 
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
-    if (account.status !== 'active') {
+    if (account.status !== "active") {
       return res.status(400).json({
         success: false,
-        message: 'Conta não está ativa'
+        message: "Conta não está ativa",
       });
     }
 
@@ -295,7 +302,7 @@ router.post('/:id/withdraw', async (req, res) => {
     if (currentBalance < withdrawAmount) {
       return res.status(400).json({
         success: false,
-        message: 'Saldo insuficiente para realizar o saque'
+        message: "Saldo insuficiente para realizar o saque",
       });
     }
 
@@ -303,61 +310,61 @@ router.post('/:id/withdraw', async (req, res) => {
     const transaction = await TransactionHistory.create({
       user_id: req.user.id,
       bookmaker_account_id: account.id,
-      transaction_type: 'withdrawal',
+      transaction_type: "withdrawal",
       amount: withdrawAmount,
       balance_before: currentBalance,
       balance_after: currentBalance - withdrawAmount,
       description: description || `Saque de R$ ${withdrawAmount.toFixed(2)}`,
-      status: 'completed'
+      status: "completed",
     });
 
     res.json({
       success: true,
-      message: 'Saque realizado com sucesso',
+      message: "Saque realizado com sucesso",
       data: {
         transaction,
-        newBalance: currentBalance - withdrawAmount
-      }
+        newBalance: currentBalance - withdrawAmount,
+      },
     });
   } catch (error) {
-    console.error('Erro ao realizar saque:', error);
+    console.error("Erro ao realizar saque:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // POST /api/bookmaker-accounts/:id/deposit - Fazer depósito
-router.post('/:id/deposit', async (req, res) => {
+router.post("/:id/deposit", async (req, res) => {
   try {
     const { amount, description } = req.body;
 
     if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Valor do depósito deve ser um número positivo'
+        message: "Valor do depósito deve ser um número positivo",
       });
     }
 
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
-    if (account.status !== 'active') {
+    if (account.status !== "active") {
       return res.status(400).json({
         success: false,
-        message: 'Conta não está ativa'
+        message: "Conta não está ativa",
       });
     }
 
@@ -368,33 +375,33 @@ router.post('/:id/deposit', async (req, res) => {
     const transaction = await TransactionHistory.create({
       user_id: req.user.id,
       bookmaker_account_id: account.id,
-      transaction_type: 'deposit',
+      transaction_type: "deposit",
       amount: depositAmount,
       balance_before: currentBalance,
       balance_after: currentBalance + depositAmount,
       description: description || `Depósito de R$ ${depositAmount.toFixed(2)}`,
-      status: 'completed'
+      status: "completed",
     });
 
     res.json({
       success: true,
-      message: 'Depósito realizado com sucesso',
+      message: "Depósito realizado com sucesso",
       data: {
         transaction,
-        newBalance: currentBalance + depositAmount
-      }
+        newBalance: currentBalance + depositAmount,
+      },
     });
   } catch (error) {
-    console.error('Erro ao realizar depósito:', error);
+    console.error("Erro ao realizar depósito:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // GET /api/bookmaker-accounts/:id/transactions - Obter histórico de transações
-router.get('/:id/transactions', async (req, res) => {
+router.get("/:id/transactions", async (req, res) => {
   try {
     const { page = 1, limit = 20 } = req.query;
     const offset = (page - 1) * limit;
@@ -403,22 +410,22 @@ router.get('/:id/transactions', async (req, res) => {
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
     const transactions = await TransactionHistory.findAndCountAll({
       where: { bookmaker_account_id: req.params.id },
-      order: [['created_at', 'DESC']],
+      order: [["created_at", "DESC"]],
       limit: parseInt(limit),
-      offset: parseInt(offset)
+      offset: parseInt(offset),
     });
 
     res.json({
@@ -429,58 +436,63 @@ router.get('/:id/transactions', async (req, res) => {
           currentPage: parseInt(page),
           totalPages: Math.ceil(transactions.count / limit),
           totalItems: transactions.count,
-          itemsPerPage: parseInt(limit)
-        }
-      }
+          itemsPerPage: parseInt(limit),
+        },
+      },
     });
   } catch (error) {
-    console.error('Erro ao buscar transações:', error);
+    console.error("Erro ao buscar transações:", error);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });
 
 // POST /api/bookmaker-accounts/:id/adjust-balance - Ajustar saldo da conta
-router.post('/:id/adjust-balance', async (req, res) => {
+router.post("/:id/adjust-balance", async (req, res) => {
   try {
-    console.log('💰 Iniciando ajuste de saldo para conta ID:', req.params.id);
-    console.log('📊 Dados recebidos:', req.body);
-    
+    console.log("💰 Iniciando ajuste de saldo para conta ID:", req.params.id);
+    console.log("📊 Dados recebidos:", req.body);
+
     const { amount, description, type } = req.body;
 
     if (!amount || isNaN(amount)) {
-      console.log('❌ Valor inválido:', amount);
+      console.log("❌ Valor inválido:", amount);
       return res.status(400).json({
         success: false,
-        message: 'Valor do ajuste deve ser um número válido'
+        message: "Valor do ajuste deve ser um número válido",
       });
     }
 
-    console.log('🔍 Buscando conta...');
+    console.log("🔍 Buscando conta...");
     const account = await BookmakerAccount.findOne({
       where: {
         id: req.params.id,
-        user_id: req.user.id
-      }
+        user_id: req.user.id,
+      },
     });
 
     if (!account) {
-      console.log('❌ Conta não encontrada');
+      console.log("❌ Conta não encontrada");
       return res.status(404).json({
         success: false,
-        message: 'Conta não encontrada'
+        message: "Conta não encontrada",
       });
     }
 
-    console.log('✅ Conta encontrada:', account.bookmaker_name, 'Saldo atual:', account.balance);
+    console.log(
+      "✅ Conta encontrada:",
+      account.bookmaker_name,
+      "Saldo atual:",
+      account.balance
+    );
 
-    if (account.status !== 'active') {
-      console.log('❌ Conta não está ativa:', account.status);
+    if (account.status !== "active") {
+      console.log("❌ Conta não está ativa:", account.status);
       return res.status(400).json({
         success: false,
-        message: 'Conta não está ativa'
+        message: "Conta não está ativa",
       });
     }
 
@@ -488,61 +500,65 @@ router.post('/:id/adjust-balance', async (req, res) => {
     const currentBalance = parseFloat(account.balance);
     const newBalance = currentBalance + adjustAmount;
 
-    console.log('📊 Cálculos:', {
+    console.log("📊 Cálculos:", {
       adjustAmount,
       currentBalance,
-      newBalance
+      newBalance,
     });
 
     // Verificar se o novo saldo não ficará negativo
     if (newBalance < 0) {
-      console.log('❌ Saldo ficaria negativo:', newBalance);
+      console.log("❌ Saldo ficaria negativo:", newBalance);
       return res.status(400).json({
         success: false,
-        message: 'Ajuste resultaria em saldo negativo'
+        message: "Ajuste resultaria em saldo negativo",
       });
     }
 
-    console.log('💾 Atualizando saldo da conta...');
+    console.log("💾 Atualizando saldo da conta...");
     // Atualizar saldo da conta
     await account.update({
       balance: newBalance,
-      last_updated: new Date()
+      last_updated: new Date(),
     });
 
-    console.log('✅ Saldo atualizado com sucesso');
+    console.log("✅ Saldo atualizado com sucesso");
 
-    console.log('📝 Criando transação...');
+    console.log("📝 Criando transação...");
     // Criar transação de ajuste
     const transaction = await TransactionHistory.create({
       user_id: req.user.id,
       bookmaker_account_id: account.id,
-      transaction_type: 'adjustment',
+      transaction_type: "adjustment",
       amount: Math.abs(adjustAmount), // Sempre positivo para o histórico
       balance_before: currentBalance,
       balance_after: newBalance,
-      description: description || `Ajuste de saldo: ${adjustAmount > 0 ? '+' : ''}${adjustAmount.toFixed(2)}`,
-      status: 'completed',
-      reference_id: type || 'manual_adjustment'
+      description:
+        description ||
+        `Ajuste de saldo: ${adjustAmount > 0 ? "+" : ""}${adjustAmount.toFixed(
+          2
+        )}`,
+      status: "completed",
+      reference_id: type || "manual_adjustment",
     });
 
-    console.log('✅ Transação criada com sucesso:', transaction.id);
+    console.log("✅ Transação criada com sucesso:", transaction.id);
 
     res.json({
       success: true,
-      message: 'Saldo ajustado com sucesso',
+      message: "Saldo ajustado com sucesso",
       data: {
         transaction,
         newBalance,
-        adjustment: adjustAmount
-      }
+        adjustment: adjustAmount,
+      },
     });
   } catch (error) {
-    console.error('❌ Erro ao ajustar saldo:', error);
-    console.error('❌ Stack trace:', error.stack);
+    console.error("❌ Erro ao ajustar saldo:", error);
+    console.error("❌ Stack trace:", error.stack);
     res.status(500).json({
       success: false,
-      message: 'Erro interno do servidor'
+      message: "Erro interno do servidor",
     });
   }
 });

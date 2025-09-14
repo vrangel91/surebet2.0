@@ -106,6 +106,10 @@ export default {
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              animation: {
+                duration: 800,
+                easing: 'easeInOutQuad'
+              },
               plugins: {
                 title: {
                   display: true,
@@ -122,7 +126,33 @@ export default {
                   labels: {
                     color: this.getThemeColor('text-primary'),
                     usePointStyle: true,
-                    padding: 20
+                    padding: 20,
+                    generateLabels: (chart) => {
+                      const datasets = chart.data.datasets;
+                      return datasets.map((dataset, i) => ({
+                        text: dataset.label || `Dataset ${i + 1}`,
+                        fillStyle: dataset.backgroundColor,
+                        strokeStyle: dataset.borderColor,
+                        lineWidth: dataset.borderWidth || 1,
+                        pointStyle: dataset.pointStyle || 'circle',
+                        hidden: !chart.isDatasetVisible(i),
+                        datasetIndex: i
+                      }));
+                    }
+                  }
+                },
+                tooltip: {
+                  enabled: true,
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  titleColor: '#ffffff',
+                  bodyColor: '#00ff88',
+                  borderColor: '#00ff88',
+                  borderWidth: 1,
+                  displayColors: true,
+                  callbacks: {
+                    label: function(context) {
+                      return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
+                    }
                   }
                 }
               },

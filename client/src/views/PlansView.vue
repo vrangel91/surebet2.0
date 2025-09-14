@@ -18,6 +18,13 @@
           <h2 class="page-title">Planos</h2>
           <p class="page-subtitle">Escolha o plano ideal para suas necessidades</p>
         </div>
+        <div class="header-right">
+          <!-- WebSocket Status -->
+          <div class="websocket-status" :class="{ connected: websocketConnected }">
+            <span class="status-dot"></span>
+            {{ websocketConnected ? 'WebSocket Conectado' : 'WebSocket Desconectado' }}
+          </div>
+        </div>
       </header>
 
       <!-- Main Content -->
@@ -660,6 +667,7 @@
       :planBenefits="confirmationPlanBenefits"
       @close="closePaymentConfirmation"
     />
+
   </div>
 </template>
 
@@ -693,6 +701,16 @@ export default {
       confirmationPaymentId: '',
       confirmationExpiresAt: '',
       confirmationPlanBenefits: [],
+      
+      // WebSocket para notificações de pagamento
+      websocket: null,
+      websocketConnected: false,
+      websocketReconnectAttempts: 0,
+      maxReconnectAttempts: 5,
+      websocketReconnectInterval: 3000,
+      
+      // Debug mode
+      debugMode: true,
       
       // Mercado Pago Configuration
       mercadopagoConfig: {
@@ -1091,16 +1109,26 @@ export default {
   },
   
   mounted() {
+    console.log('🚀 PlansView mounted - Iniciando configuração...')
+    
     // Preencher dados do usuário logado se disponível
     if (this.currentUser) {
+      console.log('👤 Usuário logado encontrado:', this.currentUser.email)
       this.checkoutData.firstName = this.currentUser.firstName || ''
       this.checkoutData.lastName = this.currentUser.lastName || ''
       this.checkoutData.email = this.currentUser.email || ''
       this.checkoutData.cpf = this.currentUser.cpf || ''
+    } else {
+      console.log('⚠️ Nenhum usuário logado encontrado')
     }
     
     // Inicializar Mercado Pago
     this.initializeMercadoPago()
+    
+    // Inicializar WebSocket para notificações de pagamento
+    this.initializeWebSocket()
+    
+    console.log('✅ PlansView inicializado com sucesso')
   },
   
   methods: {
@@ -1111,6 +1139,180 @@ export default {
     handleSidebarStateLoaded(collapsed) {
       this.sidebarCollapsed = collapsed
     },
+    
+    // Debug methods
+    debugLog(message, data = null) {
+      if (this.debugMode) {
+        const timestamp = new Date().toLocaleTimeString('pt-BR')
+        console.log(`🔍 [${timestamp}] [PLANS DEBUG] ${message}`, data || '')
+      }
+    },
+    
+    debugError(message, error = null) {
+      if (this.debugMode) {
+        const timestamp = new Date().toLocaleTimeString('pt-BR')
+        console.error(`❌ [${timestamp}] [PLANS ERROR] ${message}`, error || '')
+      }
+    },
+    
+    debugSuccess(message, data = null) {
+      if (this.debugMode) {
+        const timestamp = new Date().toLocaleTimeString('pt-BR')
+        console.log(`✅ [${timestamp}] [PLANS SUCCESS] ${message}`, data || '')
+      }
+    },
+    
+    debugWarning(message, data = null) {
+      if (this.debugMode) {
+        const timestamp = new Date().toLocaleTimeString('pt-BR')
+        console.warn(`⚠️ [${timestamp}] [PLANS WARNING] ${message}`, data || '')
+      }
+    },
+    
+    // WebSocket methods
+    initializeWebSocket() {
+      console.log('🔌 [WEBSOCKET] Inicializando WebSocket...')
+      this.debugLog('Inicializando WebSocket...')
+      
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        const hostname = window.location.hostname
+        const wsUrl = `${protocol}//${hostname}/ws`
+        
+        console.log('🔌 [WEBSOCKET] URL do WebSocket:', wsUrl)
+        console.log('🔌 [WEBSOCKET] Protocolo:', protocol)
+        console.log('🔌 [WEBSOCKET] Hostname:', hostname)
+        console.log('🔌 [WEBSOCKET] Location:', window.location.href)
+        this.debugLog('Conectando ao WebSocket', { url: wsUrl })
+        
+        this.websocket = new WebSocket(wsUrl)
+        
+        this.websocket.onopen = () => {
+          this.debugSuccess('WebSocket conectado com sucesso')
+          this.websocketConnected = true
+          this.websocketReconnectAttempts = 0
+        }
+        
+        this.websocket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            this.debugLog('Mensagem WebSocket recebida', data)
+            this.handleWebSocketMessage(data)
+          } catch (error) {
+            this.debugError('Erro ao processar mensagem WebSocket', { error: error.message })
+          }
+        }
+        
+        this.websocket.onclose = (event) => {
+          this.debugWarning('WebSocket desconectado', { code: event.code, reason: event.reason })
+          this.websocketConnected = false
+          this.attemptReconnect()
+        }
+        
+        this.websocket.onerror = (error) => {
+          console.error('❌ [WEBSOCKET ERROR] Erro no WebSocket:', error)
+          console.error('❌ [WEBSOCKET ERROR] Evento de erro:', error.type)
+          console.error('❌ [WEBSOCKET ERROR] Código de erro:', error.code)
+          console.error('❌ [WEBSOCKET ERROR] Mensagem de erro:', error.message)
+          console.error('❌ [WEBSOCKET ERROR] ReadyState:', this.websocket?.readyState)
+          this.debugError('Erro no WebSocket', { 
+            error: error.message || 'Erro desconhecido',
+            type: error.type,
+            code: error.code,
+            readyState: this.websocket?.readyState
+          })
+        }
+        
+      } catch (error) {
+        this.debugError('Erro ao inicializar WebSocket', { error: error.message })
+      }
+    },
+    
+    attemptReconnect() {
+      if (this.websocketReconnectAttempts < this.maxReconnectAttempts) {
+        this.websocketReconnectAttempts++
+        this.debugLog(`Tentativa de reconexão ${this.websocketReconnectAttempts}/${this.maxReconnectAttempts}`)
+        
+        setTimeout(() => {
+          this.initializeWebSocket()
+        }, this.websocketReconnectInterval)
+      } else {
+        this.debugLog('Máximo de tentativas de reconexão atingido')
+      }
+    },
+    
+    handleWebSocketMessage(data) {
+      switch (data.type) {
+        case 'payment_confirmed':
+          this.debugLog('Pagamento confirmado via WebSocket', data)
+          this.handlePaymentConfirmation(data.paymentData)
+          break
+          
+        case 'payment_updated':
+          this.debugLog('Status do pagamento atualizado via WebSocket', data)
+          this.handlePaymentUpdate(data.paymentData)
+          break
+          
+        case 'initial_state':
+          this.debugLog('Estado inicial recebido via WebSocket', data)
+          break
+          
+        default:
+          this.debugLog('Mensagem WebSocket não reconhecida', data)
+      }
+    },
+    
+    handlePaymentConfirmation(paymentData) {
+      console.log('🎉 [PAYMENT CONFIRMED] Processando confirmação de pagamento', paymentData)
+      this.debugLog('Processando confirmação de pagamento', paymentData)
+      
+      // Fechar modais de pagamento
+      console.log('🔍 [DEBUG] Fechando modais de pagamento...')
+      this.closePixModal()
+      this.closePaymentModal()
+      this.closeProcessingModal()
+      
+      // Preparar dados para o modal de confirmação
+      const confirmationData = {
+        planName: paymentData.planName || this.selectedPlan?.title || 'VIP',
+        paymentId: paymentData.paymentId || paymentData.id,
+        expiresAt: paymentData.expiresAt || paymentData.expiration_date,
+        benefits: paymentData.benefits || this.getDefaultPlanBenefits(paymentData.planName)
+      }
+      
+      console.log('🔍 [DEBUG] Dados para modal de confirmação:', confirmationData)
+      
+      // Mostrar modal de confirmação
+      this.showPaymentConfirmationModal(confirmationData)
+      
+      // Atualizar estado do usuário se necessário
+      if (paymentData.userData) {
+        console.log('🔍 [DEBUG] Atualizando dados do usuário...')
+        this.$store.dispatch('updateUser', paymentData.userData)
+      }
+      
+      console.log('✅ [SUCCESS] Modal de confirmação de pagamento exibido')
+    },
+    
+    handlePaymentUpdate(paymentData) {
+      this.debugLog('Processando atualização de pagamento', paymentData)
+      
+      // Atualizar status do pagamento se estiver em processamento
+      if (this.showProcessingModal || this.showPixModal) {
+        // Pode atualizar a UI com o novo status
+        console.log('Status do pagamento atualizado:', paymentData.status)
+      }
+    },
+    
+    // Cleanup WebSocket
+    beforeUnmount() {
+      this.debugLog('Limpeza do WebSocket...')
+      if (this.websocket) {
+        this.websocket.close()
+        this.websocket = null
+      }
+    },
+    
     
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
@@ -1131,20 +1333,27 @@ export default {
     },
     
     buyPlan(plan) {
-      console.log('buyPlan chamado com:', plan)
+      console.log('🔍 [DEBUG] buyPlan chamado com:', plan)
+      console.log('🔍 [DEBUG] plan.id:', plan?.id)
+      console.log('🔍 [DEBUG] plan.title:', plan?.title)
+      console.log('🔍 [DEBUG] plan.price:', plan?.price)
       
       // Verificar se o usuário está logado
       if (!this.currentUser) {
+        console.log('🔍 [DEBUG] Usuário não logado - mostrando modal de login')
         // Usuário não logado - mostrar modal de login
         this.showLoginRequiredModal = true
         this.selectedPlan = plan
+        console.log('🔍 [DEBUG] selectedPlan definido para usuário não logado:', this.selectedPlan)
         return
       }
       
+      console.log('🔍 [DEBUG] Usuário logado - prosseguindo com compra')
       // Usuário logado - prosseguir com a compra
       this.selectedPlan = plan
       this.showPaymentMethodModal = true
-      console.log('showPaymentMethodModal definido como:', this.showPaymentMethodModal)
+      console.log('🔍 [DEBUG] selectedPlan definido:', this.selectedPlan)
+      console.log('🔍 [DEBUG] showPaymentMethodModal definido como:', this.showPaymentMethodModal)
     },
     
     resetCheckoutForm() {
@@ -1197,14 +1406,28 @@ export default {
     },
     
     selectPaymentMethod(method) {
-      console.log('selectPaymentMethod chamado com:', method)
+      console.log('🔍 [DEBUG] selectPaymentMethod chamado com:', method)
+      console.log('🔍 [DEBUG] selectedPlan atual:', this.selectedPlan)
+      console.log('🔍 [DEBUG] selectedPlan existe?', !!this.selectedPlan)
+      console.log('🔍 [DEBUG] selectedPlan.id:', this.selectedPlan?.id)
+      console.log('🔍 [DEBUG] selectedPlan.title:', this.selectedPlan?.title)
+      
+      this.debugLog('selectPaymentMethod chamado', {
+        method,
+        selectedPlan: this.selectedPlan,
+        hasSelectedPlan: !!this.selectedPlan,
+        selectedPlanId: this.selectedPlan?.id,
+        selectedPlanTitle: this.selectedPlan?.title
+      })
+      
       if (method === 'pix') {
-        console.log('Abrindo modal PIX')
+        console.log('🔍 [DEBUG] Abrindo modal PIX')
         this.showPaymentMethodModal = false
         this.showPixModal = true
-        this.processPixPayment()
+        console.log('🔍 [DEBUG] Chamando createPixOrder...')
+        this.createPixOrder()
       } else if (method === 'credit_card') {
-        console.log('Abrindo modal de cartão de crédito')
+        console.log('🔍 [DEBUG] Abrindo modal de cartão de crédito')
         this.showPaymentMethodModal = false
         this.showPaymentModal = true
         this.resetCheckoutForm()
@@ -1310,8 +1533,32 @@ export default {
       return Math.abs(hash).toString(36)
     },
     
-    async processPixPayment() {
+    async createPixOrder() {
+      console.log('🔍 [DEBUG] createPixOrder iniciado')
+      console.log('🔍 [DEBUG] this.selectedPlan:', this.selectedPlan)
+      console.log('🔍 [DEBUG] typeof this.selectedPlan:', typeof this.selectedPlan)
+      
       try {
+        // Validar se selectedPlan existe
+        if (!this.selectedPlan) {
+          console.error('❌ [ERROR] selectedPlan não está definido')
+          this.debugError('selectedPlan não está definido')
+          throw new Error('Plano não selecionado. Tente novamente.')
+        }
+        
+        console.log('✅ [DEBUG] selectedPlan encontrado:', {
+          id: this.selectedPlan.id,
+          title: this.selectedPlan.title,
+          price: this.selectedPlan.price,
+          days: this.selectedPlan.days
+        })
+        
+        this.debugLog('selectedPlan encontrado', {
+          id: this.selectedPlan.id,
+          title: this.selectedPlan.title,
+          price: this.selectedPlan.price
+        })
+        
         // 1. Preparar dados do pedido PIX
         const orderData = {
           userId: this.currentUser?.id || 'guest',
@@ -1326,6 +1573,8 @@ export default {
             cpf: this.currentUser?.cpf || '00000000000'
           }
         }
+
+        this.debugLog('Criando pedido PIX...', orderData)
 
         // 2. Criar pedido PIX via API
         const response = await fetch('/api/orders/pix', {
@@ -1422,42 +1671,157 @@ export default {
       if (this.processingPayment) return
       
       this.processingPayment = true
+      this.debugLog('Iniciando processamento de pagamento...', {
+        plan: this.selectedPlan?.title,
+        price: this.selectedPlan?.price,
+        paymentMethod: this.selectedPaymentMethod
+      })
       
       try {
         // 1. Validar dados do formulário
+        this.debugLog('Validando formulário de checkout...')
         if (!this.validateCheckoutForm()) {
           throw new Error('Por favor, preencha todos os campos obrigatórios')
         }
+        this.debugLog('Formulário validado com sucesso')
         
         // 2. Criar pedido no sistema
+        this.debugLog('Criando pedido no sistema...')
         const order = await this.createOrder()
+        this.debugLog('Pedido criado com sucesso', { orderId: order.id })
         
-        // 3. Processar pagamento no Mercado Pago
-        const paymentResult = await this.processMercadoPagoPayment(order)
+        // 3. Processar pagamento baseado no método selecionado
+        let paymentResult
+        if (this.selectedPaymentMethod === 'pix') {
+          this.debugLog('Processando pagamento PIX...')
+          paymentResult = await this.processPixPayment(order)
+        } else {
+          this.debugLog('Processando pagamento no Mercado Pago...')
+          paymentResult = await this.processMercadoPagoPayment(order)
+        }
+        
+        this.debugLog('Pagamento processado', { 
+          status: paymentResult.status, 
+          paymentId: paymentResult.paymentId 
+        })
         
         // 4. Atualizar status do pedido
         await this.updateOrderStatus(order.id, paymentResult.status)
         
         // 5. Iniciar polling para verificar status do pagamento
         if (paymentResult.status === 'pending') {
+          this.debugLog('Pagamento pendente - iniciando polling...')
           this.showSuccessMessage('Pagamento processado! Aguardando confirmação...')
           this.closePaymentModal()
           
           // Iniciar polling para verificar status
-          this.startPaymentPolling(order.id, order.payment_id)
+          this.startPaymentPolling(order.id, paymentResult.paymentId)
           
         } else if (paymentResult.status === 'approved') {
           // Pagamento já aprovado (caso raro)
+          this.debugLog('Pagamento aprovado imediatamente')
           await this.handleApprovedPayment(order)
         } else {
+          this.debugLog('Pagamento não aprovado', { status: paymentResult.status })
           this.showErrorMessage('Pagamento não aprovado. Tente novamente.')
         }
         
       } catch (error) {
-        console.error('Erro no processamento do pagamento:', error)
+        this.debugError('Erro ao processar pagamento', { 
+          error: error.message, 
+          stack: error.stack 
+        })
+        console.error('❌ Erro no processamento do pagamento:', error)
         this.showErrorMessage(error.message || 'Erro ao processar pagamento. Tente novamente.')
       } finally {
         this.processingPayment = false
+        this.debugLog('Processamento de pagamento finalizado')
+      }
+    },
+    
+    // Método para processar pagamento PIX
+    async processPixPayment(order) {
+      this.debugLog('Iniciando processamento de PIX...', { orderId: order.id })
+      
+      try {
+        // 1. Gerar PIX via API
+        const response = await fetch('/api/payments/pix', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.$store.getters.token}`
+          },
+          body: JSON.stringify({
+            orderId: order.id,
+            amount: parseFloat(this.selectedPlan.price),
+            planId: this.selectedPlan.id,
+            planName: this.selectedPlan.title,
+            customerData: this.checkoutData
+          })
+        })
+        
+        this.debugLog('Resposta da API PIX recebida', { 
+          status: response.status, 
+          statusText: response.statusText 
+        })
+        
+        const result = await response.json()
+        this.debugLog('Dados do PIX processados', { 
+          success: result.success, 
+          hasPixCode: !!result.pix?.pixCode,
+          hasQrCode: !!result.pix?.pixCodeBase64
+        })
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Falha ao processar pedido PIX')
+        }
+
+        // 2. Configurar dados do PIX
+        this.pixCode = result.pix.pixCode
+        this.pixCodeBase64 = result.pix.pixCodeBase64
+        this.ticketUrl = result.pix.ticketUrl
+        this.currentOrder = result.order
+        this.timeRemaining = 570 // 9:30 em segundos
+        
+        this.debugLog('PIX configurado com sucesso', {
+          hasPixCode: !!this.pixCode,
+          hasQrCode: !!this.pixCodeBase64,
+          ticketUrl: this.ticketUrl,
+          timeRemaining: this.timeRemaining
+        })
+        
+        // 3. Iniciar timer para verificação de pagamento
+        this.startPixTimer(result.order.id)
+        
+        // 4. Notificar via WebSocket se conectado
+        if (this.websocketConnected) {
+          this.debugLog('Enviando notificação de PIX gerado via WebSocket')
+          this.websocket.send(JSON.stringify({
+            type: 'pix_generated',
+            orderId: result.order.id,
+            planName: this.selectedPlan.title,
+            amount: parseFloat(this.selectedPlan.price)
+          }))
+        }
+        
+        // 5. Mostrar modal PIX
+        this.showPixModal = true
+        
+        this.debugSuccess('PIX gerado com sucesso', result.pix)
+        
+        return {
+          status: 'pending',
+          paymentId: result.order.id,
+          pixData: result.pix
+        }
+        
+      } catch (error) {
+        this.debugError('Erro ao processar PIX', { 
+          error: error.message, 
+          stack: error.stack 
+        })
+        console.error('❌ Erro ao processar PIX:', error)
+        throw error
       }
     },
     
@@ -1861,11 +2225,21 @@ export default {
     
     // Payment confirmation modal methods
     showPaymentConfirmationModal(paymentData) {
+      console.log('🔍 [DEBUG] showPaymentConfirmationModal chamado com:', paymentData)
+      
       this.confirmationPlanName = paymentData.planName
       this.confirmationPaymentId = paymentData.paymentId || ''
       this.confirmationExpiresAt = paymentData.expiresAt || ''
       this.confirmationPlanBenefits = paymentData.benefits || this.getDefaultPlanBenefits(paymentData.planName)
       this.showPaymentConfirmation = true
+      
+      console.log('🔍 [DEBUG] Modal de confirmação configurado:', {
+        planName: this.confirmationPlanName,
+        paymentId: this.confirmationPaymentId,
+        expiresAt: this.confirmationExpiresAt,
+        benefits: this.confirmationPlanBenefits,
+        showPaymentConfirmation: this.showPaymentConfirmation
+      })
     },
     
     closePaymentConfirmation() {
@@ -1969,6 +2343,20 @@ export default {
     width: calc(100% - 80px); /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
+  }
 }
 
 /* Main Content */
@@ -1977,6 +2365,18 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (max-width: 768px) {
+    min-height: auto;
+  }
 }
 
 /* Plans Main Content */
@@ -1985,6 +2385,19 @@ export default {
   padding: 32px 24px;
   width: 100%;
   overflow-y: auto;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 24px 20px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+  }
 }
 
 .content-header {
@@ -1994,6 +2407,23 @@ export default {
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
   transition: border-color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    gap: 12px;
+  }
 }
 
 .header-left {
@@ -2008,6 +2438,19 @@ export default {
   color: var(--accent-primary);
   margin: 0;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    font-size: 28px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 }
 
 .page-subtitle {
@@ -2015,6 +2458,15 @@ export default {
   color: var(--text-secondary);
   margin: 0;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }
 
 /* Plans Title */
@@ -2024,6 +2476,20 @@ export default {
   max-width: 600px;
   margin-left: auto;
   margin-right: auto;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    margin-bottom: 28px;
+    max-width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 20px;
+  }
 }
 
 .plans-title h1 {
@@ -2032,6 +2498,19 @@ export default {
   color: var(--accent-primary);
   margin: 0 0 8px 0;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    font-size: 32px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 }
 
 .title-icon {
@@ -2053,6 +2532,27 @@ export default {
   padding: 0 16px;
   scrollbar-width: thin;
   scrollbar-color: var(--border-primary) transparent;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    gap: 10px;
+    margin-bottom: 28px;
+    padding: 0 12px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 0 8px;
+    justify-content: flex-start;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 0 4px;
+  }
 }
 
 .plan-categories::-webkit-scrollbar {
@@ -2088,6 +2588,26 @@ export default {
   white-space: nowrap;
   flex-shrink: 0;
   min-width: fit-content;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: 12px;
+    border-radius: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 6px 12px;
+    font-size: 11px;
+    border-radius: 15px;
+    gap: 6px;
+  }
 }
 
 .category-btn:hover {
@@ -2131,6 +2651,17 @@ export default {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 18px;
+    height: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 /* Plan Description */
@@ -2140,6 +2671,20 @@ export default {
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    margin-bottom: 32px;
+    max-width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    margin-bottom: 28px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 24px;
+  }
 }
 
 .description-title {
@@ -2148,6 +2693,19 @@ export default {
   color: var(--accent-primary);
   margin: 0 0 8px 0;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .description-subtitle {
@@ -2155,6 +2713,15 @@ export default {
   color: var(--text-secondary);
   margin: 0;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }
 
 /* Plans Grid */
@@ -2166,6 +2733,31 @@ export default {
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+    max-width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 }
 
 .plan-card {
@@ -2175,6 +2767,17 @@ export default {
   border-radius: 12px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    border-radius: 8px;
+  }
 }
 
 .plan-card:hover {
@@ -2202,6 +2805,19 @@ export default {
 
 .plan-content {
   padding: 24px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 }
 
 .plan-title {
@@ -2211,12 +2827,32 @@ export default {
   margin: 0 0 20px 0;
   line-height: 1.3;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 15px;
+    margin: 0 0 16px 0;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin: 0 0 12px 0;
+  }
 }
 
 .plan-features {
   list-style: none;
   padding: 0;
   margin: 0 0 24px 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    margin: 0 0 20px 0;
+  }
+  
+  @media (max-width: 480px) {
+    margin: 0 0 16px 0;
+  }
 }
 
 .feature-item {
@@ -2226,6 +2862,19 @@ export default {
   margin-bottom: 12px;
   font-size: 14px;
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
 }
 
 .feature-item.included {
@@ -2240,6 +2889,17 @@ export default {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 14px;
+    height: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 12px;
+    height: 12px;
+  }
 }
 
 .feature-icon.included {
@@ -2253,6 +2913,15 @@ export default {
 .plan-price {
   text-align: center;
   margin-bottom: 24px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 16px;
+  }
 }
 
 .price-currency {
@@ -2260,6 +2929,15 @@ export default {
   font-weight: 600;
   color: var(--accent-primary);
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 }
 
 .price-value {
@@ -2267,6 +2945,15 @@ export default {
   font-weight: 700;
   color: var(--accent-primary);
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 32px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
 }
 
 .price-decimal {
@@ -2274,6 +2961,15 @@ export default {
   font-weight: 600;
   color: var(--accent-primary);
   transition: color 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 }
 
 .buy-button {
@@ -2291,6 +2987,21 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 15px;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 14px;
+    font-size: 14px;
+    border-radius: 5px;
+    gap: 6px;
+  }
 }
 
 .buy-button:hover {
@@ -2302,6 +3013,17 @@ export default {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 16px;
+    height: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 14px;
+    height: 14px;
+  }
 }
 
   .buy-icon {
@@ -2323,6 +3045,17 @@ export default {
     justify-content: center;
     z-index: 1000;
     backdrop-filter: blur(4px);
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 768px) {
+      align-items: flex-start;
+      padding: 20px 10px;
+      overflow-y: auto;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 10px 5px;
+    }
   }
   
   .payment-modal,
@@ -2338,6 +3071,27 @@ export default {
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 1023px) {
+      max-width: 95%;
+      width: 95%;
+      border-radius: 10px;
+    }
+    
+    @media (max-width: 768px) {
+      max-width: 98%;
+      width: 98%;
+      max-height: 95vh;
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      max-width: 100%;
+      width: 100%;
+      max-height: 100vh;
+      border-radius: 0;
+    }
   }
 
   .pix-modal {
@@ -2350,6 +3104,27 @@ export default {
     overflow-y: auto;
     animation: modalSlideIn 0.3s ease-out;
     transition: background-color 0.3s ease, border-color 0.3s ease;
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 1023px) {
+      max-width: 95%;
+      width: 95%;
+      border-radius: 10px;
+    }
+    
+    @media (max-width: 768px) {
+      max-width: 98%;
+      width: 98%;
+      max-height: 90vh;
+      border-radius: 8px;
+    }
+    
+    @media (max-width: 480px) {
+      max-width: 100%;
+      width: 100%;
+      max-height: 100vh;
+      border-radius: 0;
+    }
   }
 
   @media (max-width: 480px) {
@@ -2424,6 +3199,19 @@ export default {
     justify-content: space-between;
     align-items: center;
     transition: border-color 0.3s ease;
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 1023px) {
+      padding: 20px 20px 14px 20px;
+    }
+    
+    @media (max-width: 768px) {
+      padding: 16px 16px 12px 16px;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 12px 12px 8px 12px;
+    }
   }
   
   .modal-header h3 {
@@ -2432,6 +3220,15 @@ export default {
     font-size: 20px;
     font-weight: 600;
     transition: color 0.3s ease;
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 768px) {
+      font-size: 18px;
+    }
+    
+    @media (max-width: 480px) {
+      font-size: 16px;
+    }
   }
   
   .close-btn {
@@ -2457,6 +3254,19 @@ export default {
   
   .modal-body {
     padding: 24px;
+    
+    /* Responsividade para diferentes tipos de tela */
+    @media (max-width: 1023px) {
+      padding: 20px;
+    }
+    
+    @media (max-width: 768px) {
+      padding: 16px;
+    }
+    
+    @media (max-width: 480px) {
+      padding: 12px;
+    }
   }
   
   /* Payment Modal Specific */
@@ -3310,6 +4120,131 @@ export default {
   transition: color 0.3s ease;
 }
 
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .plans-main {
+    padding: 40px 32px;
+  }
+  
+  .content-header {
+    padding: 32px 40px;
+  }
+  
+  .plans-title {
+    margin-bottom: 40px;
+  }
+  
+  .plans-title h1 {
+    font-size: 40px;
+  }
+  
+  .plan-categories {
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+  
+  .plan-description {
+    margin-bottom: 48px;
+  }
+  
+  .description-title {
+    font-size: 32px;
+  }
+  
+  .plans-grid {
+    gap: 32px;
+    margin-bottom: 48px;
+  }
+  
+  .plan-content {
+    padding: 32px;
+  }
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .plan-categories {
+    justify-content: center;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .plans-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .plan-categories {
+    justify-content: flex-start;
+  }
+}
+
+/* Media queries para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .plans-main {
+    padding: 32px 24px;
+  }
+  
+  .content-header {
+    padding: 24px 32px;
+  }
+  
+  .plans-title h1 {
+    font-size: 36px;
+  }
+  
+  .plan-categories {
+    gap: 14px;
+  }
+  
+  .description-title {
+    font-size: 28px;
+  }
+  
+  .plans-grid {
+    gap: 24px;
+  }
+  
+  .plan-content {
+    padding: 28px;
+  }
+}
+
+/* Media queries para laptops */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .plans-main {
+    padding: 28px 20px;
+  }
+  
+  .content-header {
+    padding: 20px 28px;
+  }
+  
+  .plans-title h1 {
+    font-size: 32px;
+  }
+  
+  .plan-categories {
+    gap: 12px;
+  }
+  
+  .description-title {
+    font-size: 26px;
+  }
+  
+  .plans-grid {
+    gap: 20px;
+  }
+  
+  .plan-content {
+    padding: 24px;
+  }
+}
+
 /* Responsividade */
 @media (max-width: 1023px) {
   .plans-container {
@@ -3581,13 +4516,131 @@ export default {
   .plan-price-display .price-value {
     font-size: 28px;
   }
+  
+  /* Melhorias adicionais para mobile pequeno */
+  .content-header {
+    padding: 16px 20px;
+  }
+  
+  .plans-title p {
+    font-size: 14px;
+  }
+  
+  .plan-categories {
+    margin-bottom: 20px;
+  }
+  
+  .plan-description {
+    margin-bottom: 24px;
+  }
+  
+  .description-text {
+    font-size: 14px;
+  }
+  
+  .plans-grid {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  
+  .plan-title {
+    font-size: 18px;
+  }
+  
+  .plan-features {
+    gap: 8px;
+  }
+  
+  .feature-item {
+    font-size: 12px;
+  }
+  
+  .feature-icon {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .plan-price {
+    margin: 16px 0;
+  }
+  
+  .price-currency {
+    font-size: 14px;
+  }
+  
+  .price-value {
+    font-size: 24px;
+  }
+  
+  .price-decimal {
+    font-size: 16px;
+  }
+  
+  .buy-button {
+    padding: 10px 16px;
+    font-size: 12px;
+  }
+  
+  .buy-icon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .modal-overlay {
+    padding: 16px;
+  }
+  
+  .payment-modal,
+  .payment-method-modal,
+  .processing-modal,
+  .login-required-modal,
+  .pix-modal {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  .selected-plan-info {
+    padding: 12px;
+  }
+  
+  .plan-info-title {
+    font-size: 14px;
+  }
+  
+  .plan-info-price {
+    font-size: 16px;
+  }
 }
-  
 
+/* WebSocket Status */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
 
+.websocket-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #6c757d;
+}
 
-  
+.websocket-status.connected {
+  color: #28a745;
+}
 
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc3545;
+  transition: background-color 0.3s ease;
+}
 
-
+.websocket-status.connected .status-dot {
+  background: #28a745;
+}
 </style>

@@ -65,7 +65,11 @@ export default createStore({
     
     // 📋 Estado dos planos
     plans: JSON.parse(localStorage.getItem('plans')) || [],
-    plansLoaded: false
+    plansLoaded: false,
+    
+    // 📱 Estado do mobile menu
+    mobileMenuOpen: false,
+    windowWidth: window.innerWidth
   },
   
   mutations: {
@@ -266,6 +270,24 @@ export default createStore({
       console.log('📋 [Store] Planos limpos')
     },
     
+    // 📱 Mutations para mobile menu
+    setMobileMenuOpen(state, isOpen) {
+      state.mobileMenuOpen = isOpen
+      console.log('📱 [Store] Mobile menu state:', isOpen)
+    },
+    
+    toggleMobileMenu(state) {
+      state.mobileMenuOpen = !state.mobileMenuOpen
+      console.log('📱 [Store] Mobile menu toggled to:', state.mobileMenuOpen)
+    },
+    
+    setWindowWidth(state, width) {
+      state.windowWidth = width
+      // Fechar menu mobile se a tela ficar grande
+      if (width >= 1024) {
+        state.mobileMenuOpen = false
+      }
+    }
 
   },
   
@@ -970,154 +992,46 @@ export default createStore({
       return Math.max(0, diffDays)
     },
     
-    // 🔒 Verificar se pode usar recursos VIP
+    // 🔒 Verificar se pode usar recursos VIP - agora todos os usuários logados podem usar
     canUseVIPFeatures: state => {
-      if (!state.vipStatus.isVIP) return false
-      if (state.vipStatus.expiration) {
-        const now = new Date()
-        const expiration = new Date(state.vipStatus.expiration)
-        return expiration > now
-      }
-      return true
+      return state.isAuthenticated
     },
     
     // 🔒 Getters específicos para tipos de plano
     userPlan: state => state.user?.accountType || state.user?.plan || 'basic',
     
     hasSurebetAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const surebetPlans = ['basic', 'premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
-                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
-                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly']
-      
-      // Mapear nomes de planos para tipos
-      const planNameToType = {
-        'Plano Básico': 'basic',
-        'Plano Premium': 'premium',
-        'Plano VIP': 'vip',
-        'Pré-Jogo Diário': 'pre-daily',
-        'Pré-Jogo Semanal': 'pre-weekly',
-        'Pré-Jogo Mensal': 'pre-monthly',
-        'Pré-Jogo Anual': 'pre-yearly',
-        'Live Diário': 'live-daily',
-        'Live Semanal': 'live-weekly',
-        'Live Mensal': 'live-monthly',
-        'Live Anual': 'live-yearly',
-        'Pré+Live Diário': 'prelive-daily',
-        'Pré+Live Semanal': 'prelive-weekly',
-        'Pré+Live Mensal': 'prelive-monthly',
-        'Pré+Live Anual': 'prelive-yearly'
-      }
-      
-      const userPlan = state.user.accountType || state.user.plan
-      const planType = planNameToType[userPlan] || userPlan
-      
-      return surebetPlans.includes(planType)
+      return state.isAuthenticated
     },
     
     hasValuebetAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const valuebetPlans = ['vip', 'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly']
-      
-      return valuebetPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     // 🔒 Getters específicos para diferentes tipos de acesso
     hasReportsAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const reportsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
-                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
-                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
-                           'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
-                           'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
-      
-      return reportsPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     hasCompoundInterestAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const compoundInterestPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
-                                    'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
-                                    'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
-                                    'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
-                                    'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
-      
-      return compoundInterestPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     hasBookmakerAccountsAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const bookmakerAccountsPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
-                                     'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
-                                     'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
-                                     'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
-                                     'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
-      
-      return bookmakerAccountsPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     hasPremiumAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const premiumPlans = ['premium', 'vip', 'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly', 
-                           'live-daily', 'live-weekly', 'live-monthly', 'live-yearly',
-                           'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
-                           'valuebet-daily', 'valuebet-weekly', 'valuebet-monthly', 'valuebet-yearly',
-                           'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
-      
-      return premiumPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     hasFullAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const fullPlans = ['vip', 'full-daily', 'full-weekly', 'full-monthly', 'full-yearly']
-      
-      return fullPlans.includes(state.user.accountType || state.user.plan)
+      return state.isAuthenticated
     },
     
     // 🎯 Verificar se tem acesso a planos de pré-jogo
     hasPreGameAccess: state => {
-      if (!state.user) return false
-      if (state.user.is_admin === true) return true
-      
-      const preGamePlans = [
-        'pre-daily', 'pre-weekly', 'pre-monthly', 'pre-yearly',
-        'prelive-daily', 'prelive-weekly', 'prelive-monthly', 'prelive-yearly',
-        'full-daily', 'full-weekly', 'full-monthly', 'full-yearly'
-      ]
-      
-      const planNameToType = {
-        'Pré-Jogo Diário': 'pre-daily',
-        'Pré-Jogo Semanal': 'pre-weekly', 
-        'Pré-Jogo Mensal': 'pre-monthly',
-        'Pré-Jogo Anual': 'pre-yearly',
-        'Pré+Live Diário': 'prelive-daily',
-        'Pré+Live Semanal': 'prelive-weekly',
-        'Pré+Live Mensal': 'prelive-monthly',
-        'Pré+Live Anual': 'prelive-yearly',
-        'Full Diário': 'full-daily',
-        'Full Semanal': 'full-weekly',
-        'Full Mensal': 'full-monthly',
-        'Full Anual': 'full-yearly'
-      }
-      
-      const userPlan = state.user.accountType || state.user.plan
-      const planType = planNameToType[userPlan] || userPlan
-      
-      return preGamePlans.includes(planType)
+      return state.isAuthenticated
     },
     
     // 📋 Getters para planos
@@ -1183,6 +1097,13 @@ export default createStore({
           price: 'R$ 99,90/mês'
         }
       }
-    }
+    },
+    
+    // 📱 Getters para mobile menu
+    mobileMenuOpen: state => state.mobileMenuOpen,
+    windowWidth: state => state.windowWidth,
+    isMobile: state => state.windowWidth < 768,
+    isTablet: state => state.windowWidth >= 768 && state.windowWidth < 1024,
+    isDesktop: state => state.windowWidth >= 1024
   }
 })

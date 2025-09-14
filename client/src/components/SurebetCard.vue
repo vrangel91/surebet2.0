@@ -90,20 +90,22 @@
             <span class="odds-value">{{ bet.chance || 1.11 }}</span>
           </div>
           
-          <div class="stake-info">
-            <span class="stake-label">Apostar:</span>
-            <span class="stake-value">{{ formatCurrency(calculatedStakes[index]) }}</span>
+          <div class="stake-section">
+            <div class="stake-info">
+              <span class="stake-label">Apostar:</span>
+              <span class="stake-value">{{ formatCurrency(calculatedStakes[index]) }}</span>
+            </div>
+            
+            <button 
+              class="bet-btn" 
+              :class="{ 'disabled': !hasValidUrl(bet) }"
+              @click="placeBet(bet)"
+              :title="getButtonTooltip(bet)"
+            >
+              <i class="bi bi-currency-dollar bet-icon"></i>
+              <span class="bet-text">Apostar</span>
+            </button>
           </div>
-          
-          <button 
-            class="bet-btn" 
-            :class="{ 'disabled': !hasValidUrl(bet) }"
-            @click="placeBet(bet)"
-            :title="getButtonTooltip(bet)"
-          >
-            <i class="bi bi-currency-dollar bet-icon"></i>
-            <span class="bet-text">Apostar</span>
-          </button>
         </div>
       </div>
     </div>
@@ -163,8 +165,8 @@ export default {
         return stake
       })
       
-      // Arredonda os valores para números inteiros
-      const roundedStakes = rawStakes.map(stake => Math.round(stake))
+      // Arredonda os valores para números inteiros com prioridade para valores terminados em 5 ou 0
+      const roundedStakes = this.smartRoundStakes(rawStakes)
       
       // Garante que todos os valores sejam pelo menos 1
       for (let i = 0; i < roundedStakes.length; i++) {
@@ -256,6 +258,46 @@ export default {
       })
     },
     
+    // Função para arredondar stakes de forma inteligente, priorizando valores terminados em 5 ou 0
+    smartRoundStakes(rawStakes) {
+      const roundedStakes = rawStakes.map(stake => Math.round(stake))
+      
+      // Função para verificar se um número termina em 5 ou 0
+      const endsWithFiveOrZero = (num) => {
+        return num % 10 === 0 || num % 10 === 5
+      }
+      
+      // Função para encontrar o valor mais próximo que termina em 5 ou 0
+      const findNearestFiveOrZero = (num) => {
+        const lower = Math.floor(num / 5) * 5
+        const upper = Math.ceil(num / 5) * 5
+        
+        // Se o número já termina em 5 ou 0, retorna ele mesmo
+        if (endsWithFiveOrZero(num)) return num
+        
+        // Retorna o mais próximo
+        return (num - lower) < (upper - num) ? lower : upper
+      }
+      
+      // Aplica o arredondamento inteligente
+      const smartRounded = rawStakes.map(stake => {
+        const rounded = Math.round(stake)
+        const smartRounded = findNearestFiveOrZero(rounded)
+        
+        // Só aplica se a diferença for pequena (máximo 2 unidades)
+        const difference = Math.abs(smartRounded - rounded)
+        return difference <= 2 ? smartRounded : rounded
+      })
+      
+      // Garante que todos os valores sejam pelo menos 1
+      for (let i = 0; i < smartRounded.length; i++) {
+        if (smartRounded[i] < 1) {
+          smartRounded[i] = 1
+        }
+      }
+      
+      return smartRounded
+    },
     
     
     
@@ -283,25 +325,44 @@ export default {
     
     placeBet(bet) {
       try {
-        // Primeiro, tenta extrair o domínio dos campos anchorh1 ou anchorh2
+        // PRIORIDADE 1: Usa nosso mapeamento interno
+        if (bet.house) {
+          const isLive = bet.isLive || false
+          const bookmakerUrl = getBookmakerUrl(bet.house, isLive, bet.anchorh1, bet.anchorh2)
+          
+          if (bookmakerUrl && !bookmakerUrl.includes('google.com/search')) {
+            console.log(`[BOOKMAKER] Redirecionando para ${bet.house} (${isLive ? 'Live' : 'Pre-match'}):`, bookmakerUrl)
+            window.open(bookmakerUrl, '_blank')
+            return
+          }
+        }
+        
+        // FALLBACK 1: Tenta usar a URL de redirecionamento da API
+        if (bet.url_redirect && bet.url_redirect.includes('http')) {
+          console.log(`[API] Usando URL da API para ${bet.house}:`, bet.url_redirect)
+          window.open(bet.url_redirect, '_blank')
+          return
+        }
+        
+        // FALLBACK 2: Tenta extrair o domínio dos campos anchorh1 ou anchorh2
         let targetUrl = null
         
         // Tenta extrair do anchorh1 primeiro (casa principal)
         if (bet.anchorh1) {
           const domain = extractDomainFromAnchorh(bet.anchorh1)
-                      if (domain) {
-              targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
-              console.log(`[LINK] URL extraída de anchorh1 para ${bet.house}:`, targetUrl)
-            }
+          if (domain) {
+            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+            console.log(`[LINK] URL extraída de anchorh1 para ${bet.house}:`, targetUrl)
+          }
         }
         
         // Se não encontrou no anchorh1, tenta no anchorh2
         if (!targetUrl && bet.anchorh2) {
           const domain = extractDomainFromAnchorh(bet.anchorh2)
-                      if (domain) {
-              targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
-              console.log(`[LINK] URL extraída de anchorh2 para ${bet.house}:`, targetUrl)
-            }
+          if (domain) {
+            targetUrl = buildBookmakerUrlFromDomain(domain, bet.isLive || false)
+            console.log(`[LINK] URL extraída de anchorh2 para ${bet.house}:`, targetUrl)
+          }
         }
         
         // Se conseguiu extrair URL dos anchorh, usa ela
@@ -311,25 +372,11 @@ export default {
           return
         }
         
-        // Fallback: tenta usar a URL de redirecionamento da API
-        if (bet.url_redirect && bet.url_redirect.includes('http')) {
-          console.log(`[API] Usando URL da API para ${bet.house}:`, bet.url_redirect)
-          window.open(bet.url_redirect, '_blank')
-          return
-        }
-        
-        // Último fallback: usa o mapeamento baseado no nome da casa
+        // FALLBACK FINAL: Busca no Google
         if (bet.house) {
-          const isLive = bet.isLive || false
-          const bookmakerUrl = getBookmakerUrl(bet.house, isLive)
-          
-          if (bookmakerUrl && !bookmakerUrl.includes('google.com/search')) {
-            console.log(`[BOOKMAKER] Redirecionando para ${bet.house} (${isLive ? 'Live' : 'Pre-match'}):`, bookmakerUrl)
-            window.open(bookmakerUrl, '_blank')
-          } else {
-            console.warn(`[WARNING] URL não encontrada para ${bet.house}. Usando busca no Google.`)
-            window.open(bookmakerUrl, '_blank')
-          }
+          console.warn(`[WARNING] URL não encontrada para ${bet.house}. Usando busca no Google.`)
+          const googleUrl = `https://www.google.com/search?q=${encodeURIComponent(bet.house + ' apostas esportivas')}`
+          window.open(googleUrl, '_blank')
         } else {
           console.error('[ERROR] Casa de apostas não informada')
           this.showNotification('Casa de apostas não identificada!', 'error')
@@ -340,12 +387,188 @@ export default {
       }
     },
     
-    addToReports() {
-      // Emite evento para o componente pai
-      this.$emit('add-to-reports', this.surebet)
-      
-      // Mostra notificação
-      this.showNotification('Surebet adicionado aos relatórios!')
+    async addToReports() {
+      try {
+        // 1. Verificar se há contas carregadas
+        if (this.bookmakerAccounts.length === 0) {
+          this.showNotification('Nenhuma conta de Bookmaker encontrada. Adicione contas em Bookmaker Accounts.', 'error')
+          return
+        }
+
+        // 2. Verificar se todas as contas têm saldo suficiente
+        const insufficientAccounts = []
+        const debitOperations = []
+
+        for (let i = 0; i < this.surebet.length; i++) {
+          const bet = this.surebet[i]
+          const account = this.findBookmakerAccount(bet.house)
+          const stakeAmount = this.calculatedStakes[i]
+
+          if (!account) {
+            this.showNotification(`Conta não encontrada para ${bet.house}. Adicione uma conta em Bookmaker Accounts.`, 'error')
+            return
+          }
+
+          if (account.status !== 'active') {
+            this.showNotification(`Conta ${bet.house} não está ativa.`, 'error')
+            return
+          }
+
+          const currentBalance = parseFloat(account.balance || 0)
+
+          if (currentBalance < stakeAmount) {
+            insufficientAccounts.push({
+              house: bet.house,
+              required: stakeAmount,
+              available: currentBalance
+            })
+          } else {
+            debitOperations.push({
+              account: account,
+              bet: bet,
+              stakeAmount: stakeAmount,
+              currentBalance: currentBalance
+            })
+          }
+        }
+
+        // 3. Se há contas com saldo insuficiente, mostrar erro
+        if (insufficientAccounts.length > 0) {
+          const errorMessage = insufficientAccounts.map(acc => 
+            `${acc.house}: Necessário ${this.formatCurrency(acc.required)}, Disponível ${this.formatCurrency(acc.available)}`
+          ).join('\n')
+          
+          this.showNotification(
+            `Saldo insuficiente em algumas contas:\n${errorMessage}`, 
+            'error'
+          )
+          return
+        }
+
+        // 4. Confirmar operação
+        const totalAmount = debitOperations.reduce((sum, op) => sum + op.stakeAmount, 0)
+        const confirmMessage = `Confirmar registro de surebet e débito total de ${this.formatCurrency(totalAmount)}?\n\n` +
+          debitOperations.map(op => 
+            `${op.bet.house}: ${this.formatCurrency(op.stakeAmount)} (Saldo: ${this.formatCurrency(op.currentBalance)} → ${this.formatCurrency(op.currentBalance - op.stakeAmount)})`
+          ).join('\n')
+        
+        if (!confirm(confirmMessage)) {
+          return
+        }
+
+        // 5. Processar débitos e registrar relatório
+        this.showNotification(`Processando registro e débitos...`, 'info')
+
+        const results = []
+        let successCount = 0
+
+        // Processar cada débito
+        for (const operation of debitOperations) {
+          try {
+            const response = await http.post(`/api/bookmaker-accounts/${operation.account.id}/adjust-balance`, {
+              amount: -operation.stakeAmount,
+              description: `Débito automático - Surebet ${operation.bet.house} - ${this.formatCurrency(operation.stakeAmount)}`,
+              type: 'surebet_debit'
+            })
+            
+            if (response.data.success) {
+              results.push({
+                account: operation.account,
+                bet: operation.bet,
+                amount: operation.stakeAmount,
+                newBalance: response.data.data.newBalance,
+                success: true
+              })
+              successCount++
+            } else {
+              results.push({
+                account: operation.account,
+                bet: operation.bet,
+                amount: operation.stakeAmount,
+                success: false,
+                error: response.data.message
+              })
+            }
+          } catch (error) {
+            console.error(`❌ Erro ao debitar de ${operation.bet.house}:`, error)
+            results.push({
+              account: operation.account,
+              bet: operation.bet,
+              amount: operation.stakeAmount,
+              success: false,
+              error: error.response?.data?.message || 'Erro desconhecido'
+            })
+          }
+        }
+
+        // 6. Registrar no relatório de surebets
+        try {
+          const reportData = {
+            surebet: this.surebet,
+            stakes: this.calculatedStakes,
+            totalInvestment: this.totalInvestment,
+            expectedProfit: this.expectedProfit,
+            timestamp: new Date().toISOString(),
+            status: 'pending',
+            results: results.filter(r => r.success)
+          }
+
+          const reportResponse = await http.post('/api/surebet-reports', reportData)
+          
+          if (reportResponse.data.success) {
+            console.log('✅ Relatório de surebet registrado:', reportResponse.data.data)
+          } else {
+            console.error('❌ Erro ao registrar relatório:', reportResponse.data.message)
+          }
+        } catch (error) {
+          console.error('❌ Erro ao registrar relatório de surebet:', error)
+        }
+
+        // 7. Emitir eventos e mostrar resultados
+        this.$emit('refresh-accounts')
+        this.$emit('add-to-reports', this.surebet)
+
+        const successfulResults = results.filter(r => r.success)
+        const failedResults = results.filter(r => !r.success)
+
+        if (successfulResults.length > 0) {
+          // Emitir evento para cada débito bem-sucedido
+          for (const result of successfulResults) {
+            this.$emit('balance-debited', {
+              account: result.account,
+              amount: result.amount,
+              surebet: this.surebet,
+              newBalance: result.newBalance
+            })
+          }
+
+          const totalDebited = successfulResults.reduce((sum, r) => sum + r.amount, 0)
+          this.showNotification(
+            `Surebet registrado e débitos realizados! Total: ${this.formatCurrency(totalDebited)}`, 
+            'success'
+          )
+
+          console.log('✅ Débitos processados com sucesso:', successfulResults)
+        }
+
+        if (failedResults.length > 0) {
+          const errorMessage = failedResults.map(r => 
+            `${r.bet.house}: ${r.error}`
+          ).join('\n')
+          
+          this.showNotification(
+            `Alguns débitos falharam:\n${errorMessage}`, 
+            'error'
+          )
+        }
+
+      } catch (error) {
+        console.error('❌ Erro ao processar relatório:', error)
+        this.showNotification(
+          error.response?.data?.message || 'Erro ao processar relatório de surebet', 
+          'error'
+        )
+      }
     },
     
     togglePin() {
@@ -419,12 +642,18 @@ export default {
       
       let tooltip = `Casa: ${bet.house}\n`
       
-      if (bet.anchorh1) {
+      // Usa nosso mapeamento prioritariamente
+      const isLive = bet.isLive || false
+      const mappedUrl = getBookmakerUrl(bet.house, isLive, bet.anchorh1, bet.anchorh2)
+      
+      if (mappedUrl && !mappedUrl.includes('google.com/search')) {
+        tooltip += `URL do nosso mapeamento\n${mappedUrl}`
+      } else if (bet.url_redirect) {
+        tooltip += `URL da API\n${bet.url_redirect}`
+      } else if (bet.anchorh1) {
         tooltip += `URL extraída de anchorh1\n${bet.anchorh1}`
       } else if (bet.anchorh2) {
         tooltip += `URL extraída de anchorh2\n${bet.anchorh2}`
-      } else if (bet.url_redirect) {
-        tooltip += `URL da API\n${bet.url_redirect}`
       }
       
       return tooltip
@@ -719,6 +948,36 @@ export default {
     getDynamicTranslation(market) {
       if (!market) return null
 
+      // Padrão para mercados de jogadores com shots on target
+      const playerShotsMatch = market.match(/^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+Shots\s+on\s+Target$/i)
+      if (playerShotsMatch) {
+        const [, playerName, overUnder, number] = playerShotsMatch
+        const isOver = overUnder.toLowerCase() === 'over'
+        const prefix = isOver ? 'Mais de' : 'Menos de'
+        const cleanPlayerName = playerName.trim()
+        return `${cleanPlayerName} - ${prefix} ${number} Chutes ao Gol`
+      }
+
+      // Padrão para outros mercados de jogadores
+      const playerMarketsMatch = market.match(/^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+(Goals|Assists|Cards|Fouls|Corners)$/i)
+      if (playerMarketsMatch) {
+        const [, playerName, overUnder, number, marketType] = playerMarketsMatch
+        const isOver = overUnder.toLowerCase() === 'over'
+        const prefix = isOver ? 'Mais de' : 'Menos de'
+        
+        const marketTranslations = {
+          'Goals': 'Gols',
+          'Assists': 'Assistências',
+          'Cards': 'Cartões',
+          'Fouls': 'Faltas',
+          'Corners': 'Escanteios'
+        }
+        
+        const translatedType = marketTranslations[marketType] || marketType
+        const cleanPlayerName = playerName.trim()
+        return `${cleanPlayerName} - ${prefix} ${number} ${translatedType}`
+      }
+
       // Padrão para TO/TU com valores dinâmicos - Sets
       const toTuSetsMatch = market.match(/^(TO|TU)\(([0-9.]+)\)\s*-\s*Sets$/)
       if (toTuSetsMatch) {
@@ -779,6 +1038,36 @@ export default {
         const [, team, value] = ahLoLMapsMatch
         const teamName = this.getTeamName(team)
         return `Handicap Asiático ${value} - Maps - ${teamName}`
+      }
+
+      // Padrão para TO/TU com valores dinâmicos - Offsides (Impedimentos)
+      const toTuOffsidesMatch = market.match(/^(TO|TU)\(([0-9.]+)\)\s*for\s*(Team[12])\s*-\s*Offsides$/i)
+      if (toTuOffsidesMatch) {
+        const [, type, value, team] = toTuOffsidesMatch
+        const prefix = type === 'TO' ? 'Mais de' : 'Menos de'
+        const teamName = this.getTeamName(team)
+        return `${prefix} ${value} Impedimentos - ${teamName}`
+      }
+
+      // Padrão para apostas simples de Offsides (1, 2)
+      const simpleOffsidesMatch = market.match(/^([12])\s*-\s*Offsides$/i)
+      if (simpleOffsidesMatch) {
+        const [, team] = simpleOffsidesMatch
+        const teamName = this.getTeamName(`Team${team}`)
+        return `${teamName} - Impedimentos`
+      }
+
+      // Padrão para apostas duplas de Offsides (1X, X2)
+      const doubleChanceOffsidesMatch = market.match(/^(1X|X2)\s*-\s*Offsides$/i)
+      if (doubleChanceOffsidesMatch) {
+        const [, betType] = doubleChanceOffsidesMatch
+        if (betType === '1X') {
+          const team1Name = this.getTeamName('Team1')
+          return `${team1Name} ou Empate - Impedimentos`
+        } else if (betType === 'X2') {
+          const team2Name = this.getTeamName('Team2')
+          return `Empate ou ${team2Name} - Impedimentos`
+        }
       }
 
       return null
@@ -1418,11 +1707,17 @@ export default {
 }
 
 .bet-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
   padding: 8px 0;
+}
+
+.stake-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .odds-info {
@@ -1477,9 +1772,10 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  min-width: 70px;
-  max-width: 70px;
+  min-width: 80px;
+  max-width: 100px;
   white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     transform: translateY(-1px);
@@ -1552,19 +1848,22 @@ export default {
   }
   
   .bet-details {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
   
-  .odds-info,
-  .stake-info {
+  .stake-section {
+    gap: 8px;
+  }
+  
+  .odds-info {
     justify-content: space-between;
   }
   
   .bet-btn {
-    width: 100%;
-    max-width: none;
-    min-width: auto;
+    padding: 6px 10px;
+    font-size: 12px;
+    min-width: 70px;
+    max-width: 90px;
   }
 }
 
@@ -1598,12 +1897,19 @@ export default {
   }
   
   .bet-details {
-    gap: 10px;
+    gap: 6px;
   }
   
-  .odds-info,
-  .stake-info {
+  .stake-section {
     gap: 6px;
+  }
+  
+  .odds-info {
+    gap: 4px;
+  }
+  
+  .stake-info {
+    gap: 4px;
   }
   
   .odds-label,
@@ -1617,9 +1923,9 @@ export default {
   }
   
   .bet-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-width: 80px;
+    padding: 6px 8px;
+    font-size: 11px;
+    min-width: 60px;
     max-width: 80px;
   }
 }

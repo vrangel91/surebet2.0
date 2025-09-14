@@ -156,6 +156,12 @@ class SureStakePWAInstaller {
       return;
     }
 
+    // Verificar se deve pular o instalador
+    if (this.shouldSkipInstaller()) {
+      console.log('⏰ Usuário escolheu lembrar depois recentemente, não mostrando instalador');
+      return;
+    }
+
     console.log('🎨 Mostrando instalador PWA personalizado...');
     
     if (this.installerElement) {
@@ -189,6 +195,12 @@ class SureStakePWAInstaller {
     console.log('📱 isInstalled:', this.isInstalled);
     console.log('🎯 deferredPrompt:', this.deferredPrompt);
     
+    // Verificar se o usuário já escolheu "Lembrar Depois" recentemente
+    if (this.shouldSkipInstaller()) {
+      console.log('⏰ Usuário escolheu lembrar depois recentemente, não mostrando instalador');
+      return;
+    }
+    
     // Se já temos o prompt e não está instalado, mostrar imediatamente
     if (this.deferredPrompt && !this.isInstalled) {
       console.log('✅ Condições atendidas, mostrando instalador...');
@@ -196,6 +208,25 @@ class SureStakePWAInstaller {
     } else {
       console.log('❌ Condições não atendidas para mostrar instalador');
     }
+  }
+
+  // Verificar se deve pular o instalador
+  shouldSkipInstaller() {
+    const lastShown = localStorage.getItem('pwa-installer-last-shown');
+    if (!lastShown) {
+      return false;
+    }
+    
+    const lastShownTime = parseInt(lastShown);
+    const now = Date.now();
+    const daysSinceLastShown = (now - lastShownTime) / (1000 * 60 * 60 * 24);
+    
+    // Não mostrar por 7 dias após "Lembrar Depois"
+    const skipDays = 7;
+    
+    console.log(`📅 Dias desde último "Lembrar Depois": ${daysSinceLastShown.toFixed(2)}`);
+    
+    return daysSinceLastShown < skipDays;
   }
 
   // Verificar se deve mostrar o instalador
@@ -262,6 +293,27 @@ class SureStakePWAInstaller {
     this.showReminderMessage();
   }
 
+  // Forçar mostrar instalador (ignorar preferência)
+  forceShow() {
+    console.log('🔓 Forçando exibição do instalador...');
+    
+    // Remover timestamp para permitir exibição
+    localStorage.removeItem('pwa-installer-last-shown');
+    
+    // Mostrar instalador se tiver o prompt
+    if (this.deferredPrompt && !this.isInstalled) {
+      this.showInstaller();
+    } else {
+      console.log('❌ Não é possível mostrar instalador - sem prompt ou já instalado');
+    }
+  }
+
+  // Resetar preferência do usuário
+  resetUserPreference() {
+    console.log('🔄 Resetando preferência do usuário...');
+    localStorage.removeItem('pwa-installer-last-shown');
+  }
+
   // Mostrar mensagem de sucesso
   showSuccessMessage() {
     this.showNotification('✅ SureStake instalado com sucesso!', 'success');
@@ -279,7 +331,7 @@ class SureStakePWAInstaller {
 
   // Mostrar mensagem de lembrete
   showReminderMessage() {
-    this.showNotification('⏰ Lembraremos você sobre a instalação em alguns dias.', 'info');
+    this.showNotification('⏰ Lembraremos você sobre a instalação em 7 dias. Use resetPWAPreference() no console para redefinir.', 'info');
   }
 
   // Mostrar notificação
@@ -396,6 +448,14 @@ window.showPWAInstaller = () => {
   if (pwaInstaller) pwaInstaller.forceShow();
 };
 
+window.hidePWAInstaller = () => {
+  if (pwaInstaller) pwaInstaller.hideInstaller();
+};
+
+window.resetPWAPreference = () => {
+  if (pwaInstaller) pwaInstaller.resetUserPreference();
+};
+
 window.setPWAInstallerPosition = (position) => {
   if (pwaInstaller) pwaInstaller.setPosition(position);
 };
@@ -405,3 +465,9 @@ window.setPWAInstallerTheme = (theme) => {
 };
 
 console.log('🚀 Instalador PWA personalizado carregado e pronto!');
+console.log('💡 Funções disponíveis:');
+console.log('   - showPWAInstaller() - Forçar exibição do instalador');
+console.log('   - hidePWAInstaller() - Ocultar instalador');
+console.log('   - resetPWAPreference() - Redefinir preferência do usuário');
+console.log('   - setPWAInstallerPosition("left"|"right") - Definir posição');
+console.log('   - setPWAInstallerTheme("dark"|"light") - Definir tema');

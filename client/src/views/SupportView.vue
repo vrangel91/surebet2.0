@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresAuth="true">
-    <div class="support-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="support-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -79,6 +78,22 @@
           <div class="stat-content">
             <div class="stat-value">{{ ticketsStats.avgResponseTime }}</div>
             <div class="stat-label">Tempo Médio Resposta</div>
+          </div>
+        </div>
+
+        <!-- QR Code do Telegram -->
+        <div class="stat-card telegram-qr-card">
+          <div class="telegram-qr">
+            <img 
+              src="@/assets/qrocodetelegram.png" 
+              alt="QR Code Telegram" 
+              class="qr-image"
+              title="Entre no nosso grupo do Telegram"
+            />
+            <div class="qr-content">
+              <div class="qr-text">Telegram</div>
+              <div class="qr-subtitle">Suporte Rápido</div>
+            </div>
           </div>
         </div>
       </div>
@@ -311,23 +326,19 @@
     <!-- Glossary Modal -->
     
   </div>
-    </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 import { mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'SupportView',
   components: {
     Sidebar,
-    Header,
-
-    RouteGuard
+    Header
   },
   data() {
     return {
@@ -698,6 +709,19 @@ export default {
     width: calc(100% - 80px); /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
+  
+  /* Melhorias para responsividade */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
 }
 
 /* Main Content */
@@ -706,6 +730,19 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+  
+  /* Melhorias para responsividade */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  @media (max-width: 768px) {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 }
 
 /* Support Main Content */
@@ -831,6 +868,71 @@ export default {
 .stat-label {
   font-size: 14px;
   color: var(--text-secondary);
+}
+
+/* QR Code do Telegram */
+.telegram-qr-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  position: relative;
+  overflow: hidden;
+}
+
+.telegram-qr-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(var(--accent-primary-rgb), 0.1), rgba(var(--accent-primary-rgb), 0.05));
+  pointer-events: none;
+}
+
+.telegram-qr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.qr-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--bg-primary);
+  padding: 8px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-primary);
+}
+
+.telegram-qr-card:hover .qr-image {
+  transform: scale(1.05);
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.qr-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qr-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.qr-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
 }
 
 /* Tickets Section */
@@ -1396,22 +1498,161 @@ export default {
   color: var(--text-secondary);
 }
 
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .support-container {
+    width: calc(100% - 280px);
+    max-width: calc(100% - 280px);
+  }
+  
+  .content-header {
+    padding: 32px 40px;
+  }
+  
+  .page-title {
+    font-size: 36px;
+  }
+  
+  .page-subtitle {
+    font-size: 18px;
+  }
+  
+  .support-main {
+    padding: 40px 32px;
+  }
+  
+  .stats-cards {
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .stat-card {
+    padding: 32px;
+  }
+  
+  .stat-icon {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .stat-value {
+    font-size: 36px;
+  }
+  
+  .stat-label {
+    font-size: 16px;
+  }
+  
+  .tickets-section {
+    padding: 32px;
+  }
+  
+  .section-title {
+    font-size: 28px;
+  }
+  
+  .qr-image {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .qr-text {
+    font-size: 20px;
+  }
+  
+  .qr-subtitle {
+    font-size: 14px;
+  }
+}
+
+/* Media queries para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .content-header {
+    padding: 28px 32px;
+  }
+  
+  .page-title {
+    font-size: 32px;
+  }
+  
+  .support-main {
+    padding: 32px 28px;
+  }
+  
+  .stats-cards {
+    gap: 24px;
+    margin-bottom: 32px;
+  }
+  
+  .stat-card {
+    padding: 28px;
+  }
+  
+  .tickets-section {
+    padding: 28px;
+  }
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .stats-cards {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  
+  .filter-controls {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
+    min-width: 150px;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .stats-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
+    width: 100%;
+  }
+}
+
 /* Responsividade */
 @media (max-width: 1023px) {
   .support-container {
     margin-left: 0; /* Remove margem em mobile/tablet */
+    width: 100%;
+    max-width: 100%;
   }
 }
 
 @media (max-width: 768px) {
   .support-main {
     padding: 24px 16px;
+    -webkit-overflow-scrolling: touch;
   }
   
   .content-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+    padding: 20px 16px;
   }
   
   .page-title {
@@ -1422,12 +1663,58 @@ export default {
     font-size: 14px;
   }
   
+  .new-ticket-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+  
   .stats-cards {
     grid-template-columns: 1fr;
     gap: 16px;
+    margin-bottom: 24px;
   }
   
   .stat-card {
+    padding: 20px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .stat-label {
+    font-size: 13px;
+  }
+
+  .telegram-qr {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .qr-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .qr-text {
+    font-size: 16px;
+  }
+
+  .qr-subtitle {
+    font-size: 11px;
+  }
+  
+  .tickets-section {
     padding: 20px;
   }
   
@@ -1435,6 +1722,10 @@ export default {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
+  }
+
+  .section-title {
+    font-size: 20px;
   }
 
   .filter-controls {
@@ -1449,6 +1740,20 @@ export default {
   .category-filter {
     min-width: auto;
     width: 100%;
+    padding: 10px 12px;
+    font-size: 15px; /* Evita zoom no iOS */
+  }
+  
+  .ticket-card {
+    padding: 16px;
+  }
+  
+  .ticket-title {
+    font-size: 15px;
+  }
+  
+  .ticket-description {
+    font-size: 13px;
   }
   
   .form-row {
@@ -1463,6 +1768,24 @@ export default {
     flex-direction: column;
     gap: 8px;
   }
+  
+  .modal-overlay {
+    padding: 16px;
+  }
+  
+  .ticket-modal,
+  .ticket-detail-modal {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .modal-header {
+    padding: 20px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1470,8 +1793,26 @@ export default {
     padding: 16px 12px;
   }
   
+  .content-header {
+    padding: 16px 12px;
+  }
+  
   .page-title {
     font-size: 20px;
+  }
+  
+  .page-subtitle {
+    font-size: 13px;
+  }
+  
+  .new-ticket-btn {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  .stats-cards {
+    gap: 12px;
+    margin-bottom: 20px;
   }
   
   .stat-card {
@@ -1487,9 +1828,50 @@ export default {
   .stat-value {
     font-size: 24px;
   }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .qr-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .qr-text {
+    font-size: 14px;
+  }
+
+  .qr-subtitle {
+    font-size: 10px;
+  }
+  
+  .tickets-section {
+    padding: 16px;
+  }
+  
+  .section-title {
+    font-size: 18px;
+  }
+  
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
   
   .ticket-card {
-    padding: 16px;
+    padding: 14px;
+  }
+  
+  .ticket-title {
+    font-size: 14px;
+  }
+  
+  .ticket-description {
+    font-size: 12px;
   }
   
   .ticket-header {
@@ -1504,8 +1886,221 @@ export default {
     gap: 8px;
   }
   
+  .status-badge,
+  .priority-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+  
+  .modal-overlay {
+    padding: 12px;
+  }
+  
+  .modal-header {
+    padding: 16px;
+  }
+  
+  .modal-header h3 {
+    font-size: 18px;
+  }
+  
   .modal-body {
     padding: 16px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+}
+
+/* Media queries para telas muito pequenas */
+@media (max-width: 320px) {
+  .support-main {
+    padding: 12px 8px;
+  }
+  
+  .content-header {
+    padding: 12px 8px;
+  }
+  
+  .page-title {
+    font-size: 18px;
+  }
+  
+  .page-subtitle {
+    font-size: 12px;
+  }
+  
+  .new-ticket-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .stats-cards {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+    gap: 8px;
+  }
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .qr-image {
+    width: 36px;
+    height: 36px;
+  }
+
+  .qr-text {
+    font-size: 13px;
+  }
+
+  .qr-subtitle {
+    font-size: 9px;
+  }
+  
+  .tickets-section {
+    padding: 12px;
+  }
+  
+  .section-title {
+    font-size: 16px;
+  }
+  
+  .search-input,
+  .status-filter,
+  .priority-filter,
+  .category-filter {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  
+  .ticket-card {
+    padding: 12px;
+  }
+  
+  .ticket-title {
+    font-size: 13px;
+  }
+  
+  .ticket-description {
+    font-size: 11px;
+  }
+  
+  .ticket-id {
+    font-size: 10px;
+  }
+  
+  .status-badge,
+  .priority-badge {
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+  
+  .ticket-category,
+  .ticket-date {
+    font-size: 10px;
+  }
+  
+  .modal-overlay {
+    padding: 8px;
+  }
+  
+  .modal-header {
+    padding: 12px;
+  }
+  
+  .modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .form-input,
+  .form-select,
+  .form-textarea {
+    padding: 8px;
+    font-size: 13px;
+  }
+  
+  .form-group label {
+    font-size: 13px;
+  }
+  
+  .cancel-btn,
+  .submit-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+  
+  .ticket-detail-header h4 {
+    font-size: 16px;
+  }
+  
+  .info-item label {
+    font-size: 11px;
+  }
+  
+  .info-item span {
+    font-size: 12px;
+  }
+  
+  .ticket-description-section h5,
+  .ticket-messages-section h5 {
+    font-size: 14px;
+  }
+  
+  .message-author {
+    font-size: 12px;
+  }
+  
+  .message-date {
+    font-size: 10px;
+  }
+  
+  .message-content {
+    font-size: 12px;
+  }
+  
+  .message-input {
+    padding: 8px;
+    font-size: 13px;
+    min-height: 60px;
+  }
+  
+  .send-message-btn {
+    padding: 8px 12px;
+    font-size: 12px;
   }
 }
 </style>

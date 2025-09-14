@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresAuth="true">
-    <div class="referrals-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="referrals-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <!-- Sidebar Reutilizável -->
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
@@ -232,22 +231,18 @@
       </div>
     </div>
     </div>
-  </RouteGuard>
 </template>
 
 <script>
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
   name: 'ReferralsView',
   components: {
     Sidebar,
-    Header,
-
-    RouteGuard
+    Header
   },
   data() {
     return {
@@ -448,6 +443,20 @@ export default {
     width: calc(100% - 80px); /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    margin-left: 0; /* Remove margem em mobile/tablet */
+    width: 100%;
+    max-width: 100%;
+    height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  @media (max-width: 768px) {
+    height: auto;
+    min-height: 100vh;
+  }
 }
 
 [data-theme="light"] .modal-header {
@@ -571,6 +580,18 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  @media (max-width: 768px) {
+    min-height: auto;
+  }
 }
 
 /* Referrals Main Content */
@@ -579,6 +600,19 @@ export default {
   padding: 32px 24px;
   width: 100%;
   overflow-y: auto;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 24px 20px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+  }
 }
 
 .content-header {
@@ -587,6 +621,23 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    gap: 12px;
+  }
 }
 
 .header-left {
@@ -600,12 +651,34 @@ export default {
   font-weight: 700;
   color: var(--accent-primary);
   margin: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    font-size: 28px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 }
 
 .page-subtitle {
   font-size: 16px;
   color: var(--text-secondary);
   margin: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 }
 
 /* Info Cards */
@@ -614,6 +687,28 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  
+  @media (max-width: 768px) {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 16px;
+  }
 }
 
 /* Commission and Plan Status Styles */
@@ -704,6 +799,27 @@ export default {
   align-items: center;
   gap: 20px;
   transition: all 0.3s ease;
+  width: 100%;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px;
+    gap: 16px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 16px;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    gap: 12px;
+    border-radius: 6px;
+  }
 }
 
 .info-card:hover {
@@ -720,6 +836,19 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+  }
 }
 
 .commission-icon {
@@ -743,6 +872,15 @@ export default {
   font-size: 24px;
   font-weight: 700;
   color: var(--text-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 }
 
 .card-subtitle {
@@ -815,6 +953,34 @@ export default {
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1200px) {
+    padding: 28px;
+    gap: 28px;
+  }
+  
+  @media (max-width: 1024px) {
+    padding: 24px;
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 20px;
+    gap: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px;
+    gap: 16px;
+    margin-bottom: 16px;
+    border-radius: 8px;
+  }
 }
 
 .refer-earn-section::before {
@@ -846,6 +1012,21 @@ export default {
   font-weight: 700;
   margin: 0 0 16px 0;
   color: var(--text-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    font-size: 28px;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 24px;
+    margin: 0 0 12px 0;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+    margin: 0 0 8px 0;
+  }
 }
 
 .refer-description {
@@ -854,12 +1035,34 @@ export default {
   margin: 0 0 24px 0;
   color: var(--text-secondary);
   opacity: 0.9;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 14px;
+    margin: 0 0 20px 0;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin: 0 0 16px 0;
+  }
 }
 
 .affiliate-link-section {
   display: flex;
   gap: 12px;
   align-items: center;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 8px;
+  }
 }
 
 .affiliate-link-input {
@@ -872,6 +1075,19 @@ export default {
   font-size: 14px;
   font-family: monospace;
   transition: all 0.2s ease;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 }
 
 .affiliate-link-input:focus {
@@ -894,6 +1110,20 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+  box-sizing: border-box;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: center;
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
 }
 
 .copy-link-btn:hover {
@@ -912,6 +1142,22 @@ export default {
   height: 120px;
   object-fit: contain;
   filter: drop-shadow(var(--shadow));
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    width: 100px;
+    height: 100px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 60px;
+    height: 60px;
+  }
 }
 
 @keyframes rocketFloat {
@@ -929,6 +1175,22 @@ export default {
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-radius: 6px;
+  }
 }
 
 .section-title {
@@ -936,10 +1198,31 @@ export default {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 24px 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 20px;
+    margin: 0 0 20px 0;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 18px;
+    margin: 0 0 16px 0;
+  }
 }
 
 .table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    border-radius: 4px;
+  }
 }
 
 .referrals-table {
@@ -957,12 +1240,34 @@ export default {
   padding: 16px;
   text-align: left;
   border-bottom: 1px solid var(--border-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
 }
 
 .referrals-table td {
   padding: 16px;
   border-bottom: 1px solid var(--border-primary);
   color: var(--text-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
 }
 
 .referrals-table tr:hover {
@@ -1025,6 +1330,27 @@ export default {
   overflow: hidden;
   box-shadow: var(--shadow-modal);
   animation: modalFadeIn 0.3s ease-out;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    width: 95%;
+    max-width: 95%;
+    border-radius: 12px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 98%;
+    max-width: 98%;
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
 }
 
 .modal-header {
@@ -1033,6 +1359,19 @@ export default {
   align-items: center;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
 }
 
 .modal-header h3 {
@@ -1040,6 +1379,15 @@ export default {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 }
 
 .close-btn {
@@ -1049,6 +1397,15 @@ export default {
   color: var(--text-primary);
   cursor: pointer;
   transition: color 0.2s ease;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    font-size: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 }
 
 .close-btn:hover {
@@ -1060,6 +1417,19 @@ export default {
   padding: 24px 32px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
 }
 
 .empty-history {
@@ -1158,6 +1528,19 @@ export default {
   border-top: 1px solid var(--border-primary);
   display: flex;
   justify-content: flex-end;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 1023px) {
+    padding: 20px 24px;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 16px 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+  }
 }
 
 .btn-primary {
@@ -1171,6 +1554,19 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    padding: 12px 24px;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 20px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
 }
 
 .btn-primary:hover {
@@ -1186,6 +1582,20 @@ export default {
   right: 20px;
   z-index: 10000;
   animation: toastSlideIn 0.3s ease-out;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    width: auto;
+  }
+  
+  @media (max-width: 480px) {
+    top: 5px;
+    right: 5px;
+    left: 5px;
+  }
 }
 
 .toast-content {
@@ -1199,6 +1609,20 @@ export default {
   box-shadow: var(--shadow);
   min-width: 300px;
   max-width: 400px;
+  
+  /* Responsividade para diferentes tipos de tela */
+  @media (max-width: 768px) {
+    min-width: auto;
+    max-width: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    border-radius: 6px;
+    gap: 8px;
+  }
 }
 
 .toast-container.success .toast-content {
@@ -1267,6 +1691,67 @@ export default {
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .referrals-main {
+    padding: 40px 32px;
+  }
+  
+  .content-header {
+    padding: 32px 40px;
+  }
+  
+  .info-cards {
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .info-card {
+    padding: 32px;
+  }
+  
+  .refer-earn-section {
+    padding: 40px;
+    margin-bottom: 40px;
+  }
+  
+  .referred-users-section {
+    padding: 32px;
+  }
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .info-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  
+  .refer-earn-section {
+    flex-direction: row;
+    text-align: left;
+  }
+  
+  .rocket-illustration {
+    order: 0;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .refer-earn-section {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .rocket-illustration {
+    order: -1;
   }
 }
 

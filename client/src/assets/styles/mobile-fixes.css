@@ -1,0 +1,299 @@
+/* 🔧 Correções Específicas para Mobile - SureStake */
+
+/* Reset para problemas comuns de mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Permitir seleção de texto em inputs e textareas */
+input,
+textarea,
+[contenteditable] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+}
+
+/* Correções de viewport para iOS */
+@supports (-webkit-touch-callout: none) {
+  body {
+    -webkit-overflow-scrolling: touch;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+  }
+
+  #app {
+    height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Correções para Android */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Correções para telas muito pequenas */
+@media (max-width: 320px) {
+  body {
+    font-size: 12px;
+  }
+
+  .surebets-container {
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+    padding: 0;
+  }
+
+  .main-content {
+    padding: 0 2px;
+  }
+
+  .surebets-grid {
+    grid-template-columns: 1fr !important;
+    gap: 4px;
+    padding: 0 2px;
+  }
+}
+
+/* Correções para landscape em mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+  .surebets-container {
+    height: 100vh;
+    overflow-y: auto;
+  }
+
+  .main-content {
+    height: 100vh;
+    overflow-y: auto;
+  }
+}
+
+/* Correções para problemas de zoom */
+@media screen and (max-width: 480px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+}
+
+/* Correções para problemas de scroll em iOS */
+.ios-scroll-fix {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
+/* Correções para problemas de touch */
+.touch-fix {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Correções para problemas de layout em mobile */
+.mobile-layout-fix {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* Correções para problemas de flexbox em mobile */
+.mobile-flex-fix {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+/* Correções para problemas de grid em mobile */
+.mobile-grid-fix {
+  grid-template-columns: 1fr !important;
+  gap: 1rem;
+}
+
+/* Correções para problemas de posicionamento */
+.mobile-position-fix {
+  position: relative;
+  z-index: 1;
+}
+
+/* Correções para problemas de overflow */
+.mobile-overflow-fix {
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Correções para problemas de altura */
+.mobile-height-fix {
+  min-height: 100vh;
+  height: auto;
+}
+
+/* Correções para problemas de largura */
+.mobile-width-fix {
+  width: 100%;
+  max-width: 100vw;
+  min-width: 0;
+}
+
+/* Correções para problemas de padding/margin */
+.mobile-spacing-fix {
+  padding: 0 8px;
+  margin: 0;
+}
+
+/* Correções para problemas de font-size */
+.mobile-text-fix {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Correções para problemas de botões */
+.mobile-button-fix {
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Correções para problemas de inputs */
+.mobile-input-fix {
+  font-size: 16px;
+  /* Evita zoom no iOS */
+  -webkit-appearance: none;
+  border-radius: 0;
+}
+
+/* Correções para problemas de modais */
+.mobile-modal-fix {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.5);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Correções para problemas de sidebar */
+.mobile-sidebar-fix {
+  position: fixed;
+  top: 0;
+  left: -100%;
+  width: 280px;
+  max-width: 90vw;
+  height: 100vh;
+  z-index: 1000;
+  transition: left 0.3s ease;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-sidebar-fix.open {
+  left: 0;
+}
+
+/* Correções para problemas de header */
+.mobile-header-fix {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Correções para problemas de footer */
+.mobile-footer-fix {
+  width: 100%;
+  max-width: 100vw;
+  padding: 16px 8px;
+}
+
+/* Correções para problemas de cards */
+.mobile-card-fix {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 16px 0;
+  box-sizing: border-box;
+}
+
+/* Correções para problemas de grid de cards */
+.mobile-cards-grid-fix {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 8px;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Correções para problemas de scroll */
+.mobile-scroll-fix {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Correções para problemas de animações */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Correções para problemas de acessibilidade */
+@media (prefers-reduced-motion: no-preference) {
+  .mobile-smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Correções para problemas de performance */
+.mobile-performance-fix {
+  will-change: auto;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Correções para problemas de focus */
+.mobile-focus-fix:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Correções para problemas de hover em touch */
+@media (hover: none) {
+  .mobile-hover-fix:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Correções para problemas de active em touch */
+.mobile-active-fix:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}

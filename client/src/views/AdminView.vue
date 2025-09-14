@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresAuth="true" :requiresAdmin="true">
-    <div class="admin-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+  <div class="admin-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
       <!-- Sidebar Reutilizável -->
       <Sidebar 
         :sidebarCollapsed="sidebarCollapsed"
@@ -914,7 +913,6 @@
       <!-- Glossary Modal -->
 
     </div>
-  </RouteGuard>
 </template>
 
 <script>
@@ -923,7 +921,6 @@ import Header from '../components/Header.vue'
 import PWAForceUpdateModal from '../components/PWAForceUpdateModal.vue'
 import AdminNotificationPanel from '../components/AdminNotificationPanel.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 import { mapGetters } from 'vuex'
 import { adminAPI } from '@/api/admin'
 import axios from '@/utils/axios'
@@ -934,8 +931,7 @@ export default {
     Sidebar,
     Header,
     PWAForceUpdateModal,
-    AdminNotificationPanel,
-    RouteGuard
+    AdminNotificationPanel
   },
   mounted() {
     console.log('🚀 Componente AdminView montado, verificando permissões...')

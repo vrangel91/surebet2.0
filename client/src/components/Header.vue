@@ -1,9 +1,24 @@
 <template>
   <header class="app-header">
     <div class="header-content">
+      <!-- Mobile Hamburger Button (visível apenas em telas menores) -->
+      <button 
+        v-if="!isDesktop" 
+        class="hamburger-button" 
+        @click="toggleMobileMenu"
+        :class="{ active: mobileMenuOpen }"
+        :title="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
+        :aria-label="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
+        :aria-expanded="mobileMenuOpen"
+      >
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      
       <!-- Logo/Título -->
       <div class="header-left">
-        <h1 class="app-title">SureStake</h1>
+        <h1 class="app-title">SureBets</h1>
       </div>
       
       <!-- Área direita com usuário -->
@@ -313,6 +328,27 @@ export default {
     currentUser() {
       return this.$store.getters.currentUser
     },
+    
+    // Mobile menu state from store
+    mobileMenuOpen() {
+      return this.$store.getters.mobileMenuOpen
+    },
+    
+    windowWidth() {
+      return this.$store.getters.windowWidth
+    },
+    
+    isDesktop() {
+      return this.$store.getters.isDesktop
+    },
+    
+    isMobile() {
+      return this.$store.getters.isMobile
+    },
+    
+    isTablet() {
+      return this.$store.getters.isTablet
+    },
     themeIconClass() {
       return this.currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill'
     },
@@ -571,6 +607,15 @@ export default {
   },
   
   methods: {
+    // Mobile menu methods
+    toggleMobileMenu() {
+      this.$store.commit('toggleMobileMenu')
+    },
+    
+    handleResize() {
+      this.$store.commit('setWindowWidth', window.innerWidth)
+    },
+    
     async loadUserVIPData() {
       try {
         console.log('🔍 [Header] Carregando dados VIP...')
@@ -1181,6 +1226,12 @@ export default {
     this.loadNotifications()
     this.startNotificationsPolling()
     
+    // Event listeners
+    window.addEventListener('resize', this.handleResize)
+    
+    // Inicializar largura da janela no store
+    this.$store.commit('setWindowWidth', window.innerWidth)
+    
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.showUserModal) {
         this.closeUserModal()
@@ -1188,10 +1239,14 @@ export default {
       if (e.key === 'Escape' && this.showNotificationsModal) {
         this.closeNotificationsModal()
       }
+      if (e.key === 'Escape' && this.mobileMenuOpen) {
+        this.$store.commit('setMobileMenuOpen', false)
+      }
     })
   },
   
   beforeUnmount() {
+    window.removeEventListener('resize', this.handleResize)
     document.removeEventListener('keydown', this.closeUserModal)
     this.stopCountdownTimer()
     this.stopNotificationsPolling()
@@ -1230,6 +1285,71 @@ export default {
   height: 60px;
   max-width: 1400px;
   margin: 0 auto;
+  position: relative;
+}
+
+/* Mobile Hamburger Button */
+.hamburger-button {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  min-width: 44px;
+  min-height: 44px;
+  z-index: 1001;
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  
+  &:hover {
+    background: var(--bg-hover);
+    transform: scale(1.05);
+  }
+  
+  &:focus {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+  
+  .hamburger-line {
+    width: 20px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+    display: block;
+  }
+  
+  &.active {
+    .hamburger-line {
+      &:nth-child(1) {
+        transform: translateY(6px) rotate(45deg);
+      }
+      
+      &:nth-child(2) {
+        opacity: 0;
+        transform: scaleX(0);
+      }
+      
+      &:nth-child(3) {
+        transform: translateY(-6px) rotate(-45deg);
+      }
+    }
+  }
+  
+  &:hover .hamburger-line {
+    background: var(--accent-primary);
+  }
+  
+  &.active .hamburger-line {
+    background: var(--accent-primary);
+  }
 }
 
 .header-left {
@@ -1942,28 +2062,90 @@ export default {
   }
 }
 
+@media (max-width: 1023px) {
+  .hamburger-button {
+    display: flex;
+    order: -1; /* Colocar antes do logo */
+    margin-right: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .header-content {
     padding: 0 16px;
     height: 56px;
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
   
   .app-title {
-    font-size: 18px;
+    font-size: 18px; /* Reduzir tamanho em mobile */
   }
   
-  .user-avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 14px;
+  .header-right {
+    gap: 8px; /* Reduzir gap entre elementos */
   }
   
-  .user-modal {
-    width: 280px;
+  .hamburger-button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 6px;
+    margin-right: 8px;
+    
+    .hamburger-line {
+      width: 18px;
+      height: 2px;
+    }
   }
   
-  .modal-content {
-    padding: 16px;
+  .theme-toggle-btn,
+  .notifications-btn,
+  .user-button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 8px;
+    height: 48px;
+  }
+  
+  .app-title {
+    font-size: 16px;
+  }
+  
+  .header-right {
+    gap: 4px;
+  }
+  
+  .hamburger-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px;
+    margin-right: 6px;
+    
+    .hamburger-line {
+      width: 16px;
+      height: 2px;
+    }
+  }
+  
+  .theme-toggle-btn,
+  .notifications-btn,
+  .user-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+  }
+  
+  .notifications-badge {
+    font-size: 10px;
+    min-width: 16px;
+    height: 16px;
   }
 }
 

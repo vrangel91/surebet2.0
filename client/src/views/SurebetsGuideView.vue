@@ -1,6 +1,5 @@
 <template>
-  <RouteGuard :requiresAuth="true">
-    <div class="surebets-guide-container">
+  <div class="surebets-guide-container">
     <!-- Sidebar Reutilizável -->
     <Sidebar 
       :sidebarCollapsed="sidebarCollapsed"
@@ -500,7 +499,6 @@
     <!-- Modal do Glossário -->
     
   </div>
-    </RouteGuard>
 </template>
 
 <script>
@@ -508,15 +506,12 @@ import { mapGetters } from 'vuex'
 import Sidebar from '../components/Sidebar.vue'
 import Header from '../components/Header.vue'
 
-import RouteGuard from '../components/RouteGuard.vue'
 
 export default {
   name: 'SurebetsGuideView',
   components: {
     Sidebar,
-    Header,
-
-    RouteGuard
+    Header
   },
   
   data() {

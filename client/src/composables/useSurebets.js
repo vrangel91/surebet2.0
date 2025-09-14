@@ -7,6 +7,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 import surebetsCache from '@/utils/surebetsCache'
+import { SmartTimer, SmartDebounce } from '@/utils/visibilityManager'
 
 export function useSurebets() {
   const router = useRouter()
@@ -38,6 +39,8 @@ export function useSurebets() {
   let pollingTimer = null
   let retryTimer = null
   let retryCount = 0
+  let smartTimer = null
+  let debouncedFetch = null
 
   /**
    * Gera parâmetros de cache baseados no estado atual
@@ -50,10 +53,34 @@ export function useSurebets() {
     }
   }
 
+  // Inicializar debounced fetch
+  if (!debouncedFetch) {
+    debouncedFetch = new SmartDebounce(fetchSurebetsInternal, 1000, {
+      maxWait: 5000, // Máximo 5 segundos de espera
+      leading: false,
+      trailing: true
+    })
+  }
+
   /**
    * Busca surebets do cache do servidor (otimizado)
    */
   const fetchSurebets = async (forceRefresh = false) => {
+    if (isLoading.value) {
+      console.log('⏳ Busca já em andamento, ignorando...')
+      return
+    }
+
+    // Para operações não forçadas, usar debounce
+    if (!forceRefresh) {
+      return debouncedFetch(forceRefresh)
+    }
+
+    // Para operações forçadas, executar imediatamente
+    return fetchSurebetsInternal(forceRefresh)
+  }
+
+  const fetchSurebetsInternal = async (forceRefresh = false) => {
     if (isLoading.value) {
       console.log('⏳ Busca já em andamento, ignorando...')
       return
@@ -151,27 +178,39 @@ export function useSurebets() {
   }
 
   /**
-   * Inicia busca automática
+   * Inicia busca automática com SmartTimer
    */
   const startAutoUpdate = () => {
-    if (pollingTimer) {
-      clearInterval(pollingTimer)
+    // Parar timer anterior se existir
+    if (smartTimer) {
+      smartTimer.stop()
     }
     
     isSearching.value = true
-    pollingTimer = setInterval(() => {
+    
+    // Criar SmartTimer que pausa quando a página não está visível
+    smartTimer = new SmartTimer(() => {
       if (isSearching.value) {
         fetchSurebets()
       }
-    }, autoUpdateInterval.value)
+    }, autoUpdateInterval.value, {
+      pauseWhenHidden: true,
+      resumeDelay: 2000, // 2 segundos de delay ao retomar
+      maxPauseTime: 600000 // 10 minutos máximo de pausa
+    })
     
-    console.log(`🔄 Busca automática iniciada (${autoUpdateInterval.value / 1000}s)`)
+    smartTimer.start()
+    console.log(`🔄 Busca automática inteligente iniciada (${autoUpdateInterval.value / 1000}s)`)
   }
 
   /**
    * Para busca automática
    */
   const stopAutoUpdate = () => {
+    if (smartTimer) {
+      smartTimer.stop()
+      smartTimer = null
+    }
     if (pollingTimer) {
       clearInterval(pollingTimer)
       pollingTimer = null
