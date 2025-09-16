@@ -139,6 +139,10 @@ export default {
     isLoadingAccounts: {
       type: Boolean,
       default: false
+    },
+    roundValues: {
+      type: Boolean,
+      default: false
     }
   },
   data() {
@@ -165,14 +169,15 @@ export default {
         return stake
       })
       
-      // Arredonda os valores para números inteiros com prioridade para valores terminados em 5 ou 0
-      const roundedStakes = this.smartRoundStakes(rawStakes)
+      // Aplica arredondamento inteligente se solicitado, senão mantém valores decimais reais
+      let roundedStakes
       
-      // Garante que todos os valores sejam pelo menos 1
-      for (let i = 0; i < roundedStakes.length; i++) {
-        if (roundedStakes[i] < 1) {
-          roundedStakes[i] = 1
-        }
+      if (this.roundValues) {
+        // Arredondamento inteligente que preserva o lucro esperado
+        roundedStakes = this.smartRoundStakes(rawStakes, odds)
+      } else {
+        // Mantém valores decimais reais
+        roundedStakes = rawStakes.map(stake => Math.max(1, stake))
       }
       
       // Ajusta os valores para manter o lucro
@@ -257,47 +262,58 @@ export default {
         minute: '2-digit' 
       })
     },
-    
-    // Função para arredondar stakes de forma inteligente, priorizando valores terminados em 5 ou 0
-    smartRoundStakes(rawStakes) {
-      const roundedStakes = rawStakes.map(stake => Math.round(stake))
+
+    // Arredondamento inteligente que preserva o lucro esperado
+    smartRoundStakes(rawStakes, odds) {
+      // 1. Arredonda cada stake individualmente
+      const roundedStakes = rawStakes.map(stake => Math.max(1, Math.round(stake)))
       
-      // Função para verificar se um número termina em 5 ou 0
-      const endsWithFiveOrZero = (num) => {
-        return num % 10 === 0 || num % 10 === 5
+      // 2. Calcula o lucro original
+      const originalTotalInvestment = rawStakes.reduce((sum, stake) => sum + stake, 0)
+      const originalMinReturn = Math.min(...rawStakes.map((stake, index) => 
+        stake * (parseFloat(odds[index]) || 1.0)
+      ))
+      const originalProfit = originalMinReturn - originalTotalInvestment
+      
+      // 3. Calcula o lucro após arredondamento simples
+      const roundedTotalInvestment = roundedStakes.reduce((sum, stake) => sum + stake, 0)
+      const roundedMinReturn = Math.min(...roundedStakes.map((stake, index) => 
+        stake * (parseFloat(odds[index]) || 1.0)
+      ))
+      const roundedProfit = roundedMinReturn - roundedTotalInvestment
+      
+      // 4. Se a diferença no lucro for pequena (menos de 1%), mantém o arredondamento simples
+      const profitDifference = Math.abs(originalProfit - roundedProfit)
+      const profitPercentage = Math.abs(profitDifference / originalProfit) * 100
+      
+      if (profitPercentage < 1) {
+        return roundedStakes
       }
       
-      // Função para encontrar o valor mais próximo que termina em 5 ou 0
-      const findNearestFiveOrZero = (num) => {
-        const lower = Math.floor(num / 5) * 5
-        const upper = Math.ceil(num / 5) * 5
-        
-        // Se o número já termina em 5 ou 0, retorna ele mesmo
-        if (endsWithFiveOrZero(num)) return num
-        
-        // Retorna o mais próximo
-        return (num - lower) < (upper - num) ? lower : upper
-      }
-      
-      // Aplica o arredondamento inteligente
-      const smartRounded = rawStakes.map(stake => {
-        const rounded = Math.round(stake)
-        const smartRounded = findNearestFiveOrZero(rounded)
-        
-        // Só aplica se a diferença for pequena (máximo 2 unidades)
-        const difference = Math.abs(smartRounded - rounded)
-        return difference <= 2 ? smartRounded : rounded
+      // 5. Ajuste proporcional para preservar o lucro
+      const adjustmentFactor = originalTotalInvestment / roundedTotalInvestment
+      const adjustedStakes = roundedStakes.map(stake => {
+        const adjusted = stake * adjustmentFactor
+        return Math.max(1, Math.round(adjusted))
       })
       
-      // Garante que todos os valores sejam pelo menos 1
-      for (let i = 0; i < smartRounded.length; i++) {
-        if (smartRounded[i] < 1) {
-          smartRounded[i] = 1
-        }
-      }
+      // 6. Verifica se o ajuste melhorou o lucro
+      const adjustedTotalInvestment = adjustedStakes.reduce((sum, stake) => sum + stake, 0)
+      const adjustedMinReturn = Math.min(...adjustedStakes.map((stake, index) => 
+        stake * (parseFloat(odds[index]) || 1.0)
+      ))
+      const adjustedProfit = adjustedMinReturn - adjustedTotalInvestment
       
-      return smartRounded
+      // 7. Retorna a opção que preserva melhor o lucro original
+      const adjustedProfitDifference = Math.abs(originalProfit - adjustedProfit)
+      
+      if (adjustedProfitDifference < profitDifference) {
+        return adjustedStakes
+      } else {
+        return roundedStakes
+      }
     },
+    
     
     
     
@@ -1070,6 +1086,32 @@ export default {
         }
       }
 
+      // Padrão para TO/TU com Kills (10-60)
+      const toTuKillsMatch = market.match(/^(TO|TU)\(([0-9.]+)\)\s*-\s*Kills$/i)
+      if (toTuKillsMatch) {
+        const [, type, value] = toTuKillsMatch
+        const prefix = type === 'TO' ? 'Mais de' : 'Menos de'
+        return `${prefix} ${value} Abates`
+      }
+
+      // Padrão para EH1/EH2 com números negativos
+      const ehNegativeMatch = market.match(/^(EH[12])\(([+-]?[0-9.]+)\)$/)
+      if (ehNegativeMatch) {
+        const [, team, value] = ehNegativeMatch
+        const teamName = this.getTeamName(team)
+        const formattedValue = parseFloat(value) >= 0 ? `+${value}` : value
+        return `Handicap Europeu ${formattedValue} - ${teamName}`
+      }
+
+      // Padrão para AH1/AH2 com números negativos
+      const ahNegativeMatch = market.match(/^(AH[12])\(([+-]?[0-9.]+)\)$/)
+      if (ahNegativeMatch) {
+        const [, team, value] = ahNegativeMatch
+        const teamName = this.getTeamName(team)
+        const formattedValue = parseFloat(value) >= 0 ? `+${value}` : value
+        return `Handicap Asiático ${formattedValue} - ${teamName}`
+      }
+
       return null
     },
 
@@ -1563,6 +1605,8 @@ export default {
   color: var(--text-primary);
   margin-bottom: 8px;
   line-height: 1.3;
+  user-select: text;
+  cursor: text;
 }
 
 .match-details {
@@ -1940,6 +1984,13 @@ export default {
   .bankroll-config,
   .bet-options {
     pointer-events: none;
+  }
+  
+  /* Permitir seleção de texto no título do jogo mesmo durante arrastar */
+  .match-title {
+    user-select: text;
+    cursor: text;
+    pointer-events: auto;
   }
   
   .action-btn {

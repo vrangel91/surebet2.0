@@ -87,13 +87,31 @@ class SurebetsWebSocket {
   /**
    * Envia dados iniciais para cliente recém-conectado
    */
-  sendInitialData(clientId) {
+  async sendInitialData(clientId) {
     try {
-      const cachedData = surebetsCache.get('all');
+      // Usar timeout para evitar bloqueio
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      );
+      
+      const dataPromise = new Promise((resolve) => {
+        const cachedData = surebetsCache.get('all');
+        resolve(cachedData);
+      });
+      
+      const cachedData = await Promise.race([dataPromise, timeoutPromise]);
+      
       if (cachedData) {
         this.sendToClient(clientId, {
           type: 'initial_data',
           data: cachedData,
+          timestamp: Date.now()
+        });
+      } else {
+        // Enviar dados vazios se não houver cache
+        this.sendToClient(clientId, {
+          type: 'initial_data',
+          data: { surebets: {}, isSearching: false, soundEnabled: false },
           timestamp: Date.now()
         });
       }
@@ -101,6 +119,13 @@ class SurebetsWebSocket {
       logger.error('Error sending initial data', {
         clientId,
         error: error.message
+      });
+      
+      // Enviar dados de fallback
+      this.sendToClient(clientId, {
+        type: 'initial_data',
+        data: { surebets: {}, isSearching: false, soundEnabled: false },
+        timestamp: Date.now()
       });
     }
   }

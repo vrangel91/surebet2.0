@@ -502,7 +502,9 @@ router.get('/active', async (req, res) => {
       }],
       order: [['data_fim', 'ASC']],
       limit: parseInt(limit),
-      offset
+      offset,
+      distinct: true, // Otimização para evitar duplicatas
+      subQuery: false // Otimização para consultas com includes
     });
 
     const activeVIPs = rows.map(vip => ({

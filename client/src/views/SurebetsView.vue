@@ -13,6 +13,7 @@
     <!-- Conteúdo Principal -->
     <main class="main-content">
       <!-- Header Global -->
+      <Header />
 
       <!-- Header do Conteúdo -->
       <header class="content-header">
@@ -278,6 +279,7 @@
               :isDragging="dragMode"
               :bookmaker-accounts="bookmakerAccounts"
               :is-loading-accounts="isLoadingAccounts"
+              :round-values="roundValues"
               @add-to-reports="addSurebetToReports"
               @toggle-pin="togglePinCard"
               @balance-debited="handleBalanceDebited"
@@ -335,6 +337,7 @@
             :surebet="surebet"
             :isPinned="isPinned(surebet)"
             :bookmaker-accounts="bookmakerAccounts"
+            :round-values="roundValues"
             :is-loading-accounts="isLoadingAccounts"
             @add-to-reports="addSurebetToReports"
             @toggle-pin="togglePinCard"
@@ -402,6 +405,29 @@
                 placeholder="1000"
                 class="profit-input"
               />
+            </div>
+          </div>
+
+          <div class="filter-divider"></div>
+
+          <!-- Opções de Formatação -->
+          <div class="filter-section">
+            <div class="filter-section-header">
+              <label class="filter-section-label">Formatação de Valores</label>
+            </div>
+            <div class="formatting-options">
+              <label class="checkbox-container">
+                <input 
+                  type="checkbox" 
+                  v-model="roundValues" 
+                  @change="onRoundValuesChange"
+                />
+                <span class="checkmark"></span>
+                <span class="checkbox-label">Arredondar Valores</span>
+              </label>
+              <p class="formatting-description">
+                Arredonda os centavos dos valores de apostas (ex: 93.55 → 94.00, 93.49 → 93.00)
+              </p>
             </div>
           </div>
 
@@ -717,6 +743,7 @@
 <script>
 import SurebetCard from "../components/SurebetCard.vue";
 import Sidebar from "../components/Sidebar.vue";
+import Header from "../components/Header.vue";
 
 import { filterOptions } from "../config/filters.js";
 import { getBookmakerUrl, addBookmakerUrl } from "../config/bookmakerUrls.js";
@@ -737,6 +764,7 @@ export default {
   components: {
     SurebetCard,
     Sidebar,
+    Header,
 
     MapPin,
     Trash2,
@@ -763,6 +791,7 @@ export default {
         (currency) => currency.code
       ), // Inicia com todas as moedas selecionadas
       selectedRiskLevel: "todos", // Filtro de nível de risco
+      roundValues: false, // Opção para arredondar valores de apostas
       filterOptions: filterOptions,
       availableBookmakers: [], // Casas de apostas disponíveis da API
       bookmakerUrls: {}, // URLs das casas de apostas
@@ -1380,6 +1409,12 @@ export default {
     // Carregar configurações de som
     this.loadSoundSettings();
 
+    // Carregar preferência de arredondamento
+    const savedRoundValues = localStorage.getItem('roundValues');
+    if (savedRoundValues !== null) {
+      this.roundValues = savedRoundValues === 'true';
+    }
+
     // Carregar contas de Bookmaker Accounts
     this.loadBookmakerAccounts();
 
@@ -1657,14 +1692,29 @@ export default {
         (currency) => currency.code
       );
       this.selectedDate = "";
+      this.selectedRiskLevel = "todos";
+      this.minProfit = 0;
+      this.maxProfit = 1000;
       this.marketSearchTerm = "";
       this.unifiedSearchTerm = "";
       this.activeSearchType = null;
       this.searchSuggestions = [];
       this.showSearchSuggestions = false;
       this.selectedSuggestionIndex = -1;
+      this.houseSearchTerm = "";
       this.resetPagination();
+      
+      // Salvar filtros nas configurações
+      this.saveFiltersToSettings();
+      
       console.log("🗑️ Todos os filtros foram limpos");
+    },
+
+    // Método para lidar com mudança na opção de arredondamento
+    onRoundValuesChange() {
+      console.log("🔄 Arredondamento de valores:", this.roundValues ? "Ativado" : "Desativado");
+      // Salvar preferência no localStorage
+      localStorage.setItem('roundValues', this.roundValues.toString());
     },
 
     // Carrega contas de Bookmaker Accounts
@@ -3200,7 +3250,9 @@ export default {
 
     clearDateFilter() {
       this.selectedDate = "";
+      this.resetPagination();
       this.saveFiltersToSettings();
+      console.log("🗑️ Filtro de data limpo");
     },
 
     clearFilters() {
@@ -3219,11 +3271,20 @@ export default {
         (currency) => currency.code
       );
       this.selectedDate = "";
+      this.selectedRiskLevel = "todos";
       this.minProfit = 0;
       this.maxProfit = 1000;
       this.activeFilter = "prelive";
       this.houseSearchTerm = "";
       this.marketSearchTerm = "";
+      this.unifiedSearchTerm = "";
+      this.activeSearchType = null;
+      this.searchSuggestions = [];
+      this.showSearchSuggestions = false;
+      this.selectedSuggestionIndex = -1;
+      
+      // Reset paginação
+      this.resetPagination();
 
       // Salvar filtros nas configurações
       this.saveFiltersToSettings();
@@ -7153,5 +7214,75 @@ export default {
   .filter-tab {
     justify-content: center;
   }
+}
+
+/* Estilos para opções de formatação */
+.formatting-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: var(--bg-overlay);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 0 -12px;
+  }
+}
+
+.checkbox-container input[type="checkbox"] {
+  display: none;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
+  background: var(--bg-primary);
+  position: relative;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.checkbox-container input[type="checkbox"]:checked + .checkmark::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.formatting-description {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  padding-left: 32px;
+  line-height: 1.4;
 }
 </style>

@@ -126,14 +126,14 @@ class DatabaseOptimizer {
       if (duration > 1000) { // Consultas > 1 segundo
         this.queryStats.slow++;
         this.slowQueries.push({
-          query: options.sql,
+          query: options.sql || 'Unknown query',
           duration,
           timestamp: new Date().toISOString()
         });
         
         logger.warn('Slow query detected', {
           duration,
-          query: options.sql.substring(0, 100) + '...'
+          query: options.sql ? options.sql.substring(0, 100) + '...' : 'Unknown query'
         });
       }
     });

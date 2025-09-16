@@ -3,6 +3,10 @@ const path = require("path");
 
 module.exports = defineConfig({
   transpileDependencies: true,
+  
+  // Otimizações de performance
+  parallel: true,
+  productionSourceMap: false,
 
   // Configurações PWA
   pwa: {
@@ -137,11 +141,22 @@ module.exports = defineConfig({
     optimization: {
       splitChunks: {
         chunks: "all",
+        maxInitialRequests: Infinity,
+        minSize: 0,
         cacheGroups: {
           vendor: {
             test: /[\\/]node_modules[\\/]/,
             name: "vendors",
             chunks: "all",
+            maxSize: 244000,
+            priority: 10,
+          },
+          common: {
+            name: "common",
+            minChunks: 2,
+            chunks: "all",
+            priority: 5,
+            reuseExistingChunk: true,
           },
         },
       },
