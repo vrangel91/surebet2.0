@@ -62,15 +62,63 @@ module.exports = defineConfig({
 
       icons: [
         {
-          src: "/img/logo-192x192.svg",
+          src: "/img/logo-16x16.png",
+          sizes: "16x16",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-32x32.png",
+          sizes: "32x32",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-72x72.png",
+          sizes: "72x72",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-96x96.png",
+          sizes: "96x96",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-128x128.png",
+          sizes: "128x128",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-144x144.png",
+          sizes: "144x144",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-152x152.png",
+          sizes: "152x152",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-192x192.png",
           sizes: "192x192",
-          type: "image/svg+xml",
+          type: "image/png",
           purpose: "any maskable",
         },
         {
-          src: "/img/logo-512x512.svg",
+          src: "/img/logo-384x384.png",
+          sizes: "384x384",
+          type: "image/png",
+          purpose: "any",
+        },
+        {
+          src: "/img/logo-512x512.png",
           sizes: "512x512",
-          type: "image/svg+xml",
+          type: "image/png",
           purpose: "any maskable",
         },
       ],

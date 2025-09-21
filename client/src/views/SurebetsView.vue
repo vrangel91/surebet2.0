@@ -492,33 +492,42 @@
           <div class="filter-category">
             <div class="filter-category-header">
               <h4>Casas de Aposta</h4>
-              <div class="filter-actions">
-                <button @click="selectAllHouses" class="action-btn">
-                  Marcar Todos
-                </button>
-                <button @click="deselectAllHouses" class="action-btn">
-                  Desmarcar Todos
-                </button>
-              </div>
+            </div>
+            <div class="filter-actions">
+              <button @click="selectAllHouses" class="action-btn">
+                <i class="icon-check-all"></i>
+                Marcar Todos
+              </button>
+              <button @click="deselectAllHouses" class="action-btn">
+                <i class="icon-uncheck-all"></i>
+                Desmarcar Todos
+              </button>
+              <button @click="selectFavoritesOnly" class="action-btn favorites-btn">
+                <i class="icon-star"></i>
+                Favoritos
+              </button>
             </div>
 
             <!-- Campo de busca para casas de apostas -->
             <div class="search-field-container">
-              <input
-                type="text"
-                v-model="houseSearchTerm"
-                placeholder="Pesquisar casa de aposta..."
-                class="house-search-input"
-                @input="onHouseSearchInput"
-              />
-              <button
-                v-if="houseSearchTerm"
-                @click="clearHouseSearch"
-                class="clear-search-btn"
-                title="Limpar pesquisa"
-              >
-                ×
-              </button>
+              <div class="search-input-wrapper">
+                <i class="icon-search"></i>
+                <input
+                  type="text"
+                  v-model="houseSearchTerm"
+                  placeholder="Pesquisar casa de aposta..."
+                  class="house-search-input"
+                  @input="onHouseSearchInput"
+                />
+                <button
+                  v-if="houseSearchTerm"
+                  @click="clearHouseSearch"
+                  class="clear-search-btn"
+                  title="Limpar pesquisa"
+                >
+                  <i class="icon-close"></i>
+                </button>
+              </div>
             </div>
 
             <div class="houses-grid">
@@ -534,6 +543,14 @@
                   class="filter-checkbox"
                 />
                 <span class="checkbox-label">{{ house }}</span>
+                <button 
+                  @click.stop="toggleHouseFavorite(house)"
+                  class="favorite-toggle"
+                  :class="{ active: isHouseFavorite(house) }"
+                  :title="isHouseFavorite(house) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                >
+                  <i class="icon-star"></i>
+                </button>
               </label>
             </div>
 
@@ -548,17 +565,45 @@
 
           <div class="filter-divider"></div>
 
-          <!-- Categoria: Futebol -->
+          <!-- Categoria: Esportes -->
           <div class="filter-category">
             <div class="filter-category-header">
-              <h4>Futebol</h4>
-              <div class="filter-actions">
-                <button @click="selectAllSports" class="action-btn">
-                  Marcar Todos
-                </button>
-                <button @click="deselectAllSports" class="action-btn">
-                  Desmarcar Todos
-                </button>
+              <h4>Esportes</h4>
+            </div>
+            <div class="filter-actions">
+              <button @click="selectAllSports" class="action-btn">
+                <i class="icon-check-all"></i>
+                Marcar Todos
+              </button>
+              <button @click="deselectAllSports" class="action-btn">
+                <i class="icon-uncheck-all"></i>
+                Desmarcar Todos
+              </button>
+              <button @click="selectFavoritesOnly" class="action-btn favorites-btn">
+                <i class="icon-star"></i>
+                Favoritos
+              </button>
+            </div>
+
+            <!-- Pesquisa de Esportes -->
+            <div class="filter-section">
+              <div class="search-container">
+                <div class="search-input-wrapper">
+                  <i class="icon-search"></i>
+                  <input
+                    v-model="sportSearchTerm"
+                    type="text"
+                    placeholder="Pesquisar esportes..."
+                    class="search-input"
+                  />
+                  <button 
+                    v-if="sportSearchTerm" 
+                    @click="sportSearchTerm = ''" 
+                    class="clear-search-btn"
+                  >
+                    <i class="icon-close"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -569,7 +614,7 @@
               </div>
               <div class="sports-grid">
                 <label
-                  v-for="sport in filterOptions.sports"
+                  v-for="sport in filteredSports"
                   :key="sport.value"
                   class="checkbox-item"
                 >
@@ -580,7 +625,22 @@
                     class="filter-checkbox"
                   />
                   <span class="checkbox-label">{{ sport.label }}</span>
+                  <button 
+                    @click.stop="toggleSportFavorite(sport.value)"
+                    class="favorite-toggle"
+                    :class="{ active: isSportFavorite(sport.value) }"
+                    :title="isSportFavorite(sport.value) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+                  >
+                    <i class="icon-star"></i>
+                  </button>
                 </label>
+              </div>
+              
+              <!-- Indicador de resultados da pesquisa -->
+              <div v-if="sportSearchTerm" class="search-results-info">
+                <span class="search-results-text">
+                  {{ filteredSports.length }} de {{ filterOptions.sports.length }} esportes encontrados
+                </span>
               </div>
             </div>
 
@@ -838,8 +898,13 @@ export default {
       },
       // Termo de pesquisa para casas de apostas
       houseSearchTerm: "",
+      // Termo de pesquisa para esportes
+      sportSearchTerm: "",
       // Termo de pesquisa para tipos de mercado
       marketSearchTerm: "",
+      // Sistema de favoritos
+      favoriteSports: [], // Esportes favoritos
+      favoriteHouses: [], // Casas de apostas favoritas
       // Termo de pesquisa unificado
       unifiedSearchTerm: "",
       // Tipo de busca ativa
@@ -872,6 +937,18 @@ export default {
       const searchTerm = this.houseSearchTerm.toLowerCase().trim();
       return this.filterOptions.houses.filter((house) =>
         house.toLowerCase().includes(searchTerm)
+      );
+    },
+    
+    // Esportes filtrados pela pesquisa
+    filteredSports() {
+      if (!this.sportSearchTerm.trim()) {
+        return this.filterOptions.sports;
+      }
+
+      const searchTerm = this.sportSearchTerm.toLowerCase().trim();
+      return this.filterOptions.sports.filter((sport) =>
+        sport.label.toLowerCase().includes(searchTerm)
       );
     },
     isAdmin() {
@@ -1418,6 +1495,9 @@ export default {
     // Carregar contas de Bookmaker Accounts
     this.loadBookmakerAccounts();
 
+    // Carregar favoritos salvos
+    this.loadFavoritesFromStorage();
+
     // Aplicar configurações de busca em segundo plano
     this.applyBackgroundSearchSettings();
 
@@ -1767,6 +1847,88 @@ export default {
     clearHouseSearch() {
       this.houseSearchTerm = "";
       console.log("🧹 Pesquisa de casas limpa");
+    },
+
+    // Métodos para gerenciar favoritos
+    toggleSportFavorite(sportValue) {
+      const index = this.favoriteSports.indexOf(sportValue);
+      if (index > -1) {
+        this.favoriteSports.splice(index, 1);
+        console.log("⭐ Esporte removido dos favoritos:", sportValue);
+      } else {
+        this.favoriteSports.push(sportValue);
+        console.log("⭐ Esporte adicionado aos favoritos:", sportValue);
+      }
+      this.saveFavoritesToStorage();
+    },
+
+    toggleHouseFavorite(house) {
+      const index = this.favoriteHouses.indexOf(house);
+      if (index > -1) {
+        this.favoriteHouses.splice(index, 1);
+        console.log("⭐ Casa removida dos favoritos:", house);
+      } else {
+        this.favoriteHouses.push(house);
+        console.log("⭐ Casa adicionada aos favoritos:", house);
+      }
+      this.saveFavoritesToStorage();
+    },
+
+    isSportFavorite(sportValue) {
+      return this.favoriteSports.includes(sportValue);
+    },
+
+    isHouseFavorite(house) {
+      return this.favoriteHouses.includes(house);
+    },
+
+    selectFavoritesOnly() {
+      // Desmarcar todos os esportes
+      this.selectedSports = [];
+      // Marcar apenas os esportes favoritos
+      this.selectedSports = [...this.favoriteSports];
+      
+      // Desmarcar todas as casas
+      this.selectedHouses = [];
+      // Marcar apenas as casas favoritas
+      this.selectedHouses = [...this.favoriteHouses];
+      
+      console.log("⭐ Aplicando apenas favoritos:", {
+        esportes: this.favoriteSports,
+        casas: this.favoriteHouses
+      });
+      
+      // Aplicar filtros automaticamente
+      this.applyFilters();
+    },
+
+    saveFavoritesToStorage() {
+      try {
+        const favorites = {
+          sports: this.favoriteSports,
+          houses: this.favoriteHouses
+        };
+        localStorage.setItem('surebet_favorites', JSON.stringify(favorites));
+        console.log("💾 Favoritos salvos no localStorage");
+      } catch (error) {
+        console.error("❌ Erro ao salvar favoritos:", error);
+      }
+    },
+
+    loadFavoritesFromStorage() {
+      try {
+        const saved = localStorage.getItem('surebet_favorites');
+        if (saved) {
+          const favorites = JSON.parse(saved);
+          this.favoriteSports = favorites.sports || [];
+          this.favoriteHouses = favorites.houses || [];
+          console.log("📂 Favoritos carregados do localStorage:", favorites);
+        }
+      } catch (error) {
+        console.error("❌ Erro ao carregar favoritos:", error);
+        this.favoriteSports = [];
+        this.favoriteHouses = [];
+      }
     },
 
     // Métodos para pesquisa de tipos de mercado
@@ -4342,6 +4504,33 @@ export default {
 <style lang="scss" scoped>
 /* Importação removida para evitar conflitos de build */
 
+/* Ícones CSS */
+.icon-search::before {
+  content: "🔍";
+  font-style: normal;
+}
+
+.icon-close::before {
+  content: "✕";
+  font-style: normal;
+  font-weight: bold;
+}
+
+.icon-star::before {
+  content: "★";
+  font-style: normal;
+}
+
+.icon-check-all::before {
+  content: "☑";
+  font-style: normal;
+}
+
+.icon-uncheck-all::before {
+  content: "☐";
+  font-style: normal;
+}
+
 .surebets-container {
   display: flex;
   min-height: 100vh;
@@ -4774,6 +4963,15 @@ export default {
   display: flex;
   align-items: center;
   max-width: 500px;
+  
+  i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    font-size: 16px;
+    z-index: 2;
+    pointer-events: none;
+  }
 }
 
 .market-search-container .search-icon {
@@ -5673,8 +5871,8 @@ export default {
 .filter-overlay {
   position: fixed;
   top: 0;
-  right: -400px;
-  width: 400px;
+  right: -440px;
+  width: 440px;
   height: 100vh;
   background: var(--bg-secondary);
   border-left: 1px solid var(--border-primary);
@@ -5687,10 +5885,36 @@ export default {
   }
 }
 
+/* Responsividade para overlay de filtros */
+@media (max-width: 768px) {
+  .filter-overlay {
+    width: 100vw;
+    right: -100vw;
+    border-left: none;
+    border-top: 1px solid var(--border-primary);
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-overlay {
+    width: 100vw;
+    right: -100vw;
+  }
+}
+
 .filter-panel {
   display: flex;
   flex-direction: column;
   height: 100%;
+  overflow: hidden; /* Evita overflow do painel */
+}
+
+/* Responsividade para o painel de filtros */
+@media (max-width: 768px) {
+  .filter-panel {
+    height: 100vh;
+    overflow: hidden;
+  }
 }
 
 .filter-header {
@@ -5730,10 +5954,29 @@ export default {
 .filter-content {
   flex: 1;
   padding: 20px;
+  padding-bottom: 100px; /* Espaço para os botões do footer */
   overflow-y: auto; /* Adiciona scroll único para todo o conteúdo */
   overflow-x: hidden; /* Remove scroll horizontal */
   position: relative;
   z-index: 1;
+  min-height: 0; /* Permite que o flex item seja comprimido */
+}
+
+/* Responsividade para o conteúdo dos filtros */
+@media (max-width: 768px) {
+  .filter-content {
+    padding: 16px;
+    padding-bottom: 120px; /* Mais espaço em mobile para os botões */
+    flex: 1;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-content {
+    padding: 12px;
+    padding-bottom: 140px; /* Ainda mais espaço em mobile pequeno */
+  }
 }
 
 .filter-category {
@@ -5743,10 +5986,7 @@ export default {
 }
 
 .filter-category-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--border-primary);
 
@@ -5758,6 +5998,14 @@ export default {
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .filter-section {
@@ -5818,11 +6066,147 @@ export default {
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 
   &:hover {
     background: var(--bg-hover);
   }
+
+  &.favorites-btn {
+    color: var(--warning-color);
+    
+    &:hover {
+      background: var(--warning-color);
+      color: white;
+    }
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+/* Estilos para pesquisa e favoritos */
+.search-container {
+  margin-bottom: 16px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  
+  i {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    font-size: 16px;
+    z-index: 2;
+    pointer-events: none;
+  }
+}
+
+.search-input {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 1;
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 2;
+
+  &:hover {
+    color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+
+.checkbox-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg-hover);
+  }
+}
+
+.favorite-toggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  opacity: 1;
+  color: var(--text-muted);
+
+  &:hover {
+    color: var(--warning-color);
+    background: var(--bg-hover);
+  }
+
+  &.active {
+    color: var(--warning-color);
+  }
+
+  i {
+    font-size: 14px;
+  }
+}
+
+.search-results-info {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-primary);
+}
+
+.search-results-text {
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 /* Filtro de Data */
@@ -6094,22 +6478,24 @@ export default {
 
 .house-search-input {
   width: 100%;
-  padding: 10px 40px 10px 12px;
+  padding: 10px 40px 10px 40px;
   border: 1px solid var(--border-primary);
   border-radius: 6px;
   background: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
-
-  &::placeholder {
-    color: var(--text-muted);
-  }
+  position: relative;
+  z-index: 1;
 
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
-    background: var(--bg-hover);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+  }
+
+  &::placeholder {
+    color: var(--text-muted);
   }
 }
 
@@ -6199,6 +6585,7 @@ export default {
   border-top: 1px solid var(--border-primary);
   display: flex;
   gap: 12px;
+  flex-shrink: 0; /* Evita que o footer seja comprimido */
 }
 
 .clear-btn,
@@ -6211,6 +6598,61 @@ export default {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 0; /* Permite que os botões se comprimam se necessário */
+  white-space: nowrap; /* Evita quebra de linha no texto */
+  overflow: hidden; /* Esconde texto que não cabe */
+  text-overflow: ellipsis; /* Adiciona ... se o texto for muito longo */
+}
+
+/* Responsividade para footer dos filtros */
+@media (max-width: 768px) {
+  .filter-footer {
+    padding: 16px;
+    gap: 8px;
+    flex-direction: column; /* Empilha os botões verticalmente em mobile */
+  }
+
+  .clear-btn,
+  .apply-btn {
+    flex: none; /* Remove flex para permitir largura natural */
+    width: 100%;
+    padding: 14px 16px; /* Aumenta padding para melhor toque */
+    font-size: 15px; /* Aumenta fonte para melhor legibilidade */
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-footer {
+    padding: 12px;
+    gap: 6px;
+    position: sticky; /* Mantém o footer fixo na parte inferior */
+    bottom: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-primary);
+    z-index: 10;
+  }
+
+  .clear-btn,
+  .apply-btn {
+    padding: 12px 14px;
+    font-size: 14px;
+    min-height: 44px; /* Altura mínima para melhor toque */
+  }
+}
+
+/* Estilos para telas muito pequenas (menos de 360px) */
+@media (max-width: 360px) {
+  .filter-footer {
+    padding: 8px;
+    gap: 4px;
+  }
+
+  .clear-btn,
+  .apply-btn {
+    padding: 10px 12px;
+    font-size: 13px;
+    min-height: 40px;
+  }
 }
 
 .clear-btn {
@@ -6612,12 +7054,60 @@ export default {
     border-color: var(--accent-primary);
   }
 
+  /* Manter placeholder nativo visível */
+  &::-webkit-datetime-edit-text {
+    color: var(--text-secondary);
+  }
+
+  &::-webkit-datetime-edit-month-field,
+  &::-webkit-datetime-edit-day-field,
+  &::-webkit-datetime-edit-year-field {
+    color: var(--text-secondary);
+  }
+
+  &::-webkit-datetime-edit-month-field:focus,
+  &::-webkit-datetime-edit-day-field:focus,
+  &::-webkit-datetime-edit-year-field:focus {
+    background-color: var(--accent-hover);
+    color: var(--text-primary);
+  }
+
+  /* Estilo para quando não há valor - manter placeholder visível */
+  &:invalid {
+    color: var(--text-secondary);
+  }
+
+  /* Garantir que o placeholder seja sempre visível */
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 1;
+  }
+
   // Estilizar o calendário no Chrome/Safari
   &::-webkit-calendar-picker-indicator {
     background-color: var(--accent-primary);
     border-radius: 3px;
     cursor: pointer;
     filter: invert(1);
+  }
+
+  /* Forçar exibição do placeholder no mobile */
+  @media (max-width: 768px) {
+    &::-webkit-datetime-edit-text {
+      color: var(--text-secondary) !important;
+      opacity: 1 !important;
+    }
+
+    &::-webkit-datetime-edit-month-field,
+    &::-webkit-datetime-edit-day-field,
+    &::-webkit-datetime-edit-year-field {
+      color: var(--text-secondary) !important;
+      opacity: 1 !important;
+    }
+
+    &:invalid {
+      color: var(--text-secondary) !important;
+    }
   }
 }
 
@@ -6940,24 +7430,7 @@ export default {
   }
 }
 
-.search-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-primary);
-  border-radius: 8px;
-  padding: 8px 12px;
-  min-width: 450px;
-  margin-left: auto;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  &:focus-within {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
-  }
-}
+/* Estilos duplicados removidos - usando apenas os estilos principais acima */
 
 .search-icon {
   width: 18px;
@@ -6967,18 +7440,7 @@ export default {
   flex-shrink: 0;
 }
 
-.market-search-input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-size: 14px;
-
-  &::placeholder {
-    color: var(--text-tertiary);
-  }
-}
+/* Estilo duplicado removido - usando apenas o estilo principal acima */
 
 .clear-search-btn {
   width: 20px;
@@ -7044,22 +7506,39 @@ export default {
   .search-controls {
     gap: 8px;
     margin-bottom: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   .control-btn {
     padding: 8px 12px;
     font-size: 13px;
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
   }
 
   .filter-tabs {
-    gap: 12px;
-    flex-direction: column;
-    align-items: stretch;
+    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .filter-tab {
+    flex: 1;
+    min-width: 140px;
+    justify-content: center;
+    text-align: center;
   }
 
   .date-filters {
     margin-left: 0;
     justify-content: center;
+    width: 100%;
+    margin-top: 12px;
   }
 
   .search-input-wrapper {
@@ -7203,16 +7682,90 @@ export default {
   }
 
   .search-controls {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: space-between;
   }
 
   .control-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 10px 8px;
+    font-size: 12px;
     justify-content: center;
   }
 
+  .filter-tabs {
+    gap: 6px;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
   .filter-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 6px;
+    font-size: 12px;
     justify-content: center;
+    text-align: center;
+  }
+
+  .date-filters {
+    margin-top: 8px;
+    gap: 6px;
+  }
+
+  .date-filter-label {
+    font-size: 12px;
+  }
+
+  .date-filter-input {
+    font-size: 12px;
+    padding: 8px;
+    min-width: 100px;
+    
+    /* Garantir que o placeholder seja visível no mobile */
+    &::-webkit-datetime-edit-text {
+      color: var(--text-secondary);
+      opacity: 1;
+    }
+
+    &::-webkit-datetime-edit-month-field,
+    &::-webkit-datetime-edit-day-field,
+    &::-webkit-datetime-edit-year-field {
+      color: var(--text-secondary);
+      opacity: 1;
+    }
+
+    /* Quando vazio, mostrar placeholder */
+    &:invalid {
+      color: var(--text-secondary);
+    }
+
+    &::placeholder {
+      color: var(--text-secondary);
+      opacity: 1;
+    }
+  }
+
+  .date-filter-label {
+    display: none; /* Ocultar label em telas muito pequenas */
+  }
+}
+
+/* Para telas muito pequenas, manter o filtro de data mas com layout compacto */
+@media (max-width: 360px) {
+  .date-filters {
+    margin-top: 6px;
+    gap: 4px;
+  }
+
+  .date-filter-input {
+    font-size: 11px;
+    padding: 6px;
+    min-width: 90px;
   }
 }
 

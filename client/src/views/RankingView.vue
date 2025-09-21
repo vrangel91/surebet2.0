@@ -49,6 +49,7 @@
           </div>
         </header>
   
+
         <div class="filters-section">
           <div class="filter-group">
             <label>Período:</label>
@@ -618,22 +619,6 @@
     categorizeMarket 
   } from '../config/marketGroups.js'
   Chart.register(...registerables)
-
-  // Registrar plugin customizado para background
-  const customCanvasBackgroundColor = {
-    id: 'customCanvasBackgroundColor',
-    beforeDraw: (chart) => {
-      const ctx = chart.ctx
-      const chartArea = chart.chartArea
-      if (chartArea) {
-        ctx.save()
-        ctx.fillStyle = chart.options.backgroundColor || '#2a2a2a'
-        ctx.fillRect(0, 0, chart.width, chart.height)
-        ctx.restore()
-      }
-    }
-  }
-  Chart.register(customCanvasBackgroundColor)
   
   export default {
     name: 'RankingView',
@@ -1335,42 +1320,21 @@
   
       setupCharts() {
         try {
-          // Verificar se os elementos canvas existem antes de criar os gráficos
-          const canvasElements = [
-            this.$refs.housesChart,
-            this.$refs.marketsChart,
-            this.$refs.timeChart,
-            this.$refs.sportsChart,
-            this.$refs.profitFrequencyChart
-          ]
-          
-          const missingElements = canvasElements.filter(el => !el)
-          if (missingElements.length > 0) {
-            console.warn('⚠️ Alguns elementos canvas não foram encontrados, aguardando...')
-            setTimeout(() => this.setupCharts(), 1000)
-            return
-          }
-          
           this.$nextTick(() => {
             setTimeout(() => {
-              try {
-                this.setupHousesChart()
-                this.setupMarketsChart()
-                this.setupTimeChart()
-                this.setupSportsChart()
-                this.setupProfitFrequencyChart()
-                
-                // Marcar gráficos como inicializados
-                this.chartsInitialized = true
-                console.log('✅ Gráficos configurados com sucesso')
-              } catch (chartError) {
-                console.error('❌ Erro ao configurar gráficos individuais:', chartError)
-                this.chartsInitialized = false
-              }
+              this.setupHousesChart()
+              this.setupMarketsChart()
+              this.setupTimeChart()
+              this.setupSportsChart()
+              this.setupProfitFrequencyChart()
+              
+              // Marcar gráficos como inicializados
+              this.chartsInitialized = true
+              // Remover chamada automática de forceChartColors para evitar recursão
             }, 500)
           })
         } catch (error) {
-          console.error('❌ Erro geral ao configurar gráficos:', error)
+          console.error('Erro ao configurar gráficos:', error)
           this.chartsInitialized = false
         }
       },
@@ -1420,6 +1384,18 @@
             backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
             plugins: { 
               legend: { display: false },
+              customCanvasBackgroundColor: {
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx
+                  const chartArea = chart.chartArea
+                  if (chartArea) {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, chart.width, chart.height)
+                    ctx.restore()
+                  }
+                }
+              }
             },
                         scales: {
               y: { 
@@ -1507,6 +1483,18 @@
                   }
                 }
               },
+              customCanvasBackgroundColor: {
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx
+                  const chartArea = chart.chartArea
+                  if (chartArea) {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, chart.width, chart.height)
+                    ctx.restore()
+                  }
+                }
+              }
             },
             onClick: (event, elements) => {
               if (elements.length > 0) {
@@ -1543,6 +1531,18 @@
             backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
             plugins: { 
               legend: { display: false },
+              customCanvasBackgroundColor: {
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx
+                  const chartArea = chart.chartArea
+                  if (chartArea) {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, chart.width, chart.height)
+                    ctx.restore()
+                  }
+                }
+              }
             },
                         scales: {
               y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
@@ -1588,6 +1588,18 @@
             backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
             plugins: { 
               legend: { display: false },
+              customCanvasBackgroundColor: {
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx
+                  const chartArea = chart.chartArea
+                  if (chartArea) {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, chart.width, chart.height)
+                    ctx.restore()
+                  }
+                }
+              }
             },
                         scales: {
               y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff'), callback: value => 'R$ ' + value.toFixed(0) }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
@@ -1716,6 +1728,18 @@
                   mode: 'xy'
                 }
               },
+              customCanvasBackgroundColor: {
+                beforeDraw: (chart) => {
+                  const ctx = chart.ctx
+                  const chartArea = chart.chartArea
+                  if (chartArea) {
+                    ctx.save()
+                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                    ctx.fillRect(0, 0, chart.width, chart.height)
+                    ctx.restore()
+                  }
+                }
+              }
             },
             scales: {
               x: {
@@ -3259,6 +3283,7 @@
           console.warn('Erro ao atualizar análise:', error)
         }
       },
+
       
       // Métodos para busca automática de dados
       startAutoRefresh() {
@@ -6617,4 +6642,5 @@
       padding: 2px 4px;
     }
   }
+
   </style>

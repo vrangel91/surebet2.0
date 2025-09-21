@@ -9,6 +9,7 @@
     <FloatingGuideButton />
     <!-- Componentes PWA -->
     <PWAUpdateNotification />
+    <PWAInstallBanner />
   </div>
 </template>
 <script>
@@ -17,13 +18,15 @@ import LoginLoading from './components/LoginLoading.vue'
 import FloatingGuideButton from './components/FloatingGuideButton.vue'
 import LoaderOverlay from './components/LoaderOverlay.vue'
 import PWAUpdateNotification from './components/PWAUpdateNotification.vue'
+import PWAInstallBanner from './components/PWAInstallBanner.vue'
 export default {
   name: 'App',
   components: {
     LoginLoading,
     FloatingGuideButton,
     LoaderOverlay,
-    PWAUpdateNotification
+    PWAUpdateNotification,
+    PWAInstallBanner
   },
   data() {
     return {

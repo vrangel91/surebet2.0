@@ -648,6 +648,18 @@ export default {
     display: flex;
     gap: 15px;
     align-items: center;
+    flex-wrap: wrap;
+    
+    @media (max-width: 768px) {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    @media (max-width: 640px) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
     
     .sport-filter {
       padding: 12px 20px;
@@ -658,6 +670,13 @@ export default {
       color: var(--text-primary);
       cursor: pointer;
       transition: all 0.3s ease;
+      
+      @media (max-width: 640px) {
+        width: 100%;
+        text-align: center;
+        padding: 10px 15px;
+        font-size: 13px;
+      }
       
       &:focus {
         outline: none;
@@ -679,6 +698,13 @@ export default {
       cursor: pointer;
       transition: all 0.3s ease;
       
+      @media (max-width: 640px) {
+        width: 100%;
+        justify-content: center;
+        padding: 10px 15px;
+        font-size: 13px;
+      }
+      
       &:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-hover);
@@ -691,6 +717,10 @@ export default {
       
       span {
         font-size: 16px;
+        
+        @media (max-width: 640px) {
+          font-size: 14px;
+        }
       }
     }
   }
@@ -703,6 +733,15 @@ export default {
   display: flex;
   gap: 40px;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    gap: 25px;
+  }
+  
+  @media (max-width: 640px) {
+    gap: 20px;
+  }
   
   .filter-group {
     label {
@@ -744,6 +783,27 @@ export default {
   gap: 10px;
   margin-bottom: 25px;
   flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  
+  // Scrollbar personalizada para webkit
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--accent-primary);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+  }
   
   .category-tab {
     padding: 12px 24px;
@@ -805,6 +865,24 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 20px;
+  
+  // Melhor responsividade para o grid
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  }
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
   
   .market-card {
     background: var(--bg-tertiary);
@@ -1045,10 +1123,40 @@ export default {
   }
 }
 
-// Responsividade
-@media (max-width: 1023px) {
+// Responsividade - Breakpoints otimizados
+@media (max-width: 1200px) {
   .glossary-container {
-    margin-left: 0; /* Remove margem em mobile/tablet */
+    width: calc(100% - 80px);
+    max-width: calc(100% - 80px);
+    margin-left: 80px;
+    
+    &.sidebar-collapsed {
+      width: calc(100% - 80px);
+      max-width: calc(100% - 80px);
+      margin-left: 80px;
+    }
+  }
+  
+  .markets-grid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .glossary-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
+  
+  .markets-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   }
 }
 
@@ -1086,6 +1194,8 @@ export default {
     .filter-controls {
       width: 100%;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
     }
   }
   
@@ -1096,10 +1206,14 @@ export default {
   
   .category-tabs {
     justify-content: center;
+    overflow-x: auto;
+    padding-bottom: 5px;
     
     .category-tab {
       padding: 10px 20px;
       font-size: 13px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
   }
   
@@ -1117,15 +1231,25 @@ export default {
       }
     }
   }
+  
+  .filter-stats {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .content-header {
     padding: 12px 15px;
     
     .header-left {
       .page-title {
         font-size: 1.6rem;
+      }
+      
+      .page-subtitle {
+        font-size: 0.9rem;
       }
     }
   }
@@ -1138,6 +1262,28 @@ export default {
     padding: 15px;
   }
   
+  .search-filters-row {
+    .filter-controls {
+      flex-direction: column;
+      align-items: stretch;
+      
+      .sport-filter,
+      .advanced-filters-btn {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  }
+  
+  .advanced-filters {
+    .filter-group {
+      .filter-options {
+        justify-content: center;
+        gap: 12px;
+      }
+    }
+  }
+  
   .category-tabs {
     .category-tab {
       padding: 8px 16px;
@@ -1145,18 +1291,286 @@ export default {
     }
   }
   
-  .market-card {
-    padding: 15px;
-    
-    .market-type-item {
-      flex-direction: column;
-      gap: 10px;
-      text-align: center;
+  .markets-grid {
+    .market-card {
+      padding: 15px;
       
-      .type-symbol {
-        align-self: center;
+      .market-header {
+        .market-name {
+          font-size: 1.1rem;
+        }
+        
+        .market-count {
+          font-size: 11px;
+          padding: 4px 8px;
+        }
+      }
+      
+      .market-type-item {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        
+        .type-symbol {
+          align-self: center;
+        }
+        
+        .type-info {
+          .type-description {
+            font-size: 13px;
+          }
+          
+          .type-metadata {
+            justify-content: center;
+          }
+        }
       }
     }
+  }
+}
+
+@media (max-width: 480px) {
+  .content-header {
+    padding: 10px 12px;
+    
+    .header-left {
+      .page-title {
+        font-size: 1.4rem;
+      }
+      
+      .page-subtitle {
+        font-size: 0.85rem;
+      }
+    }
+  }
+  
+  .page-content {
+    padding: 12px;
+  }
+  
+  .search-container {
+    padding: 12px;
+  }
+  
+  .search-filters-row {
+    .search-input-wrapper {
+      .search-input {
+        font-size: 14px;
+        padding: 12px 12px 12px 40px;
+      }
+    }
+  }
+  
+  .category-tabs {
+    .category-tab {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+  }
+  
+  .markets-grid {
+    .market-card {
+      padding: 12px;
+      
+      .market-header {
+        .market-name {
+          font-size: 1rem;
+        }
+      }
+      
+      .market-type-item {
+        padding: 10px 0;
+        
+        .type-symbol {
+          width: 30px;
+          height: 30px;
+          font-size: 12px;
+        }
+        
+        .type-info {
+          .type-description {
+            font-size: 12px;
+          }
+          
+          .type-metadata {
+            .difficulty-badge,
+            .popularity-badge {
+              font-size: 9px;
+              padding: 3px 6px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .no-results {
+    padding: 30px 15px;
+    
+    .no-results-icon {
+      font-size: 2.5rem;
+    }
+    
+    p {
+      font-size: 1rem;
+    }
+    
+    .no-results-actions {
+      flex-direction: column;
+      align-items: center;
+      
+      .clear-search-btn,
+      .clear-all-filters-btn {
+        width: 100%;
+        max-width: 200px;
+        padding: 10px 20px;
+        font-size: 13px;
+      }
+    }
+  }
+  
+  .filter-stats {
+    padding: 15px;
+    
+    .stats-info {
+      .stats-label {
+        font-size: 13px;
+      }
+      
+      .stats-count {
+        font-size: 14px;
+      }
+    }
+    
+    .clear-all-btn {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+  }
+}
+
+@media (max-width: 360px) {
+  .content-header {
+    .header-left {
+      .page-title {
+        font-size: 1.2rem;
+      }
+      
+      .page-subtitle {
+        font-size: 0.8rem;
+      }
+    }
+  }
+  
+  .search-container {
+    padding: 10px;
+  }
+  
+  .category-tabs {
+    .category-tab {
+      padding: 5px 10px;
+      font-size: 10px;
+    }
+  }
+  
+  .markets-grid {
+    .market-card {
+      padding: 10px;
+      
+      .market-header {
+        .market-name {
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+}
+
+// Suporte para orientação landscape em dispositivos móveis
+@media (max-height: 500px) and (orientation: landscape) {
+  .content-header {
+    padding: 10px 20px;
+    
+    .header-left {
+      .page-title {
+        font-size: 1.4rem;
+        margin-bottom: 4px;
+      }
+      
+      .page-subtitle {
+        font-size: 0.9rem;
+      }
+    }
+  }
+  
+  .page-content {
+    padding: 15px;
+  }
+  
+  .search-container {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .category-tabs {
+    margin-bottom: 15px;
+    
+    .category-tab {
+      padding: 8px 16px;
+      font-size: 12px;
+    }
+  }
+  
+  .markets-grid {
+    gap: 15px;
+    
+    .market-card {
+      padding: 15px;
+      
+      .market-header {
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        
+        .market-name {
+          font-size: 1.1rem;
+        }
+      }
+      
+      .market-type-item {
+        padding: 8px 0;
+        
+        .type-symbol {
+          width: 28px;
+          height: 28px;
+          font-size: 11px;
+        }
+        
+        .type-info {
+          .type-description {
+            font-size: 12px;
+            margin-bottom: 6px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Melhorias para telas muito largas
+@media (min-width: 1920px) {
+  .glossary-container {
+    max-width: 1800px;
+    margin: 0 auto;
+    margin-left: 280px;
+    
+    &.sidebar-collapsed {
+      margin-left: 80px;
+    }
+  }
+  
+  .markets-grid {
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
   }
 }
 </style>

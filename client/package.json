@@ -17,7 +17,10 @@
     "test:e2e": "cypress run",
     "test:e2e:open": "cypress open",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
-    "test:watch": "echo 'Test watch disabled'"
+    "test:watch": "echo 'Test watch disabled'",
+    "pwa:generate-icons": "node scripts/generate-pwa-icons.js",
+    "pwa:test": "node scripts/test-pwa.js",
+    "pwa:setup": "npm run pwa:generate-icons && npm run pwa:test"
   },
   "dependencies": {
     "@vueuse/core": "^10.4.1",
@@ -48,6 +51,7 @@
     "msw": "^2.0.8",
     "sass": "^1.70.0",
     "sass-loader": "^14.0.0",
+    "sharp": "^0.34.4",
     "workbox-webpack-plugin": "^7.0.0"
   },
   "browserslist": [

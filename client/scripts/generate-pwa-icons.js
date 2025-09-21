@@ -16,7 +16,7 @@ const ICON_SIZES = [
   { size: 150, name: 'logo-150x150.png' } // Para Windows
 ];
 
-// Cores do tema
+// Cores do tema (usando as cores do favicon existente)
 const THEME_COLORS = {
   primary: '#6366f1',
   secondary: '#8b5cf6',
@@ -24,7 +24,7 @@ const THEME_COLORS = {
   text: '#ffffff'
 };
 
-// SVG base para o logo
+// SVG base para o logo (usando o favicon existente como base)
 const LOGO_SVG = `
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
@@ -47,6 +47,19 @@ const LOGO_SVG = `
 </svg>
 `;
 
+// Função para ler o favicon SVG existente
+function getFaviconSVG() {
+  try {
+    const faviconPath = path.join(__dirname, '..', 'public', 'favicon.svg');
+    if (fs.existsSync(faviconPath)) {
+      return fs.readFileSync(faviconPath, 'utf8');
+    }
+  } catch (error) {
+    console.log('⚠️  Não foi possível ler o favicon.svg, usando SVG padrão');
+  }
+  return LOGO_SVG;
+}
+
 // Função para criar diretório se não existir
 function ensureDirectoryExists(directory) {
   if (!fs.existsSync(directory)) {
@@ -57,35 +70,63 @@ function ensureDirectoryExists(directory) {
 
 // Função para gerar ícone SVG
 function generateSVGIcon(size, filename) {
-  const svgContent = LOGO_SVG.replace(/width="512"/, `width="${size}"`).replace(/height="512"/, `height="${size}"`);
+  // Usar o favicon SVG existente como base
+  const faviconSVG = getFaviconSVG();
+  const svgContent = faviconSVG.replace(/width="32"/, `width="${size}"`).replace(/height="32"/, `height="${size}"`);
   const filePath = path.join(__dirname, '..', 'public', 'img', filename.replace('.png', '.svg'));
   
   fs.writeFileSync(filePath, svgContent);
   console.log(`✅ SVG gerado: ${filename.replace('.png', '.svg')} (${size}x${size})`);
 }
 
-// Função para gerar ícones PNG (placeholder)
-function generatePNGIcon(size, filename) {
+// Função para gerar ícones PNG
+async function generatePNGIcon(size, filename) {
   const filePath = path.join(__dirname, '..', 'public', 'img', filename);
+  const svgPath = path.join(__dirname, '..', 'public', 'img', filename.replace('.png', '.svg'));
   
-  // Criar um arquivo placeholder (você precisará converter o SVG para PNG)
+  try {
+    if (fs.existsSync(svgPath)) {
+      // Usar Sharp para converter SVG para PNG
+      const sharp = require('sharp');
+      
+      await sharp(svgPath)
+        .resize(size, size)
+        .png()
+        .toFile(filePath);
+      
+      console.log(`✅ PNG gerado: ${filename} (${size}x${size})`);
+      return;
+    }
+  } catch (error) {
+    console.log(`⚠️  Erro ao converter ${filename}: ${error.message}`);
+  }
+  
+  // Fallback: criar placeholder se a conversão falhar
   const placeholderContent = `# Placeholder para ${filename}
 # Este arquivo deve ser substituído por uma imagem PNG real de ${size}x${size} pixels
-# Você pode usar ferramentas online como:
+# 
+# Para converter manualmente, use ferramentas online:
 # - https://convertio.co/svg-png/
 # - https://cloudconvert.com/svg-to-png
-# - https://www.icoconverter.com/
-# 
-# Ou usar o comando ImageMagick:
-# magick logo.svg -resize ${size}x${size} ${filename}`;
+# - https://www.icoconverter.com/`;
   
   fs.writeFileSync(filePath, placeholderContent);
   console.log(`⚠️  Placeholder criado: ${filename} (${size}x${size}) - Converta para PNG`);
 }
 
 // Função principal
-function generatePWAIcons() {
-  console.log('🚀 Gerando ícones PWA para SureStake...\n');
+async function generatePWAIcons() {
+  console.log('🚀 Gerando ícones PWA para SureStake usando o favicon existente...\n');
+  
+  // Verificar se o favicon existe
+  const faviconPath = path.join(__dirname, '..', 'public', 'favicon.svg');
+  if (!fs.existsSync(faviconPath)) {
+    console.log('❌ Erro: favicon.svg não encontrado em public/favicon.svg');
+    console.log('   Certifique-se de que o arquivo existe antes de executar este script.');
+    return;
+  }
+  
+  console.log('✅ Favicon encontrado, usando como base para os ícones PWA\n');
   
   // Criar diretório de imagens se não existir
   const imgDir = path.join(__dirname, '..', 'public', 'img');
@@ -97,17 +138,16 @@ function generatePWAIcons() {
     generateSVGIcon(size, name);
   });
   
-  console.log('\n🖼️  Gerando placeholders PNG...');
-  ICON_SIZES.forEach(({ size, name }) => {
-    generatePNGIcon(size, name);
-  });
+  console.log('\n🖼️  Gerando ícones PNG...');
+  for (const { size, name } of ICON_SIZES) {
+    await generatePNGIcon(size, name);
+  }
   
   console.log('\n✨ Ícones PWA gerados com sucesso!');
   console.log('\n📋 Próximos passos:');
-  console.log('1. Converta os arquivos SVG para PNG usando ferramentas online');
-  console.log('2. Ou use o comando ImageMagick: magick logo.svg -resize SIZExSIZE filename.png');
-  console.log('3. Substitua os placeholders pelos arquivos PNG reais');
-  console.log('4. Teste a instalação do PWA no navegador');
+  console.log('1. Verifique se todos os arquivos PNG foram gerados corretamente');
+  console.log('2. Teste a instalação do PWA no navegador');
+  console.log('3. Verifique se o ícone aparece corretamente na tela inicial');
   
   // Criar arquivo de instruções
   const instructionsPath = path.join(__dirname, '..', 'public', 'img', 'README-ICONS.md');
@@ -160,7 +200,7 @@ Após converter todos os ícones:
 
 // Executar se chamado diretamente
 if (require.main === module) {
-  generatePWAIcons();
+  generatePWAIcons().catch(console.error);
 }
 
 module.exports = { generatePWAIcons, ICON_SIZES, LOGO_SVG };

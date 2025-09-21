@@ -73,15 +73,19 @@
     <div class="bet-options">
       <div v-for="(bet, index) in surebet" :key="index" class="bet-option">
         <div class="bet-header">
-          <span class="bookmaker">{{ bet.house || 'Bet365' }}</span>
-          <span 
-            class="market" 
-            :class="{ 'has-translation': hasMarketTranslation(bet.market) }"
-            @mouseenter="showTooltip($event, bet.market)"
-            @mouseleave="hideTooltip"
-          >
-            {{ bet.market || 'Resultado Final' }}
-          </span>
+          <div class="bookmaker-line">
+            <span class="bookmaker">{{ bet.house || 'Bet365' }}</span>
+          </div>
+          <div class="market-line">
+            <span 
+              class="market" 
+              :class="{ 'has-translation': hasMarketTranslation(bet.market) }"
+              @mouseenter="showTooltip($event, bet.market)"
+              @mouseleave="hideTooltip"
+            >
+              {{ bet.market || 'Resultado Final' }}
+            </span>
+          </div>
         </div>
         
         <div class="bet-details">
@@ -1714,18 +1718,25 @@ export default {
 }
 
 .bet-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--border-primary);
+}
+
+.bookmaker-line {
+  margin-bottom: 4px;
 }
 
 .bookmaker {
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
+  display: block;
+}
+
+.market-line {
+  display: flex;
+  align-items: center;
 }
 
 .market {
@@ -1918,10 +1929,16 @@ export default {
   }
   
   .bet-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
     margin-bottom: 10px;
+  }
+  
+  .bookmaker-line {
+    margin-bottom: 6px;
+  }
+  
+  .bookmaker {
+    font-size: 12px;
+    margin-bottom: 0;
   }
   
   .market {
@@ -1933,11 +1950,6 @@ export default {
     display: block;
     width: 100%;
     text-align: left;
-  }
-  
-  .bookmaker {
-    font-size: 12px;
-    margin-bottom: 4px;
   }
   
   .bet-details {
