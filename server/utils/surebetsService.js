@@ -9,13 +9,13 @@ const { surebetsCache } = require('./surebetsCache');
 class SurebetsService {
   constructor() {
     this.externalAPI = {
-      url: 'https://zerolossbet.com/api/fetch_surebets/',
+      url: 'https://sempregreen.net.br/apipre/stream',
       timeout: 15000, // Aumentado para 15 segundos
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Referer': 'https://zerolossbet.com/dashboard'
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Referer': 'https://sempregreen.net.br'
       }
     };
 

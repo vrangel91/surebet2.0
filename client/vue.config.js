@@ -172,7 +172,7 @@ module.exports = defineConfig({
         },
       },
       "/ws": {
-        target: "ws://localhost:3001", // ← CORRIGIDO: usar porta 3001 com path /ws
+        target: "ws://localhost:3001", // ← CORRIGIDO: usar porta 3001 para WebSocket
         ws: true,
         changeOrigin: true,
         secure: false,

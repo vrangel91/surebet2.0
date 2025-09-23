@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'zeroloss-surebets',
+      name: 'surestake-surebets',
       script: 'server.js',
       instances: 1,
       autorestart: true,

@@ -1,7 +1,7 @@
 // Configurações para produção
 export const PRODUCTION_CONFIG = {
-  API_BASE_URL: "https://surestake.com.br", // ✅ Domínio correto
-  WS_BASE_URL: "wss://surestake.com.br/ws", // ✅ Domínio correto com path /ws
+  API_BASE_URL: "https://surestake.com.br", // ✅ Domínio correto com SSL
+  WS_BASE_URL: "wss://surestake.com.br/ws", // ✅ Domínio correto com SSL
   ENVIRONMENT: "production",
 };
 

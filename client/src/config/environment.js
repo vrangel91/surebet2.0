@@ -6,8 +6,8 @@ const ENVIRONMENTS = {
     ENVIRONMENT: "development",
   },
   production: {
-    API_BASE_URL: "https://surestake.com.br", // Seu domínio real
-    WS_BASE_URL: "wss://surestake.com.br", // WebSocket do seu domínio
+    API_BASE_URL: "https://surestake.com.br", // Seu domínio real com SSL
+    WS_BASE_URL: "wss://surestake.com.br", // WebSocket do seu domínio com SSL
     ENVIRONMENT: "production",
   },
   staging: {

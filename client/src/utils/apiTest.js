@@ -1,5 +1,5 @@
 /**
- * Testes da API - Zerolossbet
+ * Testes da API - SureStake
  */
 
 import { API_CONFIG, buildApiUrl, checkApiHealth } from './apiConfig.js'

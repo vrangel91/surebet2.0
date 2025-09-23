@@ -1,107 +1,147 @@
-import { config } from '@vue/test-utils'
-import { vi } from 'vitest'
-import '@testing-library/jest-dom'
+import { vi } from 'vitest';
 
-// Mock global objects
-global.fetch = vi.fn()
-global.WebSocket = vi.fn()
-
-// Mock localStorage
+// Mock do localStorage
 const localStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
-}
-global.localStorage = localStorageMock
+};
+global.localStorage = localStorageMock;
 
-// Mock sessionStorage
+// Mock do sessionStorage
 const sessionStorageMock = {
   getItem: vi.fn(),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
-}
-global.sessionStorage = sessionStorageMock
+};
+global.sessionStorage = sessionStorageMock;
 
-// Mock console methods to reduce noise in tests
+// Mock do window.location
+Object.defineProperty(window, 'location', {
+  value: {
+    href: 'http://localhost:3000',
+    hostname: 'localhost',
+    protocol: 'http:',
+    pathname: '/',
+    search: '',
+    hash: '',
+    assign: vi.fn(),
+    replace: vi.fn(),
+    reload: vi.fn(),
+  },
+  writable: true,
+});
+
+// Mock do WebSocket
+global.WebSocket = vi.fn(() => ({
+  close: vi.fn(),
+  send: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
+  readyState: 1,
+  CONNECTING: 0,
+  OPEN: 1,
+  CLOSING: 2,
+  CLOSED: 3,
+}));
+
+// Mock do fetch
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+  })
+);
+
+// Mock do performance
+global.performance = {
+  now: vi.fn(() => Date.now()),
+  mark: vi.fn(),
+  measure: vi.fn(),
+  getEntriesByType: vi.fn(() => []),
+  getEntriesByName: vi.fn(() => []),
+};
+
+// Mock do document
+Object.defineProperty(document, 'hidden', {
+  writable: true,
+  value: false,
+});
+
+// Mock do addEventListener
+document.addEventListener = vi.fn();
+document.removeEventListener = vi.fn();
+
+// Mock do createElement
+document.createElement = vi.fn((tagName) => {
+  const element = {
+    tagName: tagName.toUpperCase(),
+    className: '',
+    style: {},
+    textContent: '',
+    innerHTML: '',
+    appendChild: vi.fn(),
+    removeChild: vi.fn(),
+    parentNode: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    setAttribute: vi.fn(),
+    getAttribute: vi.fn(),
+    removeAttribute: vi.fn(),
+    querySelector: vi.fn(),
+    querySelectorAll: vi.fn(() => []),
+    scrollIntoView: vi.fn(),
+  };
+  
+  if (tagName === 'audio') {
+    element.play = vi.fn(() => Promise.resolve());
+    element.pause = vi.fn();
+    element.currentTime = 0;
+  }
+  
+  return element;
+});
+
+// Mock do querySelector
+document.querySelector = vi.fn();
+document.querySelectorAll = vi.fn(() => []);
+
+// Mock do getComputedStyle
+window.getComputedStyle = vi.fn(() => ({
+  getPropertyValue: vi.fn(() => ''),
+}));
+
+// Mock do URL
+global.URL = vi.fn((url) => ({
+  protocol: 'http:',
+  hostname: 'localhost',
+  pathname: '/',
+  search: '',
+  hash: '',
+}));
+
+// Mock do setTimeout e clearTimeout
+global.setTimeout = vi.fn((callback, delay) => {
+  return setTimeout(callback, delay);
+});
+global.clearTimeout = vi.fn();
+
+// Mock do setInterval e clearInterval
+global.setInterval = vi.fn((callback, delay) => {
+  return setInterval(callback, delay);
+});
+global.clearInterval = vi.fn();
+
+// Mock do console para evitar logs durante os testes
 global.console = {
   ...console,
   log: vi.fn(),
-  debug: vi.fn(),
-  info: vi.fn(),
   warn: vi.fn(),
   error: vi.fn(),
-}
-
-// Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
-
-// Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}))
-
-// Mock matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: vi.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: vi.fn(),
-    removeListener: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-  })),
-})
-
-// Global test configuration
-config.global.mocks = {
-  $t: (key) => key, // Mock i18n
-  $route: {
-    path: '/',
-    params: {},
-    query: {},
-  },
-  $router: {
-    push: vi.fn(),
-    replace: vi.fn(),
-    go: vi.fn(),
-    back: vi.fn(),
-    forward: vi.fn(),
-  },
-}
-
-// Mock Vuex store
-config.global.mocks.$store = {
-  state: {},
-  getters: {},
-  dispatch: vi.fn(),
-  commit: vi.fn(),
-}
-
-// Setup MSW
-import { setupServer } from 'msw/node'
-import { handlers } from './mocks/handlers'
-
-export const server = setupServer(...handlers)
-
-// Start server before all tests
-beforeAll(() => server.listen())
-
-// Reset handlers after each test
-afterEach(() => {
-  server.resetHandlers()
-  vi.clearAllMocks()
-})
-
-// Close server after all tests
-afterAll(() => server.close())
+  info: vi.fn(),
+  debug: vi.fn(),
+};

@@ -27,6 +27,39 @@ async function safeJsonResponse(response) {
   }
 }
 
+// Função para processar resposta Server-Sent Events (SSE)
+async function processSSEResponse(response) {
+  const contentType = response.headers.get("content-type");
+  
+  if (contentType && contentType.includes("text/event-stream")) {
+    // Processar SSE
+    const text = await response.text();
+    const lines = text.split('\n');
+    let eventData = null;
+    
+    for (const line of lines) {
+      if (line.startsWith('data: ')) {
+        try {
+          const jsonData = JSON.parse(line.substring(6)); // Remove 'data: '
+          eventData = jsonData;
+          break; // Pegar apenas o primeiro evento 'data'
+        } catch (parseError) {
+          console.error("Erro ao parsear dados SSE:", parseError);
+        }
+      }
+    }
+    
+    if (eventData) {
+      return eventData;
+    } else {
+      throw new Error("Nenhum dado válido encontrado na resposta SSE");
+    }
+  } else {
+    // Fallback para JSON normal
+    return await safeJsonResponse(response);
+  }
+}
+
 // Estrutura de uma surebet com ID único
 const surebetExample = {
   id: "surebet_2024_001", // ID único para evitar duplicatas
@@ -51,15 +84,15 @@ const surebetExample = {
 };
 
 /**
- * Buscar surebets da API real
+ * Buscar surebets da API real (Server-Sent Events)
  * @param {Object} filters - Filtros para a busca
  * @returns {Promise<Array>} Lista de surebets
  */
 async function fetchSurebets(filters = {}) {
   try {
-    console.log("🌐 Buscando dados da API real...");
+    console.log("🌐 Buscando dados da API real (SSE)...");
 
-    // Fazer chamada real à API com headers apropriados
+    // Fazer chamada real à API com headers apropriados para SSE
     const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.SUREBETS), {
       method: "GET",
       headers: API_CONFIG.DEFAULT_HEADERS,
@@ -70,8 +103,9 @@ async function fetchSurebets(filters = {}) {
       throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
     }
 
-    const apiData = await safeJsonResponse(response);
-    console.log("📡 Dados recebidos da API:", apiData);
+    // Processar dados SSE
+    const apiData = await processSSEResponse(response);
+    console.log("📡 Dados recebidos da API (SSE):", apiData);
 
     // Verificar se os dados têm a estrutura esperada
     if (!apiData || typeof apiData !== "object") {
@@ -130,7 +164,7 @@ async function fetchBookmakerStats(filters = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(filters),
     });
@@ -158,7 +192,7 @@ async function fetchBookmakerRanking(filters = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(filters),
     });
@@ -186,7 +220,7 @@ async function fetchTemporalData(filters = {}) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(filters),
     });
@@ -214,7 +248,7 @@ async function checkSurebetExists(surebetData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(surebetData),
     });
@@ -253,7 +287,7 @@ async function createSurebet(surebetData) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(surebetWithId),
     });
@@ -282,7 +316,7 @@ async function updateSurebet(id, updateData) {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
       body: JSON.stringify(updateData),
     });
@@ -309,7 +343,7 @@ async function deleteSurebet(id) {
     const response = await fetch(`/api/surebets/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
       },
     });
 
@@ -537,7 +571,7 @@ function getExampleData() {
 }
 
 /**
- * Processar dados da API real
+ * Processar dados da API real (nova estrutura)
  * @param {Object} apiData - Dados brutos da API
  * @returns {Array} Lista de surebets processados
  */
@@ -557,31 +591,32 @@ function processRealAPIData(apiData) {
     processedIds.add(surebetId);
 
     // Processar cada parte do surebet
-    if (Array.isArray(surebetParts)) {
+    if (Array.isArray(surebetParts) && surebetParts.length >= 2) {
       // Agrupar todas as partes em uma única surebet
       const houses = [];
+      const odds = [];
+      const markets = [];
       let firstPart = null;
 
       surebetParts.forEach((part, index) => {
         try {
-          // Extrair informações da parte
+          // Extrair informações da parte (nova estrutura)
           const {
             house,
+            chance, // Nova estrutura usa 'chance' em vez de 'odds'
             profit,
-            roi,
             timestamp,
             sport,
-            event,
+            match, // Nova estrutura usa 'match' em vez de 'event'
             market,
             tournament,
-            selection1,
-            selection2,
-            selection3,
-            odds1,
-            odds2,
-            odds3,
-            stake = 100,
-            status = "active",
+            titulo,
+            minutes,
+            period,
+            date,
+            hour,
+            url_redirect,
+            redirect_id
           } = part;
 
           // Coletar casas de aposta
@@ -589,25 +624,34 @@ function processRealAPIData(apiData) {
             houses.push(house);
           }
 
+          // Coletar odds (chances)
+          if (chance) {
+            odds.push(parseFloat(chance));
+          }
+
+          // Coletar mercados
+          if (market && !markets.includes(market)) {
+            markets.push(market);
+          }
+
           // Usar a primeira parte como base
           if (index === 0) {
             firstPart = {
               house,
+              chance,
               profit,
-              roi,
               timestamp,
               sport,
-              event,
+              match,
               market,
               tournament,
-              selection1,
-              selection2,
-              selection3,
-              odds1,
-              odds2,
-              odds3,
-              stake,
-              status,
+              titulo,
+              minutes,
+              period,
+              date,
+              hour,
+              url_redirect,
+              redirect_id
             };
           }
         } catch (partError) {
@@ -625,6 +669,9 @@ function processRealAPIData(apiData) {
           firstPart.sport
         );
 
+        // Calcular ROI baseado no profit
+        const roi = firstPart.profit ? (parseFloat(firstPart.profit) / 100) * 100 : 0;
+
         const processedSurebet = {
           id: surebetId,
           surebet_id: surebetId,
@@ -633,19 +680,19 @@ function processRealAPIData(apiData) {
           bookmaker3: houses[2] || "", // Terceira casa (se houver)
           allBookmakers: houses, // Todas as casas para busca
           sport: firstPart.sport || "Futebol",
-          event: firstPart.event || "Evento não especificado",
-          market: firstPart.market || "Mercado não especificado",
+          event: firstPart.match || "Evento não especificado",
+          market: markets.join(" vs ") || "Mercado não especificado",
           tournament: translatedTournament,
           originalTournament: firstPart.tournament,
-          selection1: firstPart.selection1 || "",
-          selection2: firstPart.selection2 || "",
-          selection3: firstPart.selection3 || "",
-          odds1: parseFloat(firstPart.odds1) || 0,
-          odds2: parseFloat(firstPart.odds2) || 0,
-          odds3: parseFloat(firstPart.odds3) || 0,
+          selection1: markets[0] || "",
+          selection2: markets[1] || "",
+          selection3: markets[2] || "",
+          odds1: odds[0] || 0,
+          odds2: odds[1] || 0,
+          odds3: odds[2] || 0,
           profit: parseFloat(firstPart.profit) || 0,
-          roi: parseFloat(firstPart.roi) || 0,
-          stake: parseFloat(firstPart.stake) || 100,
+          roi: roi,
+          stake: 100, // Valor padrão
           createdAt: firstPart.timestamp
             ? new Date(firstPart.timestamp).toISOString()
             : new Date().toISOString(),
@@ -654,8 +701,15 @@ function processRealAPIData(apiData) {
                 new Date(firstPart.timestamp).getTime() + 24 * 60 * 60 * 1000
               ).toISOString()
             : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-          status: firstPart.status || "active",
+          status: "active",
           tags: [firstPart.sport?.toLowerCase() || "futebol", "api-real"],
+          // Campos adicionais da nova API
+          minutes: firstPart.minutes || 0,
+          period: firstPart.period || "",
+          date: firstPart.date || "",
+          hour: firstPart.hour || "",
+          url_redirect: firstPart.url_redirect || "",
+          redirect_id: firstPart.redirect_id || ""
         };
 
         processedSurebets.push(processedSurebet);

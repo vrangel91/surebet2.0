@@ -2,22 +2,28 @@
  * Configurações da API
  */
 
+// Importar configuração de ambiente
+import { isProduction } from '../config/environment.js';
+
 export const API_CONFIG = {
-  // URL base da API
-  BASE_URL: 'https://zerolossbet.com',
+  // URL base da API - usar proxy local em produção
+  BASE_URL: isProduction() ? '' : 'https://sempregreen.net.br',
   
   // Endpoints
   ENDPOINTS: {
-    SUREBETS: '/api/fetch_surebets/'
+    SUREBETS: isProduction() ? '/api/external-surebets' : '/apipre/stream'
   },
   
-  // Headers padrão
-  DEFAULT_HEADERS: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
+  // Headers padrão para Server-Sent Events (SSE)
+  DEFAULT_HEADERS: isProduction() ? {
+    'Accept': 'text/event-stream',
+    'Cache-Control': 'no-cache'
+  } : {
+    'Accept': 'text/event-stream',
+    'Cache-Control': 'no-cache',
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-    'Referer': 'https://zerolossbet.com/dashboard',
-    'Origin': 'https://zerolossbet.com'
+    'Referer': 'https://sempregreen.net.br',
+    'Origin': 'https://sempregreen.net.br'
   },
   
   // Configurações de timeout e retry

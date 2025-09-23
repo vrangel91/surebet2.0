@@ -27,13 +27,13 @@ class SurebetsScheduler {
     
     // Configuração da API externa
     this.externalAPI = {
-      baseURL: process.env.EXTERNAL_API_URL || 'https://zerolossbet.com',
+      baseURL: process.env.EXTERNAL_API_URL || 'https://sempregreen.net.br',
       timeout: 10000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Referer': 'https://zerolossbet.com/dashboard'
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Referer': 'https://sempregreen.net.br'
       }
     };
     
@@ -137,12 +137,12 @@ class SurebetsScheduler {
    */
   async fetchFromExternalAPI() {
     try {
-      const response = await axios.get('https://zerolossbet.com/api/fetch_surebets/', {
+      const response = await axios.get('https://sempregreen.net.br/apipre/stream', {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          'Referer': 'https://zerolossbet.com/dashboard',
+          'Accept': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Referer': 'https://sempregreen.net.br',
         },
         timeout: this.externalAPI.timeout
       });
@@ -155,9 +155,9 @@ class SurebetsScheduler {
         throw new Error('Invalid response format from external API');
       }
 
-      // Processar dados da API zerolossbet
+      // Processar dados da API sempregreen
       const surebetsData = response.data;
-      logger.info('Successfully fetched surebets from zerolossbet API', {
+      logger.info('Successfully fetched surebets from sempregreen API', {
         count: surebetsData.length || 0
       });
 
@@ -167,7 +167,7 @@ class SurebetsScheduler {
       logger.warn('External API fetch failed, using mock data', {
         error: error.message,
         status: error.response?.status,
-        url: 'https://zerolossbet.com/api/fetch_surebets/'
+        url: 'https://sempregreen.net.br/apipre/stream'
       });
       
       // Retornar dados mockados para demonstração

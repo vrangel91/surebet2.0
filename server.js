@@ -72,6 +72,7 @@ const { authenticateToken } = require("./server/utils/auth");
 const app = express();
 const PORT = process.env.PORT || 3001;
 const HTTPS_PORT = 3443; // Porta para HTTPS
+const WS_PORT = 3001; // Porta específica para WebSocket
 
 // Log do diretório atual para debug
 console.log("🔍 [SERVER] __dirname:", __dirname);
@@ -277,7 +278,7 @@ app.use((req, res, next) => {
   if (
     req.path.startsWith("/api/") &&
     !req.path.match(
-      /^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/admin|api\/notifications|api\/plans|api\/surebets|api\/status|api\/toggle-search|api\/toggle-sound)/
+      /^\/(api\/auth|api\/users|api\/vip|api\/bookmaker-accounts|api\/surebet-stats|api\/orders|api\/referrals|api\/tickets|api\/admin|api\/notifications|api\/plans|api\/surebets|api\/external-surebets|api\/status|api\/toggle-search|api\/toggle-sound)/
     )
   ) {
     console.log(`🚫 Rota da API não encontrada: ${req.method} ${req.path}`);
@@ -473,117 +474,7 @@ console.log(
   } registros`
 );
 
-// Função para buscar surebets da API
-async function fetchSurebets() {
-  try {
-    const response = await axios.get(
-      "https://zerolossbet.com/api/fetch_surebets/",
-      {
-        timeout: 15000, // Aumentado para 15 segundos
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36",
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Referer: "https://zerolossbet.com/dashboard",
-          Origin: "https://zerolossbet.com",
-        },
-      }
-    );
-
-    // Verificar se a resposta contém dados válidos
-    if (response.data && typeof response.data === "object") {
-      const newSurebets = response.data;
-
-      // Processar dados de forma robusta
-      const processSurebetsData = (data) => {
-        if (!data || typeof data !== "object") {
-          return {};
-        }
-
-        // Se já é um objeto válido, retornar
-        if (Object.keys(data).length > 0) {
-          return data;
-        }
-
-        // Se é um array, converter para objeto
-        if (Array.isArray(data)) {
-          const obj = {};
-          data.forEach((item, index) => {
-            if (item && typeof item === "object") {
-              obj[`surebet_${index}`] = item;
-            }
-          });
-          return obj;
-        }
-
-        return {};
-      };
-
-      const processedSurebets = processSurebetsData(newSurebets);
-      const currentSurebetCount = Object.keys(processedSurebets).length;
-
-      if (currentSurebetCount > lastSurebetCount && soundEnabled) {
-        // Enviar notificação para todos os clientes conectados
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(
-              JSON.stringify({
-                type: "new_surebet",
-                surebets: processedSurebets,
-                count: currentSurebetCount - lastSurebetCount,
-              })
-            );
-          }
-        });
-      }
-
-      // Sempre enviar atualização para todos os clientes conectados
-      wss.clients.forEach((client) => {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(
-            JSON.stringify({
-              type: "surebets_update",
-              surebets: processedSurebets,
-            })
-          );
-        }
-      });
-
-      surebets = processedSurebets;
-      global.surebets = surebets; // Atualizar variável global
-      lastSurebetCount = currentSurebetCount;
-
-      console.log(`Surebets atualizados: ${currentSurebetCount} encontrados`);
-    } else {
-      console.log(
-        "API retornou dados vazios ou inválidos, mantendo dados anteriores"
-      );
-      // Garantir que surebets seja sempre um objeto válido
-      if (!surebets || typeof surebets !== "object") {
-        surebets = {};
-      }
-    }
-  } catch (error) {
-    console.error("Erro ao buscar surebets:", error.message);
-    // Manter os dados anteriores em caso de erro
-    console.log("Mantendo dados anteriores devido ao erro na API externa");
-    // Garantir que surebets seja sempre um objeto válido
-    if (!surebets || typeof surebets !== "object") {
-      surebets = {};
-    }
-  }
-}
-
-// Agendar busca de surebets a cada 30 segundos
-cron.schedule("*/30 * * * * *", () => {
-  if (isSearching) {
-    console.log("🔄 Cron job executando: buscando surebets...");
-    fetchSurebets();
-  } else {
-    console.log("⏸️ Cron job pausado: busca desativada");
-  }
-});
+// Função antiga removida - usando nova estrutura com proxy para sempregreen
 
 // Rota de surebets otimizada (DESABILITADA - usando rota original)
 /*
@@ -822,6 +713,18 @@ app.get("*", (req, res) => {
     });
   }
 
+  // Verificar se é uma rota de WebSocket - não servir SPA para WebSocket
+  if (req.path.startsWith("/ws")) {
+    console.log(`🔌 [WEBSOCKET] Rota WebSocket interceptada: ${req.path}`);
+    return res.status(404).json({
+      error: "WebSocket endpoint não encontrado",
+      message: `A rota WebSocket ${req.path} não existe`,
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
+    });
+  }
+
   // Para todas as outras rotas, servir o SPA
   console.log(`🌐 Servindo SPA para: ${req.path}`);
   console.log(`🔍 [SPA] __dirname: ${__dirname}`);
@@ -869,8 +772,7 @@ async function initializeApp() {
     // surebetsScheduler.start();
     console.log("🚀 Sistema otimizado de surebets iniciado");
 
-    // Inicializar busca de surebets (legacy - manter para compatibilidade)
-    fetchSurebets();
+    // Inicializar busca de surebets (legacy - removido, usando nova estrutura)
 
     // Inicializar sistema de cache
     console.log("🚀 Sistema de cache de surebets inicializado");
@@ -931,13 +833,31 @@ async function initializeApp() {
             path: "/ws", // Definir path específico para WebSocket
             perMessageDeflate: false,
             clientTracking: true,
-            verifyClient: (info) => {
-              console.log(
-                `🔍 [WEBSOCKET WSS] Cliente tentando conectar:`,
-                info.origin
-              );
+          verifyClient: (info) => {
+            console.log(
+              `🔍 [WEBSOCKET WSS] Cliente tentando conectar:`,
+              info.origin
+            );
+            
+            // Verificar token de autenticação
+            const url = new URL(info.url, `https://${info.headers.host}`);
+            const token = url.searchParams.get('token');
+            
+            if (!token) {
+              console.log('❌ [WEBSOCKET WSS] Token não fornecido');
+              return false;
+            }
+            
+            try {
+              const jwt = require('jsonwebtoken');
+              const decoded = jwt.verify(token, process.env.JWT_SECRET || 'surestake-secret-key-2024');
+              console.log('✅ [WEBSOCKET WSS] Token válido para usuário:', decoded.email);
               return true;
-            },
+            } catch (error) {
+              console.log('❌ [WEBSOCKET WSS] Token inválido:', error.message);
+              return false;
+            }
+          },
           });
 
           console.log(
@@ -959,11 +879,12 @@ async function initializeApp() {
 
       // Configurar WebSocket sem HTTPS (fallback)
       console.log(
-        `🔌 [WEBSOCKET HTTP] Criando WebSocket server na porta 3002...`
+        `🔌 [WEBSOCKET HTTP] Criando WebSocket server na porta ${WS_PORT}...`
       );
       try {
         wss = new WebSocket.Server({
-          port: 3002,
+          port: WS_PORT,
+          path: "/ws",
           perMessageDeflate: false,
           clientTracking: true,
           verifyClient: (info) => {
@@ -971,11 +892,29 @@ async function initializeApp() {
               `🔍 [WEBSOCKET HTTP] Cliente tentando conectar:`,
               info.origin
             );
-            return true;
+            
+            // Verificar token de autenticação
+            const url = new URL(info.url, `http://${info.headers.host}`);
+            const token = url.searchParams.get('token');
+            
+            if (!token) {
+              console.log('❌ [WEBSOCKET HTTP] Token não fornecido');
+              return false;
+            }
+            
+            try {
+              const jwt = require('jsonwebtoken');
+              const decoded = jwt.verify(token, process.env.JWT_SECRET || 'surestake-secret-key-2024');
+              console.log('✅ [WEBSOCKET HTTP] Token válido para usuário:', decoded.email);
+              return true;
+            } catch (error) {
+              console.log('❌ [WEBSOCKET HTTP] Token inválido:', error.message);
+              return false;
+            }
           },
         });
 
-        console.log(`🔌 [WEBSOCKET HTTP] WebSocket rodando na porta 3002`);
+        console.log(`🔌 [WEBSOCKET HTTP] WebSocket rodando na porta ${WS_PORT}`);
         console.log(
           `🔍 [WEBSOCKET HTTP] Verificando se wss foi criado:`,
           !!wss
@@ -1324,6 +1263,57 @@ async function initializeApp() {
           success: false,
           error: "Erro interno do servidor",
           timestamp: Date.now(),
+        });
+      }
+    });
+
+    // Proxy para API externa de surebets (SSE)
+    httpApp.get("/api/external-surebets", async (req, res) => {
+      try {
+        console.log("🔄 [PROXY] Fazendo proxy para API externa sempregreen...");
+        
+        // Configurar headers para SSE
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('Access-Control-Allow-Origin', 'https://surestake.com.br');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
+        
+        // Fazer requisição para API externa
+        const externalResponse = await axios.get('https://sempregreen.net.br/apipre/stream', {
+          headers: {
+            'Accept': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36',
+            'Referer': 'https://sempregreen.net.br',
+            'Origin': 'https://sempregreen.net.br'
+          },
+          responseType: 'stream'
+        });
+
+        // Pipe da resposta externa para o cliente
+        externalResponse.data.pipe(res);
+        
+        // Lidar com erros da stream
+        externalResponse.data.on('error', (error) => {
+          console.error("❌ [PROXY] Erro na stream externa:", error);
+          res.write(`data: ${JSON.stringify({error: 'Erro na conexão externa'})}\n\n`);
+          res.end();
+        });
+
+        // Lidar com fechamento da conexão
+        req.on('close', () => {
+          console.log("🔌 [PROXY] Cliente desconectado");
+          externalResponse.data.destroy();
+        });
+
+      } catch (error) {
+        console.error("❌ [PROXY] Erro ao fazer proxy:", error);
+        res.status(500).json({
+          success: false,
+          error: "Erro ao conectar com API externa",
+          message: error.message
         });
       }
     });
@@ -1681,6 +1671,9 @@ async function initializeApp() {
       paymentChecker.start();
       console.log("🔄 Verificador de pagamentos PIX iniciado");
     });
+
+    // WebSocket de desenvolvimento desabilitado para evitar conflitos
+    // O WebSocket principal já está configurado na porta 3001
 
     // Integrar WebSocket com notificações de pagamento
     global.notifyPaymentUpdate = (paymentData) => {
