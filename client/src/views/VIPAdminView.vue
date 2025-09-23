@@ -1844,27 +1844,50 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* Responsividade para sidebar fixo */
-@media (max-width: 1023px) {
-  .vip-admin-page {
-    margin-left: 0; /* Remove margem em mobile/tablet */
-  }
-}
 .vip-admin-page {
   display: flex;
   min-height: 100vh;
   background: var(--bg-primary, #1a1a1a);
   color: var(--text-primary, #ffffff);
-  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  width: calc(100% - 280px);
   max-width: calc(100% - 280px);
-  margin-left: 280px; /* Espaço para o sidebar fixo */
-  transition: margin-left 0.3s ease;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease, width 0.3s ease;
   box-sizing: border-box;
   
   &.sidebar-collapsed {
-    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
-    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    margin-left: 80px;
+    width: calc(100% - 80px);
     max-width: calc(100% - 80px);
+  }
+}
+
+/* Responsividade para diferentes tamanhos de tela */
+@media (max-width: 1200px) {
+  .vip-admin-page {
+    width: calc(100% - 80px);
+    max-width: calc(100% - 80px);
+    margin-left: 80px;
+    
+    &.sidebar-collapsed {
+      width: calc(100% - 80px);
+      max-width: calc(100% - 80px);
+      margin-left: 80px;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .vip-admin-page {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
   }
 }
 
@@ -1908,7 +1931,7 @@ export default {
   }
 }
 
-// Header da Página
+/* Header da Página */
 .page-header {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
@@ -1923,12 +1946,20 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    
-    @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 16px;
-      align-items: stretch;
-    }
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  
+  .header-title {
+    flex: 1;
+    min-width: 250px;
+  }
+  
+  .header-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
   }
   
   .header-title {
@@ -1963,7 +1994,7 @@ export default {
   }
 }
 
-// Botões
+/* Botões */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -2054,7 +2085,7 @@ export default {
   flex-shrink: 0;
 }
 
-// Estatísticas
+/* Estatísticas */
 .stats-section {
   margin-bottom: 24px;
   padding: 0 32px;
@@ -2103,6 +2134,16 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 16px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .stat-card {
@@ -2169,7 +2210,7 @@ export default {
   }
 }
 
-// Tabs
+/* Tabs */
 .tabs-section {
   margin-bottom: 24px;
   padding: 0 32px;
@@ -2182,9 +2223,31 @@ export default {
   border-radius: 12px;
   padding: 4px;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  overflow-x: auto;
+  overflow-y: hidden;
+  
+  /* Scrollbar personalizada para as tabs */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
   
   @media (max-width: 768px) {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px;
   }
 }
 
@@ -2203,6 +2266,8 @@ export default {
   font-weight: 500;
   flex: 1;
   min-width: 120px;
+  white-space: nowrap;
+  flex-shrink: 0;
   
   &:hover {
     background: var(--bg-tertiary, #3a3a3a);
@@ -2213,6 +2278,20 @@ export default {
     background: linear-gradient(135deg, #007bff, #0056b3);
     color: white;
     box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  }
+  
+  @media (max-width: 768px) {
+    min-width: 100px;
+    padding: 10px 12px;
+    font-size: 13px;
+    gap: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 80px;
+    padding: 8px 10px;
+    font-size: 12px;
+    gap: 4px;
   }
   
   .tab-icon {
@@ -2238,7 +2317,7 @@ export default {
   }
 }
 
-// Conteúdo das Tabs
+/* Conteúdo das Tabs */
 .tab-content {
   background: var(--bg-secondary, #2a2a2a);
   border-radius: 12px;
@@ -2253,7 +2332,7 @@ export default {
   min-height: 400px; /* Garante altura mínima para o conteúdo */
 }
 
-// Tabelas
+/* Tabelas */
 .table-container {
   .table-header {
     display: flex;
@@ -2297,6 +2376,7 @@ export default {
   color: var(--text-primary, #ffffff);
   font-size: 14px;
   min-width: 200px;
+  width: 100%;
   
   &::placeholder {
     color: var(--text-secondary, #a0a0a0);
@@ -2307,6 +2387,11 @@ export default {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
   }
+  
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
+  }
 }
 
 .filters-row {
@@ -2314,6 +2399,12 @@ export default {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 }
 
 .filter-select {
@@ -2324,11 +2415,17 @@ export default {
   color: var(--text-primary, #ffffff);
   font-size: 14px;
   min-width: 150px;
+  width: 100%;
   
   &:focus {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+  
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
   }
 }
 
@@ -2362,11 +2459,13 @@ export default {
   width: 100%;
   border-collapse: collapse;
   background: var(--bg-tertiary, #3a3a3a);
+  min-width: 800px;
   
   th, td {
     padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+    white-space: nowrap;
   }
   
   th {
@@ -2374,6 +2473,9 @@ export default {
     font-weight: 600;
     color: var(--text-primary, #ffffff);
     font-size: 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
   
   td {
@@ -2383,6 +2485,24 @@ export default {
   
   tr:hover {
     background: var(--bg-quaternary, #4a4a4a);
+  }
+  
+  @media (max-width: 768px) {
+    min-width: 600px;
+    
+    th, td {
+      padding: 8px 12px;
+      font-size: 13px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    min-width: 500px;
+    
+    th, td {
+      padding: 6px 8px;
+      font-size: 12px;
+    }
   }
   
   .no-results {
@@ -2544,6 +2664,7 @@ export default {
 .action-buttons {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
   
   .btn-icon {
     width: 32px;
@@ -2557,6 +2678,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
     
     &:hover {
       background: var(--bg-quinary, #5a5a5a);
@@ -2577,10 +2699,20 @@ export default {
       background: linear-gradient(135deg, #17a2b8, #138496);
       color: white;
     }
+    
+    @media (max-width: 768px) {
+      width: 28px;
+      height: 28px;
+    }
+    
+    @media (max-width: 480px) {
+      width: 24px;
+      height: 24px;
+    }
   }
 }
 
-// Cron Jobs
+/* Cron Jobs */
 .cron-section {
   .cron-header {
     display: flex;
@@ -2617,6 +2749,11 @@ export default {
     gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 24px;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 8px;
+    }
   }
   
   .cron-info {
@@ -2705,7 +2842,7 @@ export default {
   }
 }
 
-// Relatórios
+/* Relatórios */
 .reports-section {
   .reports-header {
     display: flex;
@@ -2771,7 +2908,7 @@ export default {
     }
   }
   
-  // Loading State
+  /* Loading State */
   .reports-loading {
     display: flex;
     flex-direction: column;
@@ -2797,7 +2934,7 @@ export default {
     }
   }
   
-  // Error State
+  /* Error State */
   .reports-error {
     display: flex;
     flex-direction: column;
@@ -2828,7 +2965,7 @@ export default {
     }
   }
   
-  // No Data State
+  /* No Data State */
   .reports-no-data {
     display: flex;
     flex-direction: column;
@@ -2864,6 +3001,16 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .report-card {
@@ -2942,7 +3089,7 @@ export default {
   }
 }
 
-// Modal
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -2965,6 +3112,19 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  margin: 20px;
+  
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 100vw;
+    margin: 5px;
+    border-radius: 8px;
+  }
   
   /* Estilização da barra de scroll para Webkit */
   &::-webkit-scrollbar {
@@ -3115,7 +3275,7 @@ export default {
   border-top: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
 }
 
-// Tela de Acesso Negado
+/* Tela de Acesso Negado */
 .access-denied {
   display: flex;
   align-items: center;
@@ -3153,12 +3313,27 @@ export default {
   }
 }
 
-// Responsividade
+/* Responsividade */
 @media (max-width: 768px) {
   .page-header {
     margin: 16px 20px 16px 20px;
     width: calc(100% - 40px);
     max-width: calc(100% - 40px);
+    padding: 16px;
+    
+    .header-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 16px;
+    }
+    
+    .header-title {
+      min-width: auto;
+    }
+    
+    .header-actions {
+      justify-content: center;
+    }
   }
   
   .stats-section {
@@ -3174,10 +3349,10 @@ export default {
   }
   
   .main-content {
-    margin-left: 80px;
+    margin-left: 0;
     
     &.sidebar-collapsed {
-      margin-left: 280px;
+      margin-left: 0;
     }
   }
   
@@ -3207,6 +3382,16 @@ export default {
   .modal-content {
     margin: 20px;
   }
+  
+  .table-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    
+    .table-actions {
+      width: 100%;
+    }
+  }
 }
 
 @media (max-width: 480px) {
@@ -3220,6 +3405,9 @@ export default {
   }
   
   .page-header {
+    margin: 12px 16px 12px 16px;
+    width: calc(100% - 32px);
+    max-width: calc(100% - 32px);
     padding: 16px;
     
     .header-content {
@@ -3231,15 +3419,43 @@ export default {
     }
   }
   
+  .stats-section {
+    padding: 0 16px;
+  }
+  
+  .tabs-section {
+    padding: 0 16px;
+  }
+  
+  .tab-content {
+    margin: 0 16px;
+  }
+  
   .tab-pane {
     padding: 16px;
   }
   
   .data-table {
     th, td {
-      padding: 8px 12px;
+      padding: 6px 8px;
       font-size: 12px;
     }
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .modal-content {
+    margin: 5px;
+    max-width: 100vw;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 16px;
   }
 }
 

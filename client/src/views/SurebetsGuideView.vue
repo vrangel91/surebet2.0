@@ -64,6 +64,125 @@
                <li><strong>✅ Monitoramento 24/7:</strong> Nunca perde uma chance de lucro</li>
              </ul>
            </div>
+
+           <!-- ALERTA CRÍTICO: AQUECIMENTO DE CONTAS -->
+           <div class="critical-warning">
+             <div class="warning-header">
+               <h4>🔥 <strong>ATENÇÃO CRÍTICA: AQUECIMENTO DE CONTAS</strong></h4>
+               <div class="warning-badge">ESSENCIAL</div>
+             </div>
+             
+             <div class="warning-content">
+               <p class="warning-intro">
+                 <strong>⚠️ ANTES de usar nosso sistema automatizado, você DEVE aquecer sua conta!</strong>
+               </p>
+               
+               <div class="heating-strategy">
+                 <h5>🎯 <strong>Estratégia de Aquecimento (OBRIGATÓRIA)</strong></h5>
+                 <p>Casas de apostas identificam contas "suspicious" que começam fazendo arbitragens imediatamente. Siga este protocolo:</p>
+                 
+                 <div class="heating-steps">
+                   <div class="step-card">
+                     <div class="step-number">1</div>
+                     <div class="step-content">
+                       <h6>🏆 <strong>Primeira Semana: Apostas Normais</strong></h6>
+                       <ul>
+                         <li><strong>Valores:</strong> R$ 1,00 a R$ 5,00 por aposta</li>
+                         <li><strong>Frequência:</strong> 2-3 apostas por dia</li>
+                         <li><strong>Mercados:</strong> Resultado Final (1X2), Over/Under 2.5 gols</li>
+                         <li><strong>Esportes:</strong> Futebol (Brasileirão, Champions League, Premier League)</li>
+                       </ul>
+                     </div>
+                   </div>
+                   
+                   <div class="step-card">
+                     <div class="step-number">2</div>
+                     <div class="step-content">
+                       <h6>⚽ <strong>Segunda Semana: Diversificação</strong></h6>
+                       <ul>
+                         <li><strong>Valores:</strong> R$ 2,00 a R$ 10,00 por aposta</li>
+                         <li><strong>Mercados:</strong> Adicione Handicaps e Both Teams to Score</li>
+                         <li><strong>Esportes:</strong> Adicione Tênis e Basquete</li>
+                         <li><strong>Comportamento:</strong> Faça algumas apostas "perdidas" propositalmente</li>
+                       </ul>
+                     </div>
+                   </div>
+                   
+                   <div class="step-card">
+                     <div class="step-number">3</div>
+                     <div class="step-content">
+                       <h6>🎯 <strong>Terceira Semana: Preparação</strong></h6>
+                       <ul>
+                         <li><strong>Valores:</strong> R$ 5,00 a R$ 20,00 por aposta</li>
+                         <li><strong>Estratégia:</strong> Misture apostas normais com pequenas arbitragens</li>
+                         <li><strong>Frequência:</strong> 1-2 arbitragens pequenas por semana</li>
+                         <li><strong>Mercados:</strong> Use apenas mercados populares (futebol, times grandes)</li>
+                       </ul>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div class="critical-tips">
+                   <h5>🛡️ <strong>Dicas Críticas para Evitar Bloqueios:</strong></h5>
+                   <div class="tips-grid">
+                     <div class="tip-item">
+                       <span class="tip-icon">🏆</span>
+                       <div class="tip-content">
+                         <strong>Times Populares:</strong> Aposte apenas em times conhecidos (Flamengo, Palmeiras, Real Madrid, Barcelona, etc.)
+                       </div>
+                     </div>
+                     <div class="tip-item">
+                       <span class="tip-icon">⚽</span>
+                       <div class="tip-content">
+                         <strong>Campeonatos Grandes:</strong> Brasileirão, Champions League, Premier League, La Liga
+                       </div>
+                     </div>
+                     <div class="tip-item">
+                       <span class="tip-icon">💰</span>
+                       <div class="tip-content">
+                         <strong>Valores Baixos:</strong> Nunca comece com valores altos em contas novas
+                       </div>
+                     </div>
+                     <div class="tip-item">
+                       <span class="tip-icon">⏰</span>
+                       <div class="tip-content">
+                         <strong>Horários Variados:</strong> Aposte em horários diferentes, não sempre no mesmo horário
+                       </div>
+                     </div>
+                     <div class="tip-item">
+                       <span class="tip-icon">🎲</span>
+                       <div class="tip-content">
+                         <strong>Misture Resultados:</strong> Faça algumas apostas que você "perde" propositalmente
+                       </div>
+                     </div>
+                     <div class="tip-item">
+                       <span class="tip-icon">📱</span>
+                       <div class="tip-content">
+                         <strong>Dispositivos Diferentes:</strong> Use celular, computador, diferentes navegadores
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+                 
+                 <div class="danger-zone">
+                   <h5>🚨 <strong>NUNCA FAÇA ISSO (Bloqueio Garantido):</strong></h5>
+                   <ul class="danger-list">
+                     <li>❌ Começar com arbitragens em contas recém-criadas</li>
+                     <li>❌ Apostar em times desconhecidos ou campeonatos pequenos</li>
+                     <li>❌ Usar sempre os mesmos valores (R$ 10, R$ 20, R$ 50)</li>
+                     <li>❌ Apostar apenas em mercados específicos (sempre Over/Under)</li>
+                     <li>❌ Fazer arbitragens em horários muito específicos</li>
+                     <li>❌ Usar valores muito altos para o perfil da conta</li>
+                   </ul>
+                 </div>
+                 
+                 <div class="success-guarantee">
+                   <h5>✅ <strong>Após o Aquecimento (3 semanas):</strong></h5>
+                   <p>Suas contas estarão "quentes" e prontas para usar nosso sistema automatizado com segurança máxima!</p>
+                 </div>
+               </div>
+             </div>
+           </div>
          </div>
        </section>
 
@@ -597,29 +716,31 @@ export default {
   background: var(--bg-primary);
   overflow: hidden;
   position: relative;
-  width: 100%;
-  align-items: stretch;
-  height: 100vh;
+  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  margin-left: 280px; /* Espaço para o sidebar fixo */
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
+  
+  &.sidebar-collapsed {
+    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
 }
 
 .main-content {
   flex: 1;
-  margin-left: 0;
-  transition: margin-left 0.3s ease;
-  min-height: auto;
-  padding: 24px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-bottom: 200px;
-  width: 100%;
-  box-sizing: border-box;
-  position: relative;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
   display: flex;
   flex-direction: column;
-  max-height: 100vh;
-  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
 }
 
 /* Scrollbar personalizada */
@@ -649,8 +770,11 @@ export default {
 
 /* Header */
 .guide-header {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 20px 30px;
+  margin-bottom: 0;
   text-align: center;
-  margin-bottom: 32px;
 }
 
 .guide-title {
@@ -684,10 +808,11 @@ export default {
   margin-bottom: 32px;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 16px;
+  padding: 16px 30px;
   background: rgba(42, 42, 42, 0.6);
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .nav-item {
@@ -719,6 +844,7 @@ export default {
 /* Seções */
 .guide-section {
   margin-bottom: 40px;
+  padding: 0 30px;
 }
 
 .section-title {
@@ -827,6 +953,249 @@ export default {
    letter-spacing: 0.5px;
    box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
  }
+
+/* ALERTA CRÍTICO: AQUECIMENTO DE CONTAS */
+.critical-warning {
+  background: linear-gradient(135deg, rgba(255, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  border: 3px solid #ff4444;
+  border-radius: 16px;
+  padding: 24px;
+  margin: 24px 0;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(255, 68, 68, 0.3);
+  animation: pulse-warning 2s infinite;
+}
+
+@keyframes pulse-warning {
+  0%, 100% { box-shadow: 0 8px 32px rgba(255, 68, 68, 0.3); }
+  50% { box-shadow: 0 8px 32px rgba(255, 68, 68, 0.5); }
+}
+
+.critical-warning::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #ff4444, #ff6b6b, #ff4444);
+  animation: shimmer-warning 3s infinite;
+}
+
+@keyframes shimmer-warning {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.warning-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.warning-header h4 {
+  color: #ff4444;
+  font-size: 20px;
+  margin: 0;
+  text-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+}
+
+.warning-badge {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+  animation: bounce-badge 1.5s infinite;
+}
+
+@keyframes bounce-badge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.warning-content {
+  color: #ffffff;
+}
+
+.warning-intro {
+  font-size: 18px;
+  color: #ff6b6b;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.heating-strategy h5 {
+  color: #ff6b6b;
+  font-size: 18px;
+  margin: 20px 0 12px 0;
+  border-bottom: 2px solid rgba(255, 68, 68, 0.3);
+  padding-bottom: 8px;
+}
+
+.heating-steps {
+  display: grid;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.step-card {
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(255, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover {
+  transform: translateY(-2px);
+  border-color: #ff4444;
+  box-shadow: 0 8px 24px rgba(255, 68, 68, 0.2);
+}
+
+.step-number {
+  background: linear-gradient(135deg, #ff4444, #cc0000);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+.step-content h6 {
+  color: #ff6b6b;
+  font-size: 16px;
+  margin: 0 0 12px 0;
+}
+
+.step-content ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.step-content li {
+  color: #cccccc;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.critical-tips {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.critical-tips h5 {
+  color: #ff6b6b;
+  font-size: 16px;
+  margin: 0 0 16px 0;
+}
+
+.tips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.tip-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.3s ease;
+}
+
+.tip-item:hover {
+  background: rgba(255, 68, 68, 0.15);
+  border-color: #ff4444;
+}
+
+.tip-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.tip-content {
+  color: #cccccc;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.danger-zone {
+  background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(139, 0, 0, 0.1));
+  border: 2px solid #ff0000;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.danger-zone h5 {
+  color: #ff0000;
+  font-size: 16px;
+  margin: 0 0 16px 0;
+  text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+.danger-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.danger-list li {
+  color: #ff6b6b;
+  margin-bottom: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 0, 0, 0.2);
+  font-weight: 500;
+}
+
+.danger-list li:last-child {
+  border-bottom: none;
+}
+
+.success-guarantee {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), rgba(0, 204, 106, 0.1));
+  border: 2px solid #00ff88;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.success-guarantee h5 {
+  color: #00ff88;
+  font-size: 16px;
+  margin: 0 0 12px 0;
+}
+
+.success-guarantee p {
+  color: #cccccc;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
 
 .warning-box {
   background: rgba(255, 193, 7, 0.1);
@@ -1122,16 +1491,62 @@ export default {
 }
 
 @media (max-width: 1200px) {
-  .main-content {
-    margin-left: 0;
+  .surebets-guide-container {
+    width: calc(100% - 80px);
+    max-width: calc(100% - 80px);
+    margin-left: 80px;
+    
+    &.sidebar-collapsed {
+      width: calc(100% - 80px);
+      max-width: calc(100% - 80px);
+      margin-left: 80px;
+    }
   }
 }
 
 /* Responsividade */
+@media (max-width: 1024px) {
+  .surebets-guide-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
+}
+
 @media (max-width: 768px) {
+  .surebets-guide-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
+  }
+  
   .main-content {
-    padding: 16px;
+    padding: 0;
     padding-bottom: 120px;
+  }
+  
+  .guide-header {
+    padding: 15px 20px;
+  }
+  
+  .guide-navigation {
+    padding: 16px 20px;
+  }
+  
+  .guide-section {
+    padding: 0 20px;
   }
   
   .guide-title {
@@ -1160,6 +1575,48 @@ export default {
   .cta-btn {
     width: 100%;
     max-width: 200px;
+  }
+  
+  /* Responsividade para aquecimento de contas */
+  .critical-warning {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .warning-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .warning-header h4 {
+    font-size: 18px;
+  }
+  
+  .heating-steps {
+    grid-template-columns: 1fr;
+  }
+  
+  .step-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .step-number {
+    align-self: center;
+  }
+  
+  .tips-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tip-item {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .tip-icon {
+    align-self: center;
   }
 }
 

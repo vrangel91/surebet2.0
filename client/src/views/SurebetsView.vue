@@ -113,6 +113,7 @@
               type="date"
               v-model="selectedDate"
               class="date-filter-input"
+              placeholder="dd/mm/aaaa"
               @change="onDateChange"
             />
             <button
@@ -7044,10 +7045,20 @@ export default {
   min-width: 120px;
   transition: all 0.3s ease;
 
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+    font-size: 0.8em;
+  }
+
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
     box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.1);
+    
+    &::placeholder {
+      opacity: 0.5;
+    }
   }
 
   &:hover {

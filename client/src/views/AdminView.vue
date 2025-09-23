@@ -53,8 +53,8 @@
           <div class="dashboard-stats">
             <div class="stat-card">
               <div class="stat-icon users-icon">
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
               </div>
               <div class="stat-content">
@@ -65,9 +65,8 @@
 
             <div class="stat-card">
               <div class="stat-icon vip-icon">
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-                  <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
               </div>
               <div class="stat-content">
@@ -78,9 +77,12 @@
 
             <div class="stat-card">
               <div class="stat-icon tickets-icon">
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-                  <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10,9 9,9 8,9"/>
                 </svg>
               </div>
               <div class="stat-content">
@@ -91,9 +93,12 @@
 
             <div class="stat-card">
               <div class="stat-icon open-icon">
-                <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-                  <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
+                <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4"/>
+                  <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"/>
+                  <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"/>
+                  <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"/>
+                  <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"/>
                 </svg>
               </div>
               <div class="stat-content">
@@ -2262,16 +2267,45 @@ export default {
   overflow: hidden;
   background: var(--bg-primary, #1a1a1a);
   color: var(--text-primary, #ffffff);
-  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
-  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease, width 0.3s ease;
+  width: calc(100% - 280px);
   max-width: calc(100% - 280px);
-  margin-left: 280px; /* Espaço para o sidebar fixo */
+  margin-left: 280px;
   box-sizing: border-box;
   
   &.sidebar-collapsed {
-    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
-    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    margin-left: 80px;
+    width: calc(100% - 80px);
     max-width: calc(100% - 80px);
+  }
+}
+
+/* Responsividade para diferentes tamanhos de tela */
+@media (max-width: 1200px) {
+  .admin-container {
+    width: calc(100% - 80px);
+    max-width: calc(100% - 80px);
+    margin-left: 80px;
+    
+    &.sidebar-collapsed {
+      width: calc(100% - 80px);
+      max-width: calc(100% - 80px);
+      margin-left: 80px;
+    }
+  }
+}
+
+@media (max-width: 1024px) {
+  .admin-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    
+    &.sidebar-collapsed {
+      width: 100%;
+      max-width: 100%;
+      margin-left: 0;
+    }
   }
 }
 
@@ -2297,6 +2331,20 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 20px 24px;
+    gap: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px 20px;
+    gap: 16px;
+  }
 }
 
 .header-left {
@@ -2322,6 +2370,17 @@ export default {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 .refresh-btn {
@@ -2360,6 +2419,18 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+  }
 }
 
 .new-user-btn:hover {
@@ -2382,6 +2453,18 @@ export default {
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+  }
 }
 
 .force-update-btn:hover:not(:disabled) {
@@ -2425,6 +2508,18 @@ export default {
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 }
 
 .stat-card {
@@ -2436,6 +2531,18 @@ export default {
   align-items: center;
   gap: 16px;
   transition: all 0.3s ease;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+    gap: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px;
+    gap: 12px;
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
 .stat-card:hover {
@@ -2451,6 +2558,31 @@ export default {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  @media (max-width: 768px) {
+    width: 44px;
+    height: 44px;
+    
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    width: 40px;
+    height: 40px;
+    
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
 }
 
 .tickets-icon {
@@ -2475,12 +2607,12 @@ export default {
 }
 
 .users-icon {
-  background: linear-gradient(135deg, var(--purple), var(--purple-dark));
-  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
 }
 
 .vip-icon {
-  background: linear-gradient(135deg, var(--warning), var(--warning-dark));
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   color: var(--bg-primary);
 }
 
@@ -2493,11 +2625,27 @@ export default {
   font-weight: 700;
   color: var(--text-primary, #ffffff);
   margin-bottom: 4px;
+  
+  @media (max-width: 768px) {
+    font-size: 28px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 24px;
+  }
 }
 
 .stat-label {
   font-size: 14px;
   color: var(--text-secondary, #888888);
+  
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
 }
 
 /* Tabs */
@@ -2512,6 +2660,32 @@ export default {
   display: flex;
   background: var(--bg-primary, #1a1a1a);
   border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  overflow-x: auto;
+  overflow-y: hidden;
+  
+  /* Scrollbar personalizada para as tabs */
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  
+  @media (max-width: 768px) {
+    flex-wrap: nowrap;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
 }
 
 .tab-btn {
@@ -2524,6 +2698,18 @@ export default {
   cursor: pointer;
   transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+  
+  @media (max-width: 768px) {
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
 }
 
 .tab-btn:hover {
@@ -2539,6 +2725,14 @@ export default {
 
 .tab-content {
   padding: 24px;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 }
 
 /* Users Management */
@@ -2596,6 +2790,14 @@ export default {
   border-radius: 8px;
   padding: 20px;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 }
 
 .user-card:hover {
@@ -2608,6 +2810,14 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 
 .user-info {
@@ -2681,6 +2891,16 @@ export default {
 .user-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    justify-content: center;
+    gap: 4px;
+  }
 }
 
 .action-btn {
@@ -2694,6 +2914,18 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
+  
+  @media (max-width: 768px) {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 8px 10px;
+    font-size: 10px;
+    gap: 4px;
+  }
 }
 
 .edit-btn {
@@ -2754,6 +2986,18 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 16px;
+  }
 }
 
 .section-title {
@@ -2768,6 +3012,16 @@ export default {
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 }
 
 .search-input,
@@ -2781,11 +3035,27 @@ export default {
   padding: 8px 12px;
   font-size: 14px;
   cursor: pointer;
+  width: 100%;
+  
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
 }
 
 .search-input {
   min-width: 200px;
   cursor: text;
+  
+  @media (max-width: 768px) {
+    min-width: auto;
+    width: 100%;
+  }
 }
 
 .search-input:focus,
@@ -2831,6 +3101,14 @@ export default {
   padding: 20px;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 }
 
 .ticket-card:hover {
@@ -2867,6 +3145,14 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 
 .ticket-info {
@@ -2933,6 +3219,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 
 .ticket-meta {
@@ -2989,6 +3283,17 @@ export default {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+    padding-top: 20px;
+  }
 }
 
 .ticket-detail-modal {
@@ -2999,10 +3304,30 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px var(--shadow-modal);
+  
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
 }
 
 .admin-modal {
   max-width: 1000px;
+  
+  @media (max-width: 768px) {
+    max-width: 95vw;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 100vw;
+  }
 }
 
 .user-modal {
@@ -3013,6 +3338,18 @@ export default {
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 20px 40px var(--shadow-modal);
+  
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
 }
 
 .confirmation-modal {
@@ -3021,6 +3358,16 @@ export default {
   max-width: 400px;
   width: 100%;
   box-shadow: 0 20px 40px var(--shadow-modal);
+  
+  @media (max-width: 768px) {
+    max-width: 95vw;
+    border-radius: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    max-width: 100vw;
+    border-radius: 0;
+  }
 }
 
 .modal-header {
@@ -3029,6 +3376,19 @@ export default {
   justify-content: space-between;
   padding: 24px;
   border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  flex-wrap: wrap;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
 }
 
 .modal-header h3 {
@@ -3036,12 +3396,28 @@ export default {
   font-weight: 700;
   color: var(--text-primary, #ffffff);
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: 18px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 16px;
+    text-align: center;
+  }
 }
 
 .modal-actions {
   display: flex;
   gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+  
+  @media (max-width: 480px) {
+    justify-content: center;
+    width: 100%;
+    gap: 8px;
+  }
 }
 
 .close-ticket-btn {
@@ -3083,6 +3459,14 @@ export default {
 
 .modal-body {
   padding: 24px;
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 16px;
+  }
 }
 
 /* Ticket Detail Styles */
@@ -3113,6 +3497,18 @@ export default {
   padding: 16px;
   background: var(--bg-primary, #1a1a1a);
   border-radius: 8px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
 }
 
 .info-item {
@@ -3434,6 +3830,18 @@ export default {
   gap: 12px;
   justify-content: flex-end;
   margin-top: 24px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+  }
 }
 
 .cancel-btn {
@@ -3446,6 +3854,16 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 12px 16px;
+  }
 }
 
 .cancel-btn:hover {
@@ -3462,6 +3880,16 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 12px 16px;
+  }
 }
 
 .submit-btn:hover:not(:disabled) {
@@ -3483,6 +3911,16 @@ export default {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 100%;
+    padding: 12px 16px;
+  }
 }
 
 .delete-btn:hover {
@@ -3529,6 +3967,14 @@ export default {
   border-radius: 8px;
   padding: 20px;
   transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 12px;
+  }
 }
 
 .payment-card:hover {
@@ -3541,6 +3987,14 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 
 .payment-info {
@@ -3580,6 +4034,16 @@ export default {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 12px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 .payment-plan,
@@ -3614,6 +4078,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
 }
 
 .payment-meta {
@@ -3631,6 +4103,16 @@ export default {
 .payment-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    gap: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    justify-content: center;
+    gap: 4px;
+  }
 }
 
 .view-btn {
@@ -3787,140 +4269,56 @@ export default {
   background: var(--error-dark);
 }
 
-/* Responsividade */
-@media (max-width: 1023px) {
-  .admin-container {
-    margin-left: 0; /* Remove margem em mobile/tablet */
-  }
-}
-
-@media (max-width: 768px) {
+/* Responsividade adicional para telas muito pequenas */
+@media (max-width: 360px) {
   .admin-main {
-    padding: 24px 16px;
+    padding: 12px 8px;
   }
   
   .content-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
+    padding: 12px 16px;
   }
   
   .page-title {
-    font-size: 24px;
-  }
-  
-  .page-subtitle {
-    font-size: 14px;
-  }
-  
-  .dashboard-stats {
-    grid-template-columns: 1fr;
-    gap: 16px;
+    font-size: 18px;
   }
   
   .stat-card {
-    padding: 20px;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  .filter-controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .search-input,
-  .status-filter,
-  .priority-filter,
-  .category-filter {
-    min-width: auto;
-    width: 100%;
-  }
-  
-  .ticket-info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .ticket-detail-meta {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .payment-details {
-    grid-template-columns: 1fr;
-  }
-  
-  .payment-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-  
-  .payment-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .payment-actions {
-    flex-wrap: wrap;
-  }
-  
-  .payment-info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .admin-actions {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 480px) {
-  .admin-main {
-    padding: 16px 12px;
-  }
-  
-  .page-title {
-    font-size: 20px;
-  }
-  
-  .stat-card {
-    padding: 16px;
-    gap: 12px;
+    padding: 12px;
   }
   
   .stat-icon {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
   
   .stat-value {
-    font-size: 24px;
+    font-size: 20px;
   }
   
-  .ticket-card {
-    padding: 16px;
+  .tab-btn {
+    padding: 8px 10px;
+    font-size: 12px;
   }
   
-  .ticket-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .user-card,
+  .ticket-card,
+  .payment-card {
+    padding: 10px;
   }
   
-  .ticket-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+  .action-btn {
+    padding: 6px 8px;
+    font-size: 9px;
   }
   
+  .modal-overlay {
+    padding: 8px;
+  }
+  
+  .modal-header,
   .modal-body {
-    padding: 16px;
+    padding: 12px;
   }
 }
 </style>

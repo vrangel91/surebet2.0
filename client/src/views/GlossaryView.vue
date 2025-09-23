@@ -140,7 +140,12 @@
                     :key="type"
                     class="market-type-item"
                   >
-                    <div class="type-symbol">{{ type }}</div>
+                    <div class="type-symbol-container">
+                      <div class="type-symbol" :class="getSymbolClass(type)">
+                        {{ getSymbolText(type) }}
+                      </div>
+                      <div class="type-code">{{ type }}</div>
+                    </div>
                     <div class="type-info">
                       <div class="type-description">{{ description }}</div>
                       <div class="type-metadata">
@@ -199,7 +204,7 @@ export default {
     return {
       sidebarCollapsed: false,
       searchTerm: '',
-      selectedCategory: '1X2 & ML',
+      selectedCategory: 'Resultados',
       selectedSport: '',
       showAdvancedFilters: false,
       filters: {
@@ -207,139 +212,178 @@ export default {
         popularity: []
       },
       marketOptions: {
-        '1X2 & ML': {
+        'Resultados': {
           'Resultado Final': {
-            '1': 'Vitória do Time Casa',
-            'X': 'Empate',
-            '2': 'Vitória do Time Visitante'
+            '1': 'Vitória Time 1',
+            '2': 'Vitória Time 2',
+            '1X2': 'Resultado Final'
           },
           'Double Chance': {
-            '1X': 'Time Casa ou Empate',
-            '12': 'Time Casa ou Time Visitante',
-            'X2': 'Empate ou Time Visitante'
+            '1X': 'Empate ou Vitória Time 1',
+            'X2': 'Empate ou Vitória Time 2',
+            '12': 'Time 1 ou Time 2'
           },
-          'Moneyline': {
-            '1': 'Vitória do Time Casa',
-            '2': 'Vitória do Time Visitante'
+          'Draw no Bet': {
+            'DNB': 'Draw no Bet'
           },
-          'Place 1': {
-            '1': 'Time Casa termina em 1º lugar'
+          'Resultado Exato': {
+            'Score': 'Resultado exato'
           },
-          'Place 1-3': {
-            '1': 'Time Casa termina entre 1º e 3º lugar'
-          },
-          'Place 1-6': {
-            '1': 'Time Casa termina entre 1º e 6º lugar'
-          },
-          'Place 1-10': {
-            '1': 'Time Casa termina entre 1º e 10º lugar'
-          },
-          'Head to Head': {
-            '1': 'Time Casa vence confronto direto'
-          },
-          'Moneyline – to qualify': {
-            '1': 'Time Casa se classifica'
-          },
-          'Round Winner in Map 1': {
-            '1': 'Time Casa vence o round no mapa 1'
+          'Sets Exato': {
+            'Exact': 'Sets Exato'
           }
         },
         'Handicaps': {
-          'Spread – Maps': {
-            '1': 'Time Casa vence com vantagem de mapas',
-            '2': 'Time Visitante vence com vantagem de mapas'
+          'Handicap Asiático': {
+            'AH1': 'Handicap Asiático - Time 1',
+            'AH2': 'Handicap Asiático - Time 2',
+            'AH1(-1)': 'Handicap Asiático - Time 1 (-1)',
+            'AH1(-2)': 'Handicap Asiático - Time 1 (-2)',
+            'AH1(-3)': 'Handicap Asiático - Time 1 (-3)',
+            'AH1(+1)': 'Handicap Asiático - Time 1 (+1)',
+            'AH1(+2)': 'Handicap Asiático - Time 1 (+2)',
+            'AH1(+3)': 'Handicap Asiático - Time 1 (+3)',
+            'AH2(-1)': 'Handicap Asiático - Time 2 (-1)',
+            'AH2(-2)': 'Handicap Asiático - Time 2 (-2)',
+            'AH2(-3)': 'Handicap Asiático - Time 2 (-3)',
+            'AH2(+1)': 'Handicap Asiático - Time 2 (+1)',
+            'AH2(+2)': 'Handicap Asiático - Time 2 (+2)',
+            'AH2(+3)': 'Handicap Asiático - Time 2 (+3)'
           },
-          'Spread': {
-            '1': 'Time Casa vence com vantagem',
-            '2': 'Time Visitante vence com vantagem'
-          },
-          'Draw no Bet': {
-            '1': 'Time Casa vence (empate anula aposta)',
-            '2': 'Time Visitante vence (empate anula aposta)'
-          },
-          'Euro Handicap': {
-            '1': 'Time Casa vence com handicap europeu',
-            '2': 'Time Visitante vence com handicap europeu'
-          },
-          'Spread – Sets': {
-            '1': 'Time Casa vence com vantagem de sets',
-            '2': 'Time Visitante vence com vantagem de sets'
+          'Handicap Europeu': {
+            'EH1': 'Handicap Europeu - Time 1',
+            'EH2': 'Handicap Europeu - Time 2'
           }
         },
-        'Totals': {
-          'Total – Maps': {
-            'Over': 'Total de mapas acima do valor',
-            'Under': 'Total de mapas abaixo do valor'
+        'Totais (Over/Under)': {
+          'Total de Gols': {
+            'TO(0.5)': 'Mais de 0.5 Gols',
+            'TO(1.5)': 'Mais de 1.5 Gols',
+            'TO(2.5)': 'Mais de 2.5 Gols',
+            'TO(3.5)': 'Mais de 3.5 Gols',
+            'TO(4.5)': 'Mais de 4.5 Gols',
+            'TU(0.5)': 'Menos de 0.5 Gols',
+            'TU(1.5)': 'Menos de 1.5 Gols',
+            'TU(2.5)': 'Menos de 2.5 Gols',
+            'TU(3.5)': 'Menos de 3.5 Gols',
+            'TU(4.5)': 'Menos de 4.5 Gols'
           },
-          'Total': {
-            'Over': 'Total de gols/pontos acima do valor',
-            'Under': 'Total de gols/pontos abaixo do valor'
+          'Handicap Asiático de Gols': {
+            'TO(0.25)': 'Mais de 0.25 Gols',
+            'TO(0.75)': 'Mais de 0.75 Gols',
+            'TO(1.25)': 'Mais de 1.25 Gols',
+            'TO(1.75)': 'Mais de 1.75 Gols',
+            'TO(2.25)': 'Mais de 2.25 Gols',
+            'TO(2.75)': 'Mais de 2.75 Gols',
+            'TO(3.25)': 'Mais de 3.25 Gols',
+            'TO(3.75)': 'Mais de 3.75 Gols',
+            'TO(4.25)': 'Mais de 4.25 Gols',
+            'TO(4.75)': 'Mais de 4.75 Gols',
+            'TU(0.25)': 'Menos de 0.25 Gols',
+            'TU(0.75)': 'Menos de 0.75 Gols',
+            'TU(1.25)': 'Menos de 1.25 Gols',
+            'TU(1.75)': 'Menos de 1.75 Gols',
+            'TU(2.25)': 'Menos de 2.25 Gols',
+            'TU(2.75)': 'Menos de 2.75 Gols',
+            'TU(3.25)': 'Menos de 3.25 Gols',
+            'TU(3.75)': 'Menos de 3.75 Gols',
+            'TU(4.25)': 'Menos de 4.25 Gols',
+            'TU(4.75)': 'Menos de 4.75 Gols'
           },
-          'Total for Team 1': {
-            'Over': 'Total do Time Casa acima do valor',
-            'Under': 'Total do Time Casa abaixo do valor'
-          },
-          'Total for Team 2': {
-            'Over': 'Total do Time Visitante acima do valor',
-            'Under': 'Total do Time Visitante abaixo do valor'
-          },
-          'Total – Sets': {
-            'Over': 'Total de sets acima do valor',
-            'Under': 'Total de sets abaixo do valor'
+          'Total de Sets': {
+            'TO(0.5) - Sets': 'Mais de 0.5 Sets',
+            'TO(1.5) - Sets': 'Mais de 1.5 Sets',
+            'TO(2.5) - Sets': 'Mais de 2.5 Sets',
+            'TU(0.5) - Sets': 'Menos de 0.5 Sets',
+            'TU(1.5) - Sets': 'Menos de 1.5 Sets',
+            'TU(2.5) - Sets': 'Menos de 2.5 Sets'
           }
         },
         'Escanteios': {
           'Total de Escanteios': {
-            'Over': 'Total de escanteios acima do valor',
-            'Under': 'Total de escanteios abaixo do valor'
+            'TO(0.5) - Corners': 'Mais de 0.5 escanteios',
+            'TO(1.5) - Corners': 'Mais de 1.5 escanteios',
+            'TO(2.5) - Corners': 'Mais de 2.5 escanteios',
+            'TO(3.5) - Corners': 'Mais de 3.5 escanteios',
+            'TU(0.5) - Corners': 'Menos de 0.5 escanteios',
+            'TU(1.5) - Corners': 'Menos de 1.5 escanteios',
+            'TU(2.5) - Corners': 'Menos de 2.5 escanteios',
+            'TU(3.5) - Corners': 'Menos de 3.5 escanteios'
           },
-          'Escanteios Time Casa': {
-            'Over': 'Escanteios do Time Casa acima do valor',
-            'Under': 'Escanteios do Time Casa abaixo do valor'
-          },
-          'Escanteios Time Visitante': {
-            'Over': 'Escanteios do Time Visitante acima do valor',
-            'Under': 'Escanteios do Time Visitante abaixo do valor'
+          'Escanteios por Time': {
+            'TO(0.5) for Team1 - Corners': 'Mais de 0.5 escanteios para o Time 1',
+            'TO(1.5) for Team1 - Corners': 'Mais de 1.5 escanteios para o Time 1',
+            'TO(2.5) for Team1 - Corners': 'Mais de 2.5 escanteios para o Time 1',
+            'TO(0.5) for Team2 - Corners': 'Mais de 0.5 escanteios para o Time 2',
+            'TO(1.5) for Team2 - Corners': 'Mais de 1.5 escanteios para o Time 2',
+            'TO(2.5) for Team2 - Corners': 'Mais de 2.5 escanteios para o Time 2',
+            'TU(0.5) for Team1 - Corners': 'Menos de 0.5 escanteios para o Time 1',
+            'TU(1.5) for Team1 - Corners': 'Menos de 1.5 escanteios para o Time 1',
+            'TU(2.5) for Team1 - Corners': 'Menos de 2.5 escanteios para o Time 1',
+            'TU(0.5) for Team2 - Corners': 'Menos de 0.5 escanteios para o Time 2',
+            'TU(1.5) for Team2 - Corners': 'Menos de 1.5 escanteios para o Time 2',
+            'TU(2.5) for Team2 - Corners': 'Menos de 2.5 escanteios para o Time 2'
           }
         },
-        'Cartões': {
-          'Total de Cartões': {
-            'Over': 'Total de cartões acima do valor',
-            'Under': 'Total de cartões abaixo do valor'
+        'Estatísticas': {
+          'Faltas': {
+            'TO(8.5) for Team1 - Fouls': 'Mais de 8.5 faltas para o Time 1',
+            'TO(10.5) for Team1 - Fouls': 'Mais de 10.5 faltas para o Time 1',
+            'TU(8.5) for Team1 - Fouls': 'Menos de 8.5 faltas para o Time 1',
+            'TU(10.5) for Team1 - Fouls': 'Menos de 10.5 faltas para o Time 1'
           },
-          'Cartões Amarelos': {
-            'Over': 'Total de cartões amarelos acima do valor',
-            'Under': 'Total de cartões amarelos abaixo do valor'
+          'Chutes ao Gol': {
+            'Shots on goal': 'Chutes ao gol'
           },
-          'Cartões Vermelhos': {
-            'Over': 'Total de cartões vermelhos acima do valor',
-            'Under': 'Total de cartões vermelhos abaixo do valor'
+          'Gols de Campo': {
+            'Field Goals': 'Gols de campo'
+          },
+          'Impedimentos': {
+            'TO(3.5) - Offsides': 'Mais de 3.5 impedimentos',
+            'TU(3.5) - Offsides': 'Menos de 3.5 impedimentos'
           }
         },
         'Mercados Especiais': {
-          'Primeiro Gol': {
-            '1': 'Time Casa marca o primeiro gol',
-            '2': 'Time Visitante marca o primeiro gol',
-            'Nenhum': 'Nenhum gol é marcado'
-          },
-          'Último Gol': {
-            '1': 'Time Casa marca o último gol',
-            '2': 'Time Visitante marca o último gol'
-          },
           'Ambos Marcam': {
-            'Sim': 'Ambos os times marcam',
-            'Não': 'Pelo menos um time não marca'
+            'BothToScore': 'Ambos os Times Marcam: Sim',
+            'OneScoreless': 'Ambos os Times Marcam: Não'
           },
-          'Resultado HT/FT': {
-            '1/1': 'Time Casa vence no 1º tempo e no final',
-            '1/X': 'Time Casa vence no 1º tempo, empate no final',
-            '1/2': 'Time Casa vence no 1º tempo, Time Visitante vence no final',
-            'X/1': 'Empate no 1º tempo, Time Casa vence no final',
-            'X/X': 'Empate no 1º tempo e no final',
-            'X/2': 'Empate no 1º tempo, Time Visitante vence no final',
-            '2/1': 'Time Visitante vence no 1º tempo, Time Casa vence no final',
-            '2/X': 'Time Visitante vence no 1º tempo, empate no final',
-            '2/2': 'Time Visitante vence no 1º tempo e no final'
+          'Primeiro e Último Gol': {
+            'FirstGoal': 'Quem marca o primeiro gol',
+            'LastGoal': 'Quem marca o último gol'
+          },
+          'Total Par/Ímpar': {
+            'Even': 'Total de gols par',
+            'Odd': 'Total de gols ímpar'
+          },
+          'Jogador para Marcar': {
+            'Player to Score': 'Jogador para marcar'
+          }
+        },
+        'Períodos': {
+          'Primeiro Tempo': {
+            'HT': 'Primeiro Tempo'
+          },
+          'Tempo Completo': {
+            'FT': 'Tempo Completo'
+          }
+        },
+        'Resultados Exatos por Time': {
+          'Exato Time 1': {
+            'Exact (0) for Team1': 'Exato (0) para o Time 1',
+            'Exact (1) for Team1': 'Exato (1) para o Time 1',
+            'Exact (2) for Team1': 'Exato (2) para o Time 1',
+            'Exact (3) for Team1': 'Exato (3) para o Time 1',
+            'Exact (4) for Team1': 'Exato (4) para o Time 1',
+            'Exact (5) for Team1': 'Exato (5) para o Time 1'
+          },
+          'Exato Time 2': {
+            'Exact (0) for Team2': 'Exato (0) para o Time 2',
+            'Exact (1) for Team2': 'Exato (1) para o Time 2',
+            'Exact (2) for Team2': 'Exato (2) para o Time 2',
+            'Exact (3) for Team2': 'Exato (3) para o Time 2',
+            'Exact (4) for Team2': 'Exato (4) para o Time 2',
+            'Exact (5) for Team2': 'Exato (5) para o Time 2'
           }
         }
       }
@@ -394,24 +438,28 @@ export default {
     
     getCategoryDisplayName(category) {
       const displayNames = {
-        '1X2 & ML': '1X2 & Moneyline',
+        'Resultados': 'Resultados',
         'Handicaps': 'Handicaps',
-        'Totals': 'Totais',
+        'Totais (Over/Under)': 'Totais (Over/Under)',
         'Escanteios': 'Escanteios',
-        'Cartões': 'Cartões',
-        'Mercados Especiais': 'Mercados Especiais'
+        'Estatísticas': 'Estatísticas',
+        'Mercados Especiais': 'Mercados Especiais',
+        'Períodos': 'Períodos',
+        'Resultados Exatos por Time': 'Resultados Exatos por Time'
       }
       return displayNames[category] || category
     },
     
     getCategoryDescription(category) {
       const descriptions = {
-        '1X2 & ML': 'Mercados básicos de resultado e moneyline para apostas simples',
-        'Handicaps': 'Mercados com vantagens para equilibrar apostas desiguais',
-        'Totals': 'Mercados baseados no total de gols, pontos ou eventos',
+        'Resultados': 'Mercados básicos de resultado final, double chance e draw no bet',
+        'Handicaps': 'Mercados com vantagens asiáticas e europeias para equilibrar apostas desiguais',
+        'Totais (Over/Under)': 'Mercados baseados no total de gols, sets e outros eventos',
         'Escanteios': 'Mercados específicos para escanteios no futebol',
-        'Cartões': 'Mercados baseados em cartões amarelos e vermelhos',
-        'Mercados Especiais': 'Mercados únicos e específicos para situações especiais'
+        'Estatísticas': 'Mercados baseados em estatísticas do jogo como faltas, chutes e impedimentos',
+        'Mercados Especiais': 'Mercados únicos como ambos marcam, primeiro gol e totais par/ímpar',
+        'Períodos': 'Mercados específicos para primeiro tempo e tempo completo',
+        'Resultados Exatos por Time': 'Mercados de resultado exato para cada time individualmente'
       }
       return descriptions[category] || ''
     },
@@ -468,49 +516,158 @@ export default {
     
     getMarketDifficulty(marketType) {
       const difficulties = {
+        // Resultados básicos - Iniciante
         '1': 'Iniciante',
-        'X': 'Iniciante',
         '2': 'Iniciante',
+        '1X2': 'Iniciante',
         '1X': 'Iniciante',
-        '12': 'Iniciante',
         'X2': 'Iniciante',
-        'Over': 'Intermediário',
-        'Under': 'Intermediário',
-        'Place 1': 'Avançado',
-        'Place 1-3': 'Avançado',
-        'Place 1-6': 'Avançado',
-        'Place 1-10': 'Avançado',
-        'Head to Head': 'Avançado',
-        'Moneyline – to qualify': 'Avançado',
-        'Round Winner in Map 1': 'Avançado',
-        'Resultado HT/FT': 'Avançado'
+        '12': 'Iniciante',
+        'DNB': 'Iniciante',
+        'Score': 'Iniciante',
+        'Exact': 'Iniciante',
+        
+        // Handicaps - Intermediário
+        'AH1': 'Intermediário',
+        'AH2': 'Intermediário',
+        'EH1': 'Intermediário',
+        'EH2': 'Intermediário',
+        
+        // Totais básicos - Intermediário
+        'TO(0.5)': 'Intermediário',
+        'TO(1.5)': 'Intermediário',
+        'TO(2.5)': 'Intermediário',
+        'TU(0.5)': 'Intermediário',
+        'TU(1.5)': 'Intermediário',
+        'TU(2.5)': 'Intermediário',
+        
+        // Handicaps asiáticos de gols - Avançado
+        'TO(0.25)': 'Avançado',
+        'TO(0.75)': 'Avançado',
+        'TO(1.25)': 'Avançado',
+        'TO(1.75)': 'Avançado',
+        'TO(2.25)': 'Avançado',
+        'TO(2.75)': 'Avançado',
+        'TO(3.25)': 'Avançado',
+        'TO(3.75)': 'Avançado',
+        'TO(4.25)': 'Avançado',
+        'TO(4.75)': 'Avançado',
+        'TU(0.25)': 'Avançado',
+        'TU(0.75)': 'Avançado',
+        'TU(1.25)': 'Avançado',
+        'TU(1.75)': 'Avançado',
+        'TU(2.25)': 'Avançado',
+        'TU(2.75)': 'Avançado',
+        'TU(3.25)': 'Avançado',
+        'TU(3.75)': 'Avançado',
+        'TU(4.25)': 'Avançado',
+        'TU(4.75)': 'Avançado',
+        
+        // Mercados especiais - Avançado
+        'BothToScore': 'Avançado',
+        'OneScoreless': 'Avançado',
+        'FirstGoal': 'Avançado',
+        'LastGoal': 'Avançado',
+        'Even': 'Avançado',
+        'Odd': 'Avançado',
+        'Player to Score': 'Avançado',
+        
+        // Resultados exatos - Avançado
+        'Exact (0) for Team1': 'Avançado',
+        'Exact (1) for Team1': 'Avançado',
+        'Exact (2) for Team1': 'Avançado',
+        'Exact (0) for Team2': 'Avançado',
+        'Exact (1) for Team2': 'Avançado',
+        'Exact (2) for Team2': 'Avançado'
       }
       return difficulties[marketType] || 'Intermediário'
     },
     
     getMarketPopularity(marketType) {
       const popularities = {
+        // Resultados básicos - Alta popularidade
         '1': 'Alta',
-        'X': 'Alta',
         '2': 'Alta',
+        '1X2': 'Alta',
         '1X': 'Alta',
-        '12': 'Alta',
         'X2': 'Alta',
-        'Over': 'Alta',
-        'Under': 'Alta',
-        'Ambos Marcam': 'Alta',
-        'Primeiro Gol': 'Média',
-        'Último Gol': 'Média',
-        'Total de Escanteios': 'Média',
-        'Total de Cartões': 'Média',
-        'Place 1': 'Baixa',
-        'Place 1-3': 'Baixa',
-        'Place 1-6': 'Baixa',
-        'Place 1-10': 'Baixa',
-        'Head to Head': 'Baixa',
-        'Moneyline – to qualify': 'Baixa',
-        'Round Winner in Map 1': 'Baixa',
-        'Resultado HT/FT': 'Baixa'
+        '12': 'Alta',
+        'DNB': 'Alta',
+        
+        // Totais básicos - Alta popularidade
+        'TO(0.5)': 'Alta',
+        'TO(1.5)': 'Alta',
+        'TO(2.5)': 'Alta',
+        'TU(0.5)': 'Alta',
+        'TU(1.5)': 'Alta',
+        'TU(2.5)': 'Alta',
+        
+        // Handicaps asiáticos de gols - Média popularidade
+        'TO(0.25)': 'Média',
+        'TO(0.75)': 'Média',
+        'TO(1.25)': 'Média',
+        'TO(1.75)': 'Média',
+        'TO(2.25)': 'Média',
+        'TO(2.75)': 'Média',
+        'TO(3.25)': 'Média',
+        'TO(3.75)': 'Média',
+        'TO(4.25)': 'Média',
+        'TO(4.75)': 'Média',
+        'TU(0.25)': 'Média',
+        'TU(0.75)': 'Média',
+        'TU(1.25)': 'Média',
+        'TU(1.75)': 'Média',
+        'TU(2.25)': 'Média',
+        'TU(2.75)': 'Média',
+        'TU(3.25)': 'Média',
+        'TU(3.75)': 'Média',
+        'TU(4.25)': 'Média',
+        'TU(4.75)': 'Média',
+        
+        // Handicaps - Média popularidade
+        'AH1': 'Média',
+        'AH2': 'Média',
+        'EH1': 'Média',
+        'EH2': 'Média',
+        
+        // Mercados especiais - Média popularidade
+        'BothToScore': 'Média',
+        'OneScoreless': 'Média',
+        'FirstGoal': 'Média',
+        'LastGoal': 'Média',
+        'Even': 'Média',
+        'Odd': 'Média',
+        
+        // Escanteios - Média popularidade
+        'TO(0.5) - Corners': 'Média',
+        'TO(1.5) - Corners': 'Média',
+        'TO(2.5) - Corners': 'Média',
+        'TU(0.5) - Corners': 'Média',
+        'TU(1.5) - Corners': 'Média',
+        'TU(2.5) - Corners': 'Média',
+        
+        // Estatísticas - Baixa popularidade
+        'TO(8.5) for Team1 - Fouls': 'Baixa',
+        'TU(8.5) for Team1 - Fouls': 'Baixa',
+        'Shots on goal': 'Baixa',
+        'Field Goals': 'Baixa',
+        'TO(3.5) - Offsides': 'Baixa',
+        'TU(3.5) - Offsides': 'Baixa',
+        
+        // Resultados exatos - Baixa popularidade
+        'Exact (0) for Team1': 'Baixa',
+        'Exact (1) for Team1': 'Baixa',
+        'Exact (2) for Team1': 'Baixa',
+        'Exact (0) for Team2': 'Baixa',
+        'Exact (1) for Team2': 'Baixa',
+        'Exact (2) for Team2': 'Baixa',
+        
+        // Períodos - Baixa popularidade
+        'HT': 'Baixa',
+        'FT': 'Baixa',
+        
+        // Jogador específico - Baixa popularidade
+        'Player to Score': 'Baixa'
       }
       return popularities[marketType] || 'Média'
     },
@@ -519,18 +676,110 @@ export default {
       if (!this.selectedSport) return true
       
       const sportKeywords = {
-        'Futebol': ['gol', 'escanteio', 'cartão', 'futebol', 'bola'],
-        'Basquete': ['ponto', 'cesta', 'basquete', 'basquetebol'],
-        'Tênis': ['set', 'game', 'tênis', 'tenis'],
-        'Vôlei': ['set', 'ponto', 'vôlei', 'volei'],
+        'Futebol': ['gol', 'escanteio', 'cartão', 'futebol', 'bola', 'corners', 'fouls', 'offsides', 'shots on goal', 'field goals'],
+        'Basquete': ['ponto', 'cesta', 'basquete', 'basquetebol', 'rebounds', 'field goals'],
+        'Tênis': ['set', 'game', 'tênis', 'tenis', 'sets'],
+        'Vôlei': ['set', 'ponto', 'vôlei', 'volei', 'sets'],
         'E-sports': ['map', 'round', 'mapa', 'e-sports', 'esports'],
-        'Outros': []
+        'Outros': ['touchdowns', 'player to score', 'player rebounds']
       }
       
       const keywords = sportKeywords[this.selectedSport] || []
       const text = `${type} ${description}`.toLowerCase()
       
       return keywords.some(keyword => text.includes(keyword))
+    },
+    
+    getSymbolText(type) {
+      // Retorna um símbolo ou abreviação para o círculo
+      if (type.startsWith('TO(')) {
+        // Símbolos especiais para handicaps asiáticos
+        if (type.includes('0.25') || type.includes('0.75') || type.includes('1.25') || 
+            type.includes('1.75') || type.includes('2.25') || type.includes('2.75') ||
+            type.includes('3.25') || type.includes('3.75') || type.includes('4.25') || 
+            type.includes('4.75')) {
+          return '↗A' // Over Asiático
+        }
+        return '↗'
+      }
+      if (type.startsWith('TU(')) {
+        // Símbolos especiais para handicaps asiáticos
+        if (type.includes('0.25') || type.includes('0.75') || type.includes('1.25') || 
+            type.includes('1.75') || type.includes('2.25') || type.includes('2.75') ||
+            type.includes('3.25') || type.includes('3.75') || type.includes('4.25') || 
+            type.includes('4.75')) {
+          return '↘A' // Under Asiático
+        }
+        return '↘'
+      }
+      if (type.startsWith('AH')) return 'H'
+      if (type.startsWith('EH')) return 'E'
+      if (type === '1') return '1'
+      if (type === '2') return '2'
+      if (type === '1X2') return '1X2'
+      if (type === '1X') return '1X'
+      if (type === 'X2') return 'X2'
+      if (type === '12') return '12'
+      if (type === 'DNB') return 'DNB'
+      if (type === 'Score') return 'S'
+      if (type === 'Exact') return 'E'
+      if (type === 'BothToScore') return 'B'
+      if (type === 'OneScoreless') return 'N'
+      if (type === 'FirstGoal') return 'F'
+      if (type === 'LastGoal') return 'L'
+      if (type === 'Even') return 'P'
+      if (type === 'Odd') return 'I'
+      if (type === 'HT') return 'HT'
+      if (type === 'FT') return 'FT'
+      if (type.startsWith('Exact')) return 'E'
+      if (type.includes('Corners')) return 'C'
+      if (type.includes('Fouls')) return 'F'
+      if (type.includes('Offsides')) return 'O'
+      if (type.includes('Shots')) return 'S'
+      if (type.includes('Field Goals')) return 'G'
+      if (type.includes('Player')) return 'P'
+      
+      // Fallback: primeira letra do tipo
+      return type.charAt(0).toUpperCase()
+    },
+    
+    getSymbolClass(type) {
+      // Retorna classes CSS baseadas no tipo de mercado
+      if (type.startsWith('TO(')) {
+        // Classe especial para handicaps asiáticos
+        if (type.includes('0.25') || type.includes('0.75') || type.includes('1.25') || 
+            type.includes('1.75') || type.includes('2.25') || type.includes('2.75') ||
+            type.includes('3.25') || type.includes('3.75') || type.includes('4.25') || 
+            type.includes('4.75')) {
+          return 'over-asia-symbol'
+        }
+        return 'over-symbol'
+      }
+      if (type.startsWith('TU(')) {
+        // Classe especial para handicaps asiáticos
+        if (type.includes('0.25') || type.includes('0.75') || type.includes('1.25') || 
+            type.includes('1.75') || type.includes('2.25') || type.includes('2.75') ||
+            type.includes('3.25') || type.includes('3.75') || type.includes('4.25') || 
+            type.includes('4.75')) {
+          return 'under-asia-symbol'
+        }
+        return 'under-symbol'
+      }
+      if (type.startsWith('AH')) return 'handicap-asia-symbol'
+      if (type.startsWith('EH')) return 'handicap-euro-symbol'
+      if (['1', '2', '1X2', '1X', 'X2', '12', 'DNB'].includes(type)) return 'result-symbol'
+      if (['BothToScore', 'OneScoreless', 'FirstGoal', 'LastGoal'].includes(type)) return 'special-symbol'
+      if (['Even', 'Odd'].includes(type)) return 'parity-symbol'
+      if (['HT', 'FT'].includes(type)) return 'period-symbol'
+      if (type.startsWith('Exact')) return 'exact-symbol'
+      if (type.includes('Corners')) return 'corners-symbol'
+      if (type.includes('Fouls')) return 'fouls-symbol'
+      if (type.includes('Offsides')) return 'offsides-symbol'
+      if (type.includes('Shots')) return 'shots-symbol'
+      if (type.includes('Field Goals')) return 'goals-symbol'
+      if (type.includes('Player')) return 'player-symbol'
+      
+      return 'default-symbol'
     }
   }
 }
@@ -927,26 +1176,198 @@ export default {
       .market-type-item {
         display: flex;
         align-items: flex-start;
-        gap: 15px;
-        padding: 12px 0;
+        gap: 20px;
+        padding: 16px 0;
         border-bottom: 1px solid var(--border-secondary);
+        transition: all 0.3s ease;
+        
+        &:hover {
+          background: rgba(0, 255, 136, 0.02);
+          border-radius: 8px;
+          padding: 16px 12px;
+          margin: 0 -12px;
+        }
         
         &:last-child {
           border-bottom: none;
         }
         
+        .type-symbol-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          flex-shrink: 0;
+          min-width: 60px;
+        }
+        
         .type-symbol {
-          background: var(--accent-primary);
-          color: var(--bg-primary);
-          width: 35px;
-          height: 35px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 700;
-          font-size: 14px;
-          flex-shrink: 0;
+          font-size: 16px;
+          transition: all 0.3s ease;
+          
+          // Cores específicas por tipo de símbolo
+          &.over-symbol {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+          }
+          
+          &.under-symbol {
+            background: linear-gradient(135deg, #ff6b6b, #e55353);
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+          }
+          
+          &.over-asia-symbol {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
+            border: 2px solid #00ff88;
+            position: relative;
+            
+            &::after {
+              content: 'A';
+              position: absolute;
+              bottom: -2px;
+              right: -2px;
+              background: #ff6b6b;
+              color: white;
+              border-radius: 50%;
+              width: 12px;
+              height: 12px;
+              font-size: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+            }
+          }
+          
+          &.under-asia-symbol {
+            background: linear-gradient(135deg, #ff6b6b, #e55353);
+            color: white;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.4);
+            border: 2px solid #ff6b6b;
+            position: relative;
+            
+            &::after {
+              content: 'A';
+              position: absolute;
+              bottom: -2px;
+              right: -2px;
+              background: #00ff88;
+              color: white;
+              border-radius: 50%;
+              width: 12px;
+              height: 12px;
+              font-size: 8px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-weight: 700;
+            }
+          }
+          
+          &.handicap-asia-symbol {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 2px 8px rgba(78, 205, 196, 0.3);
+          }
+          
+          &.handicap-euro-symbol {
+            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(168, 230, 207, 0.3);
+          }
+          
+          &.result-symbol {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+          }
+          
+          &.special-symbol {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            box-shadow: 0 2px 8px rgba(240, 147, 251, 0.3);
+          }
+          
+          &.parity-symbol {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #8b4513;
+            box-shadow: 0 2px 8px rgba(255, 236, 210, 0.3);
+          }
+          
+          &.period-symbol {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(168, 237, 234, 0.3);
+          }
+          
+          &.exact-symbol {
+            background: linear-gradient(135deg, #d299c2, #fef9d7);
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(210, 153, 194, 0.3);
+          }
+          
+          &.corners-symbol {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #8b4513;
+            box-shadow: 0 2px 8px rgba(255, 154, 158, 0.3);
+          }
+          
+          &.fouls-symbol {
+            background: linear-gradient(135deg, #ffecd2, #fcb69f);
+            color: #8b4513;
+            box-shadow: 0 2px 8px rgba(255, 236, 210, 0.3);
+          }
+          
+          &.offsides-symbol {
+            background: linear-gradient(135deg, #a8edea, #fed6e3);
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(168, 237, 234, 0.3);
+          }
+          
+          &.shots-symbol {
+            background: linear-gradient(135deg, #d299c2, #fef9d7);
+            color: #2c3e50;
+            box-shadow: 0 2px 8px rgba(210, 153, 194, 0.3);
+          }
+          
+          &.goals-symbol {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            color: #8b4513;
+            box-shadow: 0 2px 8px rgba(255, 154, 158, 0.3);
+          }
+          
+          &.player-symbol {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+          }
+          
+          &.default-symbol {
+            background: var(--accent-primary);
+            color: var(--bg-primary);
+            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+          }
+        }
+        
+        .type-code {
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--text-tertiary);
+          text-align: center;
+          line-height: 1.2;
+          max-width: 60px;
+          word-break: break-all;
         }
         
         .type-info {
@@ -1308,11 +1729,24 @@ export default {
       
       .market-type-item {
         flex-direction: column;
-        gap: 10px;
+        gap: 15px;
         text-align: center;
+        padding: 12px 0;
         
-        .type-symbol {
+        .type-symbol-container {
           align-self: center;
+          min-width: 50px;
+          
+          .type-symbol {
+            width: 35px;
+            height: 35px;
+            font-size: 14px;
+          }
+          
+          .type-code {
+            font-size: 9px;
+            max-width: 50px;
+          }
         }
         
         .type-info {
@@ -1381,10 +1815,19 @@ export default {
       .market-type-item {
         padding: 10px 0;
         
-        .type-symbol {
-          width: 30px;
-          height: 30px;
-          font-size: 12px;
+        .type-symbol-container {
+          min-width: 45px;
+          
+          .type-symbol {
+            width: 30px;
+            height: 30px;
+            font-size: 12px;
+          }
+          
+          .type-code {
+            font-size: 8px;
+            max-width: 45px;
+          }
         }
         
         .type-info {
