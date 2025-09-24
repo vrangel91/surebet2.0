@@ -118,18 +118,25 @@ export const bookmakerLiveUrls = {
 
 /**
  * Obtém a URL correta para uma casa de apostas
- * Prioriza nosso mapeamento interno em vez dos campos anchorh1/anchorh2 da API
  * @param {string} house - Nome da casa de apostas retornado pela API
  * @param {boolean} isLive - Se é um jogo live ou pré-match
  * @param {string} anchorh1 - Campo anchorh1 da API (opcional, usado como fallback)
  * @param {string} anchorh2 - Campo anchorh2 da API (opcional, usado como fallback)
+ * @param {string} anchorh1_original - Campo anchorh1_original da API (para house1)
+ * @param {string} anchorh2_original - Campo anchorh2_original da API (para house2)
+ * @param {string} house1 - Nome da primeira casa de apostas
+ * @param {string} house2 - Nome da segunda casa de apostas
  * @returns {string} URL da casa de apostas
  */
 export function getBookmakerUrl(
   house,
   isLive = false,
   anchorh1 = null,
-  anchorh2 = null
+  anchorh2 = null,
+  anchorh1_original = null,
+  anchorh2_original = null,
+  house1 = null,
+  house2 = null
 ) {
   if (!house) {
     console.warn("Casa de apostas não informada");

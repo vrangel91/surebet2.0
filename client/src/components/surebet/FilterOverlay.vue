@@ -144,7 +144,7 @@
                 <span class="checkbox-label">{{ house }}</span>
               </label>
               <button class="favorite-btn" :class="{ 'favorited': favoriteHouses.includes(house) }"
-                @click="$emit('toggle-favorite-house', house)"
+                @click.stop="$emit('toggle-favorite-house', house)"
                 :title="favoriteHouses.includes(house) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
                 <svg class="favorite-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                   stroke-width="2">
@@ -228,7 +228,7 @@
                   <span class="checkbox-label">{{ sport.label }}</span>
                 </label>
                 <button class="favorite-btn" :class="{ 'favorited': favoriteSports.includes(sport.value) }"
-                  @click="$emit('toggle-favorite-sport', sport.value)"
+                  @click.stop="$emit('toggle-favorite-sport', sport.value)"
                   :title="favoriteSports.includes(sport.value) ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
                   <svg class="favorite-icon" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2">
@@ -390,10 +390,10 @@ export default {
   right: -440px;
   width: 440px;
   height: 100vh;
-  background: rgba(42, 42, 42, 0.95);
+  background: var(--bg-overlay);
   backdrop-filter: blur(10px);
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
+  border-left: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-overlay);
   transition: right 0.3s ease;
   z-index: 1000;
   overflow-y: auto;
@@ -414,20 +414,20 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-primary);
 
   h3 {
     margin: 0;
     font-size: 18px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
   }
 
   .close-btn {
-    background: none;
+    background: transparent;
     border: none;
     font-size: 24px;
-    color: #cccccc;
+    color: var(--text-secondary);
     cursor: pointer;
     padding: 0;
     width: 30px;
@@ -439,8 +439,8 @@ export default {
     transition: all 0.3s ease;
 
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: #00ff88;
+      background: var(--bg-tertiary);
+      color: var(--accent-color);
     }
   }
 }
@@ -465,13 +465,13 @@ export default {
 .filter-section-label {
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .default-indicator {
   font-size: 12px;
-  color: #1a1a1a;
-  background: #00ff88;
+  color: var(--text-inverse);
+  background: var(--accent-color);
   padding: 2px 8px;
   border-radius: 12px;
   font-weight: 600;
@@ -486,36 +486,36 @@ export default {
 .profit-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 6px;
-  background: rgba(42, 42, 42, 0.8);
-  color: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #00ff88;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha);
   }
 
   &:hover {
-    border-color: #00ff88;
+    border-color: var(--accent-color);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
   }
 }
 
 .profit-separator {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .filter-divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--border-primary);
   margin: 20px 0;
 }
 
@@ -529,7 +529,7 @@ export default {
 
   .formatting-description {
     font-size: 12px;
-    color: #cccccc;
+    color: var(--text-secondary);
     margin: 0;
     line-height: 1.4;
   }
@@ -543,22 +543,22 @@ export default {
 
 .risk-filter-btn {
   padding: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--bg-tertiary);
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: #00ff88;
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
     transform: translateY(-1px);
   }
 
   &.active {
-    border-color: #00ff88;
-    background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 204, 106, 0.2));
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.2);
+    border-color: var(--accent-color);
+    background: var(--accent-gradient);
+    box-shadow: var(--shadow-accent);
   }
 }
 
@@ -574,19 +574,19 @@ export default {
   margin-bottom: 4px;
 
   &.conservative {
-    background: #00ff88;
+    background: var(--accent-color);
   }
 
   &.moderate {
-    background: #ffc107;
+    background: var(--warning-color);
   }
 
   &.risky {
-    background: #ff4444;
+    background: var(--error-color);
   }
 
   &.all {
-    background: #cccccc;
+    background: var(--text-secondary);
   }
 }
 
@@ -594,12 +594,12 @@ export default {
   margin: 0 0 4px 0;
   font-size: 12px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .risk-description {
   font-size: 10px;
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .filter-category-header {
@@ -609,7 +609,7 @@ export default {
     margin: 0;
     font-size: 16px;
     font-weight: 600;
-    color: #ffffff;
+    color: var(--text-primary);
   }
 }
 
@@ -625,17 +625,17 @@ export default {
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: #00ff88;
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
     transform: translateY(-1px);
   }
 }
@@ -660,7 +660,7 @@ export default {
   left: 12px;
   width: 16px;
   height: 16px;
-  color: #cccccc;
+  color: var(--text-secondary);
   z-index: 1;
   transition: color 0.3s ease;
 }
@@ -668,29 +668,29 @@ export default {
 .search-input {
   width: 100%;
   padding: 8px 12px 8px 36px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 6px;
-  background: rgba(42, 42, 42, 0.8);
-  color: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #00ff88;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha);
 
     +.search-icon {
-      color: #00ff88;
+      color: var(--accent-color);
     }
   }
 
   &:hover {
-    border-color: #00ff88;
+    border-color: var(--accent-color);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
   }
 }
 
@@ -699,15 +699,15 @@ export default {
   right: 8px;
   background: none;
   border: none;
-  color: #cccccc;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 4px;
   border-radius: 50%;
   transition: all 0.3s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ff4444;
+    background: var(--bg-tertiary);
+    color: var(--error-color);
   }
 }
 
@@ -741,7 +741,7 @@ export default {
   flex: 1;
 
   &:hover {
-    background: rgba(0, 255, 136, 0.1);
+    background: var(--accent-color-alpha);
     transform: translateX(2px);
   }
 }
@@ -760,23 +760,23 @@ export default {
   flex-shrink: 0;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-tertiary);
     transform: scale(1.1);
   }
 
   .favorite-icon {
-    color: #cccccc;
+    color: var(--text-secondary);
     transition: all 0.3s ease;
   }
 
   &.favorited {
     .favorite-icon {
-      color: #ffc107;
-      filter: drop-shadow(0 0 8px rgba(255, 193, 7, 0.5));
+      color: var(--warning-color);
+      filter: drop-shadow(0 0 8px var(--warning-color-alpha));
     }
 
     &:hover {
-      background: rgba(255, 193, 7, 0.1);
+      background: var(--warning-color-alpha);
     }
   }
 }
@@ -795,16 +795,16 @@ input[type="checkbox"] {
 .checkmark {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--border-secondary);
   border-radius: 3px;
   position: relative;
   transition: all 0.3s ease;
 }
 
 input[type="checkbox"]:checked+.checkmark {
-  background: #00ff88;
-  border-color: #00ff88;
-  box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-accent);
 }
 
 input[type="checkbox"]:checked+.checkmark::after {
@@ -813,14 +813,14 @@ input[type="checkbox"]:checked+.checkmark::after {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: #1a1a1a;
+  color: var(--text-inverse);
   font-size: 10px;
   font-weight: bold;
 }
 
 .checkbox-label {
   font-size: 14px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .search-results-info {
@@ -830,7 +830,7 @@ input[type="checkbox"]:checked+.checkmark::after {
 
 .results-text {
   font-size: 12px;
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .sports-filter-section,
@@ -847,7 +847,7 @@ input[type="checkbox"]:checked+.checkmark::after {
   display: flex;
   gap: 12px;
   padding: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid var(--border-primary);
 }
 
 .clear-btn,
@@ -863,25 +863,25 @@ input[type="checkbox"]:checked+.checkmark::after {
 }
 
 .clear-btn {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--bg-secondary);
     transform: translateY(-1px);
   }
 }
 
 .apply-btn {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
   font-weight: 600;
 
   &:hover {
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    background: var(--accent-gradient);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-accent-hover);
   }
 }
 
@@ -891,7 +891,7 @@ input[type="checkbox"]:checked+.checkmark::after {
     width: 100vw;
     right: -100vw;
     border-left: none;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid var(--border-primary);
   }
 }
 

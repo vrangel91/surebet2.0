@@ -136,7 +136,7 @@ export default {
     transition: background-color 0.2s ease;
 
     &:hover {
-      background: var(--bg-hover);
+      background: var(--bg-tertiary);
     }
   }
 }
@@ -159,9 +159,9 @@ export default {
   .filter-name-input {
     width: 100%;
     padding: 12px 16px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border-secondary);
     border-radius: 8px;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
     color: var(--text-primary);
     font-size: 14px;
     transition: border-color 0.2s ease;
@@ -172,14 +172,14 @@ export default {
     }
 
     &::placeholder {
-      color: var(--text-secondary);
+      color: var(--text-muted);
     }
   }
 }
 
 .filter-preview {
   background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-secondary);
   border-radius: 8px;
   padding: 16px;
 
@@ -225,18 +225,18 @@ export default {
 }
 
 .cancel-btn {
-  background: var(--bg-secondary);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-secondary);
 
   &:hover {
-    background: var(--bg-hover);
+    background: var(--bg-secondary);
   }
 }
 
 .save-btn {
   background: var(--accent-color);
-  color: white;
+  color: var(--text-inverse);
 
   &:hover:not(:disabled) {
     background: var(--accent-hover);

@@ -226,7 +226,7 @@ export default {
 
 .load-btn {
   background: var(--accent-color);
-  color: white;
+  color: var(--text-inverse);
 
   &:hover {
     background: var(--accent-hover);
@@ -235,7 +235,7 @@ export default {
 
 .delete-btn {
   background: var(--error-color);
-  color: white;
+  color: var(--text-inverse);
 
   &:hover {
     background: var(--error-hover);

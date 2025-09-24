@@ -784,19 +784,19 @@ export default {
   gap: 16px;
   font-size: 32px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-primary);
   margin-bottom: 8px;
 }
 
 .guide-icon {
   width: 36px;
   height: 36px;
-  color: #00ff88;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+  color: var(--accent-color);
+  filter: drop-shadow(0 0 10px var(--accent-color-alpha));
 }
 
 .guide-subtitle {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 16px;
   margin: 0;
 }
@@ -817,10 +817,10 @@ export default {
 
 .nav-item {
   padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
   border-radius: 20px;
-  color: #ffffff;
+  color: var(--text-primary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -829,15 +829,15 @@ export default {
 }
 
 .nav-item:hover {
-  background: rgba(0, 255, 136, 0.2);
-  border-color: #00ff88;
+  background: var(--accent-color-alpha);
+  border-color: var(--accent-color);
   transform: translateY(-2px);
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
-  border-color: #00ff88;
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
+  border-color: var(--accent-color);
   font-weight: 600;
 }
 
@@ -848,7 +848,7 @@ export default {
 }
 
 .section-title {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 24px;
@@ -871,21 +871,21 @@ export default {
 }
 
 .content-card h3 {
-  color: #00ff88;
+  color: var(--accent-color);
   font-size: 22px;
   font-weight: 600;
   margin: 0 0 16px 0;
 }
 
 .content-card h4 {
-  color: #ffffff;
+  color: var(--text-primary);
   font-size: 18px;
   font-weight: 600;
   margin: 16px 0 8px 0;
 }
 
 .section-text {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 16px;
   line-height: 1.6;
   margin-bottom: 16px;
@@ -942,11 +942,11 @@ export default {
    margin: 20px 0;
  }
 
- .our-specialty {
-   background: linear-gradient(135deg, #00ff88, #00cc6a);
-   color: #1a1a1a;
-   padding: 4px 12px;
-   border-radius: 20px;
+.our-specialty {
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
+  padding: 4px 12px;
+  border-radius: 20px;
    font-size: 14px;
    font-weight: 700;
    text-transform: uppercase;

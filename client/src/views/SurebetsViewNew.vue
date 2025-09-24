@@ -56,11 +56,7 @@ import SurebetsContent from "../components/surebet/SurebetsContent.vue";
 import SurebetsModals from "../components/surebet/SurebetsModals.vue";
 import NotificationAudio from "../components/surebet/NotificationAudio.vue";
 
-import { useSurebetsData } from "../composables/useSurebetsData.js";
-import { useSurebetsSSE } from "../composables/useSurebetsSSE.js";
-import { usePinnedCards } from "../composables/usePinnedCards.js";
-import { useBookmakerAccounts } from "../composables/useBookmakerAccounts.js";
-import { useSidebar } from "../composables/useSidebar.js";
+import { useSurebets } from "../composables/useSurebets.js";
 
 import { filterOptions } from "../config/filters.js";
 import { getBookmakerUrl, addBookmakerUrl } from "../config/bookmakerUrls.js";
@@ -83,56 +79,17 @@ export default {
     Trash2,
   },
   setup() {
-    // Composables
-    const surebetsData = useSurebetsData();
-    const websocket = useSurebetsSSE();
-    const pinnedCards = usePinnedCards();
-    const bookmakerAccounts = useBookmakerAccounts();
-    const sidebar = useSidebar();
-
-    // Estados adicionais específicos da view
-    const showSearchSuggestions = ref(false);
-    const roundValues = ref(false);
+    // Usar o composable principal que coordena tudo
+    const surebetsComposable = useSurebets();
 
     // Carregar dados iniciais
     onMounted(() => {
-      pinnedCards.loadPinnedCards();
-      bookmakerAccounts.loadBookmakerAccounts();
+      surebetsComposable.loadPinnedCards();
+      surebetsComposable.loadBookmakerAccounts();
     });
 
-    // Métodos específicos da view
-    const showLiveRestrictedMessage = () => {
-      // Lógica para mostrar mensagem de restrição ao vivo
-      console.log('Mostrando mensagem de restrição ao vivo');
-    };
-
-    const hideSearchSuggestions = () => {
-      showSearchSuggestions.value = false;
-    };
-
     return {
-      // Dados de surebets
-      ...surebetsData,
-
-      // WebSocket e polling
-      ...websocket,
-
-      // Cards fixos
-      ...pinnedCards,
-
-      // Contas de bookmaker
-      ...bookmakerAccounts,
-
-      // Sidebar
-      ...sidebar,
-
-      // Estados específicos da view
-      showSearchSuggestions,
-      roundValues,
-
-      // Métodos específicos da view
-      showLiveRestrictedMessage,
-      hideSearchSuggestions,
+      ...surebetsComposable,
 
       // Configurações
       filterOptions,

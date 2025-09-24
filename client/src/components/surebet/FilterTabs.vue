@@ -103,9 +103,9 @@ export default {
   flex-wrap: wrap;
   margin: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: rgba(42, 42, 42, 0.6);
+  background: var(--bg-secondary);
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-primary);
   border-radius: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
@@ -122,10 +122,10 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -141,15 +141,15 @@ export default {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
     transition: left 0.5s ease;
   }
 
   &:hover {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: #00ff88;
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-hover);
 
     &::before {
       left: 100%;
@@ -157,16 +157,16 @@ export default {
   }
 
   &.active {
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
-    border-color: #00ff88;
-    color: #1a1a1a;
+    background: var(--accent-gradient);
+    border-color: var(--accent-color);
+    color: var(--text-inverse);
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-accent);
 
     &:hover {
-      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      background: var(--accent-gradient);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+      box-shadow: var(--shadow-accent-hover);
     }
   }
 
@@ -182,8 +182,8 @@ export default {
   cursor: not-allowed;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: var(--bg-tertiary);
+    border-color: var(--border-secondary);
     transform: none;
     box-shadow: none;
 
@@ -199,41 +199,42 @@ export default {
   gap: var(--spacing-sm);
   margin-left: auto;
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-md);
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: #00ff88;
+    border-color: var(--accent-color);
+    background: var(--accent-color-alpha);
   }
 }
 
 .date-filter-label {
   font-size: 14px;
   font-weight: 500;
-  color: #cccccc;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .date-filter-input {
   padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-sm);
-  background: rgba(42, 42, 42, 0.8);
-  color: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
   min-width: 120px;
 
   &:focus {
     outline: none;
-    border-color: #00ff88;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha);
   }
 
   &:hover {
-    border-color: #00ff88;
+    border-color: var(--accent-color);
   }
 }
 
@@ -245,15 +246,15 @@ export default {
   height: 24px;
   border: none;
   border-radius: var(--radius-full);
-  background: #ff4444;
-  color: white;
+  background: var(--error-color);
+  color: var(--text-inverse);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background: #cc0000;
+    background: var(--error-hover);
     transform: scale(1.1);
   }
 }
@@ -272,7 +273,7 @@ export default {
   left: var(--spacing-md);
   width: 18px;
   height: 18px;
-  color: #cccccc;
+  color: var(--text-secondary);
   z-index: 1;
   transition: color 0.3s ease;
 }
@@ -280,29 +281,29 @@ export default {
 .unified-search-input {
   width: 100%;
   padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 40px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-md);
-  background: rgba(42, 42, 42, 0.8);
-  color: #ffffff;
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-size: 14px;
   transition: all 0.3s ease;
 
   &:focus {
     outline: none;
-    border-color: #00ff88;
-    box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px var(--accent-color-alpha);
 
     +.search-icon {
-      color: #00ff88;
+      color: var(--accent-color);
     }
   }
 
   &:hover {
-    border-color: #00ff88;
+    border-color: var(--accent-color);
   }
 
   &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--text-muted);
   }
 }
 
@@ -324,18 +325,18 @@ export default {
   animation: fadeIn 0.3s ease;
 
   &.market {
-    background: #00ff88;
-    color: #1a1a1a;
+    background: var(--accent-color);
+    color: var(--text-inverse);
   }
 
   &.bookmaker {
-    background: #ffc107;
-    color: #1a1a1a;
+    background: var(--warning-color);
+    color: var(--text-inverse);
   }
 
   &.tournament {
-    background: #0dcaf0;
-    color: #1a1a1a;
+    background: var(--info-color);
+    color: var(--text-inverse);
   }
 }
 

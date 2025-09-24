@@ -2888,7 +2888,7 @@ export default {
     }
     
     span {
-      color: var(--text-secondary, #a0a0a0);
+      color: var(--text-secondary);
       font-size: 14px;
     }
   }

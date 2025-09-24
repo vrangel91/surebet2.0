@@ -163,7 +163,7 @@ export default {
   &.active {
     background: var(--accent-color);
     border-color: var(--accent-color);
-    color: white;
+    color: var(--text-inverse);
   }
 }
 
@@ -185,7 +185,7 @@ export default {
   border: 1px solid var(--error-color);
   border-radius: 6px;
   background: var(--error-color);
-  color: white;
+  color: var(--text-inverse);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -243,7 +243,7 @@ export default {
   right: 8px;
   z-index: 10;
   background: var(--accent-color);
-  color: white;
+  color: var(--text-inverse);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;

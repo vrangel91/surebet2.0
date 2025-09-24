@@ -683,9 +683,9 @@ export default {
 }
 
 .modal-close:hover {
-  background: rgba(255, 0, 0, 0.2);
-  border-color: #ff4444;
-  color: #ff4444;
+  background: var(--error-color-alpha);
+  border-color: var(--error-color);
+  color: var(--error-color);
   transform: scale(1.1);
 }
 
@@ -878,11 +878,11 @@ export default {
 }
 
 .category-tab.active {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #00d4ff 100%);
-  border-color: var(--accent-primary);
-  color: #000;
+  background: var(--accent-gradient);
+  border-color: var(--accent-color);
+  color: var(--text-inverse);
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: var(--shadow-accent);
 }
 
 /* Conteúdo das Categorias */
@@ -975,8 +975,8 @@ export default {
 }
 
 .market-count {
-  background: var(--accent-primary);
-  color: #000;
+  background: var(--accent-color);
+  color: var(--text-inverse);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.8rem;
@@ -1007,8 +1007,8 @@ export default {
 }
 
 .type-symbol {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, #00d4ff 100%);
-  color: #000;
+  background: var(--accent-gradient);
+  color: var(--text-inverse);
   padding: 8px 12px;
   border-radius: 6px;
   font-weight: 700;

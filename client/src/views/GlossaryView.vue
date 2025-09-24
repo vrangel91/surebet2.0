@@ -1214,22 +1214,22 @@ export default {
           
           // Cores específicas por tipo de símbolo
           &.over-symbol {
-            background: linear-gradient(135deg, #00ff88, #00cc6a);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.3);
+            background: var(--accent-gradient);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-accent);
           }
           
           &.under-symbol {
-            background: linear-gradient(135deg, #ff6b6b, #e55353);
-            color: white;
-            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            background: var(--error-gradient);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-error);
           }
           
           &.over-asia-symbol {
-            background: linear-gradient(135deg, #00ff88, #00cc6a);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0, 255, 136, 0.4);
-            border: 2px solid #00ff88;
+            background: var(--accent-gradient);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-accent-hover);
+            border: 2px solid var(--accent-color);
             position: relative;
             
             &::after {

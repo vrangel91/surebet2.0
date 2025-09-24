@@ -343,7 +343,7 @@ export function useSurebetsData(filters = null) {
                   if (apiUrl && apiUrl.includes("http")) {
                     dynamicUrls[bet.house] = apiUrl;
                     
-                    const mappedUrl = getBookmakerUrl(bet.house, bet.isLive);
+                    const mappedUrl = getBookmakerUrl(bet.house, bet.isLive, bet.anchorh1, bet.anchorh2, bet.anchorh1_original, bet.anchorh2_original, bet.house1, bet.house2);
                     if (mappedUrl.includes("google.com/search")) {
                       addBookmakerUrl(bet.house, extractBaseUrl(apiUrl), bet.isLive);
                     }

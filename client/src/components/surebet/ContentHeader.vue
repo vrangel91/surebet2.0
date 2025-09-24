@@ -27,7 +27,7 @@ export default {
 
 <style lang="scss" scoped>
 .content-header {
-  padding: var(--spacing-xl) 0;
+  padding: var(--spacing-xl) var(--spacing-lg);
   border-bottom: 1px solid var(--border-primary);
   margin-bottom: var(--spacing-xl);
   background: var(--bg-primary);
@@ -103,10 +103,10 @@ export default {
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 </style>
-

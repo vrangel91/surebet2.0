@@ -3,13 +3,13 @@
     <button class="control-btn" :class="{ active: isSearching }" @click="$emit('toggle-search')">
       <span class="control-text">{{
         isSearching ? "Pausar" : "Retomar"
-      }}</span>
+        }}</span>
     </button>
 
     <button class="control-btn" :class="{ active: soundEnabled }" @click="$emit('toggle-sound')">
       <span class="control-text">{{
         soundEnabled ? "Som On" : "Som Off"
-      }}</span>
+        }}</span>
     </button>
 
     <button class="control-btn refresh-btn" @click="$emit('manual-refresh')" :disabled="loading">
@@ -75,10 +75,10 @@ export default {
   align-items: center;
   margin: 0 var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
   padding: var(--spacing-md);
-  background: rgba(42, 42, 42, 0.8);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
@@ -88,10 +88,10 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-secondary);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -107,15 +107,15 @@ export default {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
     transition: left 0.5s ease;
   }
 
   &:hover {
-    background: rgba(0, 255, 136, 0.2);
-    border-color: #00ff88;
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-hover);
 
     &::before {
       left: 100%;
@@ -123,16 +123,16 @@ export default {
   }
 
   &.active {
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
-    border-color: #00ff88;
-    color: #1a1a1a;
+    background: var(--accent-gradient);
+    border-color: var(--accent-color);
+    color: var(--text-inverse);
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-accent);
 
     &:hover {
-      background: linear-gradient(135deg, #00ff88, #00cc6a);
+      background: var(--accent-gradient);
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+      box-shadow: var(--shadow-accent-hover);
     }
   }
 
@@ -170,31 +170,31 @@ export default {
 }
 
 .filter-toggle-btn {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  border-color: #00ff88;
-  color: #1a1a1a;
+  background: var(--accent-gradient);
+  border-color: var(--accent-color);
+  color: var(--text-inverse);
   font-weight: 600;
 
   &:hover {
-    background: linear-gradient(135deg, #00ff88, #00cc6a);
-    border-color: #00ff88;
+    background: var(--accent-gradient);
+    border-color: var(--accent-color);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4);
+    box-shadow: var(--shadow-accent-hover);
   }
 }
 
 .pinned-indicator {
-  background: linear-gradient(135deg, #ffc107, #e0a800);
-  border-color: #ffc107;
-  color: #1a1a1a;
+  background: var(--warning-gradient);
+  border-color: var(--warning-color);
+  color: var(--text-inverse);
   font-weight: 600;
   animation: pulse 2s infinite;
 
   &:hover {
-    background: linear-gradient(135deg, #ffc107, #e0a800);
-    border-color: #ffc107;
+    background: var(--warning-gradient);
+    border-color: var(--warning-color);
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 193, 7, 0.4);
+    box-shadow: var(--shadow-warning);
   }
 }
 
@@ -231,15 +231,15 @@ export default {
 /* Animações */
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(255, 170, 0, 0.7);
+    box-shadow: 0 0 0 0 var(--warning-color-alpha);
   }
 
   70% {
-    box-shadow: 0 0 0 10px rgba(255, 170, 0, 0);
+    box-shadow: 0 0 0 10px transparent;
   }
 
   100% {
-    box-shadow: 0 0 0 0 rgba(255, 170, 0, 0);
+    box-shadow: 0 0 0 0 transparent;
   }
 }
 </style>

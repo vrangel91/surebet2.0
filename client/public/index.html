@@ -72,11 +72,8 @@
                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                    console.log('🔄 Nova versão disponível, atualizando...');
                    
-                   // Mostrar notificação de atualização
-                   if (confirm('Uma nova versão do SureStake está disponível. Deseja atualizar agora?')) {
-                     newWorker.postMessage({ type: 'SKIP_WAITING' });
-                     window.location.reload();
-                   }
+                   // Mostrar notificação de atualização personalizada
+                   showUpdateModal(newWorker);
                  }
                });
              });
@@ -125,6 +122,101 @@
       </div>
     </div>
     
+    <!-- Modal de Atualização PWA -->
+    <div id="pwa-update-modal" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    ">
+      <div style="
+        background: var(--bg-primary, #2a2a2a);
+        border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+        border-radius: var(--radius-lg, 12px);
+        padding: var(--spacing-2xl, 32px);
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+      ">
+        <!-- Ícone de Atualização -->
+        <div style="
+          width: 64px;
+          height: 64px;
+          background: linear-gradient(135deg, var(--accent-color, #00ff88), var(--accent-hover, #00cc6a));
+          border-radius: 50%;
+          margin: 0 auto var(--spacing-lg, 20px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          color: var(--text-inverse, #1a1a1a);
+          font-weight: bold;
+          animation: pulse 2s infinite;
+        ">🔄</div>
+        
+        <!-- Título -->
+        <h2 style="
+          color: var(--text-primary, #ffffff);
+          font-size: 24px;
+          font-weight: 700;
+          margin: 0 0 var(--spacing-md, 12px) 0;
+          line-height: 1.2;
+        ">Nova Versão Disponível</h2>
+        
+        <!-- Descrição -->
+        <p style="
+          color: var(--text-secondary, #cccccc);
+          font-size: 16px;
+          margin: 0 0 var(--spacing-2xl, 32px) 0;
+          line-height: 1.5;
+        ">Uma nova versão do SureStake está disponível. Deseja atualizar agora?</p>
+        
+        <!-- Botões -->
+        <div style="
+          display: flex;
+          gap: var(--spacing-md, 12px);
+          justify-content: center;
+        ">
+          <button id="update-later-btn" style="
+            padding: var(--spacing-md, 12px) var(--spacing-xl, 24px);
+            border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.2));
+            border-radius: var(--radius-md, 8px);
+            background: transparent;
+            color: var(--text-secondary, #cccccc);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+          ">Depois</button>
+          
+          <button id="update-now-btn" style="
+            padding: var(--spacing-md, 12px) var(--spacing-xl, 24px);
+            border: 1px solid var(--accent-color, #00ff88);
+            border-radius: var(--radius-md, 8px);
+            background: linear-gradient(135deg, var(--accent-color, #00ff88), var(--accent-hover, #00cc6a));
+            color: var(--text-inverse, #1a1a1a);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+          ">Atualizar Agora</button>
+        </div>
+      </div>
+    </div>
+
     <!-- built files will be auto injected -->
     
     <script>
@@ -153,6 +245,105 @@
       if (appElement && appElement.children.length > 0) {
         setTimeout(hideLoadingIndicator, 500);
       }
+      
+      // 🎨 Função para mostrar modal de atualização personalizado
+      function showUpdateModal(newWorker) {
+        const modal = document.getElementById('pwa-update-modal');
+        const updateNowBtn = document.getElementById('update-now-btn');
+        const updateLaterBtn = document.getElementById('update-later-btn');
+        
+        if (!modal) return;
+        
+        // Mostrar modal com animação
+        modal.style.display = 'flex';
+        setTimeout(() => {
+          modal.style.opacity = '1';
+          modal.querySelector('div').style.transform = 'scale(1)';
+        }, 10);
+        
+        // Event listeners para os botões
+        updateNowBtn.addEventListener('click', () => {
+          newWorker.postMessage({ type: 'SKIP_WAITING' });
+          window.location.reload();
+        });
+        
+        updateLaterBtn.addEventListener('click', () => {
+          hideUpdateModal();
+        });
+        
+        // Fechar modal ao clicar no fundo
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            hideUpdateModal();
+          }
+        });
+      }
+      
+      // 🎨 Função para ocultar modal de atualização
+      function hideUpdateModal() {
+        const modal = document.getElementById('pwa-update-modal');
+        if (!modal) return;
+        
+        modal.style.opacity = '0';
+        modal.querySelector('div').style.transform = 'scale(0.9)';
+        
+        setTimeout(() => {
+          modal.style.display = 'none';
+        }, 300);
+      }
     </script>
+    
+    <!-- CSS para animações e estilos do modal -->
+    <style>
+      /* Animação de pulso para o ícone */
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7);
+        }
+        70% {
+          transform: scale(1.05);
+          box-shadow: 0 0 0 10px rgba(0, 255, 136, 0);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(0, 255, 136, 0);
+        }
+      }
+      
+      /* Hover effects para os botões */
+      #update-later-btn:hover {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        transform: translateY(-1px);
+      }
+      
+      #update-now-btn:hover {
+        background: linear-gradient(135deg, #00ff88, #00cc6a) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 255, 136, 0.4) !important;
+      }
+      
+      /* Responsividade */
+      @media (max-width: 480px) {
+        #pwa-update-modal > div {
+          padding: var(--spacing-xl, 24px) !important;
+          margin: var(--spacing-md, 16px) !important;
+        }
+        
+        #pwa-update-modal h2 {
+          font-size: 20px !important;
+        }
+        
+        #pwa-update-modal p {
+          font-size: 14px !important;
+        }
+        
+        #pwa-update-modal button {
+          padding: var(--spacing-sm, 8px) var(--spacing-lg, 16px) !important;
+          font-size: 13px !important;
+        }
+      }
+    </style>
   </body>
 </html>

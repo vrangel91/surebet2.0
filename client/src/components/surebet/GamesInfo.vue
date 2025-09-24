@@ -118,12 +118,12 @@ export default {
 }
 
 .info-card {
-  background: rgba(42, 42, 42, 0.8);
+  background: var(--bg-secondary);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -135,13 +135,13 @@ export default {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #00ff88, #00cc6a, #00ff88);
+    background: var(--accent-gradient);
     animation: shimmer 2s infinite;
   }
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
   }
 }
 
@@ -158,16 +158,16 @@ export default {
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: #00ff88;
+  background: var(--accent-color);
   border-radius: var(--radius-md);
-  color: #1a1a1a;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+  color: var(--text-inverse);
+  filter: drop-shadow(0 0 10px var(--accent-color-alpha));
 }
 
 .info-title {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
   margin: 0;
 }
 
@@ -182,32 +182,32 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   font-size: 14px;
-  color: #ffffff;
+  color: var(--text-primary);
   font-weight: 500;
   flex-wrap: wrap;
 }
 
 .count-label {
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .count-value {
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-color);
   font-size: 16px;
 }
 
 .count-separator {
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .count-total {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .count-unit {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -220,28 +220,28 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
+  background: var(--accent-color-alpha);
+  border: 1px solid var(--accent-color);
   border-radius: var(--radius-md);
   font-size: 12px;
   font-weight: 500;
-  color: #00ff88;
+  color: var(--accent-color);
 }
 
 .more-dot {
   width: 6px;
   height: 6px;
-  background: #00ff88;
+  background: var(--accent-color);
   border-radius: 50%;
   animation: pulse 2s infinite;
 }
 
 .search-results-card {
-  background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), rgba(0, 204, 106, 0.15));
-  border: 2px solid rgba(0, 255, 136, 0.4);
+  background: var(--accent-color-alpha);
+  border: 2px solid var(--accent-color);
   border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.1);
+  box-shadow: var(--shadow-accent);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -253,13 +253,13 @@ export default {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, #00ff88, #00cc6a, #00ff88);
+    background: var(--accent-gradient);
     animation: shimmer 2s infinite;
   }
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 255, 136, 0.2);
+    box-shadow: var(--shadow-accent-hover);
   }
 }
 
@@ -276,16 +276,16 @@ export default {
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: #00ff88;
+  background: var(--accent-color);
   border-radius: var(--radius-sm);
-  color: #1a1a1a;
-  filter: drop-shadow(0 0 10px rgba(0, 255, 136, 0.5));
+  color: var(--text-inverse);
+  filter: drop-shadow(0 0 10px var(--accent-color-alpha));
 }
 
 .search-title {
   font-size: 14px;
   font-weight: 600;
-  color: #00ff88;
+  color: var(--accent-color);
   margin: 0;
 }
 
@@ -300,28 +300,28 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   font-size: 14px;
-  color: #00ff88;
+  color: var(--accent-color);
   font-weight: 500;
   flex-wrap: wrap;
 }
 
 .filtered-count {
   font-weight: 700;
-  color: #00ff88;
+  color: var(--accent-color);
   font-size: 16px;
 }
 
 .filtered-separator {
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .total-filtered {
   font-weight: 600;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 .filtered-unit {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 
@@ -330,19 +330,19 @@ export default {
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-primary);
   border-radius: var(--radius-md);
   font-size: 12px;
 }
 
 .search-type-label {
-  color: #cccccc;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
 .search-type-value {
-  color: #00ff88;
+  color: var(--accent-color);
   font-weight: 600;
 }
 
