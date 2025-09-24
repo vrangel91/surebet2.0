@@ -57,5 +57,14 @@ module.exports = (sequelize) => {
     timestamps: true
   })
 
+  // Associações
+  Plan.associate = (models) => {
+    // Usuários que possuem este plano
+    Plan.hasMany(models.User, {
+      foreignKey: 'plan_id',
+      as: 'users'
+    });
+  };
+
   return Plan
 }

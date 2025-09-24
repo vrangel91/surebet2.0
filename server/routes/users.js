@@ -39,8 +39,15 @@ const pool = new Pool({
   password: 'SureStake2024!'
 });
 
-// Aplicar middleware de autenticação em todas as rotas
-router.use(authenticateToken);
+// Aplicar middleware de autenticação em todas as rotas (exceto teste)
+router.use((req, res, next) => {
+  // Permitir rota de teste sem autenticação
+  if (req.path === '/test') {
+    return next();
+  }
+  // Aplicar autenticação para todas as outras rotas
+  return authenticateToken(req, res, next);
+});
 
 // ===== ROTA DE PERFIL DO USUÁRIO =====
 
@@ -52,12 +59,20 @@ router.get('/profile', async (req, res) => {
     console.log('🔍 [Users] User from token:', req.user)
     console.log('👤 [Profile] Buscando perfil do usuário:', req.user.id);
     
+    const { Plan } = require('../models');
+    
     const user = await User.findByPk(req.user.id, {
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
         'vip_expires_at', 'account_type', 'cpf', 'phone', 'created_at', 'last_login',
-        'referral_code', 'referred_by'
-      ]
+        'referral_code', 'referred_by', 'plan_id'
+      ],
+      include: [{
+        model: Plan,
+        as: 'plan',
+        attributes: ['id', 'name', 'display_name', 'type', 'category', 'price', 'duration_days', 'color', 'css_class'],
+        required: false
+      }]
     });
 
     if (!user) {
@@ -757,26 +772,83 @@ router.get('/vip-status', authenticateToken, async (req, res) => {
 
 // ===== ROTAS DE USUÁRIOS =====
 
+// Rota de teste simples
+router.get('/test', async (req, res) => {
+  try {
+    console.log('🔍 [Users API] Rota de teste executada');
+    res.json({
+      success: true,
+      message: 'Rota de teste funcionando',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ [Users API] Erro na rota de teste:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Listar todos os usuários
 router.get('/', async (req, res) => {
   try {
-    const users = await User.findAll({
+    console.log('🔍 [Users API] Rota / executada - Buscando usuários...');
+    const { Plan } = require('../models');
+    console.log('📋 [Users API] Modelo Plan importado:', !!Plan);
+    
+    console.log('📋 [Users API] Iniciando consulta User.findAll...');
+    
+    // Primeiro, vamos testar uma consulta simples sem include
+    console.log('🔍 [Users API] Testando consulta simples...');
+    const simpleUsers = await User.findAll({
       attributes: [
         'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
-        'vip_expires_at', 'account_type', 'status', 'created_at', 'last_login'
+        'vip_expires_at', 'account_type', 'status', 'created_at', 'last_login', 'plan_id'
       ],
       order: [['created_at', 'DESC']]
     });
+    console.log(`✅ [Users API] Consulta simples executada com sucesso. ${simpleUsers.length} usuários encontrados.`);
+    
+    // Por enquanto, vamos usar apenas a consulta simples para evitar o erro
+    console.log('🔍 [Users API] Usando consulta simples (sem include do Plan por enquanto)...');
+    const users = simpleUsers;
+    console.log(`✅ [Users API] Usando dados da consulta simples. ${users.length} usuários encontrados.`);
+    
+    // Para cada usuário, vamos buscar o plano separadamente se tiver plan_id
+    console.log('🔍 [Users API] Buscando planos individuais para usuários...');
+    for (let user of users) {
+      if (user.plan_id) {
+        try {
+          const plan = await Plan.findByPk(user.plan_id);
+          if (plan) {
+            user.dataValues.plan = plan.toJSON();
+          }
+        } catch (planError) {
+          console.log(`⚠️ [Users API] Erro ao buscar plano ${user.plan_id} para usuário ${user.id}:`, planError.message);
+        }
+      }
+    }
 
     // Mapear os dados para incluir o campo 'name' esperado pelo frontend
+    console.log('🔍 [Users API] Iniciando mapeamento dos usuários...');
     const mappedUsers = users.map(user => ({
       ...user.toJSON(),
       name: user.username || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Nome não informado',
       role: user.is_admin ? 'admin' : 'user',
       account_type: user.account_type || 'user',
       status: user.status, // Usar o status real do banco de dados
-      lastLogin: user.last_login // Mapear para o formato esperado pelo frontend
+      lastLogin: user.last_login, // Mapear para o formato esperado pelo frontend
+      plan: user.plan || null // Incluir dados do plano
     }));
+
+    console.log('✅ [Users API] Usuários mapeados com sucesso');
+    console.log(`📊 [Users API] Total de usuários retornados: ${mappedUsers.length}`);
+    
+    // Log do primeiro usuário para debug
+    if (mappedUsers.length > 0) {
+      console.log('🔍 [Users API] Primeiro usuário:', JSON.stringify(mappedUsers[0], null, 2));
+    }
 
     res.json({
       success: true,
@@ -784,9 +856,258 @@ router.get('/', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro ao listar usuários:', error);
+    console.error('❌ [Users API] Erro ao listar usuários:', error);
+    console.error('📋 [Users API] Stack trace:', error.stack);
+    console.error('📋 [Users API] Error name:', error.name);
+    console.error('📋 [Users API] Error message:', error.message);
     res.status(500).json({
-      error: 'Erro interno do servidor'
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+// Listar planos ativos (substitui a funcionalidade de VIPs ativos)
+router.get('/with-plans', async (req, res) => {
+  try {
+    console.log('🔍 [Users API] Rota /with-plans executada - Buscando planos ativos...');
+    const { Plan } = require('../models');
+    
+    // Consulta simples primeiro - apenas usuários com plan_id
+    const users = await User.findAll({
+      attributes: [
+        'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
+        'vip_expires_at', 'account_type', 'status', 'created_at', 'last_login', 'plan_id'
+      ],
+      where: {
+        plan_id: {
+          [require('sequelize').Op.ne]: null // Apenas usuários com plano
+        }
+      },
+      order: [['created_at', 'DESC']]
+    });
+    
+    console.log(`✅ [Users API] Consulta simples executada. ${users.length} planos ativos encontrados.`);
+    
+    // Para cada usuário, buscar o plano separadamente
+    console.log('🔍 [Users API] Buscando planos individuais para usuários com planos...');
+    for (let user of users) {
+      if (user.plan_id) {
+        try {
+          const plan = await Plan.findByPk(user.plan_id);
+          if (plan) {
+            user.dataValues.plan = plan.toJSON();
+          }
+        } catch (planError) {
+          console.log(`⚠️ [Users API] Erro ao buscar plano ${user.plan_id} para usuário ${user.id}:`, planError.message);
+        }
+      }
+    }
+    
+    // Filtrar apenas usuários com planos específicos (full, live, pré+live, pré jogo, value bet)
+    const allowedCategories = ['Full', 'Live', 'Pré+Live', 'Pré-Jogo', 'Valuebet'];
+    console.log('🔍 [Users API] Categorias permitidas:', allowedCategories);
+    
+    const filteredUsers = users.filter(user => {
+      if (!user.dataValues.plan) {
+        console.log(`⚠️ [Users API] Usuário ${user.id} não tem plano associado`);
+        return false;
+      }
+      
+      const planCategory = user.dataValues.plan.category;
+      const isAllowed = allowedCategories.includes(planCategory);
+      
+      console.log(`🔍 [Users API] Usuário ${user.id}: Plano ${user.dataValues.plan.name} (categoria: ${planCategory}) - ${isAllowed ? 'PERMITIDO' : 'FILTRADO'}`);
+      
+      return isAllowed;
+    });
+    
+    console.log(`🔍 [Users API] Planos filtrados por categoria. ${filteredUsers.length} planos ativos permitidos.`);
+
+    // Mapear os dados para o formato esperado pelo frontend
+    const mappedUsers = filteredUsers.map(user => ({
+      id: user.id,
+      userId: user.id,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email
+      },
+      planId: user.dataValues.plan ? user.dataValues.plan.id : null,
+      planName: user.dataValues.plan ? user.dataValues.plan.display_name : 'Plano não encontrado',
+      planType: user.dataValues.plan ? user.dataValues.plan.type : null,
+      planCategory: user.dataValues.plan ? user.dataValues.plan.category : null,
+      planPrice: user.dataValues.plan ? user.dataValues.plan.price : 0,
+      planDays: user.dataValues.plan ? user.dataValues.plan.duration_days : 0,
+      planColor: user.dataValues.plan ? user.dataValues.plan.color : null,
+      planCssClass: user.dataValues.plan ? user.dataValues.plan.css_class : null,
+      dataInicio: user.created_at, // Data de criação do usuário como início
+      dataFim: user.vip_expires_at, // Data de expiração do VIP
+      amount: user.dataValues.plan ? user.dataValues.plan.price : 0,
+      status: user.is_vip ? 'ativo' : 'inativo',
+      autoRenew: false, // Por enquanto sempre false
+      createdAt: user.created_at
+    }));
+
+    console.log('✅ [Users API] Planos ativos mapeados com sucesso');
+    console.log(`📊 [Users API] Total de planos ativos retornados: ${mappedUsers.length}`);
+    
+    // Log do primeiro usuário para debug
+    if (mappedUsers.length > 0) {
+      console.log('🔍 [Users API] Primeiro usuário com plano:', JSON.stringify(mappedUsers[0], null, 2));
+    }
+    
+    // Log de todos os usuários para debug
+    console.log('🔍 [Users API] Todos os usuários com planos ativos:');
+    mappedUsers.forEach((user, index) => {
+      console.log(`  ${index + 1}. ID: ${user.id}, Nome: ${user.user?.first_name} ${user.user?.last_name}, Plano: ${user.planName} (${user.planCategory})`);
+    });
+
+    res.json({
+      success: true,
+      activeVIPs: mappedUsers,
+      count: mappedUsers.length
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao listar planos ativos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+// Listar usuários sem planos (categoria "SEM PLANO")
+router.get('/without-plans', async (req, res) => {
+  try {
+    console.log('🔍 [Users API] Rota /without-plans executada - Buscando usuários sem planos...');
+    
+    // Buscar usuários sem plan_id ou com plan_id nulo
+    const users = await User.findAll({
+      attributes: [
+        'id', 'username', 'first_name', 'last_name', 'email', 'is_admin', 'is_vip',
+        'vip_expires_at', 'account_type', 'status', 'created_at', 'last_login', 'plan_id'
+      ],
+      where: {
+        [require('sequelize').Op.or]: [
+          { plan_id: null },
+          { plan_id: { [require('sequelize').Op.is]: null } }
+        ]
+      },
+      order: [['created_at', 'DESC']]
+    });
+    
+    console.log(`✅ [Users API] ${users.length} usuários sem planos encontrados.`);
+    
+    // Mapear os dados para o formato esperado pelo frontend
+    const mappedUsers = users.map(user => ({
+      id: user.id,
+      userId: user.id,
+      user: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email
+      },
+      planId: null,
+      planName: 'SEM PLANO',
+      planType: 'sem-plano',
+      planCategory: 'sem-plano',
+      planPrice: 0,
+      planDays: 0,
+      planColor: '#6c757d',
+      planCssClass: 'sem-plano',
+      dataInicio: user.created_at,
+      dataFim: null,
+      amount: 0,
+      status: 'sem-plano',
+      autoRenew: false,
+      createdAt: user.created_at
+    }));
+    
+    console.log('✅ [Users API] Usuários sem planos mapeados com sucesso');
+    console.log(`📊 [Users API] Total de usuários sem planos retornados: ${mappedUsers.length}`);
+    
+    res.json({
+      success: true,
+      usersWithoutPlans: mappedUsers,
+      count: mappedUsers.length
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro ao listar usuários sem planos:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+// Atualizar plano do usuário (admin only)
+router.put('/:id/plan', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { plan_id, is_vip, vip_expires_at, account_type, notes } = req.body;
+    
+    console.log(`🔄 Atualizando plano do usuário ${id}...`);
+    console.log('📋 Dados recebidos:', { plan_id, is_vip, vip_expires_at, account_type, notes });
+    
+    // Verificar se o usuário existe
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuário não encontrado'
+      });
+    }
+    
+    // Verificar se o plano existe
+    if (plan_id) {
+      const { Plan } = require('../models');
+      const plan = await Plan.findByPk(plan_id);
+      if (!plan) {
+        return res.status(400).json({
+          success: false,
+          message: 'Plano não encontrado'
+        });
+      }
+    }
+    
+    // Atualizar usuário
+    const updateData = {};
+    if (plan_id !== undefined) updateData.plan_id = plan_id;
+    if (is_vip !== undefined) updateData.is_vip = is_vip;
+    if (vip_expires_at !== undefined) updateData.vip_expires_at = vip_expires_at;
+    if (account_type !== undefined) updateData.account_type = account_type;
+    
+    await user.update(updateData);
+    
+    console.log(`✅ Plano do usuário ${id} atualizado com sucesso`);
+    
+    res.json({
+      success: true,
+      message: 'Plano atualizado com sucesso',
+      user: {
+        id: user.id,
+        email: user.email,
+        plan_id: user.plan_id,
+        is_vip: user.is_vip,
+        vip_expires_at: user.vip_expires_at,
+        account_type: user.account_type
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro ao atualizar plano do usuário:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
     });
   }
 });

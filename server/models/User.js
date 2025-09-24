@@ -98,6 +98,15 @@ module.exports = (sequelize) => {
       validate: {
         isIn: [['active', 'inactive']]
       }
+    },
+    plan_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'plans',
+        key: 'id'
+      },
+      comment: 'ID do plano associado ao usuário'
     }
     // Colunas removidas pois não existem no banco surestake
     // role, credits, login_attempts, locked_until, last_credit_consumption
@@ -157,6 +166,10 @@ module.exports = (sequelize) => {
     });
     
     // Plano do usuário
+    User.belongsTo(models.Plan, {
+      foreignKey: 'plan_id',
+      as: 'plan'
+    });
   };
 
   return User;

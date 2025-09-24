@@ -301,7 +301,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 // GET /api/notifications/unread-count - Contar notificações não lidas
 router.get('/unread-count', authenticateToken, async (req, res) => {
   try {
-    console.log('🔔 [Notifications] Buscando contagem de não lidas para usuário:', req.user.userId);
+    console.log('🔔 [Notifications] Buscando contagem de não lidas para usuário:', req.user.id);
 
     // Consulta base - notificações não lidas
     let whereClause = {
