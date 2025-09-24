@@ -74,6 +74,10 @@
               @mouseenter="showTooltip($event, bet.market)" @mouseleave="hideTooltip">
               {{ bet.market || 'Resultado Final' }}
             </span>
+            <button class="market-info-btn" @mouseenter="showMarketInfoTooltip($event, bet.market)"
+              @mouseleave="hideMarketInfoTooltip" :title="'Informações sobre ' + (bet.market || 'Resultado Final')">
+              <i class="bi bi-info-circle market-info-icon"></i>
+            </button>
           </div>
         </div>
 
@@ -138,7 +142,9 @@ export default {
     return {
       defaultStake: 100.00, // Valor padrão, será carregado das configurações
       tooltipTimeout: null,
-      currentTooltip: null
+      currentTooltip: null,
+      marketInfoTooltipTimeout: null,
+      currentMarketInfoTooltip: null
     }
   },
   computed: {
@@ -221,12 +227,14 @@ export default {
   beforeDestroy() {
     // Limpa tooltips ao destruir o componente
     this.hideTooltip()
+    this.hideMarketInfoTooltip()
     this.removeTooltipCleanup()
     this.clearAllTooltips()
   },
   beforeUnmount() {
     // Limpa tooltips ao desmontar o componente (Vue 3)
     this.hideTooltip()
+    this.hideMarketInfoTooltip()
     this.removeTooltipCleanup()
     this.clearAllTooltips()
   },
@@ -1269,7 +1277,7 @@ export default {
 
     // Limpa todos os tooltips órfãos
     clearAllTooltips() {
-      const tooltips = document.querySelectorAll('.market-tooltip')
+      const tooltips = document.querySelectorAll('.market-tooltip, .market-info-tooltip')
       tooltips.forEach(tooltip => {
         if (tooltip.parentNode) {
           tooltip.parentNode.removeChild(tooltip)
@@ -1281,8 +1289,9 @@ export default {
     setupTooltipCleanup() {
       // Limpa tooltips ao clicar fora
       this.clickHandler = (event) => {
-        if (!event.target.closest('.market.has-translation')) {
+        if (!event.target.closest('.market.has-translation') && !event.target.closest('.market-info-btn')) {
           this.hideTooltip()
+          this.hideMarketInfoTooltip()
         }
       }
       document.addEventListener('click', this.clickHandler)
@@ -1290,12 +1299,14 @@ export default {
       // Limpa tooltips ao rolar a página
       this.scrollHandler = () => {
         this.hideTooltip()
+        this.hideMarketInfoTooltip()
       }
       window.addEventListener('scroll', this.scrollHandler, { passive: true })
 
       // Limpa tooltips ao redimensionar a janela
       this.resizeHandler = () => {
         this.hideTooltip()
+        this.hideMarketInfoTooltip()
       }
       window.addEventListener('resize', this.resizeHandler, { passive: true })
 
@@ -1322,6 +1333,866 @@ export default {
       if (this.routerHandler && this.$router) {
         this.$router.beforeEach(this.routerHandler)
       }
+    },
+
+    // Mostra tooltip de informações do mercado
+    showMarketInfoTooltip(event, market) {
+      if (!market) return
+
+      // Previne múltiplos tooltips
+      if (this.marketInfoTooltipTimeout) {
+        clearTimeout(this.marketInfoTooltipTimeout)
+        this.marketInfoTooltipTimeout = null
+      }
+
+      // Remove tooltip existente imediatamente
+      this.hideMarketInfoTooltip()
+
+      // Delay para evitar piscar
+      this.marketInfoTooltipTimeout = setTimeout(() => {
+        this.createMarketInfoTooltip(event, market)
+      }, 150)
+    },
+
+    // Cria o tooltip de informações do mercado
+    createMarketInfoTooltip(event, market) {
+      // Verifica se ainda existe o elemento target
+      if (!event.target || !event.target.parentNode) return
+
+      // Remove tooltip existente
+      this.hideMarketInfoTooltip()
+
+      // Cria elemento do tooltip
+      const tooltip = document.createElement('div')
+      tooltip.className = 'market-info-tooltip'
+      tooltip.id = 'market-info-tooltip'
+
+      // Gera o conteúdo do tooltip baseado no tipo de mercado
+      const tooltipContent = this.generateMarketInfoContent(market)
+      tooltip.innerHTML = tooltipContent
+
+      // Adiciona ao body
+      document.body.appendChild(tooltip)
+
+      // Posiciona o tooltip
+      const rect = event.target.getBoundingClientRect()
+      const tooltipRect = tooltip.getBoundingClientRect()
+
+      let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2)
+      let top = rect.top - tooltipRect.height - 8
+      let isAbove = true
+
+      // Ajusta se sair da tela
+      if (left < 8) left = 8
+      if (left + tooltipRect.width > window.innerWidth - 8) {
+        left = window.innerWidth - tooltipRect.width - 8
+      }
+
+      // Se não couber acima, coloca abaixo
+      if (top < 8) {
+        top = rect.bottom + 8
+        isAbove = false
+      }
+
+      // Adiciona classe para posicionamento da seta
+      if (isAbove) {
+        tooltip.classList.add('above')
+      }
+
+      tooltip.style.left = left + 'px'
+      tooltip.style.top = top + 'px'
+
+      // Adiciona animação
+      requestAnimationFrame(() => {
+        if (tooltip && tooltip.parentNode) {
+          tooltip.classList.add('show')
+        }
+      })
+
+      // Armazena referência para limpeza
+      this.currentMarketInfoTooltip = tooltip
+    },
+
+    // Esconde tooltip de informações do mercado
+    hideMarketInfoTooltip() {
+      // Limpa timeout se existir
+      if (this.marketInfoTooltipTimeout) {
+        clearTimeout(this.marketInfoTooltipTimeout)
+        this.marketInfoTooltipTimeout = null
+      }
+
+      // Remove tooltip atual
+      if (this.currentMarketInfoTooltip) {
+        this.currentMarketInfoTooltip.classList.remove('show')
+        setTimeout(() => {
+          if (this.currentMarketInfoTooltip && this.currentMarketInfoTooltip.parentNode) {
+            this.currentMarketInfoTooltip.parentNode.removeChild(this.currentMarketInfoTooltip)
+          }
+          this.currentMarketInfoTooltip = null
+        }, 200)
+      }
+
+      // Remove tooltip por ID (fallback)
+      const tooltip = document.getElementById('market-info-tooltip')
+      if (tooltip) {
+        tooltip.classList.remove('show')
+        setTimeout(() => {
+          if (tooltip && tooltip.parentNode) {
+            tooltip.parentNode.removeChild(tooltip)
+          }
+        }, 200)
+      }
+    },
+
+    // Gera o conteúdo do tooltip baseado no tipo de mercado
+    generateMarketInfoContent(market) {
+      const teams = this.getTeamNames()
+      const marketType = this.getMarketType(market)
+
+      let content = `
+        <div class="market-info-header">
+          <h4>${market}</h4>
+          <p class="market-description">${this.getMarketDescription(market)}</p>
+        </div>
+      `
+
+      switch (marketType) {
+        case 'team1win':
+        case 'team2win':
+          content += this.generateTeamWinMatrix(teams, marketType)
+          break
+        case 'over':
+        case 'under':
+          content += this.generateOverUnderMatrix(market)
+          break
+        case 'ah1':
+        case 'ah2':
+          content += this.generateHandicapMatrix(teams, market, marketType)
+          break
+        case 'eh1':
+        case 'eh2':
+          content += this.generateEuropeanHandicapMatrix(teams, market, marketType)
+          break
+        case 'double_chance_1x':
+        case 'double_chance_x2':
+          content += this.generateDoubleChanceMatrix(teams, marketType)
+          break
+        case 'match_result':
+          content += this.generateMatchResultMatrix(teams)
+          break
+        case 'draw_no_bet':
+          content += this.generateDrawNoBetMatrix(teams)
+          break
+        case 'both_score_yes':
+        case 'both_score_no':
+          content += this.generateBothScoreMatrix(marketType)
+          break
+        case 'first_goal':
+        case 'last_goal':
+          content += this.generateGoalMatrix(teams, marketType)
+          break
+        case 'even':
+        case 'odd':
+          content += this.generateEvenOddMatrix(marketType)
+          break
+        case 'exact_score':
+          content += this.generateExactScoreMatrix()
+          break
+        case 'sets':
+          content += this.generateSetsMatrix()
+          break
+        case 'player_score':
+        case 'player_rebounds':
+          content += this.generatePlayerMatrix(marketType)
+          break
+        case 'corners':
+        case 'fouls':
+        case 'offsides':
+        case 'shots_on_goal':
+        case 'field_goals':
+        case 'touchdowns':
+          content += this.generateSpecificMarketMatrix(marketType)
+          break
+        case 'half_time':
+        case 'full_time':
+          content += this.generateTimeMatrix(teams, marketType)
+          break
+        default:
+          content += this.generateGenericMatrix(market)
+      }
+
+      return content
+    },
+
+    // Identifica o tipo de mercado
+    getMarketType(market) {
+      if (!market) return 'generic'
+
+      const marketLower = market.toLowerCase()
+
+      // Vitória de times
+      if (marketLower.includes('team1') && marketLower.includes('win')) return 'team1win'
+      if (marketLower.includes('team2') && marketLower.includes('win')) return 'team2win'
+
+      // Over/Under
+      if (marketLower.includes('to(') || marketLower.includes('over')) return 'over'
+      if (marketLower.includes('tu(') || marketLower.includes('under')) return 'under'
+
+      // Handicap Asiático
+      if (marketLower.includes('ah1')) return 'ah1'
+      if (marketLower.includes('ah2')) return 'ah2'
+
+      // Handicap Europeu
+      if (marketLower.includes('eh1')) return 'eh1'
+      if (marketLower.includes('eh2')) return 'eh2'
+
+      // Dupla Chance
+      if (market === '1X') return 'double_chance_1x'
+      if (market === 'X2') return 'double_chance_x2'
+      if (market === '1X2') return 'match_result'
+
+      // Draw No Bet
+      if (market === 'DNB') return 'draw_no_bet'
+
+      // Both Teams to Score
+      if (market === 'BothToScore') return 'both_score_yes'
+      if (market === 'OneScoreless') return 'both_score_no'
+
+      // Primeiro/Último Gol
+      if (market === 'FirstGoal') return 'first_goal'
+      if (market === 'LastGoal') return 'last_goal'
+
+      // Par/Ímpar
+      if (market === 'Even') return 'even'
+      if (market === 'Odd') return 'odd'
+
+      // Resultado Exato
+      if (market === 'Score' || marketLower.includes('exact')) return 'exact_score'
+
+      // Sets
+      if (market === 'Sets' || market === 'Exact') return 'sets'
+
+      // Mercados de jogadores
+      if (marketLower.includes('player to score')) return 'player_score'
+      if (marketLower.includes('player rebounds')) return 'player_rebounds'
+
+      // Mercados específicos
+      if (market === 'Corners') return 'corners'
+      if (market === 'Fouls') return 'fouls'
+      if (market === 'Offsides') return 'offsides'
+      if (market === 'Shots on goal') return 'shots_on_goal'
+      if (market === 'Field Goals') return 'field_goals'
+      if (market === 'Touchdowns') return 'touchdowns'
+
+      // Tempo
+      if (market === 'HT') return 'half_time'
+      if (market === 'FT') return 'full_time'
+
+      return 'generic'
+    },
+
+    // Obtém descrição do mercado
+    getMarketDescription(market) {
+      const marketType = this.getMarketType(market)
+
+      switch (marketType) {
+        case 'team1win':
+          return 'Aposta na vitória do time da casa'
+        case 'team2win':
+          return 'Aposta na vitória do time visitante'
+        case 'over':
+          return 'Aposta em mais gols/pontos que o valor especificado'
+        case 'under':
+          return 'Aposta em menos gols/pontos que o valor especificado'
+        case 'ah1':
+        case 'ah2':
+          return 'Handicap asiático - vantagem/desvantagem para um dos times'
+        case 'eh1':
+        case 'eh2':
+          return 'Handicap europeu - vantagem/desvantagem para um dos times'
+        case 'double_chance_1x':
+          return 'Aposta em vitória do time 1 ou empate'
+        case 'double_chance_x2':
+          return 'Aposta em empate ou vitória do time 2'
+        case 'match_result':
+          return 'Aposta no resultado final do jogo (1X2)'
+        case 'draw_no_bet':
+          return 'Aposta sem empate - se empatar, valor é devolvido'
+        case 'both_score_yes':
+          return 'Aposta que ambos os times marcarão gols'
+        case 'both_score_no':
+          return 'Aposta que pelo menos um time não marcará'
+        case 'first_goal':
+          return 'Aposta em quem marcará o primeiro gol'
+        case 'last_goal':
+          return 'Aposta em quem marcará o último gol'
+        case 'even':
+          return 'Aposta que o total de gols será par'
+        case 'odd':
+          return 'Aposta que o total de gols será ímpar'
+        case 'exact_score':
+          return 'Aposta no resultado exato do jogo'
+        case 'sets':
+          return 'Aposta relacionada aos sets do jogo'
+        case 'player_score':
+          return 'Aposta em jogador específico marcar'
+        case 'player_rebounds':
+          return 'Aposta em rebotes de jogador específico'
+        case 'corners':
+          return 'Aposta relacionada aos escanteios'
+        case 'fouls':
+          return 'Aposta relacionada às faltas'
+        case 'offsides':
+          return 'Aposta relacionada aos impedimentos'
+        case 'shots_on_goal':
+          return 'Aposta relacionada aos chutes ao gol'
+        case 'field_goals':
+          return 'Aposta relacionada aos gols de campo'
+        case 'touchdowns':
+          return 'Aposta relacionada aos touchdowns'
+        case 'half_time':
+          return 'Aposta no resultado do primeiro tempo'
+        case 'full_time':
+          return 'Aposta no resultado do tempo completo'
+        default:
+          return 'Aposta específica do mercado'
+      }
+    },
+
+    // Gera matriz para vitória de time
+    generateTeamWinMatrix(teams, marketType) {
+      const isTeam1 = marketType === 'team1win'
+      const teamName = isTeam1 ? teams.team1 : teams.team2
+      const sport = this.getSportType()
+      const hasDraws = this.sportHasDraws(sport)
+
+      let tableRows = `
+        <tr>
+          <td>${teams.team1} vence</td>
+          <td>${teamName}</td>
+          <td class="${isTeam1 ? 'win' : 'lose'}">${isTeam1 ? 'Vitória' : 'Derrota'}</td>
+        </tr>
+        <tr>
+          <td>${teams.team2} vence</td>
+          <td>${teamName}</td>
+          <td class="${!isTeam1 ? 'win' : 'lose'}">${!isTeam1 ? 'Vitória' : 'Derrota'}</td>
+        </tr>
+      `
+
+      // Adiciona linha de empate apenas se o esporte tem empates
+      if (hasDraws) {
+        tableRows += `
+          <tr>
+            <td>Empate</td>
+            <td>${teamName}</td>
+            <td class="lose">Derrota</td>
+          </tr>
+        `
+      }
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Over/Under
+    generateOverUnderMatrix(market) {
+      const isOver = market.toLowerCase().includes('to(') || market.toLowerCase().includes('over')
+      const value = this.extractValueFromMarket(market)
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Total de Gols</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${isOver ? `Mais de ${value}` : `Menos de ${value}`}</td>
+                <td>${isOver ? `Mais de ${value}` : `Menos de ${value}`}</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>${isOver ? `Menos de ${value}` : `Mais de ${value}`}</td>
+                <td>${isOver ? `Mais de ${value}` : `Menos de ${value}`}</td>
+                <td class="lose">Derrota</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Handicap Asiático
+    generateHandicapMatrix(teams, market, marketType) {
+      const isTeam1 = marketType === 'ah1'
+      const teamName = isTeam1 ? teams.team1 : teams.team2
+      const handicap = this.extractHandicapFromMarket(market)
+      const sport = this.getSportType()
+      const hasDraws = this.sportHasDraws(sport)
+
+      let tableRows = ''
+
+      // Linha para vitória do time 1
+      tableRows += `
+        <tr>
+          <td>${teams.team1} vence por ${Math.abs(handicap) + 1}</td>
+          <td>${isTeam1 ? teams.team1 : teams.team2} vence</td>
+          <td>${teamName}</td>
+          <td class="${isTeam1 ? 'win' : 'lose'}">${isTeam1 ? 'Vitória' : 'Derrota'}</td>
+        </tr>
+      `
+
+      // Linha para vitória do time 2
+      tableRows += `
+        <tr>
+          <td>${teams.team2} vence por ${Math.abs(handicap) + 1}</td>
+          <td>${isTeam1 ? teams.team2 : teams.team1} vence</td>
+          <td>${teamName}</td>
+          <td class="${!isTeam1 ? 'win' : 'lose'}">${!isTeam1 ? 'Vitória' : 'Derrota'}</td>
+        </tr>
+      `
+
+      // Linha para empate (apenas se o esporte tem empates)
+      if (hasDraws) {
+        tableRows += `
+          <tr>
+            <td>Empate</td>
+            <td>Empate</td>
+            <td>${teamName}</td>
+            <td class="refund">Devolução do Saldo</td>
+          </tr>
+        `
+      }
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis (com handicap ${handicap}):</h5>
+          <p class="handicap-explanation">
+            <strong>Handicap Asiático:</strong> ${handicap > 0 ? 'Vantagem' : 'Desvantagem'} de ${Math.abs(handicap)} ${handicap === 0.5 || handicap === -0.5 ? 'gol' : 'gols'} para ${teamName}
+          </p>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado Real</th>
+                <th>Com Handicap</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+          <p class="handicap-note">
+            <strong>Nota:</strong> No handicap asiático, empates resultam na devolução do valor apostado (stake back).
+          </p>
+        </div>
+      `
+    },
+
+    // Gera matriz para Dupla Chance
+    generateDoubleChanceMatrix(teams, marketType) {
+      const is1X = marketType === 'double_chance_1x'
+      const betName = is1X ? `${teams.team1} ou Empate` : `Empate ou ${teams.team2}`
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${teams.team1} vence</td>
+                <td>${betName}</td>
+                <td class="${is1X ? 'win' : 'lose'}">${is1X ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+              <tr>
+                <td>${teams.team2} vence</td>
+                <td>${betName}</td>
+                <td class="${!is1X ? 'win' : 'lose'}">${!is1X ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+              <tr>
+                <td>Empate</td>
+                <td>${betName}</td>
+                <td class="win">Vitória</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Resultado Final (1X2)
+    generateMatchResultMatrix(teams) {
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado</th>
+                <th>Opções</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${teams.team1} vence</td>
+                <td>1 (Vitória Time 1)</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>Empate</td>
+                <td>X (Empate)</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>${teams.team2} vence</td>
+                <td>2 (Vitória Time 2)</td>
+                <td class="win">Vitória</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="market-note">
+            <strong>Nota:</strong> Aposte em uma das três opções: 1 (Time 1), X (Empate) ou 2 (Time 2).
+          </p>
+        </div>
+      `
+    },
+
+    // Gera matriz para Draw No Bet
+    generateDrawNoBetMatrix(teams) {
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${teams.team1} vence</td>
+                <td>Time escolhido</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>${teams.team2} vence</td>
+                <td>Time escolhido</td>
+                <td class="lose">Derrota</td>
+              </tr>
+              <tr>
+                <td>Empate</td>
+                <td>Time escolhido</td>
+                <td class="refund">Devolução do Saldo</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="market-note">
+            <strong>Nota:</strong> Se o jogo empatar, o valor apostado é devolvido (stake back).
+          </p>
+        </div>
+      `
+    },
+
+    // Gera matriz para Both Teams to Score
+    generateBothScoreMatrix(marketType) {
+      const isYes = marketType === 'both_score_yes'
+      const betName = isYes ? 'Ambos marcam' : 'Pelo menos um não marca'
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ambos os times marcam</td>
+                <td>${betName}</td>
+                <td class="${isYes ? 'win' : 'lose'}">${isYes ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+              <tr>
+                <td>Apenas um time marca</td>
+                <td>${betName}</td>
+                <td class="${!isYes ? 'win' : 'lose'}">${!isYes ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+              <tr>
+                <td>Nenhum time marca</td>
+                <td>${betName}</td>
+                <td class="${!isYes ? 'win' : 'lose'}">${!isYes ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Primeiro/Último Gol
+    generateGoalMatrix(teams, marketType) {
+      const isFirst = marketType === 'first_goal'
+      const goalType = isFirst ? 'primeiro' : 'último'
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Quem marca o ${goalType} gol</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${teams.team1}</td>
+                <td>Time escolhido</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>${teams.team2}</td>
+                <td>Time escolhido</td>
+                <td class="lose">Derrota</td>
+              </tr>
+              <tr>
+                <td>Nenhum gol</td>
+                <td>Time escolhido</td>
+                <td class="lose">Derrota</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Par/Ímpar
+    generateEvenOddMatrix(marketType) {
+      const isEven = marketType === 'even'
+      const betName = isEven ? 'Total par' : 'Total ímpar'
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Total de Gols</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>0, 2, 4, 6, 8... (Par)</td>
+                <td>${betName}</td>
+                <td class="${isEven ? 'win' : 'lose'}">${isEven ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+              <tr>
+                <td>1, 3, 5, 7, 9... (Ímpar)</td>
+                <td>${betName}</td>
+                <td class="${!isEven ? 'win' : 'lose'}">${!isEven ? 'Vitória' : 'Derrota'}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz para Sets
+    generateSetsMatrix() {
+      return `
+        <div class="market-matrix">
+          <h5>Informações sobre Sets:</h5>
+          <p>Este mercado é específico para esportes que usam sets (tênis, vôlei, etc.).</p>
+          <p><strong>Exemplos:</strong></p>
+          <ul>
+            <li>Número total de sets</li>
+            <li>Vitória em sets específicos</li>
+            <li>Handicap em sets</li>
+          </ul>
+        </div>
+      `
+    },
+
+    // Gera matriz para mercados de jogadores
+    generatePlayerMatrix(marketType) {
+      const marketName = marketType === 'player_score' ? 'Jogador para marcar' : 'Rebotes do jogador'
+
+      return `
+        <div class="market-matrix">
+          <h5>Informações sobre ${marketName}:</h5>
+          <p>Este mercado é específico para apostas em jogadores individuais.</p>
+          <p><strong>Como funciona:</strong></p>
+          <ul>
+            <li>Aposta em um jogador específico</li>
+            <li>Vitória se o jogador atingir o objetivo</li>
+            <li>Derrota se não atingir</li>
+          </ul>
+        </div>
+      `
+    },
+
+    // Gera matriz para mercados específicos
+    generateSpecificMarketMatrix(marketType) {
+      const marketNames = {
+        'corners': 'Escanteios',
+        'fouls': 'Faltas',
+        'offsides': 'Impedimentos',
+        'shots_on_goal': 'Chutes ao Gol',
+        'field_goals': 'Gols de Campo',
+        'touchdowns': 'Touchdowns'
+      }
+
+      const marketName = marketNames[marketType] || marketType
+
+      return `
+        <div class="market-matrix">
+          <h5>Informações sobre ${marketName}:</h5>
+          <p>Este mercado é específico para estatísticas do jogo.</p>
+          <p><strong>Tipos de apostas:</strong></p>
+          <ul>
+            <li>Over/Under no total</li>
+            <li>Over/Under por time</li>
+            <li>Número exato</li>
+          </ul>
+        </div>
+      `
+    },
+
+    // Gera matriz para tempo (HT/FT)
+    generateTimeMatrix(teams, marketType) {
+      const timeName = marketType === 'half_time' ? 'Primeiro Tempo' : 'Tempo Completo'
+
+      return `
+        <div class="market-matrix">
+          <h5>Resultados Possíveis - ${timeName}:</h5>
+          <table class="matrix-table">
+            <thead>
+              <tr>
+                <th>Resultado no ${timeName}</th>
+                <th>Sua Aposta</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>${teams.team1} vence</td>
+                <td>Time escolhido</td>
+                <td class="win">Vitória</td>
+              </tr>
+              <tr>
+                <td>${teams.team2} vence</td>
+                <td>Time escolhido</td>
+                <td class="lose">Derrota</td>
+              </tr>
+              <tr>
+                <td>Empate</td>
+                <td>Time escolhido</td>
+                <td class="lose">Derrota</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `
+    },
+
+    // Gera matriz genérica
+    generateGenericMatrix(market) {
+      return `
+        <div class="market-matrix">
+          <h5>Informações do Mercado:</h5>
+          <p>Este é um mercado específico que requer análise individual.</p>
+          <p><strong>Mercado:</strong> ${market}</p>
+        </div>
+      `
+    },
+
+    // Extrai valor numérico do mercado (para TO/TU)
+    extractValueFromMarket(market) {
+      const match = market.match(/\(([0-9.]+)\)/)
+      return match ? match[1] : '0.5'
+    },
+
+    // Extrai handicap do mercado (para AH/EH)
+    extractHandicapFromMarket(market) {
+      const match = market.match(/\(([+-]?[0-9.]+)\)/)
+      return match ? parseFloat(match[1]) : 0
+    },
+
+    // Obtém o tipo de esporte
+    getSportType() {
+      if (!this.surebet || !this.surebet[0] || !this.surebet[0].sport) {
+        return 'Futebol' // Default
+      }
+      return this.surebet[0].sport.toLowerCase()
+    },
+
+    // Verifica se o esporte tem empates
+    sportHasDraws(sport) {
+      const sportsWithoutDraws = [
+        'basquete',
+        'basketball',
+        'tênis',
+        'tennis',
+        'vôlei',
+        'volleyball',
+        'hóquei',
+        'hockey',
+        'beisebol',
+        'baseball',
+        'americano',
+        'american football',
+        'rugby',
+        'badminton',
+        'ping pong',
+        'table tennis',
+        'esports',
+        'lol',
+        'league of legends',
+        'csgo',
+        'counter-strike',
+        'dota',
+        'valorant'
+      ]
+
+      return !sportsWithoutDraws.some(sportWithoutDraw =>
+        sport.includes(sportWithoutDraw)
+      )
     }
 
   }
@@ -1753,6 +2624,7 @@ export default {
 .market-line {
   display: flex;
   align-items: center;
+  gap: 6px;
 }
 
 .market {
@@ -2096,6 +2968,35 @@ export default {
     justify-content: flex-start;
   }
 }
+
+.market-info-btn {
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--accent-primary);
+    transform: scale(1.1);
+  }
+}
+
+.market-info-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all 0.3s ease;
+
+  .market-info-btn:hover & {
+    color: var(--bg-primary);
+  }
+}
 </style>
 
 <!-- Estilos globais para o tooltip customizado -->
@@ -2142,6 +3043,175 @@ export default {
     top: -6px;
     border-top: none;
     border-bottom: 6px solid var(--bg-primary, #1a1a1a);
+  }
+}
+
+/* Estilos para o tooltip de informações do mercado */
+.market-info-tooltip {
+  position: fixed;
+  background: var(--bg-primary, #1a1a1a);
+  color: var(--text-primary, #ffffff);
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-primary, #333333);
+  z-index: 10001;
+  max-width: 400px;
+  min-width: 300px;
+  word-wrap: break-word;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s ease;
+  pointer-events: none;
+
+  &.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  // Seta do tooltip
+  &::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 8px solid var(--bg-primary, #1a1a1a);
+  }
+
+  // Seta do tooltip quando está acima
+  &.above::before {
+    top: -8px;
+    border-top: none;
+    border-bottom: 8px solid var(--bg-primary, #1a1a1a);
+  }
+
+  .market-info-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-primary, #333333);
+
+    h4 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-primary, #00ff88);
+    }
+
+    .market-description {
+      margin: 0;
+      font-size: 11px;
+      color: var(--text-secondary, #888888);
+      line-height: 1.4;
+    }
+  }
+
+  .market-matrix {
+    h5 {
+      margin: 0 0 8px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary, #ffffff);
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+
+      th,
+      td {
+        padding: 6px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-primary, #333333);
+      }
+
+      th {
+        background: var(--bg-overlay, #2a2a2a);
+        font-weight: 600;
+        color: var(--text-primary, #ffffff);
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      td {
+        color: var(--text-secondary, #cccccc);
+        line-height: 1.3;
+
+        &.win {
+          color: var(--accent-primary, #00ff88);
+          font-weight: 600;
+        }
+
+        &.lose {
+          color: #ff4757;
+          font-weight: 600;
+        }
+
+        &.refund {
+          color: #ffa502;
+          font-weight: 600;
+        }
+      }
+
+      tr:hover {
+        background: var(--bg-overlay, #2a2a2a);
+      }
+    }
+
+    .handicap-explanation {
+      margin: 0 0 12px 0;
+      font-size: 11px;
+      color: var(--text-secondary, #cccccc);
+      line-height: 1.4;
+      background: var(--bg-overlay, #2a2a2a);
+      padding: 8px;
+      border-radius: 4px;
+      border-left: 3px solid var(--accent-primary, #00ff88);
+    }
+
+    .handicap-note {
+      margin: 12px 0 0 0;
+      font-size: 10px;
+      color: var(--text-secondary, #888888);
+      line-height: 1.3;
+      font-style: italic;
+      background: rgba(255, 165, 2, 0.1);
+      padding: 6px 8px;
+      border-radius: 4px;
+      border-left: 2px solid #ffa502;
+    }
+
+    .market-note {
+      margin: 12px 0 0 0;
+      font-size: 10px;
+      color: var(--text-secondary, #888888);
+      line-height: 1.3;
+      font-style: italic;
+      background: rgba(0, 255, 136, 0.1);
+      padding: 6px 8px;
+      border-radius: 4px;
+      border-left: 2px solid var(--accent-primary, #00ff88);
+    }
+
+    ul {
+      margin: 8px 0;
+      padding-left: 16px;
+
+      li {
+        margin: 4px 0;
+        font-size: 11px;
+        color: var(--text-secondary, #cccccc);
+        line-height: 1.3;
+      }
+    }
   }
 }
 </style>
