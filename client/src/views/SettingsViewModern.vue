@@ -9,6 +9,7 @@
       <!-- Header Global -->
       <Header />
 
+      <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
           <h2 class="page-title">Configurações</h2>
@@ -650,7 +651,9 @@ export default {
   justify-content: space-between;
   padding: 24px 32px;
   border-bottom: 1px solid var(--border-primary);
-  margin-bottom: 32px;
+  background: var(--bg-secondary);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header-left {
@@ -674,15 +677,15 @@ export default {
 
 .settings-content {
   flex: 1;
-  padding: 0 32px 32px;
+  padding: 32px;
   overflow-y: auto;
   background: var(--bg-primary);
 }
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -694,14 +697,11 @@ export default {
   overflow: hidden;
   transition: all 0.3s ease;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1;
 
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
     border-color: var(--accent-primary);
-    z-index: 10;
   }
 }
 
@@ -875,7 +875,6 @@ input:checked+.toggle-slider:before {
   background: var(--bg-overlay);
   outline: none;
   -webkit-appearance: none;
-  appearance: none;
 
   &::-webkit-slider-thumb {
     -webkit-appearance: none;
@@ -1100,19 +1099,14 @@ input:checked+.toggle-slider:before {
     width: 100%;
     max-width: 100%;
   }
-
-  .settings-grid {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
 }
 
 @media (max-width: 768px) {
   .content-header {
+    padding: 16px 20px;
     flex-direction: column;
     align-items: flex-start;
-    gap: 16px;
-    padding: 16px 20px;
+    gap: 12px;
   }
 
   .page-title {
@@ -1124,7 +1118,7 @@ input:checked+.toggle-slider:before {
   }
 
   .settings-content {
-    padding: 0 20px 20px;
+    padding: 20px;
   }
 
   .settings-grid {
@@ -1165,6 +1159,10 @@ input:checked+.toggle-slider:before {
 }
 
 @media (max-width: 480px) {
+  .content-header {
+    padding: 12px 16px;
+  }
+
   .page-title {
     font-size: 20px;
   }
@@ -1174,7 +1172,7 @@ input:checked+.toggle-slider:before {
   }
 
   .settings-content {
-    padding: 0 12px 12px;
+    padding: 16px;
   }
 
   .card-header {

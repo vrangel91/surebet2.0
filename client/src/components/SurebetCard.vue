@@ -1601,9 +1601,9 @@ export default {
         case 'team2win':
           return 'Aposta na vitória do time visitante'
         case 'over':
-          return 'Aposta em mais gols/pontos que o valor especificado'
+          return 'Aposta em mais que o valor especificado'
         case 'under':
-          return 'Aposta em menos gols/pontos que o valor especificado'
+          return 'Aposta em menos que o valor especificado'
         case 'ah1':
         case 'ah2':
           return 'Handicap asiático - vantagem/desvantagem para um dos times'
@@ -1627,9 +1627,9 @@ export default {
         case 'last_goal':
           return 'Aposta em quem marcará o último gol'
         case 'even':
-          return 'Aposta que o total de gols será par'
+          return 'Aposta que o total será par'
         case 'odd':
-          return 'Aposta que o total de gols será ímpar'
+          return 'Aposta que o total será ímpar'
         case 'exact_score':
           return 'Aposta no resultado exato do jogo'
         case 'sets':
@@ -1713,6 +1713,8 @@ export default {
     generateOverUnderMatrix(market) {
       const isOver = market.toLowerCase().includes('to(') || market.toLowerCase().includes('over')
       const value = this.extractValueFromMarket(market)
+      const sport = this.getSportType()
+      const terminology = this.getSportTerminology(sport)
 
       return `
         <div class="market-matrix">
@@ -1720,7 +1722,7 @@ export default {
           <table class="matrix-table">
             <thead>
               <tr>
-                <th>Total de Gols</th>
+                <th>Total de ${terminology.unit}</th>
                 <th>Sua Aposta</th>
                 <th>Status</th>
               </tr>
@@ -2003,7 +2005,9 @@ export default {
     // Gera matriz para Par/Ímpar
     generateEvenOddMatrix(marketType) {
       const isEven = marketType === 'even'
-      const betName = isEven ? 'Total par' : 'Total ímpar'
+      const sport = this.getSportType()
+      const terminology = this.getSportTerminology(sport)
+      const betName = isEven ? `Total par` : `Total ímpar`
 
       return `
         <div class="market-matrix">
@@ -2011,7 +2015,7 @@ export default {
           <table class="matrix-table">
             <thead>
               <tr>
-                <th>Total de Gols</th>
+                <th>Total de ${terminology.unit}</th>
                 <th>Sua Aposta</th>
                 <th>Status</th>
               </tr>
@@ -2193,6 +2197,146 @@ export default {
       return !sportsWithoutDraws.some(sportWithoutDraw =>
         sport.includes(sportWithoutDraw)
       )
+    },
+
+    // Obtém terminologia específica do esporte
+    getSportTerminology(sport) {
+      const sportLower = sport.toLowerCase()
+
+      // Esports
+      if (sportLower.includes('lol') || sportLower.includes('league of legends')) {
+        return {
+          unit: 'Kills',
+          points: 'Kills',
+          goals: 'Kills',
+          score: 'Kills'
+        }
+      }
+
+      if (sportLower.includes('csgo') || sportLower.includes('counter-strike')) {
+        return {
+          unit: 'Rounds',
+          points: 'Rounds',
+          goals: 'Rounds',
+          score: 'Rounds'
+        }
+      }
+
+      if (sportLower.includes('dota')) {
+        return {
+          unit: 'Kills',
+          points: 'Kills',
+          goals: 'Kills',
+          score: 'Kills'
+        }
+      }
+
+      if (sportLower.includes('valorant')) {
+        return {
+          unit: 'Rounds',
+          points: 'Rounds',
+          goals: 'Rounds',
+          score: 'Rounds'
+        }
+      }
+
+      // Basquete
+      if (sportLower.includes('basquete') || sportLower.includes('basketball')) {
+        return {
+          unit: 'Pontos',
+          points: 'Pontos',
+          goals: 'Pontos',
+          score: 'Pontos'
+        }
+      }
+
+      // Tênis
+      if (sportLower.includes('tênis') || sportLower.includes('tennis')) {
+        return {
+          unit: 'Sets',
+          points: 'Sets',
+          goals: 'Sets',
+          score: 'Sets'
+        }
+      }
+
+      // Vôlei
+      if (sportLower.includes('vôlei') || sportLower.includes('volleyball')) {
+        return {
+          unit: 'Sets',
+          points: 'Sets',
+          goals: 'Sets',
+          score: 'Sets'
+        }
+      }
+
+      // Hóquei
+      if (sportLower.includes('hóquei') || sportLower.includes('hockey')) {
+        return {
+          unit: 'Gols',
+          points: 'Gols',
+          goals: 'Gols',
+          score: 'Gols'
+        }
+      }
+
+      // Beisebol
+      if (sportLower.includes('beisebol') || sportLower.includes('baseball')) {
+        return {
+          unit: 'Runs',
+          points: 'Runs',
+          goals: 'Runs',
+          score: 'Runs'
+        }
+      }
+
+      // Futebol Americano
+      if (sportLower.includes('americano') || sportLower.includes('american football')) {
+        return {
+          unit: 'Pontos',
+          points: 'Pontos',
+          goals: 'Pontos',
+          score: 'Pontos'
+        }
+      }
+
+      // Rugby
+      if (sportLower.includes('rugby')) {
+        return {
+          unit: 'Pontos',
+          points: 'Pontos',
+          goals: 'Pontos',
+          score: 'Pontos'
+        }
+      }
+
+      // Badminton
+      if (sportLower.includes('badminton')) {
+        return {
+          unit: 'Sets',
+          points: 'Sets',
+          goals: 'Sets',
+          score: 'Sets'
+        }
+      }
+
+      // Ping Pong / Table Tennis
+      if (sportLower.includes('ping pong') || sportLower.includes('table tennis')) {
+        return {
+          unit: 'Sets',
+          points: 'Sets',
+          goals: 'Sets',
+          score: 'Sets'
+        }
+      }
+
+      // Default para futebol e outros esportes
+      return {
+        unit: 'Gols',
+        points: 'Gols',
+        goals: 'Gols',
+        score: 'Gols'
+      }
     }
 
   }

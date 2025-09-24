@@ -31,40 +31,62 @@
         <!-- Card de Resumo do Usuário -->
         <div class="user-summary-card">
           <div class="card-header">
-            <h3>Olá, {{ getUserDisplayName() }}</h3>
             <button class="visibility-toggle" @click="toggleDataVisibility">
               <span class="visibility-icon">{{ showData ? '👁️' : '🙈' }}</span>
             </button>
+            <h3>Olá, {{ getUserDisplayName() }}</h3>
           </div>
           <p class="card-subtitle">Veja abaixo sua performance de ganhos detalhados.</p>
 
+          <div class="add-bet-container">
+            <button class="add-bet-btn">
+              <span class="add-bet-icon">+</span>
+              <span class="add-bet-text">Adicionar aposta</span>
+            </button>
+          </div>
+
           <div class="earnings-grid">
             <div class="earning-item">
-              <span class="earning-label">Ganhos de hoje:</span>
-              <span class="earning-value">{{ showData ? formatCurrency(todayEarnings) : '***' }}</span>
+              <div class="earning-indicator"></div>
+              <div class="earning-content">
+                <span class="earning-label">Ganhos de hoje:</span>
+                <span class="earning-value">{{ showData ? formatCurrency(todayEarnings) : '***' }}</span>
+              </div>
             </div>
             <div class="earning-item">
-              <span class="earning-label">Ganhos da semana:</span>
-              <span class="earning-value">{{ showData ? formatCurrency(weekEarnings) : '***' }}</span>
+              <div class="earning-indicator"></div>
+              <div class="earning-content">
+                <span class="earning-label">Ganhos da semana:</span>
+                <span class="earning-value">{{ showData ? formatCurrency(weekEarnings) : '***' }}</span>
+              </div>
             </div>
             <div class="earning-item">
-              <span class="earning-label">Ganhos do mês:</span>
-              <span class="earning-value">{{ showData ? formatCurrency(monthEarnings) : '***' }}</span>
+              <div class="earning-indicator"></div>
+              <div class="earning-content">
+                <span class="earning-label">Ganhos do mês:</span>
+                <span class="earning-value">{{ showData ? formatCurrency(monthEarnings) : '***' }}</span>
+              </div>
             </div>
             <div class="earning-item">
-              <span class="earning-label">Ganhos totais:</span>
-              <span class="earning-value">{{ showData ? formatCurrency(totalEarnings) : '***' }}</span>
+              <div class="earning-indicator"></div>
+              <div class="earning-content">
+                <span class="earning-label">Ganhos totais:</span>
+                <span class="earning-value">{{ showData ? formatCurrency(totalEarnings) : '***' }}</span>
+              </div>
             </div>
           </div>
 
-          <div class="stats-grid">
-            <div class="stat-item">
-              <span class="stat-label">Total de apostas:</span>
-              <span class="stat-value">{{ showData ? bets.length : '***' }}</span>
-            </div>
-            <div class="stat-item">
-              <span class="stat-label">ROI médio:</span>
-              <span class="stat-value">{{ showData ? averageROI + '%' : '***' }}</span>
+          <div class="stats-section">
+            <div class="stats-icon">📊</div>
+            <div class="stats-content">
+              <div class="stat-item">
+                <span class="stat-label">Total de apostas:</span>
+                <span class="stat-value">{{ showData ? bets.length : '***' }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">ROI médio:</span>
+                <span class="stat-value">{{ showData ? averageROI + '%' : '***' }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1359,21 +1381,24 @@ color: var(--text-primary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
-  min-height: 200px;
-  /* Altura mínima para consistência */
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .card-header {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 0;
 
   h3 {
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
+    flex: 1;
   }
 }
 
@@ -1386,6 +1411,7 @@ color: var(--text-primary);
   padding: 4px;
   border-radius: 4px;
   transition: background 0.3s ease;
+  flex-shrink: 0;
 
   &:hover {
     background: var(--bg-hover);
@@ -1395,25 +1421,94 @@ color: var(--text-primary);
 .card-subtitle {
   font-size: 14px;
   color: var(--text-secondary);
-  margin-bottom: 20px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.add-bet-container {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.add-bet-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 8px;
+  color: var(--bg-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px var(--accent-shadow);
+
+  &:hover {
+    background: var(--accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--accent-shadow);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.add-bet-icon {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.add-bet-text {
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .earnings-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 20px;
+  margin: 0;
 }
 
 .earning-item {
   display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+  }
+}
+
+.earning-indicator {
+  width: 8px;
+  height: 8px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.earning-content {
+  display: flex;
   flex-direction: column;
   gap: 4px;
+  flex: 1;
 }
 
 .earning-label {
   font-size: 12px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .earning-value {
@@ -1422,25 +1517,44 @@ color: var(--text-primary);
   color: var(--accent-primary);
 }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.stats-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  margin-top: auto;
+}
+
+.stats-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stats-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
 }
 
 .stat-item {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
 }
 
 .stat-label {
   font-size: 12px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .stat-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -2201,8 +2315,14 @@ color: var(--text-primary);
     grid-template-columns: 1fr;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .stats-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .stats-content {
+    width: 100%;
   }
 }
 
@@ -2255,6 +2375,16 @@ color: var(--text-primary);
     margin-bottom: 16px;
   }
 
+  .earning-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .earning-indicator {
+    width: 6px;
+    height: 6px;
+  }
+
   .earning-label {
     font-size: 11px;
   }
@@ -2263,8 +2393,13 @@ color: var(--text-primary);
     font-size: 14px;
   }
 
-  .stats-grid {
-    gap: 12px;
+  .stats-section {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .stats-icon {
+    font-size: 18px;
   }
 
   .stat-label {
@@ -2272,6 +2407,15 @@ color: var(--text-primary);
   }
 
   .stat-value {
+    font-size: 14px;
+  }
+
+  .add-bet-btn {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+
+  .add-bet-icon {
     font-size: 14px;
   }
 
@@ -2424,6 +2568,16 @@ color: var(--text-primary);
     margin-bottom: 12px;
   }
 
+  .earning-item {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .earning-indicator {
+    width: 5px;
+    height: 5px;
+  }
+
   .earning-label {
     font-size: 10px;
   }
@@ -2432,8 +2586,13 @@ color: var(--text-primary);
     font-size: 12px;
   }
 
-  .stats-grid {
+  .stats-section {
+    padding: 10px;
     gap: 8px;
+  }
+
+  .stats-icon {
+    font-size: 16px;
   }
 
   .stat-label {
@@ -2441,6 +2600,15 @@ color: var(--text-primary);
   }
 
   .stat-value {
+    font-size: 12px;
+  }
+
+  .add-bet-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+
+  .add-bet-icon {
     font-size: 12px;
   }
 
@@ -2786,6 +2954,36 @@ color: var(--text-primary);
 [data-theme="light"] .chart-card,
 [data-theme="light"] .roi-chart-card {
   background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="light"] .add-bet-btn {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  box-shadow: 0 2px 8px var(--accent-shadow);
+}
+
+[data-theme="light"] .add-bet-btn:hover {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 12px var(--accent-shadow);
+}
+
+[data-theme="light"] .earning-item {
+  background: var(--bg-tertiary);
+  border-color: var(--border-primary);
+}
+
+[data-theme="light"] .earning-item:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+[data-theme="light"] .earning-indicator {
+  background: var(--accent-primary);
+}
+
+[data-theme="light"] .stats-section {
+  background: var(--bg-tertiary);
   border-color: var(--border-primary);
 }
 
