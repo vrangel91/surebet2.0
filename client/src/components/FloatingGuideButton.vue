@@ -15,37 +15,35 @@
           <div class="modal-header">
             <h2 class="modal-title">
               <svg class="modal-icon" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/>
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path
+                  d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533L8.93 6.588zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0z" />
               </svg>
               {{ currentTip.title }}
             </h2>
             <button class="close-btn" @click="closeGuideModal">
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                <path
+                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
               </svg>
             </button>
           </div>
-          
+
           <div class="modal-body">
             <p class="tip-description">{{ currentTip.description }}</p>
-            
+
             <div v-if="currentTip.highlight" class="highlight-section">
               <h4>💡 Destaque:</h4>
               <div class="highlight-content">
-                <a 
-                  v-if="currentTip.highlight.type === 'link'" 
-                  :href="currentTip.highlight.target" 
-                  class="highlight-link"
-                  @click="scrollToSection(currentTip.highlight.target)"
-                >
+                <a v-if="currentTip.highlight.type === 'link'" :href="currentTip.highlight.target"
+                  class="highlight-link" @click="scrollToSection(currentTip.highlight.target)">
                   {{ currentTip.highlight.text }}
                 </a>
                 <span v-else class="highlight-text">{{ currentTip.highlight.text }}</span>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <div class="tip-progress">
               <span class="progress-text">{{ currentTipIndex + 1 }} de {{ guideTips.length }}</span>
@@ -53,27 +51,15 @@
                 <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
               </div>
             </div>
-            
+
             <div class="modal-actions">
-              <button 
-                v-if="currentTipIndex > 0" 
-                class="action-btn secondary" 
-                @click="previousTip"
-              >
+              <button v-if="currentTipIndex > 0" class="action-btn secondary" @click="previousTip">
                 ← Anterior
               </button>
-              <button 
-                v-if="currentTipIndex < guideTips.length - 1" 
-                class="action-btn primary" 
-                @click="nextTip"
-              >
+              <button v-if="currentTipIndex < guideTips.length - 1" class="action-btn primary" @click="nextTip">
                 Próxima Dica →
               </button>
-              <button 
-                v-else 
-                class="action-btn primary" 
-                @click="closeGuideModal"
-              >
+              <button v-else class="action-btn primary" @click="closeGuideModal">
                 Finalizar Guia
               </button>
             </div>
@@ -241,33 +227,35 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+@import '@/assets/styles/themes.scss';
+
 /* Botão Flutuante do Guia Interativo */
 .floating-guide-btn {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: var(--button-primary-bg);
+  color: var(--text-button-primary);
   border: none;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   width: 56px;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: var(--shadow-button);
   z-index: 1000;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   opacity: 0.9;
   backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--transparent-strong);
 }
 
 .floating-guide-btn:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 15px rgba(0, 255, 136, 0.4);
+  box-shadow: var(--shadow-button-hover);
   opacity: 1;
 }
 
@@ -281,15 +269,15 @@ export default {
 }
 
 .guide-icon {
-  color: #1a1a1a;
+  color: var(--text-button-primary);
   font-size: 24px;
-  filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0 8px var(--transparent-dark-medium));
   transition: all 0.3s ease;
 }
 
 .floating-guide-btn:hover .guide-icon {
   transform: scale(1.1);
-  filter: drop-shadow(0 0 12px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 0 12px var(--transparent-dark-strong));
 }
 
 .btn-text {
@@ -297,10 +285,10 @@ export default {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.5);
-  color: #ffffff;
+  background: var(--overlay-medium);
+  color: var(--text-primary);
   padding: 4px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
@@ -320,7 +308,7 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: var(--backdrop);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -329,9 +317,9 @@ export default {
 }
 
 .guide-modal {
-  background: var(--bg-primary);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  background: var(--modal-bg);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-modal);
   width: 90%;
   max-width: 600px;
   max-height: 90vh;
@@ -341,7 +329,7 @@ export default {
   transform: translateY(100%);
   transition: transform 0.5s ease-out;
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--modal-border);
   backdrop-filter: blur(10px);
 }
 
@@ -353,22 +341,22 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-xl);
+  border-bottom: 1px solid var(--modal-header-border);
+  background: var(--modal-header-bg);
 }
 
 .modal-title {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #00ff88;
+  gap: var(--spacing-sm);
+  color: var(--text-accent);
   font-size: 24px;
   font-weight: 700;
 }
 
 .modal-icon {
-  color: #00ff88;
+  color: var(--text-accent);
   width: 28px;
   height: 28px;
 }
@@ -378,19 +366,19 @@ export default {
   border: none;
   cursor: pointer;
   padding: 5px;
-  color: #ffffff;
+  color: var(--text-primary);
   transition: color 0.3s ease;
 }
 
 .close-btn:hover {
-  color: #ff4444;
+  color: var(--error);
 }
 
 .modal-body {
-  padding: 20px;
+  padding: var(--spacing-xl);
   overflow-y: auto;
   flex-grow: 1;
-  color: #cccccc;
+  color: var(--text-secondary);
   font-size: 16px;
   line-height: 1.6;
 }
@@ -400,54 +388,54 @@ export default {
 }
 
 .highlight-section {
-  background: rgba(0, 255, 136, 0.1);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 15px;
+  background: var(--bg-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
 }
 
 .highlight-section h4 {
-  color: #00ff88;
-  margin: 0 0 10px 0;
+  color: var(--text-accent);
+  margin: 0 0 var(--spacing-sm) 0;
   font-size: 18px;
 }
 
 .highlight-content {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .highlight-link {
-  color: #00cc6a;
+  color: var(--accent-secondary);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .highlight-link:hover {
-  color: #00ff88;
+  color: var(--accent-primary);
 }
 
 .highlight-text {
-  color: #cccccc;
+  color: var(--text-secondary);
 }
 
 .modal-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.1);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-top: 1px solid var(--modal-footer-border);
+  background: var(--modal-footer-bg);
 }
 
 .tip-progress {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #cccccc;
+  gap: var(--spacing-sm);
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -458,26 +446,26 @@ export default {
 .progress-bar {
   width: 150px;
   height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
+  background: var(--progress-bg);
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  border-radius: 4px;
+  background: var(--button-primary-bg);
+  border-radius: var(--radius-sm);
   transition: width 0.3s ease-in-out;
 }
 
 .modal-actions {
   display: flex;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .action-btn {
-  padding: 8px 15px;
-  border-radius: 8px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-lg);
   border: none;
   font-weight: 600;
   font-size: 14px;
@@ -487,23 +475,23 @@ export default {
 }
 
 .action-btn.primary {
-  background: linear-gradient(135deg, #00ff88, #00cc6a);
-  color: #1a1a1a;
+  background: var(--button-primary-bg);
+  color: var(--text-button-primary);
 }
 
 .action-btn.primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+  box-shadow: var(--shadow-button);
 }
 
 .action-btn.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: var(--transparent-medium);
+  color: var(--text-primary);
+  border: 1px solid var(--transparent-strong);
 }
 
 .action-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--transparent-strong);
   transform: translateY(-2px);
 }
 
@@ -513,10 +501,12 @@ export default {
     transform: scale(0.1) translateY(100vh);
     opacity: 0;
   }
+
   50% {
     transform: scale(0.8) translateY(20vh);
     opacity: 0.8;
   }
+
   100% {
     transform: scale(1) translateY(0);
     opacity: 1;
@@ -535,8 +525,8 @@ export default {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  background: linear-gradient(45deg, #00ff88, #00cc6a, #00ff88);
-  border-radius: 50%;
+  background: linear-gradient(45deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
+  border-radius: var(--radius-full);
   z-index: -1;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -548,10 +538,13 @@ export default {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.3;
@@ -584,7 +577,7 @@ export default {
   .modal-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: var(--spacing-sm);
   }
 
   .modal-title {
@@ -612,7 +605,7 @@ export default {
 
   .modal-actions {
     flex-direction: column;
-    gap: 10px;
+    gap: var(--spacing-sm);
   }
 
   .action-btn {

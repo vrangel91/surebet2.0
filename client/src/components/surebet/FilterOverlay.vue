@@ -247,28 +247,6 @@
             </div>
           </div>
 
-          <!-- Filtro por Moedas -->
-          <div class="currencies-filter-section">
-            <div class="filter-section-header">
-              <label class="filter-section-label">Moedas:</label>
-              <div class="currency-actions">
-                <button @click="$emit('select-all-currencies')" class="action-btn">
-                  Selecionar Todos
-                </button>
-                <button @click="$emit('deselect-all-currencies')" class="action-btn">
-                  Desmarcar Todos
-                </button>
-              </div>
-            </div>
-            <div class="currencies-grid">
-              <label v-for="currency in filterOptions.currencies" :key="currency.value" class="currency-checkbox">
-                <input type="checkbox" :checked="selectedCurrencies.includes(currency.value)"
-                  @change="$emit('toggle-currency', currency.value)" />
-                <span class="checkmark"></span>
-                <span class="checkbox-label">{{ currency.label }}</span>
-              </label>
-            </div>
-          </div>
         </div>
 
         <div class="filter-divider"></div>
@@ -328,10 +306,6 @@ export default {
       type: Array,
       default: () => [],
     },
-    selectedCurrencies: {
-      type: Array,
-      default: () => [],
-    },
     filteredHouses: {
       type: Array,
       default: () => [],
@@ -371,9 +345,6 @@ export default {
     "update:sportSearchTerm",
     "clear-sport-search",
     "toggle-sport",
-    "select-all-currencies",
-    "deselect-all-currencies",
-    "toggle-currency",
     "clear-filters",
     "apply-filters",
     "toggle-favorite-house",
@@ -387,8 +358,8 @@ export default {
 .filter-overlay {
   position: fixed;
   top: 0;
-  right: -440px;
-  width: 440px;
+  right: -460px;
+  width: 460px;
   height: 100vh;
   background: var(--bg-overlay);
   backdrop-filter: blur(10px);
@@ -712,8 +683,7 @@ export default {
 }
 
 .houses-grid,
-.sports-grid,
-.currencies-grid {
+.sports-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
@@ -729,8 +699,7 @@ export default {
 }
 
 .house-checkbox,
-.sport-checkbox,
-.currency-checkbox {
+.sport-checkbox {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -833,14 +802,8 @@ input[type="checkbox"]:checked+.checkmark::after {
   color: var(--text-secondary);
 }
 
-.sports-filter-section,
-.currencies-filter-section {
+.sports-filter-section {
   margin-top: 16px;
-}
-
-.currency-actions {
-  display: flex;
-  gap: 4px;
 }
 
 .filter-footer {

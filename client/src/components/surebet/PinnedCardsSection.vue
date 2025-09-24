@@ -1,10 +1,9 @@
 <template>
   <div v-if="pinnedCards.length > 0" class="pinned-cards-section">
     <div class="pinned-header">
-      <h3 class="pinned-title" :class="{ 'limit-reached': pinnedCards.length >= 3 }">
+      <h3 class="pinned-title">
         <MapPin class="pin-icon" size="18" />
-        Cards Fixos ({{ pinnedCards.length }}/3)
-        <span v-if="pinnedCards.length >= 3" class="limit-indicator" title="Limite máximo atingido">⚠️</span>
+        Cards Fixos ({{ pinnedCards.length }})
       </h3>
       <div class="pinned-controls">
         <button class="control-btn drag-mode-btn" :class="{ active: dragMode }" @click="$emit('toggle-drag-mode')"
@@ -18,21 +17,21 @@
         </button>
       </div>
     </div>
-    <div class="pinned-cards-grid" :class="{ 'drag-mode': dragMode }" @dragover.prevent @drop="$emit('on-drop', $event)">
+    <div class="pinned-cards-grid" :class="{ 'drag-mode': dragMode }" @dragover.prevent
+      @drop="$emit('on-drop', $event)">
       <div v-for="(surebet, index) in pinnedCards" :key="`pinned-${index}`" class="pinned-card-wrapper" :class="{
-          dragging: draggedIndex === index,
-          'drag-over': dragOverIndex === index && draggedIndex !== index,
-      }" :draggable="dragMode" :data-index="index" @dragstart="$emit('on-drag-start', $event, index)" 
-        @dragend="$emit('on-drag-end', $event)" @dragenter="$emit('on-drag-enter', $event, index)" 
-        @dragover.prevent @drop="$emit('on-drop', $event)">
+        dragging: draggedIndex === index,
+        'drag-over': dragOverIndex === index && draggedIndex !== index,
+      }" :draggable="dragMode" :data-index="index" @dragstart="$emit('on-drag-start', $event, index)"
+        @dragend="$emit('on-drag-end', $event)" @dragenter="$emit('on-drag-enter', $event, index)" @dragover.prevent
+        @drop="$emit('on-drop', $event)">
         <div v-if="dragMode" class="drag-indicator">
           <span class="drag-icon">↕️</span>
         </div>
-        <SurebetCard :surebet="surebet" :isPinned="true" :isDragging="dragMode"
-          :bookmaker-accounts="bookmakerAccounts" :is-loading-accounts="isLoadingAccounts"
-          :round-values="roundValues" @add-to-reports="$emit('add-to-reports', $event)" 
-          @toggle-pin="$emit('toggle-pin', $event)" @balance-debited="$emit('balance-debited', $event)" 
-          @refresh-accounts="$emit('refresh-accounts')" />
+        <SurebetCard :surebet="surebet" :isPinned="true" :isDragging="dragMode" :bookmaker-accounts="bookmakerAccounts"
+          :is-loading-accounts="isLoadingAccounts" :round-values="roundValues"
+          @add-to-reports="$emit('add-to-reports', $event)" @toggle-pin="$emit('toggle-pin', $event)"
+          @balance-debited="$emit('balance-debited', $event)" @refresh-accounts="$emit('refresh-accounts')" />
       </div>
     </div>
   </div>
@@ -121,19 +120,12 @@ export default {
   color: var(--text-primary);
   margin: 0;
 
-  &.limit-reached {
-    color: var(--warning-color);
-  }
 }
 
 .pin-icon {
   color: var(--accent-color);
 }
 
-.limit-indicator {
-  font-size: 16px;
-  margin-left: 4px;
-}
 
 .pinned-controls {
   display: flex;
@@ -204,14 +196,14 @@ export default {
 
 .pinned-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   transition: all 0.3s ease;
 
   &.drag-mode {
     .pinned-card-wrapper {
       cursor: move;
-      
+
       &:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -273,7 +265,7 @@ export default {
   }
 
   .pinned-cards-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 }
@@ -288,6 +280,10 @@ export default {
     padding: 6px 10px;
     font-size: 11px;
   }
+
+  .pinned-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 </style>
-

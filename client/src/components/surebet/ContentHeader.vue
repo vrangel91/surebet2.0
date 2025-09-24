@@ -27,7 +27,7 @@ export default {
 
 <style lang="scss" scoped>
 .content-header {
-  padding: var(--spacing-xl) var(--spacing-lg);
+  padding: 32px 40px;
   border-bottom: 1px solid var(--border-primary);
   margin-bottom: var(--spacing-xl);
   background: var(--bg-primary);
