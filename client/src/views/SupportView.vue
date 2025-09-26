@@ -240,9 +240,9 @@
             <h4>{{ selectedTicket.subject }}</h4>
             <div class="ticket-detail-meta">
               <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status)
-                }}</span>
+              }}</span>
               <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority)
-                }}</span>
+              }}</span>
             </div>
           </div>
 

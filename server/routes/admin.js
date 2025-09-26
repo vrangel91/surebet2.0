@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireAdmin } = require('../utils/auth');
-const { Order, User, UserVIP, Notification, sequelize } = require('../models');
+const { Order, User, UserVIP, Notification, UserSession, Plan, sequelize } = require('../models');
 const { Op } = require('sequelize');
 
 // Middleware para verificar se é admin
@@ -238,6 +238,112 @@ router.get('/payments/stats', async (req, res) => {
 
   } catch (error) {
     console.error('❌ [Admin] Erro ao buscar estatísticas:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// ===== ROTAS PWA =====
+
+// Forçar atualização PWA para todos os usuários
+router.post('/force-pwa-update', async (req, res) => {
+  try {
+    console.log('🔄 [Admin] Forçando atualização PWA...');
+    console.log('📋 [Admin] Dados recebidos:', req.body);
+    
+    const { reason, timestamp, admin } = req.body;
+    
+    // Validar dados obrigatórios
+    if (!reason) {
+      return res.status(400).json({
+        success: false,
+        error: 'Motivo da atualização é obrigatório'
+      });
+    }
+    
+    // Criar notificação de atualização PWA
+    const notification = await Notification.create({
+      title: 'Atualização do Sistema',
+      message: `Uma atualização do sistema foi forçada pelo administrador. Motivo: ${reason}`,
+      type: 'update',
+      priority: 'high',
+      target_audience: 'all',
+      metadata: {
+        forceUpdate: true,
+        timestamp: timestamp || new Date().toISOString(),
+        admin: admin || 'Sistema',
+        reason: reason
+      },
+      is_read: false,
+      is_dismissed: false,
+      created_by: req.user.id
+    });
+    
+    console.log('✅ [Admin] Notificação de atualização PWA criada:', notification.id);
+    
+    // Aqui você pode adicionar lógica adicional para:
+    // - Enviar push notifications
+    // - Invalidar cache do service worker
+    // - Registrar a ação no log de auditoria
+    
+    res.json({
+      success: true,
+      message: 'Atualização PWA forçada com sucesso',
+      data: {
+        notificationId: notification.id,
+        timestamp: new Date().toISOString(),
+        admin: admin || req.user.email
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao forçar atualização PWA:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Obter estatísticas PWA
+router.get('/pwa-stats', async (req, res) => {
+  try {
+    console.log('📊 [Admin] Buscando estatísticas PWA...');
+    
+    // Contar usuários e notificações de atualização
+    const [
+      totalUsers,
+      pwaNotifications
+    ] = await Promise.all([
+      User.count(),
+      Notification.count({
+        where: {
+          type: 'update'
+        }
+      })
+    ]);
+    
+    const stats = {
+      totalUsers,
+      pwaNotifications,
+      lastUpdate: await Notification.findOne({
+        where: { type: 'update' },
+        order: [['created_at', 'DESC']],
+        attributes: ['created_at', 'metadata']
+      })
+    };
+    
+    console.log('✅ [Admin] Estatísticas PWA:', stats);
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar estatísticas PWA:', error);
     res.status(500).json({
       success: false,
       error: 'Erro interno do servidor'
