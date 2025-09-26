@@ -393,24 +393,44 @@ export default {
 .control-btn {
   width: 32px;
   height: 32px;
-  background: var(--bg-overlay);
-  border: none;
-  border-radius: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
+    transition: left 0.5s ease;
+  }
   
   &:hover {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    transform: scale(1.05);
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    
+    &::before {
+      left: 100%;
+    }
   }
   
   i {
     font-size: 14px;
+    position: relative;
+    z-index: 1;
   }
 }
 

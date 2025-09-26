@@ -106,9 +106,9 @@
 </template>
 
 <script>
-import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../config/bookmakerUrls.js'
-import { http } from '../utils/http.js'
-import marketTranslations from '../config/marketTranslations.json'
+import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../../config/bookmakerUrls.js'
+import { http } from '../../utils/http.js'
+import marketTranslations from '../../config/marketTranslations.json'
 
 export default {
   name: 'SurebetCard',

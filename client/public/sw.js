@@ -1,14 +1,11 @@
 // Service Worker Simplificado - SureStake
-import { precacheAndRoute } from 'workbox-precaching';
 
 // Verificar se estamos em ambiente de desenvolvimento
 const isLocalDev = self.location.hostname === 'localhost';
 const isLocalHttps = isLocalDev && self.location.protocol === 'https:';
 
-// Precaching automático do Workbox (apenas se não for desenvolvimento local)
-if (!isLocalDev) {
-  precacheAndRoute(self.__WB_MANIFEST);
-}
+// Referência ao manifest do Workbox (necessário para o build)
+const manifest = self.__WB_MANIFEST;
 
 const CACHE_NAME = 'surestake-v1.0.0';
 const STATIC_CACHE = 'surestake-static-v1.0.0';

@@ -16,8 +16,8 @@
 </template>
 
 <script>
-import Sidebar from "../Sidebar.vue";
-import Header from "../Header.vue";
+import Sidebar from "../Navigation/Sidebar.vue";
+import Header from "../Navigation/Header.vue";
 
 export default {
   name: "MainLayout",
@@ -113,4 +113,3 @@ export default {
   }
 }
 </style>
-

@@ -107,66 +107,50 @@ export default {
   border: none;
   border-bottom: 1px solid var(--border-primary);
   border-radius: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
   }
 }
 
 .filter-tab {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: 1px solid var(--border-secondary);
-  border-radius: 20px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  min-height: 40px;
   position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
-    transition: left 0.5s ease;
-  }
 
   &:hover {
-    background: var(--accent-color-alpha);
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
-
-    &::before {
-      left: 100%;
-    }
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
+    transform: translateY(-1px);
   }
 
   &.active {
-    background: var(--accent-gradient);
-    border-color: var(--accent-color);
-    color: var(--text-inverse);
+    background: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-color: var(--accent-primary);
     font-weight: 600;
-    box-shadow: var(--shadow-accent);
+    box-shadow: var(--shadow-button);
 
     &:hover {
-      background: var(--accent-gradient);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-accent-hover);
+      background: var(--button-primary-hover);
+      transform: translateY(-1px);
     }
   }
 
@@ -178,35 +162,33 @@ export default {
 }
 
 .live-tab-locked {
-  opacity: 0.7;
+  opacity: 0.6;
   cursor: not-allowed;
+  background: var(--bg-disabled);
+  border-color: var(--border-disabled);
+  color: var(--text-disabled);
 
   &:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--border-secondary);
+    background: var(--bg-disabled);
+    border-color: var(--border-disabled);
     transform: none;
-    box-shadow: none;
-
-    &::before {
-      left: -100%;
-    }
   }
 }
 
 .date-filters {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: 12px;
   margin-left: auto;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: var(--bg-tertiary);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
-  transition: all 0.3s ease;
+  padding: 8px 16px;
+  background: var(--button-secondary-bg);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  transition: all 0.2s ease;
 
   &:hover {
-    border-color: var(--accent-color);
-    background: var(--accent-color-alpha);
+    border-color: var(--border-accent);
+    background: var(--button-secondary-hover);
   }
 }
 
@@ -218,23 +200,23 @@ export default {
 }
 
 .date-filter-input {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   min-width: 120px;
 
   &:focus {
     outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
   }
 
   &:hover {
-    border-color: var(--accent-color);
+    border-color: var(--border-accent);
   }
 }
 
@@ -245,17 +227,17 @@ export default {
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: var(--radius-full);
-  background: var(--error-color);
-  color: var(--text-inverse);
+  border-radius: 50%;
+  background: var(--button-danger-bg);
+  color: var(--button-danger-text);
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 
   &:hover {
-    background: var(--error-hover);
-    transform: scale(1.1);
+    background: var(--button-danger-hover);
+    transform: scale(1.05);
   }
 }
 
@@ -280,26 +262,26 @@ export default {
 
 .unified-search-input {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 40px;
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
+  padding: 12px 16px 12px 40px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
 
     +.search-icon {
-      color: var(--accent-color);
+      color: var(--accent-primary);
     }
   }
 
   &:hover {
-    border-color: var(--accent-color);
+    border-color: var(--border-accent);
   }
 
   &::placeholder {

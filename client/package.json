@@ -5,8 +5,10 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build && npm run copy-favicon",
+    "build:fast": "vue-cli-service build --mode production --no-progress --skip-plugins @vue/cli-plugin-eslint",
     "build:watch": "vue-cli-service build --watch",
     "build:auto": "npm run build && pm2 restart surestake",
+    "build:cache": "vue-cli-service build --mode production --no-progress --skip-plugins @vue/cli-plugin-eslint --cache",
     "copy-favicon": "mkdir -p dist/img/icons && cp src/assets/img/icons/favicon.svg dist/img/icons/",
     "lint": "vue-cli-service lint",
     "build:prod": "npm run build && cd dist && npx serve -s . -p 8080",

@@ -87,7 +87,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--bg-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -98,7 +98,7 @@ export default {
 .modal-content {
   background: var(--bg-primary);
   border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
   max-width: 500px;
   width: 90%;
   max-height: 80vh;
@@ -271,4 +271,3 @@ export default {
   }
 }
 </style>
-

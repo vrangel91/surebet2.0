@@ -1321,12 +1321,12 @@ export default {
   transition: all 0.3s ease;
   font-size: 14px;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+  box-shadow: var(--shadow-accent-sm);
 
   &:hover {
     background: var(--accent-secondary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-accent-md);
   }
 
   &:active {
@@ -1725,19 +1725,19 @@ export default {
   border-radius: 10px;
   border: 1px solid var(--accent-primary);
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 255, 136, 0.2);
+  box-shadow: var(--shadow-accent-sm);
 
   &:hover {
     background: var(--accent-light);
     border-color: var(--accent-primary);
-    box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+    box-shadow: var(--shadow-accent-md);
     transform: translateY(-1px);
   }
 
   .vip-icon {
     font-size: 16px;
     color: var(--accent-primary);
-    text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+    text-shadow: var(--text-shadow-accent);
   }
 
   .vip-text {
@@ -1850,7 +1850,7 @@ export default {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-primary-alpha), transparent);
     animation: shimmer 2s infinite;
   }
 }

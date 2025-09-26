@@ -6,7 +6,7 @@
         }}</span>
     </button>
 
-    <button class="control-btn" :class="{ active: soundEnabled }" @click="$emit('toggle-sound')">
+    <button class="control-btn sound-btn" :class="{ active: soundEnabled }" @click="$emit('toggle-sound')">
       <span class="control-text">{{
         soundEnabled ? "Som On" : "Som Off"
         }}</span>
@@ -79,78 +79,64 @@ export default {
   backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;
 }
 
 .control-btn {
   display: flex;
   align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border-secondary);
-  border-radius: var(--radius-md);
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  min-height: 40px;
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
-    transition: left 0.5s ease;
-  }
-
   &:hover {
-    background: var(--accent-color-alpha);
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-hover);
-
-    &::before {
-      left: 100%;
-    }
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
+    transform: translateY(-1px);
   }
 
   &.active {
-    background: var(--accent-gradient);
-    border-color: var(--accent-color);
-    color: var(--text-inverse);
+    background: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-color: var(--accent-primary);
     font-weight: 600;
-    box-shadow: var(--shadow-accent);
+    box-shadow: var(--shadow-button);
 
     &:hover {
-      background: var(--accent-gradient);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-accent-hover);
+      background: var(--button-primary-hover);
+      transform: translateY(-1px);
     }
   }
 
   &:disabled {
-    opacity: 0.6;
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+    background: var(--bg-disabled);
+    border-color: var(--border-disabled);
+    color: var(--text-disabled);
 
     &:hover {
       transform: none;
-      box-shadow: none;
+      background: var(--bg-disabled);
     }
   }
 
   .control-text {
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: inherit;
     position: relative;
     z-index: 1;
   }
@@ -166,35 +152,46 @@ export default {
   &:disabled {
     background: var(--bg-disabled);
     border-color: var(--border-disabled);
+    color: var(--text-disabled);
   }
 }
 
 .filter-toggle-btn {
-  background: var(--accent-gradient);
-  border-color: var(--accent-color);
-  color: var(--text-inverse);
+  background: var(--button-info-bg);
+  color: var(--button-info-text);
+  border-color: var(--info-color);
   font-weight: 600;
 
   &:hover {
-    background: var(--accent-gradient);
-    border-color: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-accent-hover);
+    background: var(--button-info-hover);
+    border-color: var(--info-color);
+  }
+}
+
+.sound-btn {
+  &.active {
+    background: var(--button-primary-bg);
+    color: var(--button-primary-text);
+    border-color: var(--accent-primary);
+    font-weight: 600;
+    box-shadow: var(--shadow-button);
+
+    &:hover {
+      background: var(--button-primary-hover);
+    }
   }
 }
 
 .pinned-indicator {
-  background: var(--warning-gradient);
+  background: var(--button-warning-bg);
+  color: var(--button-warning-text);
   border-color: var(--warning-color);
-  color: var(--text-inverse);
   font-weight: 600;
   animation: pulse 2s infinite;
 
   &:hover {
-    background: var(--warning-gradient);
+    background: var(--button-warning-hover);
     border-color: var(--warning-color);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-warning);
   }
 }
 

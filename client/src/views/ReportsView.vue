@@ -91,33 +91,25 @@
           </div>
         </div>
 
-        <!-- Card do Gráfico de Evolução do Lucro -->
-        <div class="chart-card">
+        <!-- Gráfico de Evolução do Lucro -->
+        <div class="chart-container">
           <h3>Evolução do Lucro Acumulado</h3>
-          <div class="chart-container">
-            <ProfitEvolutionChart ref="profitChart" :data="chartData" :isLoading="isLoadingCharts" />
-          </div>
+          <ProfitEvolutionChart ref="profitChart" :data="chartData" :isLoading="isLoadingCharts" />
         </div>
       </div>
 
-      <!-- Seção de Gráficos de ROI -->
-      <div class="roi-charts-section">
-        <div class="roi-charts-grid">
-          <!-- Gráfico de ROI por Aposta -->
-          <div class="roi-chart-card">
-            <h3>ROI por Aposta (Últimas 10)</h3>
-            <div class="roi-chart-container">
-              <ROIBarChart ref="roiChart" :data="roiChartData" :isLoading="isLoadingCharts" />
-            </div>
-          </div>
+      <!-- Gráficos de ROI -->
+      <div class="roi-charts-grid">
+        <!-- Gráfico de ROI por Aposta -->
+        <div class="roi-chart-container">
+          <h3>ROI por Aposta (Últimas 10)</h3>
+          <ROIBarChart ref="roiChart" :data="roiChartData" :isLoading="isLoadingCharts" />
+        </div>
 
-          <!-- Gráfico de ROI por Período -->
-          <div class="roi-period-card">
-            <h3>ROI por Período</h3>
-            <div class="roi-period-container">
-              <ROIBarChart ref="roiPeriodChart" :data="roiPeriodData" :isLoading="isLoadingCharts" />
-            </div>
-          </div>
+        <!-- Gráfico de ROI por Período -->
+        <div class="roi-period-container">
+          <h3>ROI por Período</h3>
+          <ROIBarChart ref="roiPeriodChart" :data="roiPeriodData" :isLoading="isLoadingCharts" />
         </div>
       </div>
 
@@ -365,10 +357,10 @@
 </template>
 
 <script>
-import ProfitEvolutionChart from '../components/ProfitEvolutionChart.vue'
-import ROIBarChart from '../components/ROIBarChart.vue'
-import Sidebar from '../components/Sidebar.vue'
-import Header from '../components/Header.vue'
+import ProfitEvolutionChart from '../components/Charts/ProfitEvolutionChart.vue'
+import ROIBarChart from '../components/Charts/ROIBarChart.vue'
+import Sidebar from '../components/Navigation/Sidebar.vue'
+import Header from '../components/Navigation/Header.vue'
 
 
 
@@ -1559,13 +1551,16 @@ color: var(--text-primary);
   color: var(--text-primary);
 }
 
-.chart-card {
+.chart-container {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
-  min-height: 300px;
-  /* Altura reduzida para melhor proporção */
+  min-height: 400px;
+  /* Mesma altura da user-summary-card */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   position: relative;
   z-index: 1;
 
@@ -1573,19 +1568,14 @@ color: var(--text-primary);
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 20px 0;
+    margin: 0;
   }
 }
 
-.chart-container {
-  height: 250px;
-  /* Altura reduzida */
-  width: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.roi-charts-section {
+.roi-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
   padding: 0 32px 24px;
   flex-shrink: 0;
   /* Evita que a seção encolha */
@@ -1594,22 +1584,17 @@ color: var(--text-primary);
   clear: both;
 }
 
-.roi-charts-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  position: relative;
-  z-index: 2;
-}
-
-.roi-chart-card,
-.roi-period-card {
+.roi-chart-container,
+.roi-period-container {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
-  min-height: 350px;
-  /* Altura reduzida para melhor proporção */
+  min-height: 400px;
+  /* Mesma altura da user-summary-card */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   position: relative;
   z-index: 2;
 
@@ -1617,17 +1602,8 @@ color: var(--text-primary);
     font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 20px 0;
+    margin: 0;
   }
-}
-
-.roi-chart-container,
-.roi-period-container {
-  height: 300px;
-  /* Altura reduzida */
-  width: 100%;
-  position: relative;
-  z-index: 2;
 }
 
 
@@ -2176,16 +2152,16 @@ color: var(--text-primary);
   }
 
   .user-summary-card,
-  .chart-card {
+  .chart-container {
     padding: 32px;
   }
 
-  .roi-charts-section {
+  .roi-charts-grid {
     padding: 0 40px 32px;
   }
 
-  .roi-chart-card,
-  .roi-period-card {
+  .roi-chart-container,
+  .roi-period-container {
     padding: 32px;
   }
 
@@ -2194,11 +2170,12 @@ color: var(--text-primary);
   }
 
   .chart-container {
-    height: 350px;
+    min-height: 450px;
   }
 
-  .roi-chart-container {
-    height: 450px;
+  .roi-chart-container,
+  .roi-period-container {
+    min-height: 450px;
   }
 }
 
@@ -2250,11 +2227,12 @@ color: var(--text-primary);
   }
 
   .chart-container {
-    height: 280px;
+    min-height: 380px;
   }
 
-  .roi-chart-container {
-    height: 380px;
+  .roi-chart-container,
+  .roi-period-container {
+    min-height: 380px;
   }
 }
 
@@ -2358,7 +2336,7 @@ color: var(--text-primary);
   }
 
   .user-summary-card,
-  .chart-card {
+  .chart-container {
     padding: 20px;
   }
 
@@ -2419,29 +2397,25 @@ color: var(--text-primary);
     font-size: 14px;
   }
 
-  .chart-card h3,
-  .roi-chart-card h3,
-  .roi-period-card h3 {
+  .chart-container h3,
+  .roi-chart-container h3,
+  .roi-period-container h3 {
     font-size: 16px;
     margin-bottom: 16px;
   }
 
   .chart-container {
-    height: 250px;
+    min-height: 300px;
   }
 
-  .roi-charts-section {
+  .roi-charts-grid {
     padding: 0 20px 16px;
-  }
-
-  .roi-chart-card,
-  .roi-period-card {
-    padding: 20px;
   }
 
   .roi-chart-container,
   .roi-period-container {
-    height: 250px;
+    padding: 20px;
+    min-height: 300px;
   }
 
   .bets-table-section {
@@ -2551,7 +2525,7 @@ color: var(--text-primary);
   }
 
   .user-summary-card,
-  .chart-card {
+  .chart-container {
     padding: 16px;
   }
 
@@ -2612,26 +2586,25 @@ color: var(--text-primary);
     font-size: 12px;
   }
 
-  .chart-card h3,
-  .roi-chart-card h3 {
+  .chart-container h3,
+  .roi-chart-container h3,
+  .roi-period-container h3 {
     font-size: 14px;
     margin-bottom: 12px;
   }
 
   .chart-container {
-    height: 200px;
+    min-height: 250px;
   }
 
-  .roi-chart-section {
+  .roi-charts-grid {
     padding: 0 16px 12px;
   }
 
-  .roi-chart-card {
+  .roi-chart-container,
+  .roi-period-container {
     padding: 16px;
-  }
-
-  .roi-chart-container {
-    height: 250px;
+    min-height: 250px;
   }
 
   .bets-table-section {
@@ -2759,7 +2732,7 @@ color: var(--text-primary);
   }
 
   .user-summary-card,
-  .chart-card {
+  .chart-container {
     padding: 12px;
   }
 
@@ -2796,26 +2769,25 @@ color: var(--text-primary);
     font-size: 11px;
   }
 
-  .chart-card h3,
-  .roi-chart-card h3 {
+  .chart-container h3,
+  .roi-chart-container h3,
+  .roi-period-container h3 {
     font-size: 13px;
     margin-bottom: 8px;
   }
 
   .chart-container {
-    height: 180px;
+    min-height: 220px;
   }
 
-  .roi-chart-section {
+  .roi-charts-grid {
     padding: 0 12px 8px;
   }
 
-  .roi-chart-card {
+  .roi-chart-container,
+  .roi-period-container {
     padding: 12px;
-  }
-
-  .roi-chart-container {
-    height: 220px;
+    min-height: 220px;
   }
 
   .bets-table-section {
@@ -2951,8 +2923,9 @@ color: var(--text-primary);
 }
 
 [data-theme="light"] .user-summary-card,
-[data-theme="light"] .chart-card,
-[data-theme="light"] .roi-chart-card {
+[data-theme="light"] .chart-container,
+[data-theme="light"] .roi-chart-container,
+[data-theme="light"] .roi-period-container {
   background: var(--bg-secondary);
   border-color: var(--border-primary);
 }
@@ -3008,8 +2981,9 @@ color: var(--text-primary);
   color: var(--text-primary);
 }
 
-[data-theme="light"] .chart-card h3,
-[data-theme="light"] .roi-chart-card h3 {
+[data-theme="light"] .chart-container h3,
+[data-theme="light"] .roi-chart-container h3,
+[data-theme="light"] .roi-period-container h3 {
   color: var(--text-primary);
 }
 
@@ -3266,10 +3240,11 @@ color: var(--text-primary);
 }
 
 [data-theme="light"] .chart-container,
-[data-theme="light"] .roi-chart-container {
-  background: var(--bg-primary);
+[data-theme="light"] .roi-chart-container,
+[data-theme="light"] .roi-period-container {
+  background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 [data-theme="light"] .action-buttons {
@@ -3494,8 +3469,9 @@ color: var(--text-primary);
 
 /* Melhorias para estados de hover mais refinados no modo light */
 [data-theme="light"] .user-summary-card:hover,
-[data-theme="light"] .chart-card:hover,
-[data-theme="light"] .roi-chart-card:hover {
+[data-theme="light"] .chart-container:hover,
+[data-theme="light"] .roi-chart-container:hover,
+[data-theme="light"] .roi-period-container:hover {
   box-shadow: 0 8px 25px var(--shadow-color);
   transform: translateY(-3px);
   border-color: var(--accent-primary);

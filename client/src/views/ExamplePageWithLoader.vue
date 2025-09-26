@@ -4,7 +4,7 @@
       <h1>Exemplo de Página com Loader</h1>
       <p>Esta página demonstra como usar o sistema de loader otimizado</p>
     </div>
-    
+
     <div class="page-content">
       <div class="demo-section">
         <h3>Loader da Página (não bloqueia o sidebar)</h3>
@@ -16,13 +16,13 @@
             {{ isLoading ? 'Atualizando...' : 'Atualizar' }}
           </button>
         </div>
-        
+
         <div v-if="dataLoaded" class="data-display">
           <h4>Dados carregados com sucesso!</h4>
           <p>Timestamp: {{ lastLoadTime }}</p>
         </div>
       </div>
-      
+
       <div class="demo-section">
         <h3>Configurações do Loader</h3>
         <div class="config-options">
@@ -49,20 +49,15 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Loader da página -->
-    <PageLoader 
-      :isLoading="isLoading"
-      :text="loaderText"
-      :size="loaderSize"
-      :position="loaderPosition"
-    />
+    <PageLoader :isLoading="isLoading" :text="loaderText" :size="loaderSize" :position="loaderPosition" />
   </div>
 </template>
 
 <script>
 import { ref, computed } from 'vue'
-import PageLoader from '@/components/PageLoader.vue'
+import PageLoader from '@/components/Loaders/PageLoader.vue'
 import { usePageLoader } from '@/composables/usePageLoader'
 
 export default {
@@ -74,17 +69,17 @@ export default {
     // Estado da página
     const dataLoaded = ref(false)
     const lastLoadTime = ref(null)
-    
+
     // Configurações do loader
     const loaderText = ref('Carregando dados...')
     const loaderSize = ref('medium')
     const loaderPosition = ref('center')
-    
+
     // Usar o composable do loader
     const { isLoading, withPageLoader } = usePageLoader({
       text: loaderText.value
     })
-    
+
     // Função para carregar dados
     const loadData = async () => {
       await withPageLoader(async () => {
@@ -94,7 +89,7 @@ export default {
         lastLoadTime.value = new Date().toLocaleString()
       }, 'Carregando dados...')
     }
-    
+
     // Função para atualizar dados
     const refreshData = async () => {
       await withPageLoader(async () => {
@@ -103,20 +98,20 @@ export default {
         lastLoadTime.value = new Date().toLocaleString()
       }, 'Atualizando dados...')
     }
-    
+
     return {
       // Estado
       dataLoaded,
       lastLoadTime,
-      
+
       // Configuração do loader
       loaderText,
       loaderSize,
       loaderPosition,
-      
+
       // Computed
       isLoading,
-      
+
       // Métodos
       loadData,
       refreshData
@@ -260,11 +255,11 @@ export default {
   .example-page {
     padding: 15px;
   }
-  
+
   .demo-buttons {
     flex-direction: column;
   }
-  
+
   .config-options {
     gap: 12px;
   }

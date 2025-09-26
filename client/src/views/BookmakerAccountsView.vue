@@ -1,14 +1,8 @@
 <template>
-  <div
-    class="bookmaker-accounts-container"
-    :class="{ 'sidebar-collapsed': sidebarCollapsed }"
-  >
+  <div class="bookmaker-accounts-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
-    <Sidebar
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-    />
+    <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded" />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
@@ -25,8 +19,7 @@
           <button @click="showAddAccountModal = true" class="btn btn-primary">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
               <path
-                d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
-              />
+                d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
             </svg>
             Adicionar Conta
           </button>
@@ -39,15 +32,9 @@
         <div class="stats-grid">
           <div class="stat-card">
             <div class="stat-icon">
-              <svg
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
-                />
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -58,18 +45,10 @@
 
           <div class="stat-card">
             <div class="stat-icon">
-              <svg
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
                 <path
-                  d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"
-                />
-                <path
-                  d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
-                />
+                  d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -80,15 +59,9 @@
 
           <div class="stat-card">
             <div class="stat-icon">
-              <svg
-                width="24"
-                height="24"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
-                />
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -104,18 +77,10 @@
             <h3 class="section-title">Suas Contas</h3>
             <div class="section-actions">
               <button @click="refreshAccounts" class="btn btn-secondary">
-                <svg
-                  width="16"
-                  height="16"
-                  fill="currentColor"
-                  viewBox="0 0 16 16"
-                >
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
                   <path
-                    d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"
-                  />
-                  <path
-                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"
-                  />
+                    d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
                 </svg>
                 Atualizar
               </button>
@@ -123,20 +88,11 @@
           </div>
 
           <!-- Empty State -->
-          <div
-            v-if="!Array.isArray(accounts) || accounts.length === 0"
-            class="empty-state"
-          >
+          <div v-if="!Array.isArray(accounts) || accounts.length === 0" class="empty-state">
             <div class="empty-icon">
-              <svg
-                width="64"
-                height="64"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
-                />
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <h3 class="empty-title">Nenhuma conta cadastrada</h3>
@@ -145,51 +101,35 @@
               seus saldos e apostas.
             </p>
             <button @click="showAddAccountModal = true" class="btn btn-primary">
-              <svg
-                width="16"
-                height="16"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"
-                />
+                  d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
               </svg>
               Adicionar Primeira Conta
             </button>
           </div>
 
           <!-- Accounts Grid -->
-          <div
-            v-else-if="Array.isArray(accounts) && accounts.length > 0"
-            class="accounts-grid"
-          >
-            <div
-              v-for="account in accounts"
-              :key="account.id"
-              class="account-card"
-              :class="{ 'account-inactive': account.status !== 'active' }"
-            >
+          <div v-else-if="Array.isArray(accounts) && accounts.length > 0" class="accounts-grid">
+            <div v-for="account in accounts" :key="account.id" class="account-card"
+              :class="{ 'account-inactive': account.status !== 'active' }">
               <div class="account-header">
                 <div class="account-info">
                   <h4 class="account-name">{{ account.bookmaker_name }}</h4>
                   <p class="account-type">{{ account.currency }}</p>
                 </div>
                 <div class="account-status">
-                  <span
-                    class="status-badge"
-                    :class="{
-                      'status-active': account.status === 'active',
-                      'status-inactive': account.status === 'inactive',
-                      'status-suspended': account.status === 'suspended',
-                    }"
-                  >
+                  <span class="status-badge" :class="{
+                    'status-active': account.status === 'active',
+                    'status-inactive': account.status === 'inactive',
+                    'status-suspended': account.status === 'suspended',
+                  }">
                     {{
                       account.status === "active"
                         ? "Ativa"
                         : account.status === "inactive"
-                        ? "Inativa"
-                        : "Suspensa"
+                          ? "Inativa"
+                          : "Suspensa"
                     }}
                   </span>
                 </div>
@@ -200,13 +140,13 @@
                   <span class="detail-label">Saldo:</span>
                   <span class="detail-value">{{
                     formatCurrency(account.balance)
-                  }}</span>
+                    }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Última atualização:</span>
                   <span class="detail-value">{{
                     formatDate(account.last_updated || account.updated_at)
-                  }}</span>
+                    }}</span>
                 </div>
                 <div v-if="account.notes" class="detail-item">
                   <span class="detail-label">Observações:</span>
@@ -215,39 +155,20 @@
               </div>
 
               <div class="account-actions">
-                <button
-                  @click="editAccount(account)"
-                  class="btn btn-sm btn-secondary"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    fill="currentColor"
-                    viewBox="0 0 16 16"
-                  >
+                <button @click="editAccount(account)" class="btn btn-sm btn-secondary">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                     <path
-                      d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L11.707 8l-3-3L12.146.146zM11.207 9l3-3L12.5 2.5 9.5 5.5l3 3z"
-                    />
+                      d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L11.707 8l-3-3L12.146.146zM11.207 9l3-3L12.5 2.5 9.5 5.5l3 3z" />
                     <path d="M8.5 2.5l3 3L8.5 8.5l-3-3 3-3z" />
                   </svg>
                   Editar
                 </button>
-                <button
-                  @click="deleteAccount(account)"
-                  class="btn btn-sm btn-danger"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    fill="currentColor"
-                    viewBox="0 0 16 16"
-                  >
+                <button @click="deleteAccount(account)" class="btn btn-sm btn-danger">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
                     <path
-                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"
-                    />
+                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
                     <path
-                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"
-                    />
+                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
                   </svg>
                   Excluir
                 </button>
@@ -263,72 +184,35 @@
           <div class="modal-header">
             <h3 class="modal-title">Adicionar Nova Conta</h3>
             <button @click="closeAddAccountModal" class="modal-close">
-              <svg
-                width="20"
-                height="20"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"
-                />
+                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
               </svg>
             </button>
           </div>
 
           <div class="modal-body">
-            <form
-              id="addAccountForm"
-              @submit.prevent="addAccount"
-              class="account-form"
-            >
+            <form id="addAccountForm" @submit.prevent="addAccount" class="account-form">
               <div class="form-group">
-                <label for="accountName" class="form-label"
-                  >Casa de Apostas</label
-                >
-                <select
-                  v-model="newAccount.name"
-                  id="accountName"
-                  class="form-select"
-                  required
-                >
+                <label for="accountName" class="form-label">Casa de Apostas</label>
+                <select v-model="newAccount.name" id="accountName" class="form-select" required>
                   <option value="">Selecione a casa de apostas</option>
-                  <option
-                    v-for="house in bookmakerHouses"
-                    :key="house"
-                    :value="house"
-                  >
+                  <option v-for="house in bookmakerHouses" :key="house" :value="house">
                     {{ house }}
                   </option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="accountBalance" class="form-label"
-                  >Saldo Inicial</label
-                >
-                <input
-                  v-model="newAccount.balance"
-                  type="number"
-                  step="0.01"
-                  id="accountBalance"
-                  class="form-input"
-                  placeholder="0.00"
-                  required
-                />
+                <label for="accountBalance" class="form-label">Saldo Inicial</label>
+                <input v-model="newAccount.balance" type="number" step="0.01" id="accountBalance" class="form-input"
+                  placeholder="0.00" required />
               </div>
 
               <div class="form-group">
-                <label for="accountNotes" class="form-label"
-                  >Observações (opcional)</label
-                >
-                <textarea
-                  v-model="newAccount.notes"
-                  id="accountNotes"
-                  class="form-textarea"
-                  placeholder="Adicione observações sobre esta conta..."
-                  rows="3"
-                ></textarea>
+                <label for="accountNotes" class="form-label">Observações (opcional)</label>
+                <textarea v-model="newAccount.notes" id="accountNotes" class="form-textarea"
+                  placeholder="Adicione observações sobre esta conta..." rows="3"></textarea>
               </div>
             </form>
           </div>
@@ -337,12 +221,7 @@
             <button @click="closeAddAccountModal" class="btn btn-secondary">
               Cancelar
             </button>
-            <button
-              type="submit"
-              form="addAccountForm"
-              class="btn btn-primary"
-              :disabled="addingAccount"
-            >
+            <button type="submit" form="addAccountForm" class="btn btn-primary" :disabled="addingAccount">
               <span v-if="addingAccount">Adicionando...</span>
               <span v-else>Adicionar Conta</span>
             </button>
@@ -356,15 +235,9 @@
           <div class="modal-header">
             <h3 class="modal-title">Editar Conta</h3>
             <button @click="closeEditAccountModal" class="modal-close">
-              <svg
-                width="20"
-                height="20"
-                fill="currentColor"
-                viewBox="0 0 16 16"
-              >
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
                 <path
-                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"
-                />
+                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
               </svg>
             </button>
           </div>
@@ -372,48 +245,24 @@
           <div class="modal-body">
             <form id="editAccountForm" @submit.prevent="updateAccount">
               <div class="form-group">
-                <label for="editAccountName" class="form-label"
-                  >Casa de Apostas *</label
-                >
-                <select
-                  v-model="editingAccountData.name"
-                  id="editAccountName"
-                  class="form-select"
-                  required
-                >
+                <label for="editAccountName" class="form-label">Casa de Apostas *</label>
+                <select v-model="editingAccountData.name" id="editAccountName" class="form-select" required>
                   <option value="">Selecione uma casa de apostas</option>
-                  <option
-                    v-for="house in bookmakerHouses"
-                    :key="house"
-                    :value="house"
-                  >
+                  <option v-for="house in bookmakerHouses" :key="house" :value="house">
                     {{ house }}
                   </option>
                 </select>
               </div>
 
               <div class="form-group">
-                <label for="editAccountBalance" class="form-label"
-                  >Saldo Atual *</label
-                >
-                <input
-                  v-model.number="editingAccountData.balance"
-                  type="number"
-                  step="0.01"
-                  id="editAccountBalance"
-                  class="form-input"
-                  placeholder="0.00"
-                  required
-                />
+                <label for="editAccountBalance" class="form-label">Saldo Atual *</label>
+                <input v-model.number="editingAccountData.balance" type="number" step="0.01" id="editAccountBalance"
+                  class="form-input" placeholder="0.00" required />
               </div>
 
               <div class="form-group">
                 <label for="editAccountStatus" class="form-label">Status</label>
-                <select
-                  v-model="editingAccountData.status"
-                  id="editAccountStatus"
-                  class="form-select"
-                >
+                <select v-model="editingAccountData.status" id="editAccountStatus" class="form-select">
                   <option value="active">Ativa</option>
                   <option value="inactive">Inativa</option>
                   <option value="suspended">Suspensa</option>
@@ -421,16 +270,9 @@
               </div>
 
               <div class="form-group">
-                <label for="editAccountNotes" class="form-label"
-                  >Observações (opcional)</label
-                >
-                <textarea
-                  v-model="editingAccountData.notes"
-                  id="editAccountNotes"
-                  class="form-textarea"
-                  placeholder="Adicione observações sobre esta conta..."
-                  rows="3"
-                ></textarea>
+                <label for="editAccountNotes" class="form-label">Observações (opcional)</label>
+                <textarea v-model="editingAccountData.notes" id="editAccountNotes" class="form-textarea"
+                  placeholder="Adicione observações sobre esta conta..." rows="3"></textarea>
               </div>
             </form>
           </div>
@@ -439,12 +281,7 @@
             <button @click="closeEditAccountModal" class="btn btn-secondary">
               Cancelar
             </button>
-            <button
-              type="submit"
-              form="editAccountForm"
-              class="btn btn-primary"
-              :disabled="editingAccount"
-            >
+            <button type="submit" form="editAccountForm" class="btn btn-primary" :disabled="editingAccount">
               <span v-if="editingAccount">Atualizando...</span>
               <span v-else>Atualizar Conta</span>
             </button>
@@ -456,8 +293,8 @@
 </template>
 
 <script>
-import AppHeader from "@/components/Header.vue";
-import Sidebar from "@/components/Sidebar.vue";
+import AppHeader from "@/components/Navigation/Header.vue";
+import Sidebar from "@/components/Navigation/Sidebar.vue";
 import { filterOptions } from "@/config/filters.js";
 
 export default {
@@ -1026,7 +863,8 @@ export default {
   transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
   width: calc(100% - 280px);
   max-width: calc(100% - 280px);
-  margin-left: 280px; /* Espaço para o sidebar fixo */
+  margin-left: 280px;
+  /* Espaço para o sidebar fixo */
 }
 
 /* Conteúdo Principal */
@@ -1074,7 +912,8 @@ export default {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
-  padding: 1rem 2rem 1.5rem 2rem; /* Adiciona padding vertical e horizontal */
+  padding: 1rem 2rem 1.5rem 2rem;
+  /* Adiciona padding vertical e horizontal */
   border-bottom: 1px solid var(--border-primary);
 }
 
@@ -1166,7 +1005,8 @@ export default {
   background: var(--bg-secondary);
   border: 1px solid var(--border-primary);
   border-radius: 12px;
-  padding: 2rem; /* Aumenta padding interno */
+  padding: 2rem;
+  /* Aumenta padding interno */
 }
 
 .section-header {
@@ -1492,19 +1332,27 @@ export default {
 /* Responsividade */
 @media (max-width: 1023px) {
   .bookmaker-accounts-container {
-    margin-left: 0; /* Remove margem em mobile/tablet */
-    width: 100%; /* Largura total em mobile */
-    max-width: 100%; /* Largura máxima total em mobile */
-    overflow-x: hidden; /* Evitar scroll horizontal */
-    overflow-y: auto; /* Permitir scroll vertical */
-    -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
+    margin-left: 0;
+    /* Remove margem em mobile/tablet */
+    width: 100%;
+    /* Largura total em mobile */
+    max-width: 100%;
+    /* Largura máxima total em mobile */
+    overflow-x: hidden;
+    /* Evitar scroll horizontal */
+    overflow-y: auto;
+    /* Permitir scroll vertical */
+    -webkit-overflow-scrolling: touch;
+    /* Scroll suave no iOS */
   }
 }
 
 @media (max-width: 700px) {
   .bookmaker-accounts-container {
-    width: 100vw; /* Largura total da viewport */
-    max-width: 100vw; /* Largura máxima da viewport */
+    width: 100vw;
+    /* Largura total da viewport */
+    max-width: 100vw;
+    /* Largura máxima da viewport */
     margin-left: 0;
     padding: 0;
     overflow-x: hidden;
@@ -1525,7 +1373,8 @@ export default {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
-    padding: 1rem 1rem 1.5rem 1rem; /* Padding responsivo */
+    padding: 1rem 1rem 1.5rem 1rem;
+    /* Padding responsivo */
   }
 
   .header-right {
@@ -1573,11 +1422,13 @@ export default {
   .main-content {
     width: 100%;
     max-width: 100%;
-    padding: 0 4px; /* Padding mínimo para evitar corte */
+    padding: 0 4px;
+    /* Padding mínimo para evitar corte */
   }
 
   .accounts-main {
-    padding: 0 4px; /* Padding mínimo para evitar corte */
+    padding: 0 4px;
+    /* Padding mínimo para evitar corte */
   }
 
   .page-title {

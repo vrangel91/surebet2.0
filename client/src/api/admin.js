@@ -105,6 +105,158 @@ export const adminAPI = {
       console.error('❌ [AdminAPI] Error response:', error.response?.data)
       throw error
     }
+  },
+
+  // ===== DASHBOARD APIs =====
+
+  // Obter estatísticas do dashboard
+  getDashboardStats: async () => {
+    try {
+      console.log('📊 [AdminAPI] Obtendo estatísticas do dashboard...')
+      
+      const response = await axios.get('/api/admin/dashboard/stats')
+      
+      console.log('📊 [AdminAPI] Response status:', response.status)
+      console.log('📊 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter estatísticas do dashboard:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // Obter usuários recentes
+  getRecentUsers: async () => {
+    try {
+      console.log('👥 [AdminAPI] Obtendo usuários recentes...')
+      
+      const response = await axios.get('/api/admin/dashboard/recent-users')
+      
+      console.log('👥 [AdminAPI] Response status:', response.status)
+      console.log('👥 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter usuários recentes:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // Obter planos ativos
+  getActivePlans: async () => {
+    try {
+      console.log('💎 [AdminAPI] Obtendo planos ativos...')
+      
+      const response = await axios.get('/api/admin/dashboard/active-plans')
+      
+      console.log('💎 [AdminAPI] Response status:', response.status)
+      console.log('💎 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter planos ativos:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // Obter atividades recentes
+  getRecentActivities: async () => {
+    try {
+      console.log('📋 [AdminAPI] Obtendo atividades recentes...')
+      
+      const response = await axios.get('/api/admin/dashboard/recent-activities')
+      
+      console.log('📋 [AdminAPI] Response status:', response.status)
+      console.log('📋 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter atividades recentes:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // ===== USUÁRIOS APIs =====
+
+  // Listar usuários
+  getUsers: async (params = {}) => {
+    try {
+      console.log('👥 [AdminAPI] Obtendo lista de usuários...')
+      
+      const queryParams = new URLSearchParams(params).toString()
+      const response = await axios.get(`/api/admin/users${queryParams ? '?' + queryParams : ''}`)
+      
+      console.log('👥 [AdminAPI] Response status:', response.status)
+      console.log('👥 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter usuários:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // ===== PLANOS APIs =====
+
+  // Listar planos
+  getPlans: async (params = {}) => {
+    try {
+      console.log('💎 [AdminAPI] Obtendo lista de planos...')
+      
+      const queryParams = new URLSearchParams(params).toString()
+      const response = await axios.get(`/api/admin/plans${queryParams ? '?' + queryParams : ''}`)
+      
+      console.log('💎 [AdminAPI] Response status:', response.status)
+      console.log('💎 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao obter planos:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // Ativar/Desativar plano
+  togglePlan: async (planId) => {
+    try {
+      console.log(`🔄 [AdminAPI] Alternando status do plano ${planId}...`)
+      
+      const response = await axios.patch(`/api/admin/plans/${planId}/toggle`)
+      
+      console.log('🔄 [AdminAPI] Response status:', response.status)
+      console.log('🔄 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro ao alternar status do plano:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
+  },
+
+  // Teste de planos
+  testPlans: async () => {
+    try {
+      console.log('🧪 [AdminAPI] Testando busca de planos...')
+      
+      const response = await axios.get('/api/admin/plans/test')
+      
+      console.log('🧪 [AdminAPI] Response status:', response.status)
+      console.log('🧪 [AdminAPI] Response data:', response.data)
+      
+      return response.data
+    } catch (error) {
+      console.error('❌ [AdminAPI] Erro no teste de planos:', error)
+      console.error('❌ [AdminAPI] Error response:', error.response?.data)
+      throw error
+    }
   }
 }
 

@@ -69,6 +69,13 @@ export function useSurebetsData(filters = null) {
         return;
       }
       
+      // Converter is_live para isLive em cada bet
+      surebet.forEach((bet) => {
+        if (bet && bet.is_live !== undefined && bet.isLive === undefined) {
+          bet.isLive = bet.is_live === 1 || bet.is_live === '1' || bet.is_live === true;
+        }
+      });
+      
       const key = createSurebetKey(surebet);
       
       if (!seenKeys.has(key)) {

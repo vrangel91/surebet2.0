@@ -646,7 +646,7 @@
                 <h4>Relatório de Receita</h4>
                 <div class="report-content">
                   <p><strong>Receita Total:</strong> R$ {{ formatCurrency(reports.revenue?.summary?.totalRevenue || 0)
-                    }}</p>
+                  }}</p>
                   <p><strong>Média por Transação:</strong> R$ {{ formatCurrency(reports.revenue?.summary?.avgRevenue ||
                     0) }}</p>
                   <p><strong>Total de Transações:</strong> {{ reports.revenue?.summary?.totalTransactions || 0 }}</p>
@@ -672,7 +672,7 @@
                     0) }}%</p>
                   <p><strong>VIPs Expirados:</strong> {{ reports.retention?.metrics?.totalExpired || 0 }}</p>
                   <p><strong>Renovados após Expiração:</strong> {{ reports.retention?.metrics?.renewedAfterExpiry || 0
-                    }}</p>
+                  }}</p>
                   <p><strong>Renovados antes da Expiração:</strong> {{ reports.retention?.metrics?.renewedBeforeExpiry
                     || 0 }}</p>
                 </div>
@@ -689,7 +689,7 @@
                     <div class="plan-summary">
                       <p><strong>Total de Ativações:</strong> {{ reports.plans?.summary?.totalActivations || 0 }}</p>
                       <p><strong>Receita Total:</strong> R$ {{ formatCurrency(reports.plans?.summary?.totalRevenue || 0)
-                        }}</p>
+                      }}</p>
                     </div>
                   </div>
                   <div v-else class="no-data">
@@ -867,8 +867,8 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { useStore } from 'vuex'
 import axios from '@/utils/axios'
-import Sidebar from '@/components/Sidebar.vue'
-import Header from '@/components/Header.vue'
+import Sidebar from '@/components/Navigation/Sidebar.vue'
+import Header from '@/components/Navigation/Header.vue'
 import {
   Crown,
   RefreshCw,

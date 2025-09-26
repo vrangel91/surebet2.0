@@ -121,6 +121,17 @@ Order.belongsTo(User, {
   as: 'user'
 });
 
+// Associações para planos
+Plan.hasMany(UserVIP, {
+  foreignKey: 'plan_id',
+  as: 'userVips'
+});
+
+UserVIP.belongsTo(Plan, {
+  foreignKey: 'plan_id',
+  as: 'plan'
+});
+
 // Função para sincronizar modelos com o banco
 async function syncModels() {
   try {

@@ -442,4 +442,597 @@ router.delete('/notifications/:id', async (req, res) => {
   }
 });
 
+// ===== ROTAS DE DASHBOARD =====
+
+// Obter estatísticas gerais do dashboard
+router.get('/dashboard/stats', async (req, res) => {
+  try {
+    console.log('📊 [Admin] Buscando estatísticas do dashboard...');
+
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+
+    // Estatísticas de usuários
+    const [
+      totalUsers,
+      newUsersToday,
+      activeUsersToday,
+      planUsers
+    ] = await Promise.all([
+      User.count(),
+      User.count({ where: { created_at: { [Op.gte]: startOfDay } } }),
+      UserSession.count({ 
+        where: { 
+          created_at: { [Op.gte]: startOfDay } 
+        },
+        distinct: true,
+        col: 'user_id'
+      }),
+      UserVIP.count({ 
+        where: { 
+          status: 'ativo',
+          data_fim: { [Op.gt]: new Date() }
+        }
+      })
+    ]);
+
+    // Estatísticas de receita
+    const [
+      monthlyRevenue,
+      lastMonthRevenue,
+      newPlansToday
+    ] = await Promise.all([
+      Order.sum('amount', {
+        where: {
+          status: 'approved',
+          created_at: { [Op.gte]: startOfMonth }
+        }
+      }),
+      Order.sum('amount', {
+        where: {
+          status: 'approved',
+          created_at: { 
+            [Op.gte]: startOfLastMonth,
+            [Op.lte]: endOfLastMonth
+          }
+        }
+      }),
+      UserVIP.count({
+        where: {
+          created_at: { [Op.gte]: startOfDay }
+        }
+      })
+    ]);
+
+    // Calcular crescimento
+    const revenueGrowth = lastMonthRevenue > 0 
+      ? ((monthlyRevenue - lastMonthRevenue) / lastMonthRevenue * 100).toFixed(1)
+      : 0;
+
+    // Usuários ativos (últimos 7 dias)
+    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const activeUsersLastWeek = await UserSession.count({
+      where: {
+        created_at: { [Op.gte]: sevenDaysAgo }
+      },
+      distinct: true,
+      col: 'user_id'
+    });
+
+    const activeGrowth = totalUsers > 0 
+      ? ((activeUsersToday / totalUsers) * 100).toFixed(1)
+      : 0;
+
+    const stats = {
+      totalUsers,
+      planUsers,
+      monthlyRevenue: monthlyRevenue || 0,
+      activeUsers: activeUsersToday,
+      newUsersToday,
+      newPlansToday,
+      revenueGrowth: parseFloat(revenueGrowth),
+      activeGrowth: parseFloat(activeGrowth)
+    };
+
+    console.log('✅ [Admin] Estatísticas do dashboard:', stats);
+
+    res.json({
+      success: true,
+      data: stats
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar estatísticas do dashboard:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Obter usuários recentes
+router.get('/dashboard/recent-users', async (req, res) => {
+  try {
+    console.log('👥 [Admin] Buscando usuários recentes...');
+
+    const recentUsers = await User.findAll({
+      attributes: ['id', 'first_name', 'last_name', 'email', 'username', 'created_at'],
+      order: [['created_at', 'DESC']],
+      limit: 10
+    });
+
+    // Verificar status do plano para cada usuário
+    const usersWithStatus = await Promise.all(
+      recentUsers.map(async (user) => {
+        const planStatus = await UserVIP.findOne({
+          where: {
+            user_id: user.id,
+            status: 'ativo',
+            data_fim: { [Op.gt]: new Date() }
+          }
+        });
+
+        return {
+          id: user.id,
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Usuário',
+          email: user.email,
+          status: planStatus ? 'premium' : 'active',
+          created_at: user.created_at
+        };
+      })
+    );
+
+    console.log(`✅ [Admin] Encontrados ${usersWithStatus.length} usuários recentes`);
+
+    res.json({
+      success: true,
+      data: usersWithStatus
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar usuários recentes:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Obter planos ativos
+router.get('/dashboard/active-plans', async (req, res) => {
+  try {
+    console.log('💎 [Admin] Buscando planos ativos...');
+
+    const activePlans = await UserVIP.findAll({
+      attributes: [
+        'plan_id',
+        [sequelize.fn('COUNT', sequelize.col('UserVIP.id')), 'activeUsers'],
+        [sequelize.fn('SUM', sequelize.col('amount')), 'monthlyRevenue']
+      ],
+      where: {
+        status: 'ativo',
+        data_fim: { [Op.gt]: new Date() }
+      },
+      group: ['plan_id'],
+      raw: true
+    });
+
+    // Buscar nomes dos planos
+    const planNames = await Plan.findAll({
+      attributes: ['id', 'name'],
+      raw: true
+    });
+
+    const planMap = {};
+    planNames.forEach(plan => {
+      planMap[plan.id] = plan.name;
+    });
+
+    const formattedPlans = activePlans.map(plan => ({
+      id: plan.plan_id,
+      name: planMap[plan.plan_id] || `Plano ${plan.plan_id}`,
+      activeUsers: parseInt(plan.activeUsers),
+      monthlyRevenue: parseFloat(plan.monthlyRevenue) || 0
+    }));
+
+    console.log(`✅ [Admin] Encontrados ${formattedPlans.length} planos ativos`);
+
+    res.json({
+      success: true,
+      data: formattedPlans
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar planos ativos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Obter atividades recentes
+router.get('/dashboard/recent-activities', async (req, res) => {
+  try {
+    console.log('📋 [Admin] Buscando atividades recentes...');
+
+    const activities = [];
+
+    // Buscar novos usuários (últimas 24h)
+    const newUsers = await User.findAll({
+      attributes: ['id', 'first_name', 'last_name', 'username', 'created_at'],
+      where: {
+        created_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      },
+      order: [['created_at', 'DESC']],
+      limit: 5
+    });
+
+    newUsers.forEach(user => {
+      activities.push({
+        id: `user_${user.id}`,
+        type: 'user_signup',
+        description: `Novo usuário cadastrado: ${user.first_name || user.username || 'Usuário'}`,
+        created_at: user.created_at
+      });
+    });
+
+    // Buscar ativações de planos (últimas 24h)
+    const planActivations = await UserVIP.findAll({
+      attributes: ['id', 'created_at', 'plan_name'],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['first_name', 'last_name', 'username']
+      }],
+      where: {
+        created_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      },
+      order: [['created_at', 'DESC']],
+      limit: 5
+    });
+
+    planActivations.forEach(plan => {
+      const userName = plan.user ? 
+        (plan.user.first_name || plan.user.username || 'Usuário') : 'Usuário';
+      activities.push({
+        id: `plan_${plan.id}`,
+        type: 'plan_activation',
+        description: `${userName} ativou o plano ${plan.plan_name}`,
+        created_at: plan.created_at
+      });
+    });
+
+    // Buscar pagamentos aprovados (últimas 24h)
+    const payments = await Order.findAll({
+      attributes: ['id', 'amount', 'created_at'],
+      where: {
+        status: 'approved',
+        created_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      },
+      order: [['created_at', 'DESC']],
+      limit: 5
+    });
+
+    payments.forEach(payment => {
+      activities.push({
+        id: `payment_${payment.id}`,
+        type: 'payment',
+        description: `Pagamento confirmado: R$ ${payment.amount.toFixed(2)}`,
+        created_at: payment.created_at
+      });
+    });
+
+    // Buscar logins recentes (últimas 24h)
+    const recentLogins = await UserSession.findAll({
+      attributes: ['id', 'created_at'],
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['first_name', 'last_name', 'username']
+      }],
+      where: {
+        created_at: { [Op.gte]: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+      },
+      order: [['created_at', 'DESC']],
+      limit: 5
+    });
+
+    recentLogins.forEach(session => {
+      const userName = session.user ? 
+        (session.user.first_name || session.user.username || 'Usuário') : 'Usuário';
+      activities.push({
+        id: `login_${session.id}`,
+        type: 'user_login',
+        description: `${userName} fez login`,
+        created_at: session.created_at
+      });
+    });
+
+    // Ordenar todas as atividades por data
+    activities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    // Limitar a 10 atividades mais recentes
+    const recentActivities = activities.slice(0, 10);
+
+    console.log(`✅ [Admin] Encontradas ${recentActivities.length} atividades recentes`);
+
+    res.json({
+      success: true,
+      data: recentActivities
+    });
+
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar atividades recentes:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// ===== ROTAS DE USUÁRIOS =====
+
+// Listar usuários com paginação e filtros
+router.get('/users', async (req, res) => {
+  try {
+    console.log('👥 [Admin] Buscando usuários...');
+    
+    const { 
+      page = 1, 
+      limit = 20, 
+      search = '', 
+      status = '', 
+      plan = '',
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    // Construir filtros
+    const whereClause = {};
+    const userWhereClause = {};
+    
+    if (search) {
+      userWhereClause[Op.or] = [
+        { first_name: { [Op.iLike]: `%${search}%` } },
+        { last_name: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } },
+        { username: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+    
+    // Buscar usuários com informações de planos
+    const { count, rows: users } = await User.findAndCountAll({
+      where: userWhereClause,
+      include: [
+        {
+          model: UserVIP,
+          as: 'vipPlans',
+          where: {
+            status: 'ativo',
+            data_fim: { [Op.gt]: new Date() }
+          },
+          required: false,
+          attributes: ['plan_id', 'plan_name', 'data_fim']
+        }
+      ],
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset),
+      distinct: true
+    });
+    
+    // Formatar dados dos usuários
+    const formattedUsers = users.map(user => {
+      const activePlan = user.vipPlans && user.vipPlans.length > 0 ? user.vipPlans[0] : null;
+      
+      return {
+        id: user.id,
+        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Usuário',
+        email: user.email,
+        username: user.username,
+        status: activePlan ? 'premium' : 'active',
+        planName: activePlan ? activePlan.plan_name : 'Gratuito',
+        planExpires: activePlan ? activePlan.data_fim : null,
+        createdAt: user.created_at,
+        lastLogin: user.last_login || null
+      };
+    });
+    
+    const pagination = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: count,
+      pages: Math.ceil(count / limit)
+    };
+    
+    console.log(`✅ [Admin] Encontrados ${users.length} usuários`);
+    
+    res.json({
+      success: true,
+      data: {
+        users: formattedUsers,
+        pagination
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar usuários:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// ===== ROTAS DE PLANOS =====
+
+// Teste simples para verificar se há planos
+router.get('/plans/test', async (req, res) => {
+  try {
+    console.log('🧪 [Admin] Testando busca de planos...');
+    
+    const totalPlans = await Plan.count();
+    console.log(`📊 [Admin] Total de planos na tabela: ${totalPlans}`);
+    
+    const allPlans = await Plan.findAll({
+      limit: 5,
+      attributes: ['id', 'name', 'display_name', 'type', 'is_active']
+    });
+    
+    console.log('📋 [Admin] Primeiros 5 planos:', allPlans);
+    
+    res.json({
+      success: true,
+      data: {
+        total: totalPlans,
+        sample: allPlans
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro no teste de planos:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Listar planos
+router.get('/plans', async (req, res) => {
+  try {
+    console.log('💎 [Admin] Buscando planos...');
+    
+    const { 
+      page = 1, 
+      limit = 20, 
+      search = '', 
+      status = '',
+      sortBy = 'created_at',
+      sortOrder = 'DESC'
+    } = req.query;
+    
+    const offset = (page - 1) * limit;
+    
+    // Construir filtros
+    const whereClause = {};
+    
+    if (search) {
+      whereClause[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { display_name: { [Op.iLike]: `%${search}%` } },
+        { type: { [Op.iLike]: `%${search}%` } }
+      ];
+    }
+    
+    if (status) {
+      whereClause.is_active = status === 'active';
+    }
+    
+    console.log('🔍 [Admin] Filtros aplicados:', whereClause);
+    
+    // Buscar planos
+    const { count, rows: plans } = await Plan.findAndCountAll({
+      where: whereClause,
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    console.log(`📊 [Admin] Encontrados ${plans.length} planos de ${count} total`);
+    
+    // Formatar planos (sem estatísticas por enquanto para debug)
+    const formattedPlans = plans.map(plan => {
+      console.log('📋 [Admin] Processando plano:', plan.id, plan.name);
+      
+      return {
+        id: plan.id,
+        name: plan.name,
+        displayName: plan.display_name,
+        type: plan.type,
+        category: plan.category,
+        price: parseFloat(plan.price),
+        durationDays: plan.duration_days,
+        isActive: plan.is_active,
+        description: plan.description,
+        features: plan.features,
+        color: plan.color,
+        cssClass: plan.css_class,
+        activeUsers: 0, // Temporariamente 0 para debug
+        monthlyRevenue: 0, // Temporariamente 0 para debug
+        createdAt: plan.created_at
+      };
+    });
+    
+    const pagination = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      total: count,
+      pages: Math.ceil(count / limit)
+    };
+    
+    console.log(`✅ [Admin] Encontrados ${plans.length} planos`);
+    
+    res.json({
+      success: true,
+      data: {
+        plans: formattedPlans,
+        pagination
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao buscar planos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Ativar/Desativar plano
+router.patch('/plans/:id/toggle', async (req, res) => {
+  try {
+    const planId = req.params.id;
+    console.log(`🔄 [Admin] Alternando status do plano ${planId}...`);
+    
+    const plan = await Plan.findByPk(planId);
+    
+    if (!plan) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plano não encontrado'
+      });
+    }
+    
+    await plan.update({
+      is_active: !plan.is_active
+    });
+    
+    console.log(`✅ [Admin] Plano ${planId} ${plan.is_active ? 'ativado' : 'desativado'}`);
+    
+    res.json({
+      success: true,
+      message: `Plano ${plan.is_active ? 'ativado' : 'desativado'} com sucesso`,
+      data: {
+        id: plan.id,
+        isActive: plan.is_active
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ [Admin] Erro ao alternar status do plano:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno do servidor'
+    });
+  }
+});
+
 module.exports = router;

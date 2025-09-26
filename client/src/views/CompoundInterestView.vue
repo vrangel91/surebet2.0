@@ -172,8 +172,8 @@
 </template>
 
 <script>
-import Sidebar from '../components/Sidebar.vue'
-import Header from '../components/Header.vue'
+import Sidebar from '../components/Navigation/Sidebar.vue'
+import Header from '../components/Navigation/Header.vue'
 
 import Chart from 'chart.js/auto'
 

@@ -1,6646 +1,6739 @@
 <template>
-      <div class="ranking-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
-      <Sidebar 
-        :sidebarCollapsed="sidebarCollapsed"
-        @toggle-sidebar="handleSidebarToggle"
-        @sidebar-state-loaded="handleSidebarStateLoaded"
-        @open-glossary="openGlossary"
-      />
-  
-      <main class="main-content">
-        <!-- Header Global -->
-        <Header />
-        
-        <header class="content-header">
-          <div class="header-left">
-            <h2 class="page-title">
-              <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z"/>
-              </svg>
-              Insights de Surebets
-            </h2>
-            <p class="page-subtitle">Análise completa de padrões, casas, mercados e oportunidades</p>
-          </div>
-          
-          <!-- Indicador de status dos dados -->
-          <div class="data-status-indicator" v-if="dataSource">
-            <span class="status-icon" :class="dataSource === 'cache' ? 'cache' : 'api'">
-              {{ dataSource === 'cache' ? '💾' : '🌐' }}
-            </span>
-            <span class="status-text">
-              {{ dataSource === 'cache' ? 'Dados do cache' : 'Dados da API' }}
-            </span>
-            <span class="status-time" v-if="lastDataUpdate">
-              • Atualizado: {{ formatDateTime(lastDataUpdate) }}
-            </span>
-          </div>
+  <div class="ranking-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded" @open-glossary="openGlossary" />
 
-          <!-- Botões de teste UTF-8 (apenas em desenvolvimento) -->
-          <div class="utf8-test-buttons" v-if="isDevelopment">
-            <button @click="testUTF8System" class="test-btn utf8-test">
-              🧪 Testar UTF-8
-            </button>
-            <button @click="showUTF8Statistics" class="test-btn utf8-stats">
-              📊 Stats UTF-8
-            </button>
-            <button @click="clearUTF8Reports" class="test-btn utf8-clear">
-              🗑️ Limpar Relatórios
-            </button>
-          </div>
-        </header>
-  
+    <main class="main-content">
+      <!-- Header Global -->
+      <Header />
 
-        <div class="filters-section">
-          <div class="filter-group">
-            <label>Período:</label>
-            <select v-model="selectedPeriod" @change="updateAnalysis" class="filter-select">
-              <option value="7">7 dias</option>
-              <option value="30">30 dias</option>
-              <option value="90">90 dias</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Esporte:</label>
-            <select v-model="selectedSport" @change="updateAnalysis" class="filter-select">
-              <option value="all">Todos</option>
-              <option v-for="sport in availableSports" :key="sport" :value="sport">{{ sport }}</option>
-            </select>
-          </div>
+      <header class="content-header">
+        <div class="header-left">
+          <h2 class="page-title">
+            <svg class="ranking-icon" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0z" />
+            </svg>
+            Insights de Surebets
+          </h2>
+          <p class="page-subtitle">Análise completa de padrões, casas, mercados e oportunidades</p>
         </div>
-  
-        <!-- Status da busca automática - OCULTO -->
-        <div class="auto-refresh-status" style="display: none;">
-          <div class="status-indicator">
-            <span class="status-dot" :class="{ active: autoRefreshInterval }"></span>
-            <span class="status-text">
-              {{ autoRefreshInterval ? '🔄 Busca automática ativa' : '⏹️ Busca automática pausada' }}
-            </span>
-          </div>
-          <div class="update-info" v-if="lastDataUpdate">
-            <span class="update-text">
-              Última atualização: {{ formatDateTime(lastDataUpdate) }}
-            </span>
-            <span class="update-count" v-if="dataUpdateCount > 0">
-              ({{ dataUpdateCount }} atualizações)
-            </span>
-          </div>
-          <button 
-            @click="toggleAutoRefresh" 
-            class="toggle-auto-refresh-btn"
-            :class="{ active: autoRefreshInterval }"
-          >
-            {{ autoRefreshInterval ? '⏸️ Pausar' : '▶️ Retomar' }}
+
+        <!-- Indicador de status dos dados -->
+        <div class="data-status-indicator" v-if="dataSource">
+          <span class="status-icon" :class="dataSource === 'cache' ? 'cache' : 'api'">
+            {{ dataSource === 'cache' ? '💾' : '🌐' }}
+          </span>
+          <span class="status-text">
+            {{ dataSource === 'cache' ? 'Dados do cache' : 'Dados da API' }}
+          </span>
+          <span class="status-time" v-if="lastDataUpdate">
+            • Atualizado: {{ formatDateTime(lastDataUpdate) }}
+          </span>
+        </div>
+
+        <!-- Botões de teste UTF-8 (apenas em desenvolvimento) -->
+        <div class="utf8-test-buttons" v-if="isDevelopment">
+          <button @click="testUTF8System" class="test-btn utf8-test">
+            🧪 Testar UTF-8
+          </button>
+          <button @click="showUTF8Statistics" class="test-btn utf8-stats">
+            📊 Stats UTF-8
+          </button>
+          <button @click="clearUTF8Reports" class="test-btn utf8-clear">
+            🗑️ Limpar Relatórios
           </button>
         </div>
-  
-        <div class="stats-dashboard">
-          <div class="stat-card">
-            <div class="stat-icon">🎯</div>
-            <div class="stat-content">
-              <span class="stat-number">{{ totalSurebets }}</span>
-              <span class="stat-label">Surebets</span>
+      </header>
+
+
+      <div class="filters-section">
+        <div class="filter-group">
+          <label>Período:</label>
+          <select v-model="selectedPeriod" @change="updateAnalysis" class="filter-select">
+            <option value="7">7 dias</option>
+            <option value="30">30 dias</option>
+            <option value="90">90 dias</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Esporte:</label>
+          <select v-model="selectedSport" @change="updateAnalysis" class="filter-select">
+            <option value="all">Todos</option>
+            <option v-for="sport in availableSports" :key="sport" :value="sport">{{ sport }}</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Status da busca automática - OCULTO -->
+      <div class="auto-refresh-status" style="display: none;">
+        <div class="status-indicator">
+          <span class="status-dot" :class="{ active: autoRefreshInterval }"></span>
+          <span class="status-text">
+            {{ autoRefreshInterval ? '🔄 Busca automática ativa' : '⏹️ Busca automática pausada' }}
+          </span>
+        </div>
+        <div class="update-info" v-if="lastDataUpdate">
+          <span class="update-text">
+            Última atualização: {{ formatDateTime(lastDataUpdate) }}
+          </span>
+          <span class="update-count" v-if="dataUpdateCount > 0">
+            ({{ dataUpdateCount }} atualizações)
+          </span>
+        </div>
+        <button @click="toggleAutoRefresh" class="toggle-auto-refresh-btn" :class="{ active: autoRefreshInterval }">
+          {{ autoRefreshInterval ? '⏸️ Pausar' : '▶️ Retomar' }}
+        </button>
+      </div>
+
+      <div class="stats-dashboard">
+        <div class="stat-card">
+          <div class="stat-icon">🎯</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ totalSurebets }}</span>
+            <span class="stat-label">Surebets</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏢</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ uniqueHouses }}</span>
+            <span class="stat-label">Casas</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ uniqueMarkets }}</span>
+            <span class="stat-label">Mercados</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">💰</div>
+          <div class="stat-content">
+            <span class="stat-number">{{ formatCurrency(averageProfit) }}</span>
+            <span class="stat-label">Lucro Médio</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-section">
+          <h3>🏆 Top Casas</h3>
+          <p class="chart-description">
+            Distribuição das surebets pelas principais casas de apostas.
+          </p>
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-label">🏢 Total de Casas:</span>
+              <span class="stat-value">{{ getTotalHouses() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">⭐ Casa Mais Frequente:</span>
+              <span class="stat-value">{{ getMostFrequentHouse() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🎯 Total de Surebets:</span>
+              <span class="stat-value">{{ totalSurebets }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📊 Média por Casa:</span>
+              <span class="stat-value">{{ getAverageSurebetsPerHouse() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">💰 Casa Mais Lucrativa:</span>
+              <span class="stat-value">{{ getHouseWithHighestProfit() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📉 Casa Menos Lucrativa:</span>
+              <span class="stat-value">{{ getHouseWithLowestProfit() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">💵 Lucro Total:</span>
+              <span class="stat-value">{{ formatCurrency(getTotalProfit()) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📈 Faixa de Lucro:</span>
+              <span class="stat-value">{{ getProfitRange() }}</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">🏢</div>
-            <div class="stat-content">
-              <span class="stat-number">{{ uniqueHouses }}</span>
-              <span class="stat-label">Casas</span>
+          <div class="chart-container">
+            <canvas ref="housesChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-section">
+          <h3>📈 Análise de Lucro vs Frequência</h3>
+          <p class="chart-description">
+            Relação entre frequência de aparições e lucro médio por mercado.
+            <span class="legend-item"><span class="legend-color green"></span> Top 33% lucro</span>
+            <span class="legend-item"><span class="legend-color yellow"></span> Médio 33% lucro</span>
+            <span class="legend-item"><span class="legend-color orange"></span> Bottom 33% lucro</span>
+            <br><small>💡 Tamanho dos pontos = frequência de aparições | 🔍 Use scroll para zoom | 🖱️ Arraste para
+              navegar</small>
+          </p>
+
+          <!-- Estatísticas adicionais do gráfico -->
+          <div class="chart-stats" v-if="filteredSurebets.length > 0">
+            <div class="stat-item">
+              <span class="stat-label">Total de Mercados:</span>
+              <span class="stat-value">{{ uniqueMarkets }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Mercado Mais Frequente:</span>
+              <span class="stat-value">{{ getMostFrequentMarket() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Lucro Máximo:</span>
+              <span class="stat-value">{{ formatCurrency(getMaxProfit()) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Lucro Mínimo:</span>
+              <span class="stat-value">{{ formatCurrency(getMinProfit()) }}</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-content">
-              <span class="stat-number">{{ uniqueMarkets }}</span>
-              <span class="stat-label">Mercados</span>
+          <div class="chart-container">
+            <canvas ref="profitFrequencyChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-section">
+          <h3>⏰ Atividade por Hora</h3>
+          <p class="chart-description">
+            Padrão de atividade das surebets ao longo do dia.
+          </p>
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-label">🎯 Total de Surebets:</span>
+              <span class="stat-value">{{ totalSurebets }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🔥 Hora de Pico:</span>
+              <span class="stat-value">{{ getPeakHour() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">⚡ Hora Mais Ativa:</span>
+              <span class="stat-value">{{ getMostActiveHour() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">😴 Hora Menos Ativa:</span>
+              <span class="stat-value">{{ getLeastActiveHour() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">💰 Lucro Médio por Hora:</span>
+              <span class="stat-value">{{ formatCurrency(getAverageProfitPerHour()) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🌅 Período Ativo:</span>
+              <span class="stat-value">{{ getActivePeriod() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🌙 Período Inativo:</span>
+              <span class="stat-value">{{ getInactivePeriod() }}</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div class="stat-content">
-              <span class="stat-number">{{ formatCurrency(averageProfit) }}</span>
-              <span class="stat-label">Lucro Médio</span>
+          <div class="chart-container">
+            <canvas ref="timeChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-section">
+          <h3>⚽ Esportes</h3>
+          <p class="chart-description">
+            Lucro médio por esporte nas surebets analisadas.
+          </p>
+          <div class="chart-stats">
+            <div class="stat-item">
+              <span class="stat-label">⚽ Total de Esportes:</span>
+              <span class="stat-value">{{ getTotalSports() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">💎 Esporte Mais Lucrativo:</span>
+              <span class="stat-value">{{ getMostProfitableSport() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">📉 Esporte Menos Lucrativo:</span>
+              <span class="stat-value">{{ getLeastProfitableSport() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">💰 Lucro Médio Geral:</span>
+              <span class="stat-value">{{ formatCurrency(getAverageProfitPerSport()) }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🔥 Esporte Mais Ativo:</span>
+              <span class="stat-value">{{ getMostActiveSport() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">😴 Esporte Menos Ativo:</span>
+              <span class="stat-value">{{ getLeastActiveSport() }}</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">🌈 Diversidade Esportiva:</span>
+              <span class="stat-value">{{ getSportDiversity() }}</span>
+            </div>
+          </div>
+          <div class="chart-container">
+            <canvas ref="sportsChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📈 Análise de Mercados Redesenhada -->
+      <div class="markets-analysis-section">
+        <div class="section-header">
+          <h3>📈 Análise de Mercados</h3>
+          <p>Performance detalhada por tipo de mercado</p>
+        </div>
+
+        <!-- Resumo Estatístico -->
+        <div class="markets-summary">
+          <div class="summary-card">
+            <div class="summary-icon">🎯</div>
+            <div class="summary-content">
+              <span class="summary-value">{{ uniqueMarkets }}</span>
+              <span class="summary-label">Tipos de Mercado</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon">📊</div>
+            <div class="summary-content">
+              <span class="summary-value">{{ Object.keys(groupedMarkets).length }}</span>
+              <span class="summary-label">Categorias</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon">🏆</div>
+            <div class="summary-content">
+              <span class="summary-value">{{ getDominantMarket() }}</span>
+              <span class="summary-label">Mercado Dominante</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon">💰</div>
+            <div class="summary-content">
+              <span class="summary-value">{{ formatCurrency(getAverageMarketProfit()) }}</span>
+              <span class="summary-label">Lucro Médio</span>
             </div>
           </div>
         </div>
-  
-        <div class="charts-grid">
-                   <div class="chart-section">
-             <h3>🏆 Top Casas</h3>
-             <p class="chart-description">
-               Distribuição das surebets pelas principais casas de apostas.
-             </p>
-                         <div class="chart-stats">
-                <div class="stat-item">
-                  <span class="stat-label">🏢 Total de Casas:</span>
-                  <span class="stat-value">{{ getTotalHouses() }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">⭐ Casa Mais Frequente:</span>
-                  <span class="stat-value">{{ getMostFrequentHouse() }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">🎯 Total de Surebets:</span>
-                  <span class="stat-value">{{ totalSurebets }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">📊 Média por Casa:</span>
-                  <span class="stat-value">{{ getAverageSurebetsPerHouse() }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">💰 Casa Mais Lucrativa:</span>
-                  <span class="stat-value">{{ getHouseWithHighestProfit() }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">📉 Casa Menos Lucrativa:</span>
-                  <span class="stat-value">{{ getHouseWithLowestProfit() }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">💵 Lucro Total:</span>
-                  <span class="stat-value">{{ formatCurrency(getTotalProfit()) }}</span>
-                </div>
-                <div class="stat-item">
-                  <span class="stat-label">📈 Faixa de Lucro:</span>
-                  <span class="stat-value">{{ getProfitRange() }}</span>
-                </div>
-              </div>
-             <div class="chart-container">
-               <canvas ref="housesChart"></canvas>
-             </div>
-           </div>
-                   <div class="chart-section">
-             <h3>📈 Análise de Lucro vs Frequência</h3>
-             <p class="chart-description">
-               Relação entre frequência de aparições e lucro médio por mercado. 
-               <span class="legend-item"><span class="legend-color green"></span> Top 33% lucro</span>
-               <span class="legend-item"><span class="legend-color yellow"></span> Médio 33% lucro</span>
-               <span class="legend-item"><span class="legend-color orange"></span> Bottom 33% lucro</span>
-               <br><small>💡 Tamanho dos pontos = frequência de aparições | 🔍 Use scroll para zoom | 🖱️ Arraste para navegar</small>
-             </p>
-             
-             <!-- Estatísticas adicionais do gráfico -->
-             <div class="chart-stats" v-if="filteredSurebets.length > 0">
-               <div class="stat-item">
-                 <span class="stat-label">Total de Mercados:</span>
-                 <span class="stat-value">{{ uniqueMarkets }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">Mercado Mais Frequente:</span>
-                 <span class="stat-value">{{ getMostFrequentMarket() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">Lucro Máximo:</span>
-                 <span class="stat-value">{{ formatCurrency(getMaxProfit()) }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">Lucro Mínimo:</span>
-                 <span class="stat-value">{{ formatCurrency(getMinProfit()) }}</span>
-               </div>
-             </div>
-            <div class="chart-container">
-              <canvas ref="profitFrequencyChart"></canvas>
-            </div>
-          </div>
-                   <div class="chart-section">
-             <h3>⏰ Atividade por Hora</h3>
-             <p class="chart-description">
-               Padrão de atividade das surebets ao longo do dia.
-             </p>
-             <div class="chart-stats">
-               <div class="stat-item">
-                 <span class="stat-label">🎯 Total de Surebets:</span>
-                 <span class="stat-value">{{ totalSurebets }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">🔥 Hora de Pico:</span>
-                 <span class="stat-value">{{ getPeakHour() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">⚡ Hora Mais Ativa:</span>
-                 <span class="stat-value">{{ getMostActiveHour() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">😴 Hora Menos Ativa:</span>
-                 <span class="stat-value">{{ getLeastActiveHour() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">💰 Lucro Médio por Hora:</span>
-                 <span class="stat-value">{{ formatCurrency(getAverageProfitPerHour()) }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">🌅 Período Ativo:</span>
-                 <span class="stat-value">{{ getActivePeriod() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">🌙 Período Inativo:</span>
-                 <span class="stat-value">{{ getInactivePeriod() }}</span>
-               </div>
-             </div>
-             <div class="chart-container">
-               <canvas ref="timeChart"></canvas>
-             </div>
-           </div>
-                   <div class="chart-section">
-             <h3>⚽ Esportes</h3>
-             <p class="chart-description">
-               Lucro médio por esporte nas surebets analisadas.
-             </p>
-             <div class="chart-stats">
-               <div class="stat-item">
-                 <span class="stat-label">⚽ Total de Esportes:</span>
-                 <span class="stat-value">{{ getTotalSports() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">💎 Esporte Mais Lucrativo:</span>
-                 <span class="stat-value">{{ getMostProfitableSport() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">📉 Esporte Menos Lucrativo:</span>
-                 <span class="stat-value">{{ getLeastProfitableSport() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">💰 Lucro Médio Geral:</span>
-                 <span class="stat-value">{{ formatCurrency(getAverageProfitPerSport()) }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">🔥 Esporte Mais Ativo:</span>
-                 <span class="stat-value">{{ getMostActiveSport() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">😴 Esporte Menos Ativo:</span>
-                 <span class="stat-value">{{ getLeastActiveSport() }}</span>
-               </div>
-               <div class="stat-item">
-                 <span class="stat-label">🌈 Diversidade Esportiva:</span>
-                 <span class="stat-value">{{ getSportDiversity() }}</span>
-               </div>
-             </div>
-             <div class="chart-container">
-               <canvas ref="sportsChart"></canvas>
-             </div>
-           </div>
-        </div>
-  
-        <!-- 📈 Análise de Mercados Redesenhada -->
-        <div class="markets-analysis-section">
-          <div class="section-header">
-            <h3>📈 Análise de Mercados</h3>
-            <p>Performance detalhada por tipo de mercado</p>
-          </div>
-          
-          <!-- Resumo Estatístico -->
-          <div class="markets-summary">
-            <div class="summary-card">
-              <div class="summary-icon">🎯</div>
-              <div class="summary-content">
-                <span class="summary-value">{{ uniqueMarkets }}</span>
-                <span class="summary-label">Tipos de Mercado</span>
+
+        <!-- Layout Principal -->
+        <div class="markets-main-layout">
+          <!-- Gráfico Compacto -->
+          <div class="markets-chart-section">
+            <div class="chart-header">
+              <h4>📊 Distribuição por Categoria</h4>
+              <div class="chart-controls">
+                <button @click="toggleMarketsChartViewMode" class="control-btn"
+                  :class="{ active: marketsChartViewMode === 'percentage' }"
+                  title="Alternar entre percentual e contagem">
+                  {{ marketsChartViewMode === 'percentage' ? '%' : '#' }}
+                </button>
+                <button @click="toggleMarketsChartDetails" class="control-btn"
+                  :class="{ active: marketsChartShowDetails }" title="Mostrar detalhes por subcategoria">
+                  {{ marketsChartShowDetails ? '📋' : '📊' }}
+                </button>
               </div>
             </div>
-            <div class="summary-card">
-              <div class="summary-icon">📊</div>
-              <div class="summary-content">
-                <span class="summary-value">{{ Object.keys(groupedMarkets).length }}</span>
-                <span class="summary-label">Categorias</span>
-              </div>
+
+            <div class="chart-container-compact">
+              <canvas ref="marketsChart"></canvas>
             </div>
-            <div class="summary-card">
-              <div class="summary-icon">🏆</div>
-              <div class="summary-content">
-                <span class="summary-value">{{ getDominantMarket() }}</span>
-                <span class="summary-label">Mercado Dominante</span>
-              </div>
-            </div>
-            <div class="summary-card">
-              <div class="summary-icon">💰</div>
-              <div class="summary-content">
-                <span class="summary-value">{{ formatCurrency(getAverageMarketProfit()) }}</span>
-                <span class="summary-label">Lucro Médio</span>
+
+            <div class="chart-filters" v-if="!marketsChartShowDetails">
+              <div class="filter-group">
+                <label>Filtro Mínimo:</label>
+                <select v-model="marketsChartFilters.minCount" @change="updateMarketsChartFilters"
+                  class="filter-select">
+                  <option value="1">1 aparição</option>
+                  <option value="2">2 aparições</option>
+                  <option value="3">3 aparições</option>
+                  <option value="5">5 aparições</option>
+                </select>
               </div>
             </div>
           </div>
-  
-          <!-- Layout Principal -->
-          <div class="markets-main-layout">
-            <!-- Gráfico Compacto -->
-            <div class="markets-chart-section">
-              <div class="chart-header">
-                <h4>📊 Distribuição por Categoria</h4>
-                <div class="chart-controls">
-                  <button 
-                    @click="toggleMarketsChartViewMode" 
-                    class="control-btn"
-                    :class="{ active: marketsChartViewMode === 'percentage' }"
-                    title="Alternar entre percentual e contagem"
-                  >
-                    {{ marketsChartViewMode === 'percentage' ? '%' : '#' }}
-                  </button>
-                  <button 
-                    @click="toggleMarketsChartDetails" 
-                    class="control-btn"
-                    :class="{ active: marketsChartShowDetails }"
-                    title="Mostrar detalhes por subcategoria"
-                  >
-                    {{ marketsChartShowDetails ? '📋' : '📊' }}
-                  </button>
-                </div>
-              </div>
-              
-              <div class="chart-container-compact">
-                <canvas ref="marketsChart"></canvas>
-              </div>
-              
-              <div class="chart-filters" v-if="!marketsChartShowDetails">
-                <div class="filter-group">
-                  <label>Filtro Mínimo:</label>
-                  <select v-model="marketsChartFilters.minCount" @change="updateMarketsChartFilters" class="filter-select">
-                    <option value="1">1 aparição</option>
-                    <option value="2">2 aparições</option>
-                    <option value="3">3 aparições</option>
-                    <option value="5">5 aparições</option>
-                  </select>
-                </div>
+
+          <!-- Ranking Compacto -->
+          <div class="markets-ranking-compact">
+            <div class="ranking-header">
+              <h4>🏆 Top Mercados</h4>
+              <div class="ranking-filters">
+                <select v-model="selectedMarketGroup" class="filter-select" @change="filterMarketsTable">
+                  <option value="">Todas as categorias</option>
+                  <option v-for="(group, key) in groupedMarkets" :key="key" :value="group.name">
+                    {{ group.name }}
+                  </option>
+                </select>
               </div>
             </div>
-  
-            <!-- Ranking Compacto -->
-            <div class="markets-ranking-compact">
-              <div class="ranking-header">
-                <h4>🏆 Top Mercados</h4>
-                <div class="ranking-filters">
-                  <select v-model="selectedMarketGroup" class="filter-select" @change="filterMarketsTable">
-                    <option value="">Todas as categorias</option>
-                    <option v-for="(group, key) in groupedMarkets" :key="key" :value="group.name">
-                      {{ group.name }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-              
-              <div class="ranking-list">
-                <div 
-                  v-for="(market, index) in filteredTopMarkets.slice(0, 8)" 
-                  :key="market.name" 
-                  class="ranking-item"
-                  :class="{ 
-                    'highlighted': selectedMarketGroup && market.categoryName === selectedMarketGroup,
-                    'category-filtered': selectedMarketGroup && market.categoryName !== selectedMarketGroup
-                  }"
-                  @click="selectMarket(market)"
-                >
-                  <div class="ranking-position">{{ index + 1 }}</div>
-                  <div class="ranking-content">
-                    <div class="market-name">{{ market.name || 'N/A' }}</div>
-                    <div class="market-category">
-                      <span 
-                        class="category-badge" 
-                        :style="{ backgroundColor: getGroupColor(market.categoryName) }"
-                      >
-                        {{ market.categoryName }}
-                      </span>
-                    </div>
+
+            <div class="ranking-list">
+              <div v-for="(market, index) in filteredTopMarkets.slice(0, 8)" :key="market.name" class="ranking-item"
+                :class="{
+                  'highlighted': selectedMarketGroup && market.categoryName === selectedMarketGroup,
+                  'category-filtered': selectedMarketGroup && market.categoryName !== selectedMarketGroup
+                }" @click="selectMarket(market)">
+                <div class="ranking-position">{{ index + 1 }}</div>
+                <div class="ranking-content">
+                  <div class="market-name">{{ market.name || 'N/A' }}</div>
+                  <div class="market-category">
+                    <span class="category-badge" :style="{ backgroundColor: getGroupColor(market.categoryName) }">
+                      {{ market.categoryName }}
+                    </span>
                   </div>
-                  <div class="ranking-stats">
-                    <div class="stat-count">{{ market.count }}x</div>
-                    <div class="stat-profit">{{ formatCurrency(market.averageProfit) }}</div>
-                  </div>
+                </div>
+                <div class="ranking-stats">
+                  <div class="stat-count">{{ market.count }}x</div>
+                  <div class="stat-profit">{{ formatCurrency(market.averageProfit) }}</div>
                 </div>
               </div>
             </div>
           </div>
-  
-          <!-- Tabela Detalhada (Expandível) -->
-          <div class="markets-detail-section" v-if="showDetailedTable">
-            <div class="detail-header">
-              <h4>📋 Detalhamento Completo</h4>
-              <button @click="showDetailedTable = false" class="close-btn">✕</button>
-            </div>
-            <div class="detail-table-wrapper">
-              <table class="detail-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Mercado</th>
-                    <th>Categoria</th>
-                    <th>Count</th>
-                    <th>Lucro Médio</th>
-                    <th>Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr 
-                    v-for="(market, index) in filteredTopMarkets" 
-                    :key="market.name" 
-                    class="detail-row"
-                    :class="{ 
-                      'highlighted': selectedMarketGroup && market.categoryName === selectedMarketGroup,
-                      'category-filtered': selectedMarketGroup && market.categoryName !== selectedMarketGroup
-                    }"
-                  >
-                    <td class="position">{{ index + 1 }}</td>
-                    <td class="market-name-cell">
-                      <div class="market-name-wrapper">
-                        <span class="market-icon">🎯</span>
-                        <span class="market-name-text">{{ market.name || 'N/A' }}</span>
-                      </div>
-                    </td>
-                    <td class="category-cell">
-                      <span 
-                        class="category-badge-compact" 
-                        :style="{ backgroundColor: getGroupColor(market.categoryName) }"
-                      >
-                        {{ market.categoryName }}
-                      </span>
-                    </td>
-                    <td class="count">{{ market.count }}</td>
-                    <td class="profit">{{ formatCurrency(market.averageProfit) }}</td>
-                    <td class="score">{{ (market.score || 0).toFixed(1) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-  
-          <!-- Botão para expandir tabela -->
-          <div class="expand-section" v-if="!showDetailedTable">
-            <button @click="showDetailedTable = true" class="expand-btn">
-              📋 Ver Tabela Completa
-            </button>
-          </div>
         </div>
-  
-               <div class="ranking-section">
-           <h3>🏢 Ranking das Casas</h3>
-           <div class="ranking-table-container">
-             <table class="ranking-table">
-               <thead>
-                 <tr>
-                   <th>Pos</th>
-                   <th>Casa</th>
-                   <th>Aparições</th>
-                   <th>%</th>
-                   <th>Lucro Médio</th>
-                   <th>Lucro Max</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 <tr v-for="(house, index) in topHouses" :key="house.name" class="ranking-row">
-                   <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
-                   <td class="house-name">
-                     <span class="house-logo">{{ house.name ? house.name.charAt(0) : '?' }}</span>
-                     {{ house.name || 'Nome não informado' }}
-                   </td>
-                   <td>{{ house.count }}</td>
-                   <td>{{ formatPercentage(house.percentage) }}%</td>
-                   <td class="positive">{{ formatCurrency(house.averageProfit) }}</td>
-                   <td class="positive">{{ formatCurrency(house.maxProfit) }}</td>
-                 </tr>
-               </tbody>
-             </table>
-           </div>
-           
-           <!-- Estatísticas das casas não ativas -->
-           <div class="inactive-houses-info">
-             <h4>📊 Casas Não Ativas no Período</h4>
-             <p>Total de casas disponíveis: <strong>{{ totalAvailableHouses }}</strong></p>
-             <p>Casas ativas: <strong class="positive">{{ activeHousesCount }}</strong></p>
-             <p>Casas inativas: <strong class="neutral">{{ inactiveHousesCount }}</strong></p>
-           </div>
-         </div>
-  
-        <div class="ranking-section">
-          <h3>🤝 Duplas Mais Frequentes</h3>
-          <div class="ranking-table-container">
-            <table class="ranking-table">
+
+        <!-- Tabela Detalhada (Expandível) -->
+        <div class="markets-detail-section" v-if="showDetailedTable">
+          <div class="detail-header">
+            <h4>📋 Detalhamento Completo</h4>
+            <button @click="showDetailedTable = false" class="close-btn">✕</button>
+          </div>
+          <div class="detail-table-wrapper">
+            <table class="detail-table">
               <thead>
                 <tr>
                   <th>Pos</th>
-                  <th>Dupla</th>
-                  <th>Freq</th>
-                  <th>%</th>
+                  <th>Mercado</th>
+                  <th>Categoria</th>
+                  <th>Count</th>
                   <th>Lucro Médio</th>
-                  <th>Consistência</th>
+                  <th>Score</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(pair, index) in topHousePairs" :key="pair.id" class="ranking-row">
-                  <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
-                  <td class="pair-names">
-                    <span class="house-tag">{{ pair.house1 }}</span>
-                    <span class="pair-separator">+</span>
-                    <span class="house-tag">{{ pair.house2 }}</span>
+                <tr v-for="(market, index) in filteredTopMarkets" :key="market.name" class="detail-row" :class="{
+                  'highlighted': selectedMarketGroup && market.categoryName === selectedMarketGroup,
+                  'category-filtered': selectedMarketGroup && market.categoryName !== selectedMarketGroup
+                }">
+                  <td class="position">{{ index + 1 }}</td>
+                  <td class="market-name-cell">
+                    <div class="market-name-wrapper">
+                      <span class="market-icon">🎯</span>
+                      <span class="market-name-text">{{ market.name || 'N/A' }}</span>
+                    </div>
                   </td>
-                  <td>{{ pair.count }}</td>
-                  <td>{{ formatPercentage(pair.percentage) }}%</td>
-                  <td class="positive">{{ formatCurrency(pair.averageProfit) }}</td>
-                  <td><span class="consistency-score" :class="getConsistencyClass(pair.consistency)">{{ formatPercentage(pair.consistency) }}%</span></td>
+                  <td class="category-cell">
+                    <span class="category-badge-compact"
+                      :style="{ backgroundColor: getGroupColor(market.categoryName) }">
+                      {{ market.categoryName }}
+                    </span>
+                  </td>
+                  <td class="count">{{ market.count }}</td>
+                  <td class="profit">{{ formatCurrency(market.averageProfit) }}</td>
+                  <td class="score">{{ (market.score || 0).toFixed(1) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-  
-        <div class="insights-section">
-          <h3>🔍 Insights</h3>
-          <div class="insights-grid">
-            <div class="insight-card">
-              <div class="insight-header">
-                <span class="insight-icon">⭐</span>
-                <h4>Melhor Dupla</h4>
-              </div>
-              <div class="insight-content">
-                <p v-if="bestPair">
-                  <strong>{{ bestPair.house1 }} + {{ bestPair.house2 }}</strong><br>
-                  <span class="insight-detail">{{ bestPair.count }} aparições</span>
-                </p>
-                <p v-else class="no-data">Sem dados</p>
-              </div>
+
+        <!-- Botão para expandir tabela -->
+        <div class="expand-section" v-if="!showDetailedTable">
+          <button @click="showDetailedTable = true" class="expand-btn">
+            📋 Ver Tabela Completa
+          </button>
+        </div>
+      </div>
+
+      <div class="ranking-section">
+        <h3>🏢 Ranking das Casas</h3>
+        <div class="ranking-table-container">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Casa</th>
+                <th>Aparições</th>
+                <th>%</th>
+                <th>Lucro Médio</th>
+                <th>Lucro Max</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(house, index) in topHouses" :key="house.name" class="ranking-row">
+                <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
+                <td class="house-name">
+                  <span class="house-logo">{{ house.name ? house.name.charAt(0) : '?' }}</span>
+                  {{ house.name || 'Nome não informado' }}
+                </td>
+                <td>{{ house.count }}</td>
+                <td>{{ formatPercentage(house.percentage) }}%</td>
+                <td class="positive">{{ formatCurrency(house.averageProfit) }}</td>
+                <td class="positive">{{ formatCurrency(house.maxProfit) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Estatísticas das casas não ativas -->
+        <div class="inactive-houses-info">
+          <h4>📊 Casas Não Ativas no Período</h4>
+          <p>Total de casas disponíveis: <strong>{{ totalAvailableHouses }}</strong></p>
+          <p>Casas ativas: <strong class="positive">{{ activeHousesCount }}</strong></p>
+          <p>Casas inativas: <strong class="neutral">{{ inactiveHousesCount }}</strong></p>
+        </div>
+      </div>
+
+      <div class="ranking-section">
+        <h3>🤝 Duplas Mais Frequentes</h3>
+        <div class="ranking-table-container">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Dupla</th>
+                <th>Freq</th>
+                <th>%</th>
+                <th>Lucro Médio</th>
+                <th>Consistência</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(pair, index) in topHousePairs" :key="pair.id" class="ranking-row">
+                <td><span class="position-badge" :class="getPositionClass(index + 1)">{{ index + 1 }}</span></td>
+                <td class="pair-names">
+                  <span class="house-tag">{{ pair.house1 }}</span>
+                  <span class="pair-separator">+</span>
+                  <span class="house-tag">{{ pair.house2 }}</span>
+                </td>
+                <td>{{ pair.count }}</td>
+                <td>{{ formatPercentage(pair.percentage) }}%</td>
+                <td class="positive">{{ formatCurrency(pair.averageProfit) }}</td>
+                <td><span class="consistency-score" :class="getConsistencyClass(pair.consistency)">{{
+                  formatPercentage(pair.consistency) }}%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="insights-section">
+        <h3>🔍 Insights</h3>
+        <div class="insights-grid">
+          <div class="insight-card">
+            <div class="insight-header">
+              <span class="insight-icon">⭐</span>
+              <h4>Melhor Dupla</h4>
             </div>
-            <div class="insight-card">
-              <div class="insight-header">
-                <span class="insight-icon">🕐</span>
-                <h4>Pico</h4>
-              </div>
-              <div class="insight-content">
-                <p v-if="peakHour">
-                  <strong>{{ peakHour.hour }}:00h</strong><br>
-                  <span class="insight-detail">{{ peakHour.count }} surebets</span>
-                </p>
-                <p v-else class="no-data">Sem dados</p>
-              </div>
+            <div class="insight-content">
+              <p v-if="bestPair">
+                <strong>{{ bestPair.house1 }} + {{ bestPair.house2 }}</strong><br>
+                <span class="insight-detail">{{ bestPair.count }} aparições</span>
+              </p>
+              <p v-else class="no-data">Sem dados</p>
             </div>
-            <div class="insight-card">
-              <div class="insight-header">
-                <span class="insight-icon">💎</span>
-                <h4>Melhor Mercado</h4>
-              </div>
-              <div class="insight-content">
-                <p v-if="bestMarket">
-                  <strong>{{ bestMarket.name }}</strong><br>
-                  <span class="insight-detail">{{ formatCurrency(bestMarket.averageProfit) }}</span>
-                </p>
-                <p v-else class="no-data">Sem dados</p>
-              </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-header">
+              <span class="insight-icon">🕐</span>
+              <h4>Pico</h4>
             </div>
-            <div class="insight-card">
-              <div class="insight-header">
-                <span class="insight-icon">⚽</span>
-                <h4>Esporte Ativo</h4>
-              </div>
-              <div class="insight-content">
-                <p v-if="mostActiveSport">
-                  <strong>{{ mostActiveSport.name }}</strong><br>
-                  <span class="insight-detail">{{ mostActiveSport.count }} surebets</span>
-                </p>
-                <p v-else class="no-data">Sem dados</p>
-              </div>
+            <div class="insight-content">
+              <p v-if="peakHour">
+                <strong>{{ peakHour.hour }}:00h</strong><br>
+                <span class="insight-detail">{{ peakHour.count }} surebets</span>
+              </p>
+              <p v-else class="no-data">Sem dados</p>
+            </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-header">
+              <span class="insight-icon">💎</span>
+              <h4>Melhor Mercado</h4>
+            </div>
+            <div class="insight-content">
+              <p v-if="bestMarket">
+                <strong>{{ bestMarket.name }}</strong><br>
+                <span class="insight-detail">{{ formatCurrency(bestMarket.averageProfit) }}</span>
+              </p>
+              <p v-else class="no-data">Sem dados</p>
+            </div>
+          </div>
+          <div class="insight-card">
+            <div class="insight-header">
+              <span class="insight-icon">⚽</span>
+              <h4>Esporte Ativo</h4>
+            </div>
+            <div class="insight-content">
+              <p v-if="mostActiveSport">
+                <strong>{{ mostActiveSport.name }}</strong><br>
+                <span class="insight-detail">{{ mostActiveSport.count }} surebets</span>
+              </p>
+              <p v-else class="no-data">Sem dados</p>
             </div>
           </div>
         </div>
-  
-        <div class="scroll-spacer"></div>
-      </main>
-  
-      <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary"     />
-    </div>
-  </template>
-  
-  <script>
-  import { mapGetters } from 'vuex'
-  import Sidebar from '../components/Sidebar.vue'
-  import Header from '../components/Header.vue'
-  import GlossaryModal from '../components/GlossaryModal.vue'
-  import { Chart, registerables } from 'chart.js'
-  import { filterOptions } from '../config/filters.js'
-  import { 
-    groupMarketsByCategory, 
-    filterMarketsByRelevance, 
-    createChartData,
-    categorizeMarket 
-  } from '../config/marketGroups.js'
-  Chart.register(...registerables)
-  
-  export default {
-    name: 'RankingView',
-    components: { Sidebar, Header, GlossaryModal },
-    
-    data() {
-      return {
-        sidebarCollapsed: false,
-        showGlossaryModal: false,
-        selectedPeriod: '30',
-        selectedSport: 'all',
-        surebets: [],
-        totalSurebets: 0,
-        uniqueHouses: 0,
-        uniqueMarkets: 0,
-        averageProfit: 0,
-        topHouses: [],
-        isDevelopment: process.env.NODE_ENV === 'development',
-        topHousePairs: [],
-        topMarkets: [],
-        bestPair: null,
-        peakHour: null,
-        bestMarket: null,
-        mostActiveSport: null,
-        housesChart: null,
-        marketsChart: null,
-                timeChart: null,
-          sportsChart: null,
-          profitFrequencyChart: null,
-          isLoading: false,
-          availableSports: [],
-          // Novas propriedades para busca contínua
-          autoRefreshInterval: null,
-          lastDataUpdate: null,
-          dataUpdateCount: 0,
-          dataSource: null, // 'cache' ou 'api'
-          
-          // Propriedades para o gráfico de mercados melhorado
-          groupedMarkets: {},
-          marketsChartViewMode: 'percentage', // 'percentage' ou 'count'
-          marketsChartShowDetails: false,
-          selectedMarketGroup: null,
-          marketsChartFilters: {
-            minCount: 2,
-            minPercentage: 1
-          },
-          showDetailedTable: false,
-          chartsInitialized: false,
-          _forceChartColorsRunning: false,
-        _updatingCharts: false,
-          _forceChartBackgroundRunning: false
+      </div>
+
+      <div class="scroll-spacer"></div>
+    </main>
+
+    <GlossaryModal :isVisible="showGlossaryModal" @close="closeGlossary" />
+  </div>
+</template>
+
+<script>
+import { mapGetters } from 'vuex'
+import Sidebar from '../components/Navigation/Sidebar.vue'
+import Header from '../components/Navigation/Header.vue'
+import GlossaryModal from '../components/Modals/GlossaryModal.vue'
+import { Chart, registerables } from 'chart.js'
+import { filterOptions } from '../config/filters.js'
+import {
+  groupMarketsByCategory,
+  filterMarketsByRelevance,
+  createChartData,
+  categorizeMarket
+} from '../config/marketGroups.js'
+Chart.register(...registerables)
+
+export default {
+  name: 'RankingView',
+  components: { Sidebar, Header, GlossaryModal },
+
+  data() {
+    return {
+      sidebarCollapsed: false,
+      showGlossaryModal: false,
+      selectedPeriod: '30',
+      selectedSport: 'all',
+      surebets: [],
+      totalSurebets: 0,
+      uniqueHouses: 0,
+      uniqueMarkets: 0,
+      averageProfit: 0,
+      topHouses: [],
+      isDevelopment: process.env.NODE_ENV === 'development',
+      topHousePairs: [],
+      topMarkets: [],
+      bestPair: null,
+      peakHour: null,
+      bestMarket: null,
+      mostActiveSport: null,
+      housesChart: null,
+      marketsChart: null,
+      timeChart: null,
+      sportsChart: null,
+      profitFrequencyChart: null,
+      isLoading: false,
+      availableSports: [],
+      // Novas propriedades para busca contínua
+      autoRefreshInterval: null,
+      lastDataUpdate: null,
+      dataUpdateCount: 0,
+      dataSource: null, // 'cache' ou 'api'
+
+      // Propriedades para o gráfico de mercados melhorado
+      groupedMarkets: {},
+      marketsChartViewMode: 'percentage', // 'percentage' ou 'count'
+      marketsChartShowDetails: false,
+      selectedMarketGroup: null,
+      marketsChartFilters: {
+        minCount: 2,
+        minPercentage: 1
+      },
+      showDetailedTable: false,
+      chartsInitialized: false,
+      _forceChartColorsRunning: false,
+      _updatingCharts: false,
+      _forceChartBackgroundRunning: false
+    }
+  },
+
+  computed: {
+    ...mapGetters(['isAdmin', 'isAuthenticated', 'currentUser']),
+
+    filteredSurebets() {
+      let filtered = [...this.surebets]
+      if (this.selectedPeriod !== 'all') {
+        const days = parseInt(this.selectedPeriod)
+        const cutoffDate = new Date()
+        cutoffDate.setDate(cutoffDate.getDate() - days)
+        filtered = filtered.filter(s => new Date(s.date) >= cutoffDate)
       }
-    },
-    
-    computed: {
-      ...mapGetters(['isAdmin', 'isAuthenticated', 'currentUser']),
-      
-      filteredSurebets() {
-        let filtered = [...this.surebets]
-        if (this.selectedPeriod !== 'all') {
-          const days = parseInt(this.selectedPeriod)
-          const cutoffDate = new Date()
-          cutoffDate.setDate(cutoffDate.getDate() - days)
-          filtered = filtered.filter(s => new Date(s.date) >= cutoffDate)
-        }
-        if (this.selectedSport !== 'all') {
-          filtered = filtered.filter(s => s.sport === this.selectedSport)
-        }
-        return filtered
-      },
-      
-      // Estatísticas das casas disponíveis
-      totalAvailableHouses() {
-        return filterOptions.houses.length
-      },
-      
-      activeHousesCount() {
-        return this.uniqueHouses
-      },
-      
-      inactiveHousesCount() {
-        return this.totalAvailableHouses - this.activeHousesCount
-      },
-  
-      // Mercados filtrados por categoria
-      filteredTopMarkets() {
-        if (!this.selectedMarketGroup) {
-          return this.topMarkets
-        }
-        return this.topMarkets.filter(market => market.categoryName === this.selectedMarketGroup)
+      if (this.selectedSport !== 'all') {
+        filtered = filtered.filter(s => s.sport === this.selectedSport)
       }
+      return filtered
     },
-    
-    async mounted() {
+
+    // Estatísticas das casas disponíveis
+    totalAvailableHouses() {
+      return filterOptions.houses.length
+    },
+
+    activeHousesCount() {
+      return this.uniqueHouses
+    },
+
+    inactiveHousesCount() {
+      return this.totalAvailableHouses - this.activeHousesCount
+    },
+
+    // Mercados filtrados por categoria
+    filteredTopMarkets() {
+      if (!this.selectedMarketGroup) {
+        return this.topMarkets
+      }
+      return this.topMarkets.filter(market => market.categoryName === this.selectedMarketGroup)
+    }
+  },
+
+  async mounted() {
+    try {
+      // Inicializar sistema de prevenção UTF-8
+      await this.setupUTF8Prevention()
+
+      await this.loadSurebetsData()
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.setupCharts()
+        }, 1000)
+      })
+
+      // Iniciar busca automática de novos dados
+      this.startAutoRefresh()
+    } catch (error) {
+      console.error('Erro no mounted:', error)
+      // Tentar configurar gráficos mesmo com erro
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.setupCharts()
+        }, 1000)
+      })
+    }
+  },
+
+  beforeUnmount() {
+    this.destroyCharts()
+    this.stopAutoRefresh()
+  },
+
+  methods: {
+    handleSidebarToggle(collapsed) { this.sidebarCollapsed = collapsed },
+    handleSidebarStateLoaded(collapsed) { this.sidebarCollapsed = collapsed },
+    openGlossary() { this.showGlossaryModal = true },
+    closeGlossary() { this.showGlossaryModal = false },
+
+
+
+    async loadSurebetsData() {
+      if (this.isLoading) return
       try {
-        // Inicializar sistema de prevenção UTF-8
-        await this.setupUTF8Prevention()
-        
-        await this.loadSurebetsData()
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.setupCharts()
-          }, 1000)
-        })
-        
-        // Iniciar busca automática de novos dados
-        this.startAutoRefresh()
+        this.isLoading = true
+
+        // Buscar dados da API externa
+        const apiData = await this.fetchFromExternalAPI()
+
+        if (apiData && apiData.length > 0) {
+          console.log(`✅ Carregados ${apiData.length} registros da API externa`)
+          this.surebets = apiData
+
+          // Salvar dados no banco local para cache (com tratamento de erro)
+          try {
+            await this.saveDataToDatabase()
+          } catch (saveError) {
+            console.warn('⚠️ Erro ao salvar dados no banco (não crítico):', saveError)
+            // Continuar mesmo se falhar ao salvar
+          }
+        } else {
+          console.log('📊 Nenhum dado encontrado na API externa, tentando carregar do banco local')
+
+          // Tentar carregar dados do banco local
+          try {
+            const dbStats = await this.$store.dispatch('fetchSurebetStats', {
+              period: this.selectedPeriod,
+              sport: this.selectedSport,
+              limit: 1000
+            })
+
+            if (dbStats && dbStats.length > 0) {
+              console.log(`✅ Carregados ${dbStats.length} registros do banco de dados`)
+              this.surebets = dbStats
+            } else {
+              console.log('📊 Nenhum dado encontrado, usando dados de exemplo')
+              this.surebets = this.generateSampleData()
+            }
+          } catch (dbError) {
+            console.warn('⚠️ Erro ao carregar do banco, usando dados de exemplo:', dbError)
+            this.surebets = this.generateSampleData()
+          }
+        }
+
+        this.processAnalytics()
+
       } catch (error) {
-        console.error('Erro no mounted:', error)
-        // Tentar configurar gráficos mesmo com erro
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.setupCharts()
-          }, 1000)
-        })
+        console.error('❌ Erro ao carregar dados:', error)
+        // Fallback para dados de exemplo
+        this.surebets = this.generateSampleData()
+        this.processAnalytics()
+      } finally {
+        this.isLoading = false
       }
     },
-    
-    beforeUnmount() {
-      this.destroyCharts()
-      this.stopAutoRefresh()
+
+    async fetchFromExternalAPI() {
+      try {
+        console.log('🌐 Buscando dados da API externa...')
+
+        // Buscar dados da API externa via servidor
+        // Obter token de autenticação
+        const authToken = this.$store.getters.authToken
+        if (!authToken) {
+          throw new Error('Token de autenticação não encontrado. Faça login novamente.')
+        }
+
+        const response = await fetch('/api/surebets', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
+        }
+
+        const apiResponse = await response.json()
+        console.log('📡 Dados recebidos da API externa:', apiResponse)
+
+        // Verificar se os dados têm a estrutura esperada
+        if (!apiResponse || typeof apiResponse !== 'object') {
+          throw new Error('Estrutura de dados inválida da API')
+        }
+
+        // Extrair os dados reais da resposta da API
+        const apiData = apiResponse.data || apiResponse
+
+        // Verificar se os dados extraídos têm a estrutura esperada
+        if (!apiData || typeof apiData !== 'object') {
+          throw new Error('Dados de surebets não encontrados na resposta da API')
+        }
+
+        // Processar dados da API externa
+        const processedData = this.processExternalAPIData(apiData)
+        console.log('✅ Dados processados:', processedData.length, 'registros únicos')
+
+        return processedData
+
+      } catch (error) {
+        console.error('❌ Erro ao buscar da API externa:', error)
+        throw error
+      }
     },
-    
-    methods: {
-      handleSidebarToggle(collapsed) { this.sidebarCollapsed = collapsed },
-      handleSidebarStateLoaded(collapsed) { this.sidebarCollapsed = collapsed },
-      openGlossary() { this.showGlossaryModal = true },
-      closeGlossary() { this.showGlossaryModal = false },
-  
-  
-  
-      async loadSurebetsData() {
-        if (this.isLoading) return
+
+    processExternalAPIData(apiData) {
+      const processedData = []
+      const processedIds = new Set()
+
+      // Verificar se apiData é um array (formato alternativo)
+      if (Array.isArray(apiData)) {
+        console.log('📊 Processando dados em formato de array')
+        apiData.forEach((surebet, index) => {
+          try {
+            const processedSurebet = this.processSingleSurebet(surebet, `array_${index}`)
+            if (processedSurebet) {
+              processedData.push(processedSurebet)
+            }
+          } catch (error) {
+            console.error(`Erro ao processar surebet do array (índice ${index}):`, error)
+          }
+        })
+        return processedData
+      }
+
+      // Iterar sobre cada surebet_id na resposta da API
+      Object.entries(apiData).forEach(([surebetId, surebetParts]) => {
+        // Verificar se já processamos este surebet_id
+        if (processedIds.has(surebetId)) {
+          console.log(`⚠️ Surebet ID duplicado ignorado: ${surebetId}`)
+          return
+        }
+
+        // Marcar como processado
+        processedIds.add(surebetId)
+
+        // Processar cada parte do surebet
+        if (Array.isArray(surebetParts)) {
+          surebetParts.forEach((part, index) => {
+            try {
+              // Extrair informações da parte
+              const {
+                house,
+                profit,
+                roi,
+                timestamp,
+                sport,
+                event,
+                market,
+                selection1,
+                selection2,
+                selection3,
+                odds1,
+                odds2,
+                odds3,
+                stake = 100,
+                status = 'active'
+              } = part
+
+              // Criar data e hora a partir do timestamp
+              const dateObj = timestamp ? new Date(timestamp) : new Date()
+              const date = dateObj.toISOString().split('T')[0]
+              const hour = dateObj.getHours()
+
+              // Determinar se é Live ou Pre Live baseado na URL e campo minutes
+              let isLive = false
+              let minutes = part.minutes || 0
+
+              // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
+              const anchorUrl = part.anchorh1 || part.anchorh2 || ''
+
+              let isLiveParam = null
+
+              // Tentar extrair is_live da URL
+              if (anchorUrl && anchorUrl.includes('is_live=')) {
+                const match = anchorUrl.match(/is_live=([01])/)
+                if (match) {
+                  isLiveParam = match[1]
+                }
+              }
+
+              // Determinar status baseado no parâmetro oficial is_live
+              if (isLiveParam === '1') {
+                isLive = true
+                // Manter os minutos originais da API
+              } else if (isLiveParam === '0') {
+                isLive = false
+                // Manter os minutos originais da API (pode ter minutos mesmo sendo pre-match)
+              } else {
+                // Fallback: usar campo minutes se não conseguir extrair is_live
+                if (minutes && minutes > 0) {
+                  isLive = true
+                } else {
+                  isLive = false
+                }
+              }
+
+              // Criar objeto surebet processado
+              const processedSurebet = {
+                surebet_id: surebetId,
+                house: house || 'Casa não especificada',
+                market: market || 'Mercado não especificado',
+                match: event || 'Evento não especificado',
+                profit: parseFloat(profit) || 0,
+                date: date,
+                hour: hour,
+                sport: sport || 'Futebol',
+                period: part.period || null,
+                minutes: minutes,
+                anchorh1: null,
+                anchorh2: null,
+                chance: parseFloat(roi) || null,
+                isLive: isLive,
+                metadata: {
+                  source: 'external_api',
+                  timestamp: timestamp,
+                  selection1: selection1 || null,
+                  selection2: selection2 || null,
+                  selection3: selection3 || null,
+                  odds1: parseFloat(odds1) || null,
+                  odds2: parseFloat(odds2) || null,
+                  odds3: parseFloat(odds3) || null,
+                  stake: parseFloat(stake) || 100,
+                  status: status || 'active',
+                  processed_at: new Date().toISOString()
+                }
+              }
+
+              // Aplicar sanitização UTF-8 antes de adicionar aos dados processados
+              const sanitizedSurebet = this.sanitizeJSONForUTF8(processedSurebet)
+              processedData.push(sanitizedSurebet)
+
+            } catch (partError) {
+              console.error(`Erro ao processar parte ${index + 1} do surebet ${surebetId}:`, partError)
+            }
+          })
+        } else {
+          console.warn(`Formato inválido para surebet ${surebetId}:`, {
+            type: typeof surebetParts,
+            isArray: Array.isArray(surebetParts),
+            value: surebetParts
+          })
+        }
+      })
+
+      console.log(`🎯 Processados ${processedData.length} registros únicos de ${processedIds.size} IDs únicos`)
+      return processedData
+    },
+
+    processSingleSurebet(surebet, surebetId) {
+      try {
+        // Extrair informações do surebet
+        const {
+          house,
+          profit,
+          roi,
+          timestamp,
+          sport,
+          event,
+          market,
+          selection1,
+          selection2,
+          selection3,
+          odds1,
+          odds2,
+          odds3,
+          stake = 100,
+          status = 'active'
+        } = surebet
+
+        // Criar data e hora a partir do timestamp
+        const dateObj = timestamp ? new Date(timestamp) : new Date()
+        const date = dateObj.toISOString().split('T')[0]
+        const hour = dateObj.getHours()
+
+        // Determinar se é Live ou Pre Live
+        let isLive = false
+        let minutes = surebet.minutes || 0
+
+        // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
+        const anchorUrl = surebet.anchorh1 || surebet.anchorh2 || ''
+
+        let isLiveParam = null
+        if (anchorUrl) {
+          const urlParams = new URLSearchParams(anchorUrl.split('?')[1] || '')
+          isLiveParam = urlParams.get('is_live')
+          if (isLiveParam !== null) {
+            isLive = isLiveParam === 'true' || isLiveParam === '1'
+          }
+        }
+
+        // Se não conseguiu determinar via URL, usar lógica baseada em minutos
+        if (isLiveParam === null) {
+          isLive = minutes > 0 && minutes <= 90
+        }
+
+        // Criar objeto processado
+        const processedSurebet = {
+          id: surebetId,
+          house: house || 'Casa não informada',
+          profit: parseFloat(profit) || 0,
+          roi: parseFloat(roi) || 0,
+          timestamp: timestamp || Date.now(),
+          date: date,
+          hour: hour,
+          sport: sport || 'Esporte não informado',
+          event: event || 'Evento não informado',
+          market: market || 'Mercado não informado',
+          selection1: selection1 || '',
+          selection2: selection2 || '',
+          selection3: selection3 || '',
+          odds1: parseFloat(odds1) || 0,
+          odds2: parseFloat(odds2) || 0,
+          odds3: parseFloat(odds3) || 0,
+          isLive: isLive,
+          minutes: minutes,
+          stake: parseFloat(stake) || 100,
+          status: status || 'active',
+          processed_at: new Date().toISOString()
+        }
+
+        // Aplicar sanitização UTF-8
+        return this.sanitizeJSONForUTF8(processedSurebet)
+
+      } catch (error) {
+        console.error(`Erro ao processar surebet ${surebetId}:`, error)
+        return null
+      }
+    },
+
+    generateSampleData() {
+      // Usar as casas reais do filtro
+      const houses = filterOptions.houses
+      const markets = ['Resultado Final', 'Over/Under 2.5', 'Ambas Marcam', 'Handicap', 'Dupla Chance', 'Escanteios', 'Cartões', 'Gols por Tempo']
+      const sports = ['Futebol', 'Tênis', 'Basquete', 'Vôlei', 'Handebol', 'Futsal', 'Rugby', 'Hóquei']
+      const data = []
+
+      for (let i = 0; i < 150; i++) {
+        const surebetId = `surebet_${i}`
+        const cloneCount = Math.floor(Math.random() * 4) + 2 // 2 a 5 casas por surebet
+        const selectedHouses = this.getRandomHouses(houses, cloneCount)
+        const selectedMarket = markets[Math.floor(Math.random() * markets.length)]
+        const selectedSport = sports[Math.floor(Math.random() * sports.length)]
+
+        const baseDate = new Date()
+        baseDate.setDate(baseDate.getDate() - Math.floor(Math.random() * 90))
+        let hour = Math.floor(Math.random() * 24)
+        if (Math.random() < 0.6) hour = 14 + Math.floor(Math.random() * 9)
+
+        const baseProfit = 8 + Math.random() * 60 // Lucro entre 8% e 68%
+
+        for (let j = 0; j < cloneCount; j++) {
+          data.push({
+            surebet_id: surebetId,
+            house: selectedHouses[j],
+            market: selectedMarket,
+            profit: parseFloat((baseProfit + (Math.random() - 0.5) * 8).toFixed(2)),
+            date: baseDate.toISOString().split('T')[0],
+            hour: hour,
+            sport: selectedSport,
+            period: Math.random() < 0.7 ? '90min' : '45min',
+            minutes: Math.random() < 0.3 ? Math.floor(Math.random() * 90) : 0
+          })
+        }
+      }
+      return data
+    },
+
+    processAnalytics() {
+      try {
+        const filtered = this.filteredSurebets
+        if (!filtered || !Array.isArray(filtered)) {
+          console.warn('⚠️ Dados filtrados inválidos para análise')
+          return
+        }
+
+        this.totalSurebets = new Set(filtered.map(s => s.surebet_id)).size
+        this.uniqueHouses = new Set(filtered.map(s => s.house)).size
+        this.uniqueMarkets = new Set(filtered.map(s => s.market)).size
+        this.availableSports = [...new Set(this.surebets.map(s => s.sport))].sort()
+
+        const surebetProfits = {}
+        filtered.forEach(item => {
+          if (!surebetProfits[item.surebet_id]) {
+            surebetProfits[item.surebet_id] = item.profit
+          }
+        })
+
+        const profits = Object.values(surebetProfits)
+        this.averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
+
+        this.processHousesRanking(filtered)
+        this.processHousePairsRanking(filtered)
+        this.processMarketsRanking(filtered)
+        this.processInsights(filtered)
+
+        // Só atualizar gráficos se estiverem inicializados
+        if (this.chartsInitialized) {
+          this.updateCharts()
+        }
+
+        // Log das estatísticas das casas
+        console.log(`📊 Estatísticas das Casas:`)
+        console.log(`Total disponíveis: ${this.totalAvailableHouses}`)
+        console.log(`Ativas no período: ${this.activeHousesCount}`)
+        console.log(`Inativas no período: ${this.inactiveHousesCount}`)
+        console.log(`Taxa de atividade: ${((this.activeHousesCount / this.totalAvailableHouses) * 100).toFixed(1)}%`)
+
+        // Salvar análises no banco
+        this.saveAnalyticsToDatabase(filtered)
+      } catch (error) {
+        console.error('Erro ao processar análises:', error)
+      }
+    },
+
+    processHousesRanking(data) {
+      const houseStats = {}
+      data.forEach(item => {
+        if (!houseStats[item.house]) {
+          houseStats[item.house] = { name: item.house, count: 0, profits: [] }
+        }
+        houseStats[item.house].count++
+        houseStats[item.house].profits.push(item.profit)
+      })
+
+      this.topHouses = Object.values(houseStats).map(house => ({
+        ...house,
+        percentage: (house.count / data.length) * 100,
+        averageProfit: house.profits.reduce((sum, p) => sum + p, 0) / house.profits.length,
+        maxProfit: Math.max(...house.profits)
+      })).sort((a, b) => b.count - a.count).slice(0, 15) // Mostrar top 15 casas
+    },
+
+    processHousePairsRanking(data) {
+      const pairStats = {}
+      const surebetGroups = {}
+
+      data.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = []
+        surebetGroups[item.surebet_id].push(item)
+      })
+
+      Object.values(surebetGroups).forEach(group => {
+        const houses = [...new Set(group.map(item => item.house))].sort()
+        if (houses.length >= 2) {
+          for (let i = 0; i < houses.length; i++) {
+            for (let j = i + 1; j < houses.length; j++) {
+              const pairKey = `${houses[i]}|${houses[j]}`
+              if (!pairStats[pairKey]) {
+                pairStats[pairKey] = { id: pairKey, house1: houses[i], house2: houses[j], count: 0, profits: [] }
+              }
+              pairStats[pairKey].count++
+              const groupProfit = group.reduce((sum, item) => sum + item.profit, 0) / group.length
+              pairStats[pairKey].profits.push(groupProfit)
+            }
+          }
+        }
+      })
+
+      const totalPairs = Object.values(pairStats).reduce((sum, pair) => sum + pair.count, 0)
+      this.topHousePairs = Object.values(pairStats).map(pair => {
+        const averageProfit = pair.profits.reduce((sum, p) => sum + p, 0) / pair.profits.length
+        const profitVariation = this.calculateVariation(pair.profits)
+        return {
+          ...pair,
+          percentage: (pair.count / totalPairs) * 100,
+          averageProfit,
+          consistency: 100 - profitVariation
+        }
+      }).sort((a, b) => b.count - a.count).slice(0, 10)
+    },
+
+    processMarketsRanking(data) {
+      const marketStats = {}
+      const surebetGroups = {}
+
+      // Verificar se data é válido
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        console.warn('⚠️ Dados de mercados inválidos ou vazios')
+        this.topMarkets = []
+        this.groupedMarkets = {}
+        return
+      }
+
+      data.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+
+      Object.values(surebetGroups).forEach(item => {
+        // Verificar se item.market existe
+        const marketName = item.market || 'Mercado Desconhecido'
+        if (!marketStats[marketName]) {
+          marketStats[marketName] = { name: marketName, count: 0, profits: [], totalProfit: 0 }
+        }
+        marketStats[marketName].count++
+        marketStats[marketName].profits.push(item.profit || 0)
+        marketStats[marketName].totalProfit += item.profit || 0
+      })
+
+      // Verificar se há dados de mercados
+      const marketsArray = Object.values(marketStats)
+      if (marketsArray.length === 0) {
+        console.warn('⚠️ Nenhum mercado encontrado nos dados')
+        this.topMarkets = []
+        this.groupedMarkets = {}
+        return
+      }
+
+      // Filtrar mercados por relevância
+      const relevantMarkets = filterMarketsByRelevance(
+        marketsArray,
+        this.marketsChartFilters.minCount,
+        this.marketsChartFilters.minPercentage
+      )
+
+      // Agrupar mercados por categoria
+      this.groupedMarkets = groupMarketsByCategory(relevantMarkets)
+
+      const totalMarkets = marketsArray.reduce((sum, market) => sum + (market.count || 0), 0)
+
+      this.topMarkets = Object.values(marketStats).map(market => {
+        // Verificar se market.profits existe e é um array válido
+        const profits = Array.isArray(market.profits) ? market.profits : []
+        const averageProfit = profits.length > 0 ? profits.reduce((sum, p) => sum + (p || 0), 0) / profits.length : 0
+        const maxProfit = profits.length > 0 ? Math.max(...profits) : 0
+        const variability = this.calculateVariation(profits)
+        const consistency = 100 - variability
+        const percentage = totalMarkets > 0 ? (market.count / totalMarkets) * 100 : 0
+        const score = (market.count * 0.3) + (averageProfit * 0.4) + (consistency * 0.3)
+
+        // Adicionar informações de categoria
+        const category = categorizeMarket(market.name)
+
+        return {
+          ...market,
+          averageProfit,
+          maxProfit,
+          variability,
+          consistency,
+          percentage,
+          score,
+          category: category.group,
+          categoryName: category.groupName,
+          subcategory: category.subcategory?.name || 'Diversos'
+        }
+      }).sort((a, b) => b.score - a.score).slice(0, 10)
+    },
+
+    processInsights(data) {
+      this.bestPair = this.topHousePairs.filter(pair => pair.count >= 3).sort((a, b) => b.averageProfit - a.averageProfit)[0] || null
+
+      const hourStats = {}
+      data.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
+      this.peakHour = Object.entries(hourStats).map(([hour, count]) => ({ hour: parseInt(hour), count })).sort((a, b) => b.count - a.count)[0] || null
+
+      this.bestMarket = this.topMarkets[0] || null
+
+      const sportStats = {}
+      const surebetGroups = {}
+      data.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+      Object.values(surebetGroups).forEach(item => sportStats[item.sport] = (sportStats[item.sport] || 0) + 1)
+      const totalSports = Object.values(sportStats).reduce((sum, count) => sum + count, 0)
+      this.mostActiveSport = Object.entries(sportStats).map(([sport, count]) => ({ name: sport, count, percentage: (count / totalSports) * 100 })).sort((a, b) => b.count - a.count)[0] || null
+    },
+
+    setupCharts() {
+      try {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.setupHousesChart()
+            this.setupMarketsChart()
+            this.setupTimeChart()
+            this.setupSportsChart()
+            this.setupProfitFrequencyChart()
+
+            // Marcar gráficos como inicializados
+            this.chartsInitialized = true
+            // Remover chamada automática de forceChartColors para evitar recursão
+          }, 500)
+        })
+      } catch (error) {
+        console.error('Erro ao configurar gráficos:', error)
+        this.chartsInitialized = false
+      }
+    },
+
+    // Método para destruir gráficos de forma segura
+    destroyChartSafely(chartName) {
+      try {
+        const chart = this[chartName]
+        if (chart && typeof chart.destroy === 'function') {
+          // Verificar se o gráfico ainda está ativo
+          if (chart.canvas && chart.canvas.parentNode) {
+            chart.destroy()
+            console.log(`✅ Gráfico ${chartName} destruído com sucesso`)
+          }
+          this[chartName] = null
+        }
+      } catch (error) {
+        console.warn(`⚠️ Erro ao destruir gráfico ${chartName}:`, error.message)
+        // Forçar limpeza mesmo com erro
+        this[chartName] = null
+      }
+    },
+
+    setupHousesChart() {
+      const ctx = this.$refs.housesChart
+      if (!ctx) return
+
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely('housesChart')
+
+      const data = this.topHouses.slice(0, 12) // Mostrar top 12 casas no gráfico
+      this.housesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: data.map(h => h.name),
+          datasets: [{
+            label: 'Aparições',
+            data: data.map(h => h.count),
+            backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'),
+            borderColor: this.getThemeColor('--accent-primary', '#00ff88'),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+          plugins: {
+            legend: { display: false },
+            customCanvasBackgroundColor: {
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx
+                const chartArea = chart.chartArea
+                if (chartArea) {
+                  ctx.save()
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                  ctx.fillRect(0, 0, chart.width, chart.height)
+                  ctx.restore()
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { color: this.getThemeColor('--text-primary', '#ffffff') },
+              grid: { color: this.getThemeColor('--border-primary', '#666666') }
+            },
+            x: {
+              ticks: {
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                maxRotation: 45,
+                minRotation: 0
+              },
+              grid: { color: this.getThemeColor('--border-primary', '#666666') }
+            }
+          }
+        }
+      })
+
+      // Remover chamada automática de forceChartColors para evitar recursão
+    },
+
+    setupMarketsChart() {
+      const ctx = this.$refs.marketsChart
+      if (!ctx) return
+
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely('marketsChart')
+
+      // Criar dados do gráfico usando o novo sistema de agrupamento
+      const { chartData, colors, labels } = createChartData(
+        this.groupedMarkets,
+        this.marketsChartShowDetails,
+        this.marketsChartViewMode
+      )
+
+      this.marketsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: chartData,
+            backgroundColor: colors,
+            borderColor: colors.map(color => color.replace('0.8', '1')),
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                padding: 15,
+                usePointStyle: true,
+                pointStyle: 'circle'
+              },
+              onClick: (event, legendItem, legend) => {
+                // Implementar filtro por categoria
+                this.toggleMarketCategoryFilter(legendItem.text)
+              }
+            },
+            tooltip: {
+              backgroundColor: this.getThemeColor('--bg-primary', '#ffffff'),
+              titleColor: this.getThemeColor('--text-primary', '#000000'),
+              bodyColor: this.getThemeColor('--text-primary', '#000000'),
+              borderColor: this.getThemeColor('--border-primary', '#666666'),
+              borderWidth: 2,
+              cornerRadius: 8,
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || ''
+                  const value = context.parsed
+                  const total = context.dataset.data.reduce((sum, val) => sum + val, 0)
+                  const percentage = ((value / total) * 100).toFixed(1)
+
+                  if (this.marketsChartViewMode === 'percentage') {
+                    return `${label}: ${value.toFixed(1)}%`
+                  } else {
+                    return `${label}: ${value} (${percentage}%)`
+                  }
+                }
+              }
+            },
+            customCanvasBackgroundColor: {
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx
+                const chartArea = chart.chartArea
+                if (chartArea) {
+                  ctx.save()
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                  ctx.fillRect(0, 0, chart.width, chart.height)
+                  ctx.restore()
+                }
+              }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const index = elements[0].index
+              const label = labels[index]
+              this.handleMarketChartClick(label, index)
+            }
+          }
+        }
+      })
+    },
+
+    setupTimeChart() {
+      const ctx = this.$refs.timeChart
+      if (!ctx) return
+
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely('timeChart')
+
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
+      const hours = Array.from({ length: 24 }, (_, i) => i)
+      const counts = hours.map(hour => hourStats[hour] || 0)
+
+      this.timeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: hours.map(h => `${h}:00`),
+          datasets: [{ label: 'Atividade', data: counts, borderColor: this.getThemeColor('--accent-primary', '#00ff88'), backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'), tension: 0.4, fill: true }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+          plugins: {
+            legend: { display: false },
+            customCanvasBackgroundColor: {
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx
+                const chartArea = chart.chartArea
+                if (chartArea) {
+                  ctx.save()
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                  ctx.fillRect(0, 0, chart.width, chart.height)
+                  ctx.restore()
+                }
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
+            x: { ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } }
+          }
+        }
+      })
+
+      // Remover chamada automática de forceChartColors para evitar recursão
+    },
+
+    setupSportsChart() {
+      const ctx = this.$refs.sportsChart
+      if (!ctx) return
+
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely('sportsChart')
+
+      const sportStats = {}
+      const surebetGroups = {}
+      this.filteredSurebets.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+      Object.values(surebetGroups).forEach(item => {
+        if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
+        sportStats[item.sport].profits.push(item.profit)
+      })
+
+      const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
+        sport,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
+      })).sort((a, b) => b.averageProfit - a.averageProfit)
+
+      this.sportsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: sportsData.map(s => s.sport),
+          datasets: [{ label: 'Lucro Médio', data: sportsData.map(s => s.averageProfit), backgroundColor: this.getThemeColor('--accent-primary', '#00ff88') }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+          plugins: {
+            legend: { display: false },
+            customCanvasBackgroundColor: {
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx
+                const chartArea = chart.chartArea
+                if (chartArea) {
+                  ctx.save()
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                  ctx.fillRect(0, 0, chart.width, chart.height)
+                  ctx.restore()
+                }
+              }
+            }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff'), callback: value => 'R$ ' + value.toFixed(0) }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
+            x: { ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } }
+          }
+        }
+      })
+
+      // Remover chamada automática de forceChartColors para evitar recursão
+    },
+
+    setupProfitFrequencyChart() {
+      const ctx = this.$refs.profitFrequencyChart
+      if (!ctx) return
+
+      // Destruir gráfico existente de forma segura
+      this.destroyChartSafely('profitFrequencyChart')
+
+      // Agrupar dados por mercado para calcular frequência e lucro médio
+      const marketStats = {}
+      this.filteredSurebets.forEach(item => {
+        if (!marketStats[item.market]) {
+          marketStats[item.market] = { count: 0, profits: [], totalProfit: 0 }
+        }
+        marketStats[item.market].count++
+        marketStats[item.market].profits.push(item.profit)
+        marketStats[item.market].totalProfit += item.profit
+      })
+
+      // Filtrar mercados com pelo menos 2 aparições para evitar ruído
+      const filteredMarkets = Object.entries(marketStats).filter(([market, stats]) => stats.count >= 2)
+
+      if (filteredMarkets.length === 0) {
+        console.warn('⚠️ Nenhum mercado com dados suficientes para o gráfico')
+        return
+      }
+
+      // Preparar dados para o gráfico de dispersão
+      const chartData = filteredMarkets.map(([market, stats]) => ({
+        x: stats.count, // Frequência (eixo X)
+        y: stats.totalProfit / stats.count, // Lucro médio (eixo Y)
+        market: market,
+        count: stats.count,
+        totalProfit: stats.totalProfit,
+        averageProfit: stats.totalProfit / stats.count
+      }))
+
+      // Calcular estatísticas para melhor distribuição visual
+      const frequencies = chartData.map(item => item.x)
+      const profits = chartData.map(item => item.y)
+
+      const freqStats = this.calculateStats(frequencies)
+      const profitStats = this.calculateStats(profits)
+
+      // Calcular percentis para melhor distribuição de cores
+      const sortedProfits = profits.sort((a, b) => a - b)
+      const p33 = sortedProfits[Math.floor(sortedProfits.length * 0.33)]
+      const p66 = sortedProfits[Math.floor(sortedProfits.length * 0.66)]
+
+      // Definir cores baseadas em percentis para melhor distribuição
+      const colors = chartData.map(item => {
+        if (item.y >= p66) return this.getThemeColor('--accent-primary', '#00ff88') // Verde para top 33%
+        if (item.y >= p33) return this.getThemeColor('--accent-secondary', '#ffd700') // Amarelo para médio 33%
+        return this.getThemeColor('--warning-color', '#ff6b35') // Laranja para bottom 33%
+      })
+
+      // Calcular tamanhos dos pontos baseados na frequência (logarítmico para melhor distribuição)
+      const maxCount = Math.max(...frequencies)
+      const pointSizes = chartData.map(item => {
+        // Usar escala logarítmica para melhor distribuição visual
+        const logSize = Math.log(item.x + 1) / Math.log(maxCount + 1)
+        const normalizedSize = logSize * 0.8 + 0.2 // Entre 0.2 e 0.1
+        return Math.max(4, Math.min(10, normalizedSize * 12.5)) // Entre 4 e 10 pixels (50% menor)
+      })
+
+      this.profitFrequencyChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [{
+            label: 'Mercados',
+            data: chartData,
+            backgroundColor: colors,
+            borderColor: colors.map(color => color.replace('0.9', '1')),
+            borderWidth: 2,
+            pointRadius: pointSizes,
+            pointHoverRadius: pointSizes.map(size => size + 6)
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: this.getThemeColor('--bg-primary', '#ffffff'),
+              titleColor: this.getThemeColor('--text-primary', '#000000'),
+              bodyColor: this.getThemeColor('--text-primary', '#000000'),
+              borderColor: this.getThemeColor('--border-primary', '#666666'),
+              borderWidth: 2,
+              cornerRadius: 8,
+              callbacks: {
+                label: function (context) {
+                  const data = context.raw
+                  return [
+                    `Mercado: ${data.market}`,
+                    `Frequência: ${data.count} aparições`,
+                    `Lucro Médio: R$ ${data.averageProfit.toFixed(2)}`,
+                    `Lucro Total: R$ ${data.totalProfit.toFixed(2)}`
+                  ]
+                }
+              }
+            },
+            zoom: {
+              pan: {
+                enabled: true,
+                mode: 'xy'
+              },
+              zoom: {
+                wheel: {
+                  enabled: true
+                },
+                pinch: {
+                  enabled: true
+                },
+                mode: 'xy'
+              }
+            },
+            customCanvasBackgroundColor: {
+              beforeDraw: (chart) => {
+                const ctx = chart.ctx
+                const chartArea = chart.chartArea
+                if (chartArea) {
+                  ctx.save()
+                  ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                  ctx.fillRect(0, 0, chart.width, chart.height)
+                  ctx.restore()
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              title: {
+                display: true,
+                text: 'Frequência de Aparições',
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                font: { size: 14, weight: '600' }
+              },
+              ticks: {
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                font: { size: 12 },
+                callback: function (value) {
+                  // Formatação inteligente dos ticks
+                  if (value >= 1000) return (value / 1000).toFixed(1) + 'k'
+                  if (value >= 100) return (value / 100).toFixed(1) + 'h'
+                  return value
+                }
+              },
+              grid: {
+                color: this.getThemeColor('--border-primary', '#666666'),
+                drawBorder: false
+              },
+              // Escala inteligente baseada nos dados
+              min: Math.max(0, freqStats.q1 - (freqStats.q3 - freqStats.q1) * 0.5),
+              max: freqStats.q3 + (freqStats.q3 - freqStats.q1) * 1.5
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Lucro Médio (R$)',
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                font: { size: 14, weight: '600' }
+              },
+              ticks: {
+                color: this.getThemeColor('--text-primary', '#ffffff'),
+                font: { size: 12 },
+                callback: value => 'R$ ' + value.toFixed(0)
+              },
+              grid: {
+                color: this.getThemeColor('--border-primary', '#666666'),
+                drawBorder: false
+              },
+              // Escala inteligente baseada nos dados
+              min: Math.max(0, profitStats.q1 - (profitStats.q3 - profitStats.q1) * 0.5),
+              max: profitStats.q3 + (profitStats.q3 - profitStats.q1) * 1.5
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'nearest'
+          },
+          // Adicionar área de seleção para zoom
+          onHover: (event, elements) => {
+            const canvas = event.native.target
+            canvas.style.cursor = elements.length ? 'pointer' : 'default'
+          }
+        }
+      })
+    },
+
+    updateCharts() {
+      if (!this.chartsInitialized || this._updatingCharts) return
+
+      this._updatingCharts = true
+
+      this.$nextTick(() => setTimeout(() => {
         try {
-          this.isLoading = true
-          
-          // Buscar dados da API externa
-          const apiData = await this.fetchFromExternalAPI()
-          
-          if (apiData && apiData.length > 0) {
-            console.log(`✅ Carregados ${apiData.length} registros da API externa`)
+          if (this.housesChart) this.updateHousesChart()
+          if (this.marketsChart) this.updateMarketsChart()
+          if (this.timeChart) this.updateTimeChart()
+          if (this.sportsChart) this.updateSportsChart()
+          if (this.profitFrequencyChart) this.updateProfitFrequencyChart()
+        } catch (error) {
+          console.error('❌ Erro ao atualizar gráficos:', error)
+        } finally {
+          this._updatingCharts = false
+        }
+      }, 100))
+    },
+
+    mounted() {
+      // Inicializar observação de mudanças de tema
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.observeThemeChanges()
+          // Não chamar forceChartBackground e forceChartColors aqui, pois os gráficos ainda não foram criados
+        }, 500)
+      })
+    },
+
+    async saveDataToDatabase() {
+      try {
+        if (!this.surebets || this.surebets.length === 0) {
+          console.log('📊 Nenhum dado para salvar')
+          return
+        }
+
+        if (!this.currentUser?.id) {
+          console.error('❌ Usuário não autenticado ou ID não encontrado')
+          throw new Error('Usuário não autenticado')
+        }
+
+        console.log(`💾 Salvando ${this.surebets.length} registros no banco para usuário ${this.currentUser.id}...`)
+
+        // Verificar se o token de autenticação existe
+        if (!this.$store.state.authToken) {
+          console.error('❌ Token de autenticação não encontrado')
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        // Validar codificação UTF-8 do banco de dados
+        await this.validateDatabaseUTF8Encoding()
+
+        // Salvar registros individualmente (mais seguro)
+        let savedCount = 0
+        let utf8Errors = 0
+        const maxRecords = Math.min(this.surebets.length, 50) // Limitar a 50 registros
+
+        for (let i = 0; i < maxRecords; i++) {
+          try {
+            const item = this.surebets[i]
+
+            // Log detalhado do item sendo processado
+            console.log(`🔍 Processando item ${i + 1}/${maxRecords}:`, {
+              surebet_id: item.surebet_id || item.id,
+              house: item.house || item.house_name,
+              market: item.market || item.market_name,
+              match: item.match || item.match_name
+            })
+
+            // Verificar se o item tem dados válidos
+            if (!item.surebet_id || !item.house || !item.market) {
+              console.warn(`⚠️ Item ${i} com dados inválidos, pulando...`)
+              continue
+            }
+
+            // Validar e sanitizar dados UTF-8 antes de salvar
+            const sanitizedItem = await this.sanitizeDataForUTF8(item)
+            if (sanitizedItem.hasUTF8Issues) {
+              utf8Errors++
+              console.warn(`⚠️ Item ${i} teve problemas UTF-8 corrigidos:`, sanitizedItem.utf8Report)
+
+              // Log detalhado dos problemas UTF-8 encontrados
+              Object.keys(sanitizedItem.utf8Report).forEach(field => {
+                const report = sanitizedItem.utf8Report[field]
+                console.warn(`🔧 Campo '${field}' sanitizado:`, {
+                  original: report.original,
+                  sanitized: report.sanitized,
+                  issue: report.issue
+                })
+              })
+            }
+
+            await this.saveIndividualRecord(sanitizedItem.data)
+            savedCount++
+
+            // Log de progresso
+            if ((i + 1) % 10 === 0) {
+              console.log(`📊 Progresso: ${i + 1}/${maxRecords} registros processados`)
+            }
+
+            // Pequena pausa para não sobrecarregar o servidor
+            if (i % 10 === 0 && i > 0) {
+              await new Promise(resolve => setTimeout(resolve, 100))
+            }
+
+          } catch (itemError) {
+            console.error(`❌ Erro ao salvar item ${i}:`, itemError)
+
+            // Log detalhado do erro
+            if (itemError.message.includes('UTF8') || itemError.message.includes('codificação') || itemError.message.includes('0xe3')) {
+              console.error('🚨 ERRO UTF-8 DETECTADO no item:', {
+                index: i,
+                item: this.surebets[i],
+                error: itemError.message
+              })
+
+              // Tentar sanitização mais agressiva
+              try {
+                console.log('🔧 Tentando sanitização agressiva...')
+                const aggressiveItem = this.aggressiveUTF8Sanitization(this.surebets[i])
+                await this.saveIndividualRecord(aggressiveItem)
+                savedCount++
+                utf8Errors++
+                console.log('✅ Item salvo com sanitização agressiva')
+              } catch (aggressiveError) {
+                console.error('❌ Falha mesmo com sanitização agressiva:', aggressiveError)
+              }
+            }
+
+            // Continuar com o próximo item
+          }
+        }
+
+        console.log(`✅ ${savedCount} registros salvos com sucesso`)
+        if (utf8Errors > 0) {
+          console.log(`⚠️ ${utf8Errors} registros tiveram problemas UTF-8 corrigidos`)
+        }
+
+        // Salvar análise também
+        if (this.filteredSurebets && this.filteredSurebets.length > 0) {
+          await this.saveAnalyticsToDatabase(this.filteredSurebets)
+        }
+
+      } catch (error) {
+        console.error('❌ Erro ao salvar dados no banco:', error)
+        throw error
+      }
+    },
+
+    // ===== SISTEMA DE VALIDAÇÃO E SANITIZAÇÃO UTF-8 =====
+
+    /**
+     * Valida se o banco de dados está configurado para UTF-8
+     */
+    async validateDatabaseUTF8Encoding() {
+      try {
+        console.log('🔍 Verificando codificação UTF-8 do banco de dados...')
+
+        // Testar codificação UTF-8 localmente primeiro
+        const testStrings = [
+          'Teste UTF-8: áéíóú àèìòù âêîôû ãõ ç ñ',
+          '🏆⚽🎯💰',
+          '€£¥₹',
+          'Flamengo vs São Paulo - 2.5 gols ⚽'
+        ]
+
+        // Validar se todas as strings de teste são UTF-8 válidas
+        const allValid = testStrings.every(str => this.isValidUTF8String(str))
+
+        if (!allValid) {
+          console.warn('⚠️ Problemas de codificação UTF-8 detectados localmente')
+          return false
+        }
+
+        // Testar serialização JSON com caracteres especiais
+        const testData = {
+          test_utf8: testStrings[0],
+          test_emojis: testStrings[1],
+          test_symbols: testStrings[2],
+          test_mixed: testStrings[3]
+        }
+
+        try {
+          // Testar se consegue serializar e deserializar JSON com UTF-8
+          const jsonString = JSON.stringify(testData)
+          const parsedData = JSON.parse(jsonString)
+
+          // Verificar se os dados foram preservados corretamente
+          const dataPreserved = JSON.stringify(parsedData) === JSON.stringify(testData)
+
+          if (!dataPreserved) {
+            console.warn('⚠️ Problemas na serialização/deserialização JSON UTF-8')
+            return false
+          }
+
+          console.log('✅ Codificação UTF-8 validada localmente com sucesso')
+          return true
+
+        } catch (jsonError) {
+          console.warn('⚠️ Erro na serialização JSON UTF-8:', jsonError.message)
+          return false
+        }
+
+      } catch (error) {
+        console.warn('⚠️ Erro na validação UTF-8:', error.message)
+        // Continuar mesmo sem verificação (não é crítico)
+        return true
+      }
+    },
+
+    /**
+     * Valida se uma string é válida em UTF-8
+     */
+    isValidUTF8String(str) {
+      if (typeof str !== 'string') return true
+
+      try {
+        // Método 1: Verificar se consegue codificar/decodificar sem perda
+        const encoded = encodeURIComponent(str)
+        const decoded = decodeURIComponent(encoded)
+        if (decoded !== str) return false
+
+        // Método 2: Verificar se não há caracteres de substituição UTF-8
+        // O caractere (U+FFFD) indica problemas de codificação
+        if (str.includes('\uFFFD')) return false
+
+        // Método 3: Verificar se consegue serializar em JSON sem problemas
+        try {
+          JSON.stringify({ test: str })
+          return true
+        } catch (jsonError) {
+          return false
+        }
+      } catch (error) {
+        return false
+      }
+    },
+
+    /**
+     * Testa se uma string específica é UTF-8 válida (para debug)
+     */
+    testUTF8String(str) {
+      console.log('🧪 Testando string UTF-8:', str)
+      console.log('📝 Caracteres individuais:')
+      for (let i = 0; i < str.length; i++) {
+        const char = str[i]
+        const code = char.charCodeAt(0)
+        const hex = code.toString(16).toUpperCase()
+        console.log(`  ${i}: "${char}" (U+${hex.padStart(4, '0')})`)
+      }
+
+      const isValid = this.isValidUTF8String(str)
+      console.log('✅ É UTF-8 válida:', isValid)
+
+      try {
+        const json = JSON.stringify({ test: str })
+        console.log('✅ JSON válido:', json)
+      } catch (error) {
+        console.log('❌ JSON inválido:', error.message)
+      }
+
+      return isValid
+    },
+
+    /**
+     * Detecta e corrige problemas de codificação (Latin1 -> UTF-8)
+     */
+    fixEncodingIssues(str) {
+      try {
+        // Detectar se a string tem caracteres que parecem Latin1 mal codificados
+        // Padrões comuns de problemas de codificação em português
+        const latin1Patterns = {
+          // "ã" em Latin1 mal codificado
+          'n?o': 'não',
+          'n?o ': 'não ',
+          'n?o especificado': 'não especificado',
+          'n?o encontrado': 'não encontrado',
+          'n?o disponível': 'não disponível',
+
+          // "ç" em Latin1 mal codificado  
+          'c?o': 'ção',
+          'c?es': 'ções',
+          'c?ao': 'ção',
+          'c?oes': 'ções',
+
+          // "é" em Latin1 mal codificado
+          'e?': 'é',
+          'e? ': 'é ',
+          'e?s': 'és',
+
+          // "á" em Latin1 mal codificado
+          'a?': 'á',
+          'a? ': 'á ',
+          'a?s': 'ás',
+
+          // "í" em Latin1 mal codificado
+          'i?': 'í',
+          'i? ': 'í ',
+          'i?s': 'ís',
+
+          // "ó" em Latin1 mal codificado
+          'o?': 'ó',
+          'o? ': 'ó ',
+          'o?s': 'ós',
+
+          // "ú" em Latin1 mal codificado
+          'u?': 'ú',
+          'u? ': 'ú ',
+          'u?s': 'ús'
+        }
+
+        let corrected = str
+
+        // Aplicar correções de padrões conhecidos
+        for (const [wrong, correct] of Object.entries(latin1Patterns)) {
+          if (corrected.includes(wrong)) {
+            corrected = corrected.replace(new RegExp(wrong, 'g'), correct)
+          }
+        }
+
+        // Se houve correções, logar para debug
+        if (corrected !== str) {
+          console.log('🔧 Codificação corrigida:', {
+            original: str,
+            corrected: corrected,
+            pattern: 'Latin1 -> UTF-8'
+          })
+        }
+
+        return corrected
+      } catch (error) {
+        console.warn('⚠️ Erro ao corrigir codificação:', error)
+        return str
+      }
+    },
+
+    /**
+     * Sanitiza uma string para garantir compatibilidade UTF-8
+     */
+    sanitizeUTF8String(str) {
+      if (typeof str !== 'string') return str
+
+      try {
+        const originalStr = str
+        let hasIssues = false
+        const issues = []
+
+        // Primeiro, tentar detectar e corrigir problemas de codificação
+        let sanitized = this.fixEncodingIssues(str)
+
+        if (sanitized !== str) {
+          hasIssues = true
+          issues.push('Problemas de codificação detectados e corrigidos')
+        }
+
+        // Debug específico para "Jogo Específico"
+        if (str === 'Jogo Específico') {
+          console.log('🔍 Debug para "Jogo Específico":')
+          this.testUTF8String(str)
+        }
+
+        // Remover caracteres de controle inválidos
+        sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+
+        // Normalizar caracteres Unicode primeiro
+        sanitized = sanitized.normalize('NFC')
+
+        // Verificar se a string é UTF-8 válida APÓS normalização
+        const isValidUTF8 = this.isValidUTF8String(sanitized)
+
+        if (!isValidUTF8) {
+          hasIssues = true
+          issues.push('Sequências de bytes malformadas detectadas')
+
+          // Aplicar correção conservadora - apenas caracteres realmente problemáticos
+          // Remover caracteres de controle e sequências malformadas específicas
+          sanitized = sanitized
+            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Caracteres de controle
+            .replace(/\uFFFD/g, '?') // Caracteres de substituição UTF-8
+            .replace(/[\uD800-\uDFFF](?![\uDC00-\uDFFF])/g, '?') // Surrogates malformados
+            .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '?') // Surrogates órfãos
+        }
+
+        // Log APENAS se houve problemas reais (não para acentos normais)
+        if (hasIssues && originalStr !== sanitized) {
+          console.warn('🔧 UTF-8 Sanitização aplicada:', {
+            original: originalStr,
+            sanitized: sanitized,
+            issues: issues,
+            changes: originalStr !== sanitized
+          })
+        }
+
+        return sanitized
+      } catch (error) {
+        console.warn('⚠️ Erro ao sanitizar string UTF-8:', error)
+        // Fallback: remover APENAS caracteres de controle, preservar acentos
+        return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      }
+    },
+
+    /**
+     * Sanitização UTF-8 mais agressiva para casos problemáticos
+     */
+    aggressiveUTF8Sanitization(obj) {
+      if (obj === null || obj === undefined) return obj
+
+      if (typeof obj === 'string') {
+        // Sanitização mais agressiva APENAS para caracteres realmente problemáticos
+        return obj
+          .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remover caracteres de controle
+          .replace(/[\x80-\xFF](?![\x80-\xBF])/g, '?') // Corrigir sequências malformadas
+          .normalize('NFC') // Normalizar Unicode (preserva acentos)
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => this.aggressiveUTF8Sanitization(item))
+      }
+
+      if (typeof obj === 'object') {
+        const sanitized = {}
+        for (const [key, value] of Object.entries(obj)) {
+          const sanitizedKey = this.aggressiveUTF8Sanitization(key)
+          const sanitizedValue = this.aggressiveUTF8Sanitization(value)
+          sanitized[sanitizedKey] = sanitizedValue
+        }
+        return sanitized
+      }
+
+      return obj
+    },
+
+    /**
+     * Sanitiza um objeto JSON para garantir compatibilidade UTF-8
+     */
+    sanitizeJSONForUTF8(obj) {
+      if (obj === null || obj === undefined) return obj
+
+      if (typeof obj === 'string') {
+        return this.sanitizeUTF8String(obj)
+      }
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => this.sanitizeJSONForUTF8(item))
+      }
+
+      if (typeof obj === 'object') {
+        const sanitized = {}
+        for (const [key, value] of Object.entries(obj)) {
+          const sanitizedKey = this.sanitizeUTF8String(key)
+          const sanitizedValue = this.sanitizeJSONForUTF8(value)
+          sanitized[sanitizedKey] = sanitizedValue
+        }
+        return sanitized
+      }
+
+      return obj
+    },
+
+    /**
+     * Sanitiza dados completos para inserção no banco UTF-8
+     */
+    async sanitizeDataForUTF8(data) {
+      const report = {
+        hasUTF8Issues: false,
+        fieldsCorrected: [],
+        originalData: JSON.parse(JSON.stringify(data)),
+        utf8Report: {}
+      }
+
+      try {
+        // Lista de campos que podem conter texto
+        const textFields = [
+          'surebet_id', 'house', 'house_name', 'bookmaker',
+          'market', 'market_name', 'bet_type',
+          'match', 'match_name', 'game', 'event',
+          'sport', 'sport_name', 'category',
+          'period', 'time_period', 'period_name',
+          'anchorh1', 'anchor_h1', 'anchor1',
+          'anchorh2', 'anchor_h2', 'anchor2'
+        ]
+
+        const sanitizedData = JSON.parse(JSON.stringify(data))
+
+        // Validar e sanitizar cada campo de texto
+        for (const field of textFields) {
+          if (data[field] && typeof data[field] === 'string') {
+            const originalValue = data[field]
+            const sanitizedValue = this.sanitizeUTF8String(originalValue)
+
+            if (originalValue !== sanitizedValue) {
+              report.hasUTF8Issues = true
+              report.fieldsCorrected.push(field)
+              report.utf8Report[field] = {
+                original: originalValue,
+                sanitized: sanitizedValue,
+                issue: 'Caracteres UTF-8 inválidos detectados e corrigidos'
+              }
+              sanitizedData[field] = sanitizedValue
+            }
+          }
+        }
+
+        // Sanitizar campo metadata se existir
+        if (data.metadata && typeof data.metadata === 'object') {
+          const originalMetadata = data.metadata
+          const sanitizedMetadata = this.sanitizeJSONForUTF8(originalMetadata)
+
+          if (JSON.stringify(originalMetadata) !== JSON.stringify(sanitizedMetadata)) {
+            report.hasUTF8Issues = true
+            report.fieldsCorrected.push('metadata')
+            report.utf8Report.metadata = {
+              original: originalMetadata,
+              sanitized: sanitizedMetadata,
+              issue: 'Metadados com caracteres UTF-8 inválidos detectados e corrigidos'
+            }
+            sanitizedData.metadata = sanitizedMetadata
+          }
+        }
+
+        // Testar se os dados sanitizados podem ser serializados em JSON
+        try {
+          JSON.stringify(sanitizedData)
+        } catch (jsonError) {
+          console.error('❌ Erro ao serializar dados sanitizados:', jsonError)
+          report.hasUTF8Issues = true
+          report.utf8Report.serialization = {
+            error: jsonError.message,
+            issue: 'Dados não podem ser serializados em JSON após sanitização'
+          }
+        }
+
+        return {
+          data: sanitizedData,
+          hasUTF8Issues: report.hasUTF8Issues,
+          utf8Report: report.utf8Report,
+          fieldsCorrected: report.fieldsCorrected
+        }
+
+      } catch (error) {
+        console.error('❌ Erro durante sanitização UTF-8:', error)
+        report.hasUTF8Issues = true
+        report.utf8Report.error = {
+          message: error.message,
+          issue: 'Erro durante processo de sanitização UTF-8'
+        }
+
+        return {
+          data: data, // Retornar dados originais em caso de erro
+          hasUTF8Issues: true,
+          utf8Report: report.utf8Report,
+          fieldsCorrected: []
+        }
+      }
+    },
+
+    /**
+     * Registra relatório de problemas UTF-8 para análise futura
+     */
+    async logUTF8Report(report) {
+      try {
+        const logEntry = {
+          timestamp: new Date().toISOString(),
+          user_id: this.currentUser?.id || 'anonymous',
+          report: report,
+          user_agent: navigator.userAgent,
+          url: window.location.href
+        }
+
+        // Salvar no localStorage para análise local
+        const existingLogs = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
+        existingLogs.push(logEntry)
+
+        // Manter apenas os últimos 100 relatórios
+        if (existingLogs.length > 100) {
+          existingLogs.splice(0, existingLogs.length - 100)
+        }
+
+        localStorage.setItem('utf8_reports', JSON.stringify(existingLogs))
+
+        // Tentar enviar para o servidor (opcional) - usar endpoint existente
+        try {
+          // Usar o endpoint de surebet-stats para enviar relatório
+          const reportData = {
+            user_id: this.currentUser?.id || 'anonymous',
+            surebet_id: `utf8_report_${Date.now()}`,
+            house: 'Sistema UTF-8',
+            market: 'Relatório de Validação',
+            match: 'Log de Problemas UTF-8',
+            profit: 0,
+            date: new Date().toISOString().split('T')[0],
+            hour: 0,
+            sport: 'Sistema',
+            metadata: {
+              source: 'utf8_report_log',
+              report_data: logEntry,
+              generated_at: new Date().toISOString()
+            }
+          }
+
+          await fetch('/api/surebet-stats', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${this.$store.state.authToken}`
+            },
+            body: JSON.stringify(reportData)
+          })
+
+          console.log('📤 Relatório UTF-8 enviado para o servidor')
+        } catch (serverError) {
+          console.warn('⚠️ Não foi possível enviar relatório UTF-8 para o servidor:', serverError.message)
+          // Continuar normalmente - o relatório já foi salvo localmente
+        }
+
+      } catch (error) {
+        console.error('❌ Erro ao registrar relatório UTF-8:', error)
+      }
+    },
+
+    /**
+     * Sistema de prevenção UTF-8 para futuras inserções
+     */
+    async setupUTF8Prevention() {
+      try {
+        console.log('🛡️ Configurando sistema de prevenção UTF-8...')
+
+        // Interceptar todas as requisições fetch para validação UTF-8
+        const originalFetch = window.fetch
+        window.fetch = async (url, options = {}) => {
+          // Aplicar validação UTF-8 apenas para requisições POST/PUT com JSON
+          if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
+            if (options.body && typeof options.body === 'string') {
+              try {
+                const parsedBody = JSON.parse(options.body)
+                const sanitizedBody = this.sanitizeJSONForUTF8(parsedBody)
+
+                // Se houve mudanças, atualizar o body
+                if (JSON.stringify(parsedBody) !== JSON.stringify(sanitizedBody)) {
+                  console.warn('⚠️ Dados UTF-8 sanitizados automaticamente na requisição:', url)
+                  options.body = JSON.stringify(sanitizedBody)
+                }
+              } catch (parseError) {
+                // Se não for JSON válido, continuar normalmente
+              }
+            }
+          }
+
+          return originalFetch(url, options)
+        }
+
+        // Configurar headers padrão para UTF-8
+        if (!window.defaultHeaders) {
+          window.defaultHeaders = {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Accept': 'application/json; charset=utf-8'
+          }
+        }
+
+        console.log('✅ Sistema de prevenção UTF-8 configurado')
+
+      } catch (error) {
+        console.error('❌ Erro ao configurar prevenção UTF-8:', error)
+      }
+    },
+
+    /**
+     * Validação automática de UTF-8 em dados de entrada
+     */
+    validateInputData(data) {
+      const issues = []
+
+      if (typeof data === 'string') {
+        if (!this.isValidUTF8String(data)) {
+          issues.push({
+            type: 'string',
+            value: data,
+            issue: 'String contém caracteres UTF-8 inválidos'
+          })
+        }
+      } else if (Array.isArray(data)) {
+        data.forEach((item, index) => {
+          const itemIssues = this.validateInputData(item)
+          if (itemIssues.length > 0) {
+            issues.push({
+              type: 'array_item',
+              index: index,
+              issues: itemIssues
+            })
+          }
+        })
+      } else if (typeof data === 'object' && data !== null) {
+        Object.entries(data).forEach(([key, value]) => {
+          if (!this.isValidUTF8String(key)) {
+            issues.push({
+              type: 'object_key',
+              key: key,
+              issue: 'Chave do objeto contém caracteres UTF-8 inválidos'
+            })
+          }
+
+          const valueIssues = this.validateInputData(value)
+          if (valueIssues.length > 0) {
+            issues.push({
+              type: 'object_value',
+              key: key,
+              issues: valueIssues
+            })
+          }
+        })
+      }
+
+      return issues
+    },
+
+    /**
+     * Relatório completo de validação UTF-8
+     */
+    generateUTF8ValidationReport(data) {
+      const report = {
+        timestamp: new Date().toISOString(),
+        totalIssues: 0,
+        issues: [],
+        recommendations: []
+      }
+
+      const issues = this.validateInputData(data)
+      report.issues = issues
+      report.totalIssues = issues.length
+
+      if (issues.length > 0) {
+        report.recommendations.push('Aplicar sanitização UTF-8 antes de inserir no banco')
+        report.recommendations.push('Verificar fonte dos dados para identificar origem dos caracteres inválidos')
+        report.recommendations.push('Implementar validação UTF-8 na entrada de dados')
+      } else {
+        report.recommendations.push('Dados validados com sucesso - nenhuma ação necessária')
+      }
+
+      return report
+    },
+
+    /**
+     * Exibe relatório UTF-8 no console para análise
+     */
+    displayUTF8Report(report) {
+      console.group('📊 Relatório de Validação UTF-8')
+      console.log('⏰ Timestamp:', report.timestamp)
+      console.log('🔢 Total de Problemas:', report.totalIssues)
+
+      if (report.totalIssues > 0) {
+        console.group('⚠️ Problemas Encontrados:')
+        report.issues.forEach((issue, index) => {
+          console.log(`${index + 1}.`, issue)
+        })
+        console.groupEnd()
+
+        console.group('💡 Recomendações:')
+        report.recommendations.forEach((rec, index) => {
+          console.log(`${index + 1}.`, rec)
+        })
+        console.groupEnd()
+      } else {
+        console.log('✅ Nenhum problema UTF-8 encontrado!')
+      }
+
+      console.groupEnd()
+    },
+
+    /**
+     * Testa o sistema UTF-8 com dados de exemplo
+     */
+    async testUTF8System() {
+      console.log('🧪 Testando sistema UTF-8...')
+
+      // Dados de teste com caracteres especiais
+      const testData = {
+        normal: 'Texto normal',
+        accents: 'áéíóú àèìòù âêîôû ãõ ç ñ',
+        emojis: '🏆⚽🎯💰',
+        symbols: '€£¥₹',
+        mixed: 'Flamengo vs São Paulo - 2.5 gols ⚽',
+        metadata: {
+          source: 'teste',
+          description: 'Partida com acentos e símbolos especiais'
+        }
+      }
+
+      // Testar validação
+      const validationReport = this.generateUTF8ValidationReport(testData)
+      this.displayUTF8Report(validationReport)
+
+      // Testar sanitização
+      const sanitizedData = this.sanitizeJSONForUTF8(testData)
+      console.log('🧹 Dados sanitizados:', sanitizedData)
+
+      // Testar se dados sanitizados são válidos
+      const finalValidation = this.generateUTF8ValidationReport(sanitizedData)
+      console.log('✅ Validação final:', finalValidation.totalIssues === 0 ? 'SUCESSO' : 'AINDA HÁ PROBLEMAS')
+
+      return {
+        original: testData,
+        sanitized: sanitizedData,
+        validationReport,
+        finalValidation
+      }
+    },
+
+    /**
+     * Limpa relatórios UTF-8 antigos do localStorage
+     */
+    clearUTF8Reports() {
+      try {
+        localStorage.removeItem('utf8_reports')
+        console.log('🗑️ Relatórios UTF-8 antigos removidos do localStorage')
+      } catch (error) {
+        console.error('❌ Erro ao limpar relatórios UTF-8:', error)
+      }
+    },
+
+    /**
+     * Exibe estatísticas dos relatórios UTF-8 salvos
+     */
+    showUTF8Statistics() {
+      try {
+        const reports = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
+
+        if (reports.length === 0) {
+          console.log('📊 Nenhum relatório UTF-8 encontrado no localStorage')
+          return
+        }
+
+        const totalReports = reports.length
+        const totalIssues = reports.reduce((sum, report) => sum + (report.report?.totalIssues || 0), 0)
+        const avgIssuesPerReport = totalIssues / totalReports
+
+        console.group('📊 Estatísticas UTF-8')
+        console.log('📈 Total de relatórios:', totalReports)
+        console.log('⚠️ Total de problemas:', totalIssues)
+        console.log('📊 Média de problemas por relatório:', avgIssuesPerReport.toFixed(2))
+
+        // Mostrar os últimos 5 relatórios
+        console.group('📋 Últimos 5 relatórios:')
+        reports.slice(-5).forEach((report, index) => {
+          console.log(`${index + 1}. ${report.timestamp} - ${report.report?.totalIssues || 0} problemas`)
+        })
+        console.groupEnd()
+
+        console.groupEnd()
+
+      } catch (error) {
+        console.error('❌ Erro ao exibir estatísticas UTF-8:', error)
+      }
+    },
+
+    async saveIndividualRecord(item) {
+      try {
+        // Verificações de segurança
+        if (!this.currentUser?.id) {
+          console.error('❌ Usuário não autenticado ou ID não encontrado')
+          throw new Error('Usuário não autenticado')
+        }
+
+        if (!this.$store.state.authToken) {
+          console.error('❌ Token de autenticação não encontrado')
+          throw new Error('Token de autenticação não encontrado')
+        }
+
+        // Validar dados obrigatórios com fallbacks inteligentes
+        const missingFields = []
+        if (!item.surebet_id && !item.id) missingFields.push('surebet_id')
+        if (!item.house && !item.house_name) missingFields.push('house')
+        if (!item.market && !item.market_name) missingFields.push('market')
+
+        if (missingFields.length > 0) {
+          console.warn(`⚠️ Item ${item.surebet_id || item.id || 'sem ID'} com campos ausentes:`, missingFields)
+          console.warn('📋 Dados do item:', item)
+
+          // Em vez de falhar, vamos usar valores padrão
+          console.log('🔄 Aplicando valores padrão para campos ausentes...')
+        }
+
+        // Preparar dados com validação robusta e fallbacks
+        let recordData = {
+          // Campos obrigatórios com validação rigorosa
+          surebet_id: item.surebet_id || item.id || `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          house: item.house || item.house_name || item.bookmaker || 'Casa não especificada',
+          market: item.market || item.market_name || item.bet_type || 'Mercado não especificado',
+          profit: this.validateProfit(item.profit, item.return),
+          date: this.validateDate(item.date, item.match_date, item.event_date),
+          hour: this.validateHour(item.hour, item.time),
+          sport: item.sport || item.sport_name || item.category || 'Esporte não especificado',
+
+          // Campos opcionais
+          match: item.match || item.match_name || item.game || item.event || 'Partida não especificada',
+          period: item.period || item.time_period || item.period_name || null,
+          minutes: item.minutes || item.match_minutes || item.duration || null,
+          anchorh1: item.anchorh1 || item.anchor_h1 || item.anchor1 || null,
+          anchorh2: item.anchorh2 || item.anchor_h2 || item.anchor2 || null,
+          chance: item.chance || item.odds || item.probability || null,
+          metadata: {
+            source: 'ranking_view',
+            generated_at: new Date().toISOString(),
+            original_data: item,
+            has_fallbacks: missingFields.length > 0,
+            missing_fields: missingFields,
+            ...(item.metadata || {})
+          }
+        }
+
+        // Validação final dos campos obrigatórios
+        const finalValidation = this.validateRequiredFields(recordData)
+        if (!finalValidation.isValid) {
+          console.error('❌ Validação final falhou:', finalValidation.errors)
+          throw new Error(`Campos obrigatórios inválidos: ${finalValidation.errors.join(', ')}`)
+        }
+
+        // Aplicar sanitização UTF-8 final nos dados preparados
+        const originalRecordData = JSON.parse(JSON.stringify(recordData))
+        recordData = this.sanitizeJSONForUTF8(recordData)
+
+        // Log detalhado se houve mudanças na sanitização
+        if (JSON.stringify(originalRecordData) !== JSON.stringify(recordData)) {
+          console.warn('🔧 Dados sanitizados antes do envio:', {
+            original: originalRecordData,
+            sanitized: recordData,
+            recordId: recordData.surebet_id
+          })
+        }
+
+        // Validar se os dados sanitizados são válidos para JSON
+        let jsonBody
+        try {
+          jsonBody = JSON.stringify(recordData)
+        } catch (jsonError) {
+          console.error('❌ Erro ao serializar dados para JSON:', jsonError)
+          console.error('📋 Dados problemáticos:', recordData)
+          throw new Error(`Erro de serialização JSON: ${jsonError.message}`)
+        }
+
+        const response = await fetch('/api/surebet-stats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Authorization': `Bearer ${this.$store.state.authToken}`
+          },
+          body: jsonBody
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ Erro HTTP detalhado:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText: errorText,
+            recordId: recordData.surebet_id,
+            dataSize: jsonBody.length
+          })
+
+          // Tratar erro HTTP 400 - Campos obrigatórios
+          if (response.status === 400) {
+            try {
+              const errorData = JSON.parse(errorText)
+              if (errorData.details && errorData.details.missingFields) {
+                console.error('🚨 CAMPOS OBRIGATÓRIOS FALTANDO:', errorData.details.missingFields)
+                console.error('📋 Campos recebidos:', errorData.details.receivedFields)
+                console.error('📋 Campos obrigatórios:', errorData.details.requiredFields)
+
+                // Tentar corrigir automaticamente os campos faltantes
+                const correctedData = this.correctMissingFields(recordData, errorData.details.missingFields)
+                if (correctedData) {
+                  console.log('🔧 Tentando novamente com campos corrigidos...')
+
+                  const correctedJsonBody = JSON.stringify(correctedData)
+                  const retryResponse = await fetch('/api/surebet-stats', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json; charset=utf-8',
+                      'Authorization': `Bearer ${this.$store.state.authToken}`
+                    },
+                    body: correctedJsonBody
+                  })
+
+                  if (!retryResponse.ok) {
+                    const retryErrorText = await retryResponse.text()
+                    throw new Error(`Erro HTTP após correção: ${retryResponse.status} - ${retryErrorText}`)
+                  }
+
+                  console.log('✅ Registro salvo com campos corrigidos')
+                  return await retryResponse.json()
+                }
+              }
+            } catch (parseError) {
+              console.error('❌ Erro ao parsear resposta de erro:', parseError)
+            }
+          }
+
+          // Verificar se é erro específico de UTF-8
+          if (errorText.includes('UTF8') || errorText.includes('codificação') || errorText.includes('0xe3')) {
+            console.error('🚨 ERRO UTF-8 DETECTADO - Aplicando sanitização mais agressiva...')
+
+            // Aplicar sanitização mais agressiva
+            const aggressiveSanitized = this.aggressiveUTF8Sanitization(recordData)
+            const aggressiveJsonBody = JSON.stringify(aggressiveSanitized)
+
+            console.log('🔧 Tentando novamente com sanitização agressiva...')
+
+            // Tentar novamente com dados mais agressivamente sanitizados
+            const retryResponse = await fetch('/api/surebet-stats', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+                'Authorization': `Bearer ${this.$store.state.authToken}`
+              },
+              body: aggressiveJsonBody
+            })
+
+            if (!retryResponse.ok) {
+              const retryErrorText = await retryResponse.text()
+              throw new Error(`Erro HTTP UTF-8 (retry): ${retryResponse.status} - ${retryErrorText}`)
+            }
+
+            console.log('✅ Registro salvo com sanitização agressiva')
+            return await retryResponse.json()
+          }
+
+          throw new Error(`Erro HTTP: ${response.status} - ${errorText}`)
+        }
+
+        const result = await response.json()
+        const recordId = recordData.surebet_id
+        const hasFallbacks = missingFields.length > 0
+
+        if (hasFallbacks) {
+          console.log(`✅ Registro ${recordId} salvo com sucesso (com fallbacks para: ${missingFields.join(', ')})`)
+        } else {
+          console.log(`✅ Registro ${recordId} salvo com sucesso`)
+        }
+
+        return result
+
+      } catch (error) {
+        console.error(`❌ Erro ao salvar registro ${item.surebet_id}:`, error)
+        throw error
+      }
+    },
+
+    // Funções de validação para campos obrigatórios
+    validateProfit(profit, returnValue) {
+      if (typeof profit === 'number' && !isNaN(profit)) {
+        return profit;
+      }
+      if (typeof returnValue === 'number' && !isNaN(returnValue)) {
+        return returnValue;
+      }
+      const parsedProfit = parseFloat(profit);
+      if (!isNaN(parsedProfit)) {
+        return parsedProfit;
+      }
+      const parsedReturn = parseFloat(returnValue);
+      if (!isNaN(parsedReturn)) {
+        return parsedReturn;
+      }
+      console.warn('⚠️ Profit inválido, usando 0 como fallback');
+      return 0;
+    },
+
+    validateDate(date, matchDate, eventDate) {
+      const dateValue = date || matchDate || eventDate;
+      if (dateValue) {
+        // Se já é uma string no formato YYYY-MM-DD
+        if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+          return dateValue;
+        }
+        // Se é um objeto Date
+        if (dateValue instanceof Date) {
+          return dateValue.toISOString().split('T')[0];
+        }
+        // Tentar converter string para Date
+        const parsedDate = new Date(dateValue);
+        if (!isNaN(parsedDate.getTime())) {
+          return parsedDate.toISOString().split('T')[0];
+        }
+      }
+      console.warn('⚠️ Data inválida, usando data atual como fallback');
+      return new Date().toISOString().split('T')[0];
+    },
+
+    validateHour(hour, time) {
+      if (typeof hour === 'number' && hour >= 0 && hour <= 23) {
+        return hour;
+      }
+      if (typeof time === 'number' && time >= 0 && time <= 23) {
+        return time;
+      }
+      const parsedHour = parseInt(hour);
+      if (!isNaN(parsedHour) && parsedHour >= 0 && parsedHour <= 23) {
+        return parsedHour;
+      }
+      const parsedTime = parseInt(time);
+      if (!isNaN(parsedTime) && parsedTime >= 0 && parsedTime <= 23) {
+        return parsedTime;
+      }
+      console.warn('⚠️ Hora inválida, usando 0 como fallback');
+      return 0;
+    },
+
+    validateRequiredFields(recordData) {
+      const requiredFields = ['surebet_id', 'house', 'market', 'profit', 'date', 'hour', 'sport'];
+      const errors = [];
+
+      requiredFields.forEach(field => {
+        const value = recordData[field];
+        if (!value && value !== 0) {
+          errors.push(`${field} é obrigatório`);
+        }
+      });
+
+      // Validações específicas
+      if (recordData.profit !== undefined && (isNaN(recordData.profit) || recordData.profit === null)) {
+        errors.push('profit deve ser um número válido');
+      }
+
+      if (recordData.hour !== undefined && (isNaN(recordData.hour) || recordData.hour < 0 || recordData.hour > 23)) {
+        errors.push('hour deve ser um número entre 0 e 23');
+      }
+
+      if (recordData.date && !/^\d{4}-\d{2}-\d{2}$/.test(recordData.date)) {
+        errors.push('date deve estar no formato YYYY-MM-DD');
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors: errors
+      };
+    },
+
+    correctMissingFields(recordData, missingFields) {
+      console.log('🔧 Corrigindo campos faltantes:', missingFields)
+
+      const correctedData = { ...recordData }
+
+      missingFields.forEach(field => {
+        switch (field) {
+          case 'surebet_id':
+            correctedData.surebet_id = correctedData.surebet_id || `corrected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+            break
+          case 'house':
+            correctedData.house = correctedData.house || 'Casa corrigida automaticamente'
+            break
+          case 'market':
+            correctedData.market = correctedData.market || 'Mercado corrigido automaticamente'
+            break
+          case 'profit':
+            correctedData.profit = correctedData.profit !== undefined ? correctedData.profit : 0
+            break
+          case 'date':
+            correctedData.date = correctedData.date || new Date().toISOString().split('T')[0]
+            break
+          case 'hour':
+            correctedData.hour = correctedData.hour !== undefined ? correctedData.hour : 0
+            break
+          case 'sport':
+            correctedData.sport = correctedData.sport || 'Esporte corrigido automaticamente'
+            break
+          default:
+            console.warn(`⚠️ Campo desconhecido para correção: ${field}`)
+        }
+      })
+
+      // Validar se a correção foi bem-sucedida
+      const validation = this.validateRequiredFields(correctedData)
+      if (validation.isValid) {
+        console.log('✅ Campos corrigidos com sucesso')
+        return correctedData
+      } else {
+        console.error('❌ Correção falhou:', validation.errors)
+        return null
+      }
+    },
+
+    async saveAnalyticsToDatabase(filteredData) {
+      try {
+        // Verificar se há dados para analisar
+        if (!filteredData || !Array.isArray(filteredData) || filteredData.length === 0) {
+          console.log('📊 Nenhum dado para análise')
+          return
+        }
+
+        // Verificar se o usuário está autenticado
+        if (!this.currentUser?.id) {
+          console.error('❌ Usuário não autenticado para salvar análise')
+          return
+        }
+
+        // Calcular estatísticas para salvar com validação
+        const validData = filteredData.filter(item => item && item.surebet_id)
+        const totalSurebets = new Set(validData.map(s => s.surebet_id)).size
+        const uniqueHouses = new Set(validData.map(s => s.house || 'Desconhecida')).size
+        const uniqueMarkets = new Set(validData.map(s => s.market || 'Desconhecido')).size
+
+        const surebetProfits = {}
+        validData.forEach(item => {
+          if (!surebetProfits[item.surebet_id]) {
+            surebetProfits[item.surebet_id] = parseFloat(item.profit) || 0
+          }
+        })
+        const profits = Object.values(surebetProfits)
+        const averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
+
+        // Preparar dados de análise com validação
+        let analyticsData = {
+          user_id: this.currentUser.id,
+          analysis_type: 'comprehensive',
+          period_days: parseInt(this.selectedPeriod) || 30,
+          sport_filter: this.selectedSport || 'all',
+          analysis_data: {
+            topHouses: this.topHouses || [],
+            topHousePairs: this.topHousePairs || [],
+            topMarkets: this.topMarkets || [],
+            insights: {
+              bestPair: this.bestPair || null,
+              peakHour: this.peakHour || null,
+              bestMarket: this.bestMarket || null,
+              mostActiveSport: this.mostActiveSport || null
+            }
+          },
+          total_surebets: totalSurebets,
+          unique_houses: uniqueHouses,
+          unique_markets: uniqueMarkets,
+          average_profit: averageProfit,
+          generated_at: new Date().toISOString()
+        }
+
+        // Aplicar sanitização UTF-8 nos dados de análise
+        analyticsData = this.sanitizeJSONForUTF8(analyticsData)
+
+        // Salvar análise no banco
+        const result = await this.$store.dispatch('saveSurebetAnalytics', analyticsData)
+        console.log('✅ Análise salva no banco:', result)
+
+      } catch (error) {
+        console.error('❌ Erro ao salvar análise no banco:', error)
+        // Não re-throw para não interromper o fluxo principal
+      }
+    },
+
+    updateHousesChart() {
+      if (!this.housesChart || !this.housesChart.data || !this.housesChart.data.datasets || !this.housesChart.data.datasets[0]) return
+
+      // Verificar se o gráfico ainda está ativo
+      if (!this.housesChart.canvas || !this.housesChart.canvas.parentNode) {
+        console.warn('⚠️ Gráfico housesChart não está mais ativo, recriando...')
+        this.setupHousesChart()
+        return
+      }
+
+      const data = this.topHouses.slice(0, 12)
+      this.housesChart.data.labels = data.map(h => h.name)
+      this.housesChart.data.datasets[0].data = data.map(h => h.count)
+
+      if (typeof this.housesChart.update === 'function') {
+        this.housesChart.update('none')
+      }
+    },
+
+    updateMarketsChart() {
+      if (!this.marketsChart || !this.marketsChart.data || !this.marketsChart.data.datasets || !this.marketsChart.data.datasets[0]) return
+
+      // Verificar se o gráfico ainda está ativo
+      if (!this.marketsChart.canvas || !this.marketsChart.canvas.parentNode) {
+        console.warn('⚠️ Gráfico marketsChart não está mais ativo, recriando...')
+        this.setupMarketsChart()
+        return
+      }
+
+      const { chartData, colors, labels } = createChartData(
+        this.groupedMarkets,
+        this.marketsChartShowDetails,
+        this.marketsChartViewMode
+      )
+
+      this.marketsChart.data.labels = labels
+      this.marketsChart.data.datasets[0].data = chartData
+      this.marketsChart.data.datasets[0].backgroundColor = colors
+      this.marketsChart.data.datasets[0].borderColor = colors.map(color => color.replace('0.8', '1'))
+
+      if (typeof this.marketsChart.update === 'function') {
+        this.marketsChart.update('none')
+      }
+    },
+
+    updateTimeChart() {
+      if (!this.timeChart || !this.timeChart.data || !this.timeChart.data.datasets || !this.timeChart.data.datasets[0]) return
+
+      // Verificar se o gráfico ainda está ativo
+      if (!this.timeChart.canvas || !this.timeChart.canvas.parentNode) {
+        console.warn('⚠️ Gráfico timeChart não está mais ativo, recriando...')
+        this.setupTimeChart()
+        return
+      }
+
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
+      const hours = Array.from({ length: 24 }, (_, i) => i)
+      const counts = hours.map(hour => hourStats[hour] || 0)
+      this.timeChart.data.datasets[0].data = counts
+
+      if (typeof this.timeChart.update === 'function') {
+        this.timeChart.update('none')
+      }
+    },
+
+    updateSportsChart() {
+      if (!this.sportsChart || !this.sportsChart.data || !this.sportsChart.data.datasets || !this.sportsChart.data.datasets[0]) return
+
+      // Verificar se o gráfico ainda está ativo
+      if (!this.sportsChart.canvas || !this.sportsChart.canvas.parentNode) {
+        console.warn('⚠️ Gráfico sportsChart não está mais ativo, recriando...')
+        this.setupSportsChart()
+        return
+      }
+
+      const sportStats = {}
+      const surebetGroups = {}
+      this.filteredSurebets.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+      Object.values(surebetGroups).forEach(item => {
+        if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
+        sportStats[item.sport].profits.push(item.profit)
+      })
+      const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
+        sport,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
+      })).sort((a, b) => b.averageProfit - a.averageProfit)
+
+      this.sportsChart.data.labels = sportsData.map(s => s.sport)
+      this.sportsChart.data.datasets[0].data = sportsData.map(s => s.averageProfit)
+
+      if (typeof this.sportsChart.update === 'function') {
+        this.sportsChart.update('none')
+      }
+    },
+
+    updateProfitFrequencyChart() {
+      if (!this.profitFrequencyChart) return
+
+      // Verificar se o gráfico ainda está ativo
+      if (!this.profitFrequencyChart.canvas || !this.profitFrequencyChart.canvas.parentNode) {
+        console.warn('⚠️ Gráfico profitFrequencyChart não está mais ativo, recriando...')
+        this.setupProfitFrequencyChart()
+        return
+      }
+
+      // Recalcular dados para o gráfico
+      const marketStats = {}
+      this.filteredSurebets.forEach(item => {
+        if (!marketStats[item.market]) {
+          marketStats[item.market] = { count: 0, profits: [], totalProfit: 0 }
+        }
+        marketStats[item.market].count++
+        marketStats[item.market].profits.push(item.profit)
+        marketStats[item.market].totalProfit += item.profit
+      })
+
+      // Filtrar mercados com pelo menos 2 aparições para evitar ruído
+      const filteredMarkets = Object.entries(marketStats).filter(([market, stats]) => stats.count >= 2)
+
+      const chartData = filteredMarkets.map(([market, stats]) => ({
+        x: stats.count,
+        y: stats.totalProfit / stats.count,
+        market: market,
+        count: stats.count,
+        totalProfit: stats.totalProfit,
+        averageProfit: stats.totalProfit / stats.count
+      }))
+
+      // Calcular estatísticas para melhor distribuição visual
+      const frequencies = chartData.map(item => item.x)
+      const profits = chartData.map(item => item.y)
+
+      const freqStats = this.calculateStats(frequencies)
+      const profitStats = this.calculateStats(profits)
+
+      // Calcular percentis para melhor distribuição de cores
+      const sortedProfits = profits.sort((a, b) => a - b)
+      const p33 = sortedProfits[Math.floor(sortedProfits.length * 0.33)]
+      const p66 = sortedProfits[Math.floor(sortedProfits.length * 0.66)]
+
+      // Atualizar cores baseadas em percentis para melhor distribuição
+      const colors = chartData.map(item => {
+        if (item.y >= p66) return this.getThemeColor('--accent-primary', '#00ff88') // Verde para top 33%
+        if (item.y >= p33) return this.getThemeColor('--accent-secondary', '#ffd700') // Amarelo para médio 33%
+        return this.getThemeColor('--warning-color', '#ff6b35') // Laranja para bottom 33%
+      })
+
+      // Calcular tamanhos dos pontos baseados na frequência (logarítmico para melhor distribuição)
+      const maxCount = Math.max(...frequencies)
+      const pointSizes = chartData.map(item => {
+        // Usar escala logarítmica para melhor distribuição visual
+        const logSize = Math.log(item.x + 1) / Math.log(maxCount + 1)
+        const normalizedSize = logSize * 0.8 + 0.2 // Entre 0.2 e 1.0
+        return Math.max(4, Math.min(10, normalizedSize * 12.5)) // Entre 4 e 10 pixels (50% menor)
+      })
+
+      this.profitFrequencyChart.data.datasets[0].data = chartData
+      this.profitFrequencyChart.data.datasets[0].backgroundColor = colors
+      this.profitFrequencyChart.data.datasets[0].borderColor = colors.map(color => color.replace('0.9', '1'))
+      this.profitFrequencyChart.data.datasets[0].pointRadius = pointSizes
+      this.profitFrequencyChart.data.datasets[0].pointHoverRadius = pointSizes.map(size => size + 6)
+
+      // Atualizar escalas para melhor distribuição
+      this.profitFrequencyChart.options.scales.x.min = Math.max(0, freqStats.q1 - (freqStats.q3 - freqStats.q1) * 0.5)
+      this.profitFrequencyChart.options.scales.x.max = freqStats.q3 + (freqStats.q3 - freqStats.q1) * 1.5
+      this.profitFrequencyChart.options.scales.y.min = Math.max(0, profitStats.q1 - (profitStats.q3 - profitStats.q1) * 0.5)
+      this.profitFrequencyChart.options.scales.y.max = profitStats.q3 + (profitStats.q3 - profitStats.q1) * 1.5
+
+      if (typeof this.profitFrequencyChart.update === 'function') {
+        this.profitFrequencyChart.update('none')
+      }
+    },
+
+
+
+    calculateVariation(values) {
+      try {
+        // Verificar se values é um array válido
+        if (!Array.isArray(values) || values.length <= 1) return 0
+
+        // Filtrar valores válidos (números)
+        const validValues = values.filter(val => typeof val === 'number' && !isNaN(val))
+        if (validValues.length <= 1) return 0
+
+        const mean = validValues.reduce((sum, val) => sum + val, 0) / validValues.length
+        const variance = validValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validValues.length
+        const stdDev = Math.sqrt(variance)
+        return mean > 0 ? (stdDev / mean) * 100 : 0
+      } catch (error) {
+        console.warn('Erro ao calcular variação:', error)
+        return 0
+      }
+    },
+
+    calculateStats(values) {
+      if (values.length === 0) return { q1: 0, q3: 0, median: 0, mean: 0 }
+
+      const sorted = [...values].sort((a, b) => a - b)
+      const n = sorted.length
+
+      const q1 = sorted[Math.floor(n * 0.25)]
+      const median = sorted[Math.floor(n * 0.5)]
+      const q3 = sorted[Math.floor(n * 0.75)]
+      const mean = values.reduce((sum, val) => sum + val, 0) / n
+
+      return { q1, q3, median, mean }
+    },
+
+    // Método auxiliar para selecionar casas aleatórias únicas
+    getRandomHouses(houses, count) {
+      try {
+        if (!houses || !Array.isArray(houses) || houses.length === 0 || !count || count <= 0) {
+          return []
+        }
+
+        const shuffled = [...houses].sort(() => 0.5 - Math.random())
+        return shuffled.slice(0, Math.min(count, houses.length))
+      } catch (error) {
+        console.warn('Erro ao selecionar casas aleatórias:', error)
+        return []
+      }
+    },
+
+    updateAnalysis() {
+      try {
+        this.processAnalytics()
+      } catch (error) {
+        console.warn('Erro ao atualizar análise:', error)
+      }
+    },
+
+
+    // Métodos para busca automática de dados
+    startAutoRefresh() {
+      // Parar intervalo existente se houver
+      this.stopAutoRefresh()
+
+      // Iniciar novo intervalo (buscar a cada 2 minutos)
+      this.autoRefreshInterval = setInterval(async () => {
+        try {
+          console.log('🔄 Busca automática de novos dados...')
+          await this.checkForNewData()
+        } catch (error) {
+          console.error('❌ Erro na busca automática:', error)
+        }
+      }, 2 * 60 * 1000) // 2 minutos
+
+      console.log('✅ Busca automática iniciada (intervalo: 2 minutos)')
+    },
+
+    stopAutoRefresh() {
+      try {
+        if (this.autoRefreshInterval) {
+          clearInterval(this.autoRefreshInterval)
+          this.autoRefreshInterval = null
+          console.log('⏹️ Busca automática parada')
+        }
+      } catch (error) {
+        console.warn('Erro ao parar busca automática:', error)
+        this.autoRefreshInterval = null
+      }
+    },
+
+    toggleAutoRefresh() {
+      try {
+        if (this.autoRefreshInterval) {
+          this.stopAutoRefresh()
+        } else {
+          this.startAutoRefresh()
+        }
+      } catch (error) {
+        console.warn('Erro ao alternar busca automática:', error)
+      }
+    },
+
+    async checkForNewData() {
+      try {
+        // Buscar dados da API externa
+        const apiData = await this.fetchFromExternalAPI()
+
+        if (apiData && apiData.length > 0) {
+          // Verificar se há novos dados
+          const currentCount = this.surebets.length
+          const newCount = apiData.length
+
+          if (newCount > currentCount || this.hasNewSurebets(apiData)) {
+            console.log(`🆕 Novos dados encontrados! Atual: ${currentCount}, Novo: ${newCount}`)
+
+            // Atualizar dados
             this.surebets = apiData
-            
-            // Salvar dados no banco local para cache (com tratamento de erro)
+            this.dataUpdateCount++
+            this.lastDataUpdate = new Date()
+
+            // Reprocessar análises
+            this.processAnalytics()
+
+            // Salvar no banco (com tratamento de erro)
             try {
               await this.saveDataToDatabase()
             } catch (saveError) {
               console.warn('⚠️ Erro ao salvar dados no banco (não crítico):', saveError)
               // Continuar mesmo se falhar ao salvar
             }
+
+            // Atualizar gráficos se estiverem inicializados
+            if (this.chartsInitialized) {
+              this.updateCharts()
+            }
+
+            console.log('✅ Dados atualizados com sucesso')
           } else {
-            console.log('📊 Nenhum dado encontrado na API externa, tentando carregar do banco local')
-            
-            // Tentar carregar dados do banco local
-            try {
-              const dbStats = await this.$store.dispatch('fetchSurebetStats', {
-                period: this.selectedPeriod,
-                sport: this.selectedSport,
-                limit: 1000
-              })
-              
-              if (dbStats && dbStats.length > 0) {
-                console.log(`✅ Carregados ${dbStats.length} registros do banco de dados`)
-                this.surebets = dbStats
-              } else {
-                console.log('📊 Nenhum dado encontrado, usando dados de exemplo')
-                this.surebets = this.generateSampleData()
-              }
-            } catch (dbError) {
-              console.warn('⚠️ Erro ao carregar do banco, usando dados de exemplo:', dbError)
-              this.surebets = this.generateSampleData()
-            }
+            console.log('📊 Nenhum novo dado encontrado')
           }
-          
-          this.processAnalytics()
-          
-        } catch (error) {
-          console.error('❌ Erro ao carregar dados:', error)
-          // Fallback para dados de exemplo
-          this.surebets = this.generateSampleData()
-          this.processAnalytics()
-        } finally {
-          this.isLoading = false
         }
-      },
-  
-      async fetchFromExternalAPI() {
-        try {
-          console.log('🌐 Buscando dados da API externa...')
-          
-          // Buscar dados da API externa via servidor
-          // Obter token de autenticação
-          const authToken = this.$store.getters.authToken
-          if (!authToken) {
-            throw new Error('Token de autenticação não encontrado. Faça login novamente.')
-          }
-          
-          const response = await fetch('/api/surebets', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${authToken}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          
-          if (!response.ok) {
-            throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`)
-          }
-          
-          const apiResponse = await response.json()
-          console.log('📡 Dados recebidos da API externa:', apiResponse)
-          
-          // Verificar se os dados têm a estrutura esperada
-          if (!apiResponse || typeof apiResponse !== 'object') {
-            throw new Error('Estrutura de dados inválida da API')
-          }
-          
-          // Extrair os dados reais da resposta da API
-          const apiData = apiResponse.data || apiResponse
-          
-          // Verificar se os dados extraídos têm a estrutura esperada
-          if (!apiData || typeof apiData !== 'object') {
-            throw new Error('Dados de surebets não encontrados na resposta da API')
-          }
-          
-          // Processar dados da API externa
-          const processedData = this.processExternalAPIData(apiData)
-          console.log('✅ Dados processados:', processedData.length, 'registros únicos')
-          
-          return processedData
-          
-        } catch (error) {
-          console.error('❌ Erro ao buscar da API externa:', error)
-          throw error
-        }
-      },
-  
-      processExternalAPIData(apiData) {
-        const processedData = []
-        const processedIds = new Set()
-        
-        // Verificar se apiData é um array (formato alternativo)
-        if (Array.isArray(apiData)) {
-          console.log('📊 Processando dados em formato de array')
-          apiData.forEach((surebet, index) => {
-            try {
-              const processedSurebet = this.processSingleSurebet(surebet, `array_${index}`)
-              if (processedSurebet) {
-                processedData.push(processedSurebet)
-              }
-            } catch (error) {
-              console.error(`Erro ao processar surebet do array (índice ${index}):`, error)
-            }
-          })
-          return processedData
-        }
-        
-        // Iterar sobre cada surebet_id na resposta da API
-        Object.entries(apiData).forEach(([surebetId, surebetParts]) => {
-          // Verificar se já processamos este surebet_id
-          if (processedIds.has(surebetId)) {
-            console.log(`⚠️ Surebet ID duplicado ignorado: ${surebetId}`)
-            return
-          }
-          
-          // Marcar como processado
-          processedIds.add(surebetId)
-          
-          // Processar cada parte do surebet
-          if (Array.isArray(surebetParts)) {
-            surebetParts.forEach((part, index) => {
-              try {
-                // Extrair informações da parte
-                const {
-                  house,
-                  profit,
-                  roi,
-                  timestamp,
-                  sport,
-                  event,
-                  market,
-                  selection1,
-                  selection2,
-                  selection3,
-                  odds1,
-                  odds2,
-                  odds3,
-                  stake = 100,
-                  status = 'active'
-                } = part
-                
-                // Criar data e hora a partir do timestamp
-                const dateObj = timestamp ? new Date(timestamp) : new Date()
-                const date = dateObj.toISOString().split('T')[0]
-                const hour = dateObj.getHours()
-                
-                // Determinar se é Live ou Pre Live baseado na URL e campo minutes
-                let isLive = false
-                let minutes = part.minutes || 0
-                
-                // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
-                const anchorUrl = part.anchorh1 || part.anchorh2 || ''
-                
-                let isLiveParam = null
-                
-                // Tentar extrair is_live da URL
-                if (anchorUrl && anchorUrl.includes('is_live=')) {
-                  const match = anchorUrl.match(/is_live=([01])/)
-                  if (match) {
-                    isLiveParam = match[1]
-                  }
-                }
-                
-                // Determinar status baseado no parâmetro oficial is_live
-                if (isLiveParam === '1') {
-                  isLive = true
-                  // Manter os minutos originais da API
-                } else if (isLiveParam === '0') {
-                  isLive = false
-                  // Manter os minutos originais da API (pode ter minutos mesmo sendo pre-match)
-                } else {
-                  // Fallback: usar campo minutes se não conseguir extrair is_live
-                  if (minutes && minutes > 0) {
-                    isLive = true
-                  } else {
-                    isLive = false
-                  }
-                }
-                
-                // Criar objeto surebet processado
-                const processedSurebet = {
-                  surebet_id: surebetId,
-                  house: house || 'Casa não especificada',
-                  market: market || 'Mercado não especificado',
-                  match: event || 'Evento não especificado',
-                  profit: parseFloat(profit) || 0,
-                  date: date,
-                  hour: hour,
-                  sport: sport || 'Futebol',
-                  period: part.period || null,
-                  minutes: minutes,
-                  anchorh1: null,
-                  anchorh2: null,
-                  chance: parseFloat(roi) || null,
-                  isLive: isLive,
-                  metadata: {
-                    source: 'external_api',
-                    timestamp: timestamp,
-                    selection1: selection1 || null,
-                    selection2: selection2 || null,
-                    selection3: selection3 || null,
-                    odds1: parseFloat(odds1) || null,
-                    odds2: parseFloat(odds2) || null,
-                    odds3: parseFloat(odds3) || null,
-                    stake: parseFloat(stake) || 100,
-                    status: status || 'active',
-                    processed_at: new Date().toISOString()
-                  }
-                }
-                
-                // Aplicar sanitização UTF-8 antes de adicionar aos dados processados
-                const sanitizedSurebet = this.sanitizeJSONForUTF8(processedSurebet)
-                processedData.push(sanitizedSurebet)
-                
-              } catch (partError) {
-                console.error(`Erro ao processar parte ${index + 1} do surebet ${surebetId}:`, partError)
-              }
-            })
-          } else {
-            console.warn(`Formato inválido para surebet ${surebetId}:`, {
-              type: typeof surebetParts,
-              isArray: Array.isArray(surebetParts),
-              value: surebetParts
-            })
-          }
-        })
-        
-        console.log(`🎯 Processados ${processedData.length} registros únicos de ${processedIds.size} IDs únicos`)
-        return processedData
-      },
-
-      processSingleSurebet(surebet, surebetId) {
-        try {
-          // Extrair informações do surebet
-          const {
-            house,
-            profit,
-            roi,
-            timestamp,
-            sport,
-            event,
-            market,
-            selection1,
-            selection2,
-            selection3,
-            odds1,
-            odds2,
-            odds3,
-            stake = 100,
-            status = 'active'
-          } = surebet
-          
-          // Criar data e hora a partir do timestamp
-          const dateObj = timestamp ? new Date(timestamp) : new Date()
-          const date = dateObj.toISOString().split('T')[0]
-          const hour = dateObj.getHours()
-          
-          // Determinar se é Live ou Pre Live
-          let isLive = false
-          let minutes = surebet.minutes || 0
-          
-          // Extrair o parâmetro is_live da URL (anchorh1 ou anchorh2)
-          const anchorUrl = surebet.anchorh1 || surebet.anchorh2 || ''
-          
-          let isLiveParam = null
-          if (anchorUrl) {
-            const urlParams = new URLSearchParams(anchorUrl.split('?')[1] || '')
-            isLiveParam = urlParams.get('is_live')
-            if (isLiveParam !== null) {
-              isLive = isLiveParam === 'true' || isLiveParam === '1'
-            }
-          }
-          
-          // Se não conseguiu determinar via URL, usar lógica baseada em minutos
-          if (isLiveParam === null) {
-            isLive = minutes > 0 && minutes <= 90
-          }
-          
-          // Criar objeto processado
-          const processedSurebet = {
-            id: surebetId,
-            house: house || 'Casa não informada',
-            profit: parseFloat(profit) || 0,
-            roi: parseFloat(roi) || 0,
-            timestamp: timestamp || Date.now(),
-            date: date,
-            hour: hour,
-            sport: sport || 'Esporte não informado',
-            event: event || 'Evento não informado',
-            market: market || 'Mercado não informado',
-            selection1: selection1 || '',
-            selection2: selection2 || '',
-            selection3: selection3 || '',
-            odds1: parseFloat(odds1) || 0,
-            odds2: parseFloat(odds2) || 0,
-            odds3: parseFloat(odds3) || 0,
-            isLive: isLive,
-            minutes: minutes,
-            stake: parseFloat(stake) || 100,
-            status: status || 'active',
-            processed_at: new Date().toISOString()
-          }
-          
-          // Aplicar sanitização UTF-8
-          return this.sanitizeJSONForUTF8(processedSurebet)
-          
-        } catch (error) {
-          console.error(`Erro ao processar surebet ${surebetId}:`, error)
-          return null
-        }
-      },
-  
-      generateSampleData() {
-        // Usar as casas reais do filtro
-        const houses = filterOptions.houses
-        const markets = ['Resultado Final', 'Over/Under 2.5', 'Ambas Marcam', 'Handicap', 'Dupla Chance', 'Escanteios', 'Cartões', 'Gols por Tempo']
-        const sports = ['Futebol', 'Tênis', 'Basquete', 'Vôlei', 'Handebol', 'Futsal', 'Rugby', 'Hóquei']
-        const data = []
-  
-        for (let i = 0; i < 150; i++) {
-          const surebetId = `surebet_${i}`
-          const cloneCount = Math.floor(Math.random() * 4) + 2 // 2 a 5 casas por surebet
-          const selectedHouses = this.getRandomHouses(houses, cloneCount)
-          const selectedMarket = markets[Math.floor(Math.random() * markets.length)]
-          const selectedSport = sports[Math.floor(Math.random() * sports.length)]
-          
-          const baseDate = new Date()
-          baseDate.setDate(baseDate.getDate() - Math.floor(Math.random() * 90))
-          let hour = Math.floor(Math.random() * 24)
-          if (Math.random() < 0.6) hour = 14 + Math.floor(Math.random() * 9)
-          
-          const baseProfit = 8 + Math.random() * 60 // Lucro entre 8% e 68%
-  
-          for (let j = 0; j < cloneCount; j++) {
-            data.push({
-              surebet_id: surebetId,
-              house: selectedHouses[j],
-              market: selectedMarket,
-              profit: parseFloat((baseProfit + (Math.random() - 0.5) * 8).toFixed(2)),
-              date: baseDate.toISOString().split('T')[0],
-              hour: hour,
-              sport: selectedSport,
-              period: Math.random() < 0.7 ? '90min' : '45min',
-              minutes: Math.random() < 0.3 ? Math.floor(Math.random() * 90) : 0
-            })
-          }
-        }
-        return data
-      },
-  
-      processAnalytics() {
-        try {
-          const filtered = this.filteredSurebets
-          if (!filtered || !Array.isArray(filtered)) {
-            console.warn('⚠️ Dados filtrados inválidos para análise')
-            return
-          }
-          
-          this.totalSurebets = new Set(filtered.map(s => s.surebet_id)).size
-          this.uniqueHouses = new Set(filtered.map(s => s.house)).size
-          this.uniqueMarkets = new Set(filtered.map(s => s.market)).size
-          this.availableSports = [...new Set(this.surebets.map(s => s.sport))].sort()
-          
-          const surebetProfits = {}
-          filtered.forEach(item => {
-            if (!surebetProfits[item.surebet_id]) {
-              surebetProfits[item.surebet_id] = item.profit
-            }
-          })
-          
-          const profits = Object.values(surebetProfits)
-          this.averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
-      
-          this.processHousesRanking(filtered)
-          this.processHousePairsRanking(filtered)
-          this.processMarketsRanking(filtered)
-          this.processInsights(filtered)
-          
-          // Só atualizar gráficos se estiverem inicializados
-          if (this.chartsInitialized) {
-            this.updateCharts()
-          }
-          
-          // Log das estatísticas das casas
-          console.log(`📊 Estatísticas das Casas:`)
-          console.log(`Total disponíveis: ${this.totalAvailableHouses}`)
-          console.log(`Ativas no período: ${this.activeHousesCount}`)
-          console.log(`Inativas no período: ${this.inactiveHousesCount}`)
-          console.log(`Taxa de atividade: ${((this.activeHousesCount / this.totalAvailableHouses) * 100).toFixed(1)}%`)
-          
-          // Salvar análises no banco
-          this.saveAnalyticsToDatabase(filtered)
-        } catch (error) {
-          console.error('Erro ao processar análises:', error)
-        }
-      },
-  
-      processHousesRanking(data) {
-        const houseStats = {}
-        data.forEach(item => {
-          if (!houseStats[item.house]) {
-            houseStats[item.house] = { name: item.house, count: 0, profits: [] }
-          }
-          houseStats[item.house].count++
-          houseStats[item.house].profits.push(item.profit)
-        })
-        
-        this.topHouses = Object.values(houseStats).map(house => ({
-          ...house,
-          percentage: (house.count / data.length) * 100,
-          averageProfit: house.profits.reduce((sum, p) => sum + p, 0) / house.profits.length,
-          maxProfit: Math.max(...house.profits)
-        })).sort((a, b) => b.count - a.count).slice(0, 15) // Mostrar top 15 casas
-      },
-  
-      processHousePairsRanking(data) {
-        const pairStats = {}
-        const surebetGroups = {}
-        
-        data.forEach(item => {
-          if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = []
-          surebetGroups[item.surebet_id].push(item)
-        })
-        
-        Object.values(surebetGroups).forEach(group => {
-          const houses = [...new Set(group.map(item => item.house))].sort()
-          if (houses.length >= 2) {
-            for (let i = 0; i < houses.length; i++) {
-              for (let j = i + 1; j < houses.length; j++) {
-                const pairKey = `${houses[i]}|${houses[j]}`
-                if (!pairStats[pairKey]) {
-                  pairStats[pairKey] = { id: pairKey, house1: houses[i], house2: houses[j], count: 0, profits: [] }
-                }
-                pairStats[pairKey].count++
-                const groupProfit = group.reduce((sum, item) => sum + item.profit, 0) / group.length
-                pairStats[pairKey].profits.push(groupProfit)
-              }
-            }
-          }
-        })
-        
-        const totalPairs = Object.values(pairStats).reduce((sum, pair) => sum + pair.count, 0)
-        this.topHousePairs = Object.values(pairStats).map(pair => {
-          const averageProfit = pair.profits.reduce((sum, p) => sum + p, 0) / pair.profits.length
-          const profitVariation = this.calculateVariation(pair.profits)
-          return {
-            ...pair,
-            percentage: (pair.count / totalPairs) * 100,
-            averageProfit,
-            consistency: 100 - profitVariation
-          }
-        }).sort((a, b) => b.count - a.count).slice(0, 10)
-      },
-  
-      processMarketsRanking(data) {
-        const marketStats = {}
-        const surebetGroups = {}
-        
-        // Verificar se data é válido
-        if (!data || !Array.isArray(data) || data.length === 0) {
-          console.warn('⚠️ Dados de mercados inválidos ou vazios')
-          this.topMarkets = []
-          this.groupedMarkets = {}
-          return
-        }
-        
-        data.forEach(item => {
-          if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-        })
-        
-        Object.values(surebetGroups).forEach(item => {
-          // Verificar se item.market existe
-          const marketName = item.market || 'Mercado Desconhecido'
-          if (!marketStats[marketName]) {
-            marketStats[marketName] = { name: marketName, count: 0, profits: [], totalProfit: 0 }
-          }
-          marketStats[marketName].count++
-          marketStats[marketName].profits.push(item.profit || 0)
-          marketStats[marketName].totalProfit += item.profit || 0
-        })
-        
-        // Verificar se há dados de mercados
-        const marketsArray = Object.values(marketStats)
-        if (marketsArray.length === 0) {
-          console.warn('⚠️ Nenhum mercado encontrado nos dados')
-          this.topMarkets = []
-          this.groupedMarkets = {}
-          return
-        }
-        
-        // Filtrar mercados por relevância
-        const relevantMarkets = filterMarketsByRelevance(
-          marketsArray, 
-          this.marketsChartFilters.minCount, 
-          this.marketsChartFilters.minPercentage
-        )
-        
-        // Agrupar mercados por categoria
-        this.groupedMarkets = groupMarketsByCategory(relevantMarkets)
-        
-        const totalMarkets = marketsArray.reduce((sum, market) => sum + (market.count || 0), 0)
-        
-        this.topMarkets = Object.values(marketStats).map(market => {
-          // Verificar se market.profits existe e é um array válido
-          const profits = Array.isArray(market.profits) ? market.profits : []
-          const averageProfit = profits.length > 0 ? profits.reduce((sum, p) => sum + (p || 0), 0) / profits.length : 0
-          const maxProfit = profits.length > 0 ? Math.max(...profits) : 0
-          const variability = this.calculateVariation(profits)
-          const consistency = 100 - variability
-          const percentage = totalMarkets > 0 ? (market.count / totalMarkets) * 100 : 0
-          const score = (market.count * 0.3) + (averageProfit * 0.4) + (consistency * 0.3)
-          
-          // Adicionar informações de categoria
-          const category = categorizeMarket(market.name)
-          
-          return { 
-            ...market, 
-            averageProfit, 
-            maxProfit,
-            variability, 
-            consistency,
-            percentage,
-            score,
-            category: category.group,
-            categoryName: category.groupName,
-            subcategory: category.subcategory?.name || 'Diversos'
-          }
-        }).sort((a, b) => b.score - a.score).slice(0, 10)
-      },
-  
-      processInsights(data) {
-        this.bestPair = this.topHousePairs.filter(pair => pair.count >= 3).sort((a, b) => b.averageProfit - a.averageProfit)[0] || null
-  
-        const hourStats = {}
-        data.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
-        this.peakHour = Object.entries(hourStats).map(([hour, count]) => ({ hour: parseInt(hour), count })).sort((a, b) => b.count - a.count)[0] || null
-  
-        this.bestMarket = this.topMarkets[0] || null
-  
-        const sportStats = {}
-        const surebetGroups = {}
-        data.forEach(item => {
-          if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-        })
-        Object.values(surebetGroups).forEach(item => sportStats[item.sport] = (sportStats[item.sport] || 0) + 1)
-        const totalSports = Object.values(sportStats).reduce((sum, count) => sum + count, 0)
-        this.mostActiveSport = Object.entries(sportStats).map(([sport, count]) => ({ name: sport, count, percentage: (count / totalSports) * 100 })).sort((a, b) => b.count - a.count)[0] || null
-      },
-  
-      setupCharts() {
-        try {
-          this.$nextTick(() => {
-            setTimeout(() => {
-              this.setupHousesChart()
-              this.setupMarketsChart()
-              this.setupTimeChart()
-              this.setupSportsChart()
-              this.setupProfitFrequencyChart()
-              
-              // Marcar gráficos como inicializados
-              this.chartsInitialized = true
-              // Remover chamada automática de forceChartColors para evitar recursão
-            }, 500)
-          })
-        } catch (error) {
-          console.error('Erro ao configurar gráficos:', error)
-          this.chartsInitialized = false
-        }
-      },
-
-      // Método para destruir gráficos de forma segura
-      destroyChartSafely(chartName) {
-        try {
-          const chart = this[chartName]
-          if (chart && typeof chart.destroy === 'function') {
-            // Verificar se o gráfico ainda está ativo
-            if (chart.canvas && chart.canvas.parentNode) {
-              chart.destroy()
-              console.log(`✅ Gráfico ${chartName} destruído com sucesso`)
-            }
-            this[chartName] = null
-          }
-        } catch (error) {
-          console.warn(`⚠️ Erro ao destruir gráfico ${chartName}:`, error.message)
-          // Forçar limpeza mesmo com erro
-          this[chartName] = null
-        }
-      },
-  
-      setupHousesChart() {
-        const ctx = this.$refs.housesChart
-        if (!ctx) return
-        
-        // Destruir gráfico existente de forma segura
-        this.destroyChartSafely('housesChart')
-        
-        const data = this.topHouses.slice(0, 12) // Mostrar top 12 casas no gráfico
-        this.housesChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: data.map(h => h.name),
-            datasets: [{ 
-              label: 'Aparições', 
-              data: data.map(h => h.count), 
-              backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'),
-              borderColor: this.getThemeColor('--accent-primary', '#00ff88'),
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            plugins: { 
-              legend: { display: false },
-              customCanvasBackgroundColor: {
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx
-                  const chartArea = chart.chartArea
-                  if (chartArea) {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, chart.width, chart.height)
-                    ctx.restore()
-                  }
-                }
-              }
-            },
-                        scales: {
-              y: { 
-                beginAtZero: true, 
-                ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, 
-                grid: { color: this.getThemeColor('--border-primary', '#666666') } 
-              },
-              x: { 
-                ticks: { 
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  maxRotation: 45,
-                  minRotation: 0
-                }, 
-                grid: { color: this.getThemeColor('--border-primary', '#666666') } 
-              }
-            }
-          }
-        })
-        
-        // Remover chamada automática de forceChartColors para evitar recursão
-      },
-
-      setupMarketsChart() {
-        const ctx = this.$refs.marketsChart
-        if (!ctx) return
-        
-        // Destruir gráfico existente de forma segura
-        this.destroyChartSafely('marketsChart')
-        
-        // Criar dados do gráfico usando o novo sistema de agrupamento
-        const { chartData, colors, labels } = createChartData(
-          this.groupedMarkets, 
-          this.marketsChartShowDetails, 
-          this.marketsChartViewMode
-        )
-        
-        this.marketsChart = new Chart(ctx, {
-          type: 'doughnut',
-          data: {
-            labels: labels,
-            datasets: [{ 
-              data: chartData, 
-              backgroundColor: colors,
-              borderColor: colors.map(color => color.replace('0.8', '1')),
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            plugins: { 
-              legend: { 
-                position: 'bottom', 
-                labels: { 
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  padding: 15,
-                  usePointStyle: true,
-                  pointStyle: 'circle'
-                },
-                onClick: (event, legendItem, legend) => {
-                  // Implementar filtro por categoria
-                  this.toggleMarketCategoryFilter(legendItem.text)
-                }
-              },
-              tooltip: {
-                backgroundColor: this.getThemeColor('--bg-primary', '#ffffff'),
-                titleColor: this.getThemeColor('--text-primary', '#000000'),
-                bodyColor: this.getThemeColor('--text-primary', '#000000'),
-                borderColor: this.getThemeColor('--border-primary', '#666666'),
-                borderWidth: 2,
-                cornerRadius: 8,
-                callbacks: {
-                  label: (context) => {
-                    const label = context.label || ''
-                    const value = context.parsed
-                    const total = context.dataset.data.reduce((sum, val) => sum + val, 0)
-                    const percentage = ((value / total) * 100).toFixed(1)
-                    
-                    if (this.marketsChartViewMode === 'percentage') {
-                      return `${label}: ${value.toFixed(1)}%`
-                    } else {
-                      return `${label}: ${value} (${percentage}%)`
-                    }
-                  }
-                }
-              },
-              customCanvasBackgroundColor: {
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx
-                  const chartArea = chart.chartArea
-                  if (chartArea) {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, chart.width, chart.height)
-                    ctx.restore()
-                  }
-                }
-              }
-            },
-            onClick: (event, elements) => {
-              if (elements.length > 0) {
-                const index = elements[0].index
-                const label = labels[index]
-                this.handleMarketChartClick(label, index)
-              }
-            }
-          }
-        })
-      },
-  
-      setupTimeChart() {
-        const ctx = this.$refs.timeChart
-        if (!ctx) return
-        
-        // Destruir gráfico existente de forma segura
-        this.destroyChartSafely('timeChart')
-        
-        const hourStats = {}
-        this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
-        const hours = Array.from({length: 24}, (_, i) => i)
-        const counts = hours.map(hour => hourStats[hour] || 0)
-        
-        this.timeChart = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: hours.map(h => `${h}:00`),
-            datasets: [{ label: 'Atividade', data: counts, borderColor: this.getThemeColor('--accent-primary', '#00ff88'), backgroundColor: this.getThemeColor('--accent-primary', '#00ff88'), tension: 0.4, fill: true }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            plugins: { 
-              legend: { display: false },
-              customCanvasBackgroundColor: {
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx
-                  const chartArea = chart.chartArea
-                  if (chartArea) {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, chart.width, chart.height)
-                    ctx.restore()
-                  }
-                }
-              }
-            },
-                        scales: {
-              y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
-              x: { ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } }
-            }
-          }
-        })
-        
-        // Remover chamada automática de forceChartColors para evitar recursão
-      },
-
-      setupSportsChart() {
-        const ctx = this.$refs.sportsChart
-        if (!ctx) return
-        
-        // Destruir gráfico existente de forma segura
-        this.destroyChartSafely('sportsChart')
-        
-        const sportStats = {}
-        const surebetGroups = {}
-        this.filteredSurebets.forEach(item => {
-          if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-        })
-        Object.values(surebetGroups).forEach(item => {
-          if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
-          sportStats[item.sport].profits.push(item.profit)
-        })
-        
-        const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
-          sport,
-          averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
-        })).sort((a, b) => b.averageProfit - a.averageProfit)
-        
-        this.sportsChart = new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: sportsData.map(s => s.sport),
-            datasets: [{ label: 'Lucro Médio', data: sportsData.map(s => s.averageProfit), backgroundColor: this.getThemeColor('--accent-primary', '#00ff88') }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            plugins: { 
-              legend: { display: false },
-              customCanvasBackgroundColor: {
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx
-                  const chartArea = chart.chartArea
-                  if (chartArea) {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, chart.width, chart.height)
-                    ctx.restore()
-                  }
-                }
-              }
-            },
-                        scales: {
-              y: { beginAtZero: true, ticks: { color: this.getThemeColor('--text-primary', '#ffffff'), callback: value => 'R$ ' + value.toFixed(0) }, grid: { color: this.getThemeColor('--border-primary', '#666666') } },
-              x: { ticks: { color: this.getThemeColor('--text-primary', '#ffffff') }, grid: { color: this.getThemeColor('--border-primary', '#666666') } }
-            }
-          }
-        })
-        
-        // Remover chamada automática de forceChartColors para evitar recursão
-      },
-
-      setupProfitFrequencyChart() {
-        const ctx = this.$refs.profitFrequencyChart
-        if (!ctx) return
-        
-        // Destruir gráfico existente de forma segura
-        this.destroyChartSafely('profitFrequencyChart')
-        
-        // Agrupar dados por mercado para calcular frequência e lucro médio
-        const marketStats = {}
-        this.filteredSurebets.forEach(item => {
-          if (!marketStats[item.market]) {
-            marketStats[item.market] = { count: 0, profits: [], totalProfit: 0 }
-          }
-          marketStats[item.market].count++
-          marketStats[item.market].profits.push(item.profit)
-          marketStats[item.market].totalProfit += item.profit
-        })
-        
-        // Filtrar mercados com pelo menos 2 aparições para evitar ruído
-        const filteredMarkets = Object.entries(marketStats).filter(([market, stats]) => stats.count >= 2)
-        
-        if (filteredMarkets.length === 0) {
-          console.warn('⚠️ Nenhum mercado com dados suficientes para o gráfico')
-          return
-        }
-        
-        // Preparar dados para o gráfico de dispersão
-        const chartData = filteredMarkets.map(([market, stats]) => ({
-          x: stats.count, // Frequência (eixo X)
-          y: stats.totalProfit / stats.count, // Lucro médio (eixo Y)
-          market: market,
-          count: stats.count,
-          totalProfit: stats.totalProfit,
-          averageProfit: stats.totalProfit / stats.count
-        }))
-        
-        // Calcular estatísticas para melhor distribuição visual
-        const frequencies = chartData.map(item => item.x)
-        const profits = chartData.map(item => item.y)
-        
-        const freqStats = this.calculateStats(frequencies)
-        const profitStats = this.calculateStats(profits)
-        
-        // Calcular percentis para melhor distribuição de cores
-        const sortedProfits = profits.sort((a, b) => a - b)
-        const p33 = sortedProfits[Math.floor(sortedProfits.length * 0.33)]
-        const p66 = sortedProfits[Math.floor(sortedProfits.length * 0.66)]
-        
-        // Definir cores baseadas em percentis para melhor distribuição
-        const colors = chartData.map(item => {
-          if (item.y >= p66) return this.getThemeColor('--accent-primary', '#00ff88') // Verde para top 33%
-          if (item.y >= p33) return this.getThemeColor('--accent-secondary', '#ffd700') // Amarelo para médio 33%
-          return this.getThemeColor('--warning-color', '#ff6b35') // Laranja para bottom 33%
-        })
-        
-        // Calcular tamanhos dos pontos baseados na frequência (logarítmico para melhor distribuição)
-        const maxCount = Math.max(...frequencies)
-        const pointSizes = chartData.map(item => {
-          // Usar escala logarítmica para melhor distribuição visual
-          const logSize = Math.log(item.x + 1) / Math.log(maxCount + 1)
-          const normalizedSize = logSize * 0.8 + 0.2 // Entre 0.2 e 0.1
-          return Math.max(4, Math.min(10, normalizedSize * 12.5)) // Entre 4 e 10 pixels (50% menor)
-        })
-        
-        this.profitFrequencyChart = new Chart(ctx, {
-          type: 'scatter',
-          data: {
-            datasets: [{
-              label: 'Mercados',
-              data: chartData,
-              backgroundColor: colors,
-              borderColor: colors.map(color => color.replace('0.9', '1')),
-              borderWidth: 2,
-              pointRadius: pointSizes,
-              pointHoverRadius: pointSizes.map(size => size + 6)
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            backgroundColor: this.getThemeColor('--bg-tertiary', '#2a2a2a'),
-            plugins: {
-              legend: { display: false },
-              tooltip: {
-                backgroundColor: this.getThemeColor('--bg-primary', '#ffffff'),
-                titleColor: this.getThemeColor('--text-primary', '#000000'),
-                bodyColor: this.getThemeColor('--text-primary', '#000000'),
-                borderColor: this.getThemeColor('--border-primary', '#666666'),
-                borderWidth: 2,
-                cornerRadius: 8,
-                callbacks: {
-                  label: function(context) {
-                    const data = context.raw
-                    return [
-                      `Mercado: ${data.market}`,
-                      `Frequência: ${data.count} aparições`,
-                      `Lucro Médio: R$ ${data.averageProfit.toFixed(2)}`,
-                      `Lucro Total: R$ ${data.totalProfit.toFixed(2)}`
-                    ]
-                  }
-                }
-              },
-              zoom: {
-                pan: {
-                  enabled: true,
-                  mode: 'xy'
-                },
-                zoom: {
-                  wheel: {
-                    enabled: true
-                  },
-                  pinch: {
-                    enabled: true
-                  },
-                  mode: 'xy'
-                }
-              },
-              customCanvasBackgroundColor: {
-                beforeDraw: (chart) => {
-                  const ctx = chart.ctx
-                  const chartArea = chart.chartArea
-                  if (chartArea) {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, chart.width, chart.height)
-                    ctx.restore()
-                  }
-                }
-              }
-            },
-            scales: {
-              x: {
-                type: 'linear',
-                position: 'bottom',
-                title: {
-                  display: true,
-                  text: 'Frequência de Aparições',
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  font: { size: 14, weight: '600' }
-                },
-                ticks: { 
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  font: { size: 12 },
-                  callback: function(value) {
-                    // Formatação inteligente dos ticks
-                    if (value >= 1000) return (value / 1000).toFixed(1) + 'k'
-                    if (value >= 100) return (value / 100).toFixed(1) + 'h'
-                    return value
-                  }
-                },
-                grid: { 
-                  color: this.getThemeColor('--border-primary', '#666666'),
-                  drawBorder: false
-                },
-                // Escala inteligente baseada nos dados
-                min: Math.max(0, freqStats.q1 - (freqStats.q3 - freqStats.q1) * 0.5),
-                max: freqStats.q3 + (freqStats.q3 - freqStats.q1) * 1.5
-              },
-              y: {
-                title: {
-                  display: true,
-                  text: 'Lucro Médio (R$)',
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  font: { size: 14, weight: '600' }
-                },
-                ticks: { 
-                  color: this.getThemeColor('--text-primary', '#ffffff'),
-                  font: { size: 12 },
-                  callback: value => 'R$ ' + value.toFixed(0)
-                },
-                grid: { 
-                  color: this.getThemeColor('--border-primary', '#666666'),
-                  drawBorder: false
-                },
-                // Escala inteligente baseada nos dados
-                min: Math.max(0, profitStats.q1 - (profitStats.q3 - profitStats.q1) * 0.5),
-                max: profitStats.q3 + (profitStats.q3 - profitStats.q1) * 1.5
-              }
-            },
-            interaction: {
-              intersect: false,
-              mode: 'nearest'
-            },
-            // Adicionar área de seleção para zoom
-            onHover: (event, elements) => {
-              const canvas = event.native.target
-              canvas.style.cursor = elements.length ? 'pointer' : 'default'
-            }
-          }
-        })
-      },
-  
-      updateCharts() {
-        if (!this.chartsInitialized || this._updatingCharts) return
-        
-        this._updatingCharts = true
-        
-        this.$nextTick(() => setTimeout(() => {
-          try {
-            if (this.housesChart) this.updateHousesChart()
-            if (this.marketsChart) this.updateMarketsChart()
-            if (this.timeChart) this.updateTimeChart()
-            if (this.sportsChart) this.updateSportsChart()
-            if (this.profitFrequencyChart) this.updateProfitFrequencyChart()
-          } catch (error) {
-            console.error('❌ Erro ao atualizar gráficos:', error)
-          } finally {
-            this._updatingCharts = false
-          }
-        }, 100))
-      },
-      
-      mounted() {
-        // Inicializar observação de mudanças de tema
-        this.$nextTick(() => {
-          setTimeout(() => {
-            this.observeThemeChanges()
-            // Não chamar forceChartBackground e forceChartColors aqui, pois os gráficos ainda não foram criados
-          }, 500)
-        })
-      },
-      
-      async saveDataToDatabase() {
-        try {
-          if (!this.surebets || this.surebets.length === 0) {
-            console.log('📊 Nenhum dado para salvar')
-            return
-          }
-          
-          if (!this.currentUser?.id) {
-            console.error('❌ Usuário não autenticado ou ID não encontrado')
-            throw new Error('Usuário não autenticado')
-          }
-          
-          console.log(`💾 Salvando ${this.surebets.length} registros no banco para usuário ${this.currentUser.id}...`)
-          
-          // Verificar se o token de autenticação existe
-          if (!this.$store.state.authToken) {
-            console.error('❌ Token de autenticação não encontrado')
-            throw new Error('Token de autenticação não encontrado')
-          }
-          
-          // Validar codificação UTF-8 do banco de dados
-          await this.validateDatabaseUTF8Encoding()
-          
-          // Salvar registros individualmente (mais seguro)
-          let savedCount = 0
-          let utf8Errors = 0
-          const maxRecords = Math.min(this.surebets.length, 50) // Limitar a 50 registros
-          
-          for (let i = 0; i < maxRecords; i++) {
-            try {
-              const item = this.surebets[i]
-              
-              // Log detalhado do item sendo processado
-              console.log(`🔍 Processando item ${i + 1}/${maxRecords}:`, {
-                surebet_id: item.surebet_id || item.id,
-                house: item.house || item.house_name,
-                market: item.market || item.market_name,
-                match: item.match || item.match_name
-              })
-              
-              // Verificar se o item tem dados válidos
-              if (!item.surebet_id || !item.house || !item.market) {
-                console.warn(`⚠️ Item ${i} com dados inválidos, pulando...`)
-                continue
-              }
-              
-              // Validar e sanitizar dados UTF-8 antes de salvar
-              const sanitizedItem = await this.sanitizeDataForUTF8(item)
-              if (sanitizedItem.hasUTF8Issues) {
-                utf8Errors++
-                console.warn(`⚠️ Item ${i} teve problemas UTF-8 corrigidos:`, sanitizedItem.utf8Report)
-                
-                // Log detalhado dos problemas UTF-8 encontrados
-                Object.keys(sanitizedItem.utf8Report).forEach(field => {
-                  const report = sanitizedItem.utf8Report[field]
-                  console.warn(`🔧 Campo '${field}' sanitizado:`, {
-                    original: report.original,
-                    sanitized: report.sanitized,
-                    issue: report.issue
-                  })
-                })
-              }
-              
-              await this.saveIndividualRecord(sanitizedItem.data)
-              savedCount++
-              
-              // Log de progresso
-              if ((i + 1) % 10 === 0) {
-                console.log(`📊 Progresso: ${i + 1}/${maxRecords} registros processados`)
-              }
-              
-              // Pequena pausa para não sobrecarregar o servidor
-              if (i % 10 === 0 && i > 0) {
-                await new Promise(resolve => setTimeout(resolve, 100))
-              }
-              
-            } catch (itemError) {
-              console.error(`❌ Erro ao salvar item ${i}:`, itemError)
-              
-              // Log detalhado do erro
-              if (itemError.message.includes('UTF8') || itemError.message.includes('codificação') || itemError.message.includes('0xe3')) {
-                console.error('🚨 ERRO UTF-8 DETECTADO no item:', {
-                  index: i,
-                  item: this.surebets[i],
-                  error: itemError.message
-                })
-                
-                // Tentar sanitização mais agressiva
-                try {
-                  console.log('🔧 Tentando sanitização agressiva...')
-                  const aggressiveItem = this.aggressiveUTF8Sanitization(this.surebets[i])
-                  await this.saveIndividualRecord(aggressiveItem)
-                  savedCount++
-                  utf8Errors++
-                  console.log('✅ Item salvo com sanitização agressiva')
-                } catch (aggressiveError) {
-                  console.error('❌ Falha mesmo com sanitização agressiva:', aggressiveError)
-                }
-              }
-              
-              // Continuar com o próximo item
-            }
-          }
-          
-          console.log(`✅ ${savedCount} registros salvos com sucesso`)
-          if (utf8Errors > 0) {
-            console.log(`⚠️ ${utf8Errors} registros tiveram problemas UTF-8 corrigidos`)
-          }
-          
-          // Salvar análise também
-          if (this.filteredSurebets && this.filteredSurebets.length > 0) {
-            await this.saveAnalyticsToDatabase(this.filteredSurebets)
-          }
-          
-        } catch (error) {
-          console.error('❌ Erro ao salvar dados no banco:', error)
-          throw error
-        }
-      },
-
-      // ===== SISTEMA DE VALIDAÇÃO E SANITIZAÇÃO UTF-8 =====
-      
-      /**
-       * Valida se o banco de dados está configurado para UTF-8
-       */
-      async validateDatabaseUTF8Encoding() {
-        try {
-          console.log('🔍 Verificando codificação UTF-8 do banco de dados...')
-          
-          // Testar codificação UTF-8 localmente primeiro
-          const testStrings = [
-            'Teste UTF-8: áéíóú àèìòù âêîôû ãõ ç ñ',
-            '🏆⚽🎯💰',
-            '€£¥₹',
-            'Flamengo vs São Paulo - 2.5 gols ⚽'
-          ]
-          
-          // Validar se todas as strings de teste são UTF-8 válidas
-          const allValid = testStrings.every(str => this.isValidUTF8String(str))
-          
-          if (!allValid) {
-            console.warn('⚠️ Problemas de codificação UTF-8 detectados localmente')
-            return false
-          }
-          
-          // Testar serialização JSON com caracteres especiais
-          const testData = {
-            test_utf8: testStrings[0],
-            test_emojis: testStrings[1],
-            test_symbols: testStrings[2],
-            test_mixed: testStrings[3]
-          }
-          
-          try {
-            // Testar se consegue serializar e deserializar JSON com UTF-8
-            const jsonString = JSON.stringify(testData)
-            const parsedData = JSON.parse(jsonString)
-            
-            // Verificar se os dados foram preservados corretamente
-            const dataPreserved = JSON.stringify(parsedData) === JSON.stringify(testData)
-            
-            if (!dataPreserved) {
-              console.warn('⚠️ Problemas na serialização/deserialização JSON UTF-8')
-              return false
-            }
-            
-            console.log('✅ Codificação UTF-8 validada localmente com sucesso')
-            return true
-            
-          } catch (jsonError) {
-            console.warn('⚠️ Erro na serialização JSON UTF-8:', jsonError.message)
-            return false
-          }
-          
-        } catch (error) {
-          console.warn('⚠️ Erro na validação UTF-8:', error.message)
-          // Continuar mesmo sem verificação (não é crítico)
-          return true
-        }
-      },
-
-      /**
-       * Valida se uma string é válida em UTF-8
-       */
-      isValidUTF8String(str) {
-        if (typeof str !== 'string') return true
-        
-        try {
-          // Método 1: Verificar se consegue codificar/decodificar sem perda
-          const encoded = encodeURIComponent(str)
-          const decoded = decodeURIComponent(encoded)
-          if (decoded !== str) return false
-          
-          // Método 2: Verificar se não há caracteres de substituição UTF-8
-          // O caractere (U+FFFD) indica problemas de codificação
-          if (str.includes('\uFFFD')) return false
-          
-          // Método 3: Verificar se consegue serializar em JSON sem problemas
-          try {
-            JSON.stringify({ test: str })
-            return true
-          } catch (jsonError) {
-            return false
-          }
-        } catch (error) {
-          return false
-        }
-      },
-
-      /**
-       * Testa se uma string específica é UTF-8 válida (para debug)
-       */
-      testUTF8String(str) {
-        console.log('🧪 Testando string UTF-8:', str)
-        console.log('📝 Caracteres individuais:')
-        for (let i = 0; i < str.length; i++) {
-          const char = str[i]
-          const code = char.charCodeAt(0)
-          const hex = code.toString(16).toUpperCase()
-          console.log(`  ${i}: "${char}" (U+${hex.padStart(4, '0')})`)
-        }
-        
-        const isValid = this.isValidUTF8String(str)
-        console.log('✅ É UTF-8 válida:', isValid)
-        
-        try {
-          const json = JSON.stringify({ test: str })
-          console.log('✅ JSON válido:', json)
-        } catch (error) {
-          console.log('❌ JSON inválido:', error.message)
-        }
-        
-        return isValid
-      },
-
-      /**
-       * Detecta e corrige problemas de codificação (Latin1 -> UTF-8)
-       */
-      fixEncodingIssues(str) {
-        try {
-          // Detectar se a string tem caracteres que parecem Latin1 mal codificados
-          // Padrões comuns de problemas de codificação em português
-          const latin1Patterns = {
-            // "ã" em Latin1 mal codificado
-            'n?o': 'não',
-            'n?o ': 'não ',
-            'n?o especificado': 'não especificado',
-            'n?o encontrado': 'não encontrado',
-            'n?o disponível': 'não disponível',
-            
-            // "ç" em Latin1 mal codificado  
-            'c?o': 'ção',
-            'c?es': 'ções',
-            'c?ao': 'ção',
-            'c?oes': 'ções',
-            
-            // "é" em Latin1 mal codificado
-            'e?': 'é',
-            'e? ': 'é ',
-            'e?s': 'és',
-            
-            // "á" em Latin1 mal codificado
-            'a?': 'á',
-            'a? ': 'á ',
-            'a?s': 'ás',
-            
-            // "í" em Latin1 mal codificado
-            'i?': 'í',
-            'i? ': 'í ',
-            'i?s': 'ís',
-            
-            // "ó" em Latin1 mal codificado
-            'o?': 'ó',
-            'o? ': 'ó ',
-            'o?s': 'ós',
-            
-            // "ú" em Latin1 mal codificado
-            'u?': 'ú',
-            'u? ': 'ú ',
-            'u?s': 'ús'
-          }
-          
-          let corrected = str
-          
-          // Aplicar correções de padrões conhecidos
-          for (const [wrong, correct] of Object.entries(latin1Patterns)) {
-            if (corrected.includes(wrong)) {
-              corrected = corrected.replace(new RegExp(wrong, 'g'), correct)
-            }
-          }
-          
-          // Se houve correções, logar para debug
-          if (corrected !== str) {
-            console.log('🔧 Codificação corrigida:', {
-              original: str,
-              corrected: corrected,
-              pattern: 'Latin1 -> UTF-8'
-            })
-          }
-          
-          return corrected
-        } catch (error) {
-          console.warn('⚠️ Erro ao corrigir codificação:', error)
-          return str
-        }
-      },
-
-      /**
-       * Sanitiza uma string para garantir compatibilidade UTF-8
-       */
-      sanitizeUTF8String(str) {
-        if (typeof str !== 'string') return str
-        
-        try {
-          const originalStr = str
-          let hasIssues = false
-          const issues = []
-          
-          // Primeiro, tentar detectar e corrigir problemas de codificação
-          let sanitized = this.fixEncodingIssues(str)
-          
-          if (sanitized !== str) {
-            hasIssues = true
-            issues.push('Problemas de codificação detectados e corrigidos')
-          }
-          
-          // Debug específico para "Jogo Específico"
-          if (str === 'Jogo Específico') {
-            console.log('🔍 Debug para "Jogo Específico":')
-            this.testUTF8String(str)
-          }
-          
-          // Remover caracteres de controle inválidos
-          sanitized = sanitized.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-          
-          // Normalizar caracteres Unicode primeiro
-          sanitized = sanitized.normalize('NFC')
-          
-          // Verificar se a string é UTF-8 válida APÓS normalização
-          const isValidUTF8 = this.isValidUTF8String(sanitized)
-          
-          if (!isValidUTF8) {
-            hasIssues = true
-            issues.push('Sequências de bytes malformadas detectadas')
-            
-            // Aplicar correção conservadora - apenas caracteres realmente problemáticos
-            // Remover caracteres de controle e sequências malformadas específicas
-            sanitized = sanitized
-              .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Caracteres de controle
-              .replace(/\uFFFD/g, '?') // Caracteres de substituição UTF-8
-              .replace(/[\uD800-\uDFFF](?![\uDC00-\uDFFF])/g, '?') // Surrogates malformados
-              .replace(/(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '?') // Surrogates órfãos
-          }
-          
-          // Log APENAS se houve problemas reais (não para acentos normais)
-          if (hasIssues && originalStr !== sanitized) {
-            console.warn('🔧 UTF-8 Sanitização aplicada:', {
-              original: originalStr,
-              sanitized: sanitized,
-              issues: issues,
-              changes: originalStr !== sanitized
-            })
-          }
-          
-          return sanitized
-        } catch (error) {
-          console.warn('⚠️ Erro ao sanitizar string UTF-8:', error)
-          // Fallback: remover APENAS caracteres de controle, preservar acentos
-          return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
-        }
-      },
-
-      /**
-       * Sanitização UTF-8 mais agressiva para casos problemáticos
-       */
-      aggressiveUTF8Sanitization(obj) {
-        if (obj === null || obj === undefined) return obj
-        
-        if (typeof obj === 'string') {
-          // Sanitização mais agressiva APENAS para caracteres realmente problemáticos
-          return obj
-            .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remover caracteres de controle
-            .replace(/[\x80-\xFF](?![\x80-\xBF])/g, '?') // Corrigir sequências malformadas
-            .normalize('NFC') // Normalizar Unicode (preserva acentos)
-        }
-        
-        if (Array.isArray(obj)) {
-          return obj.map(item => this.aggressiveUTF8Sanitization(item))
-        }
-        
-        if (typeof obj === 'object') {
-          const sanitized = {}
-          for (const [key, value] of Object.entries(obj)) {
-            const sanitizedKey = this.aggressiveUTF8Sanitization(key)
-            const sanitizedValue = this.aggressiveUTF8Sanitization(value)
-            sanitized[sanitizedKey] = sanitizedValue
-          }
-          return sanitized
-        }
-        
-        return obj
-      },
-
-      /**
-       * Sanitiza um objeto JSON para garantir compatibilidade UTF-8
-       */
-      sanitizeJSONForUTF8(obj) {
-        if (obj === null || obj === undefined) return obj
-        
-        if (typeof obj === 'string') {
-          return this.sanitizeUTF8String(obj)
-        }
-        
-        if (Array.isArray(obj)) {
-          return obj.map(item => this.sanitizeJSONForUTF8(item))
-        }
-        
-        if (typeof obj === 'object') {
-          const sanitized = {}
-          for (const [key, value] of Object.entries(obj)) {
-            const sanitizedKey = this.sanitizeUTF8String(key)
-            const sanitizedValue = this.sanitizeJSONForUTF8(value)
-            sanitized[sanitizedKey] = sanitizedValue
-          }
-          return sanitized
-        }
-        
-        return obj
-      },
-
-      /**
-       * Sanitiza dados completos para inserção no banco UTF-8
-       */
-      async sanitizeDataForUTF8(data) {
-        const report = {
-          hasUTF8Issues: false,
-          fieldsCorrected: [],
-          originalData: JSON.parse(JSON.stringify(data)),
-          utf8Report: {}
-        }
-        
-        try {
-          // Lista de campos que podem conter texto
-          const textFields = [
-            'surebet_id', 'house', 'house_name', 'bookmaker',
-            'market', 'market_name', 'bet_type',
-            'match', 'match_name', 'game', 'event',
-            'sport', 'sport_name', 'category',
-            'period', 'time_period', 'period_name',
-            'anchorh1', 'anchor_h1', 'anchor1',
-            'anchorh2', 'anchor_h2', 'anchor2'
-          ]
-          
-          const sanitizedData = JSON.parse(JSON.stringify(data))
-          
-          // Validar e sanitizar cada campo de texto
-          for (const field of textFields) {
-            if (data[field] && typeof data[field] === 'string') {
-              const originalValue = data[field]
-              const sanitizedValue = this.sanitizeUTF8String(originalValue)
-              
-              if (originalValue !== sanitizedValue) {
-                report.hasUTF8Issues = true
-                report.fieldsCorrected.push(field)
-                report.utf8Report[field] = {
-                  original: originalValue,
-                  sanitized: sanitizedValue,
-                  issue: 'Caracteres UTF-8 inválidos detectados e corrigidos'
-                }
-                sanitizedData[field] = sanitizedValue
-              }
-            }
-          }
-          
-          // Sanitizar campo metadata se existir
-          if (data.metadata && typeof data.metadata === 'object') {
-            const originalMetadata = data.metadata
-            const sanitizedMetadata = this.sanitizeJSONForUTF8(originalMetadata)
-            
-            if (JSON.stringify(originalMetadata) !== JSON.stringify(sanitizedMetadata)) {
-              report.hasUTF8Issues = true
-              report.fieldsCorrected.push('metadata')
-              report.utf8Report.metadata = {
-                original: originalMetadata,
-                sanitized: sanitizedMetadata,
-                issue: 'Metadados com caracteres UTF-8 inválidos detectados e corrigidos'
-              }
-              sanitizedData.metadata = sanitizedMetadata
-            }
-          }
-          
-          // Testar se os dados sanitizados podem ser serializados em JSON
-          try {
-            JSON.stringify(sanitizedData)
-          } catch (jsonError) {
-            console.error('❌ Erro ao serializar dados sanitizados:', jsonError)
-            report.hasUTF8Issues = true
-            report.utf8Report.serialization = {
-              error: jsonError.message,
-              issue: 'Dados não podem ser serializados em JSON após sanitização'
-            }
-          }
-          
-          return {
-            data: sanitizedData,
-            hasUTF8Issues: report.hasUTF8Issues,
-            utf8Report: report.utf8Report,
-            fieldsCorrected: report.fieldsCorrected
-          }
-          
-        } catch (error) {
-          console.error('❌ Erro durante sanitização UTF-8:', error)
-          report.hasUTF8Issues = true
-          report.utf8Report.error = {
-            message: error.message,
-            issue: 'Erro durante processo de sanitização UTF-8'
-          }
-          
-          return {
-            data: data, // Retornar dados originais em caso de erro
-            hasUTF8Issues: true,
-            utf8Report: report.utf8Report,
-            fieldsCorrected: []
-          }
-        }
-      },
-
-      /**
-       * Registra relatório de problemas UTF-8 para análise futura
-       */
-      async logUTF8Report(report) {
-        try {
-          const logEntry = {
-            timestamp: new Date().toISOString(),
-            user_id: this.currentUser?.id || 'anonymous',
-            report: report,
-            user_agent: navigator.userAgent,
-            url: window.location.href
-          }
-          
-          // Salvar no localStorage para análise local
-          const existingLogs = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
-          existingLogs.push(logEntry)
-          
-          // Manter apenas os últimos 100 relatórios
-          if (existingLogs.length > 100) {
-            existingLogs.splice(0, existingLogs.length - 100)
-          }
-          
-          localStorage.setItem('utf8_reports', JSON.stringify(existingLogs))
-          
-          // Tentar enviar para o servidor (opcional) - usar endpoint existente
-          try {
-            // Usar o endpoint de surebet-stats para enviar relatório
-            const reportData = {
-              user_id: this.currentUser?.id || 'anonymous',
-              surebet_id: `utf8_report_${Date.now()}`,
-              house: 'Sistema UTF-8',
-              market: 'Relatório de Validação',
-              match: 'Log de Problemas UTF-8',
-              profit: 0,
-              date: new Date().toISOString().split('T')[0],
-              hour: 0,
-              sport: 'Sistema',
-              metadata: {
-                source: 'utf8_report_log',
-                report_data: logEntry,
-                generated_at: new Date().toISOString()
-              }
-            }
-            
-            await fetch('/api/surebet-stats', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.$store.state.authToken}`
-              },
-              body: JSON.stringify(reportData)
-            })
-            
-            console.log('📤 Relatório UTF-8 enviado para o servidor')
-          } catch (serverError) {
-            console.warn('⚠️ Não foi possível enviar relatório UTF-8 para o servidor:', serverError.message)
-            // Continuar normalmente - o relatório já foi salvo localmente
-          }
-          
-        } catch (error) {
-          console.error('❌ Erro ao registrar relatório UTF-8:', error)
-        }
-      },
-
-      /**
-       * Sistema de prevenção UTF-8 para futuras inserções
-       */
-      async setupUTF8Prevention() {
-        try {
-          console.log('🛡️ Configurando sistema de prevenção UTF-8...')
-          
-          // Interceptar todas as requisições fetch para validação UTF-8
-          const originalFetch = window.fetch
-          window.fetch = async (url, options = {}) => {
-            // Aplicar validação UTF-8 apenas para requisições POST/PUT com JSON
-            if (options.method && ['POST', 'PUT', 'PATCH'].includes(options.method.toUpperCase())) {
-              if (options.body && typeof options.body === 'string') {
-                try {
-                  const parsedBody = JSON.parse(options.body)
-                  const sanitizedBody = this.sanitizeJSONForUTF8(parsedBody)
-                  
-                  // Se houve mudanças, atualizar o body
-                  if (JSON.stringify(parsedBody) !== JSON.stringify(sanitizedBody)) {
-                    console.warn('⚠️ Dados UTF-8 sanitizados automaticamente na requisição:', url)
-                    options.body = JSON.stringify(sanitizedBody)
-                  }
-                } catch (parseError) {
-                  // Se não for JSON válido, continuar normalmente
-                }
-              }
-            }
-            
-            return originalFetch(url, options)
-          }
-          
-          // Configurar headers padrão para UTF-8
-          if (!window.defaultHeaders) {
-            window.defaultHeaders = {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Accept': 'application/json; charset=utf-8'
-            }
-          }
-          
-          console.log('✅ Sistema de prevenção UTF-8 configurado')
-          
-        } catch (error) {
-          console.error('❌ Erro ao configurar prevenção UTF-8:', error)
-        }
-      },
-
-      /**
-       * Validação automática de UTF-8 em dados de entrada
-       */
-      validateInputData(data) {
-        const issues = []
-        
-        if (typeof data === 'string') {
-          if (!this.isValidUTF8String(data)) {
-            issues.push({
-              type: 'string',
-              value: data,
-              issue: 'String contém caracteres UTF-8 inválidos'
-            })
-          }
-        } else if (Array.isArray(data)) {
-          data.forEach((item, index) => {
-            const itemIssues = this.validateInputData(item)
-            if (itemIssues.length > 0) {
-              issues.push({
-                type: 'array_item',
-                index: index,
-                issues: itemIssues
-              })
-            }
-          })
-        } else if (typeof data === 'object' && data !== null) {
-          Object.entries(data).forEach(([key, value]) => {
-            if (!this.isValidUTF8String(key)) {
-              issues.push({
-                type: 'object_key',
-                key: key,
-                issue: 'Chave do objeto contém caracteres UTF-8 inválidos'
-              })
-            }
-            
-            const valueIssues = this.validateInputData(value)
-            if (valueIssues.length > 0) {
-              issues.push({
-                type: 'object_value',
-                key: key,
-                issues: valueIssues
-              })
-            }
-          })
-        }
-        
-        return issues
-      },
-
-      /**
-       * Relatório completo de validação UTF-8
-       */
-      generateUTF8ValidationReport(data) {
-        const report = {
-          timestamp: new Date().toISOString(),
-          totalIssues: 0,
-          issues: [],
-          recommendations: []
-        }
-        
-        const issues = this.validateInputData(data)
-        report.issues = issues
-        report.totalIssues = issues.length
-        
-        if (issues.length > 0) {
-          report.recommendations.push('Aplicar sanitização UTF-8 antes de inserir no banco')
-          report.recommendations.push('Verificar fonte dos dados para identificar origem dos caracteres inválidos')
-          report.recommendations.push('Implementar validação UTF-8 na entrada de dados')
-        } else {
-          report.recommendations.push('Dados validados com sucesso - nenhuma ação necessária')
-        }
-        
-        return report
-      },
-
-      /**
-       * Exibe relatório UTF-8 no console para análise
-       */
-      displayUTF8Report(report) {
-        console.group('📊 Relatório de Validação UTF-8')
-        console.log('⏰ Timestamp:', report.timestamp)
-        console.log('🔢 Total de Problemas:', report.totalIssues)
-        
-        if (report.totalIssues > 0) {
-          console.group('⚠️ Problemas Encontrados:')
-          report.issues.forEach((issue, index) => {
-            console.log(`${index + 1}.`, issue)
-          })
-          console.groupEnd()
-          
-          console.group('💡 Recomendações:')
-          report.recommendations.forEach((rec, index) => {
-            console.log(`${index + 1}.`, rec)
-          })
-          console.groupEnd()
-        } else {
-          console.log('✅ Nenhum problema UTF-8 encontrado!')
-        }
-        
-        console.groupEnd()
-      },
-
-      /**
-       * Testa o sistema UTF-8 com dados de exemplo
-       */
-      async testUTF8System() {
-        console.log('🧪 Testando sistema UTF-8...')
-        
-        // Dados de teste com caracteres especiais
-        const testData = {
-          normal: 'Texto normal',
-          accents: 'áéíóú àèìòù âêîôû ãõ ç ñ',
-          emojis: '🏆⚽🎯💰',
-          symbols: '€£¥₹',
-          mixed: 'Flamengo vs São Paulo - 2.5 gols ⚽',
-          metadata: {
-            source: 'teste',
-            description: 'Partida com acentos e símbolos especiais'
-          }
-        }
-        
-        // Testar validação
-        const validationReport = this.generateUTF8ValidationReport(testData)
-        this.displayUTF8Report(validationReport)
-        
-        // Testar sanitização
-        const sanitizedData = this.sanitizeJSONForUTF8(testData)
-        console.log('🧹 Dados sanitizados:', sanitizedData)
-        
-        // Testar se dados sanitizados são válidos
-        const finalValidation = this.generateUTF8ValidationReport(sanitizedData)
-        console.log('✅ Validação final:', finalValidation.totalIssues === 0 ? 'SUCESSO' : 'AINDA HÁ PROBLEMAS')
-        
-        return {
-          original: testData,
-          sanitized: sanitizedData,
-          validationReport,
-          finalValidation
-        }
-      },
-
-      /**
-       * Limpa relatórios UTF-8 antigos do localStorage
-       */
-      clearUTF8Reports() {
-        try {
-          localStorage.removeItem('utf8_reports')
-          console.log('🗑️ Relatórios UTF-8 antigos removidos do localStorage')
-        } catch (error) {
-          console.error('❌ Erro ao limpar relatórios UTF-8:', error)
-        }
-      },
-
-      /**
-       * Exibe estatísticas dos relatórios UTF-8 salvos
-       */
-      showUTF8Statistics() {
-        try {
-          const reports = JSON.parse(localStorage.getItem('utf8_reports') || '[]')
-          
-          if (reports.length === 0) {
-            console.log('📊 Nenhum relatório UTF-8 encontrado no localStorage')
-            return
-          }
-          
-          const totalReports = reports.length
-          const totalIssues = reports.reduce((sum, report) => sum + (report.report?.totalIssues || 0), 0)
-          const avgIssuesPerReport = totalIssues / totalReports
-          
-          console.group('📊 Estatísticas UTF-8')
-          console.log('📈 Total de relatórios:', totalReports)
-          console.log('⚠️ Total de problemas:', totalIssues)
-          console.log('📊 Média de problemas por relatório:', avgIssuesPerReport.toFixed(2))
-          
-          // Mostrar os últimos 5 relatórios
-          console.group('📋 Últimos 5 relatórios:')
-          reports.slice(-5).forEach((report, index) => {
-            console.log(`${index + 1}. ${report.timestamp} - ${report.report?.totalIssues || 0} problemas`)
-          })
-          console.groupEnd()
-          
-          console.groupEnd()
-          
-        } catch (error) {
-          console.error('❌ Erro ao exibir estatísticas UTF-8:', error)
-        }
-      },
-      
-      async saveIndividualRecord(item) {
-        try {
-          // Verificações de segurança
-          if (!this.currentUser?.id) {
-            console.error('❌ Usuário não autenticado ou ID não encontrado')
-            throw new Error('Usuário não autenticado')
-          }
-          
-          if (!this.$store.state.authToken) {
-            console.error('❌ Token de autenticação não encontrado')
-            throw new Error('Token de autenticação não encontrado')
-          }
-          
-          // Validar dados obrigatórios com fallbacks inteligentes
-          const missingFields = []
-          if (!item.surebet_id && !item.id) missingFields.push('surebet_id')
-          if (!item.house && !item.house_name) missingFields.push('house')
-          if (!item.market && !item.market_name) missingFields.push('market')
-          
-          if (missingFields.length > 0) {
-            console.warn(`⚠️ Item ${item.surebet_id || item.id || 'sem ID'} com campos ausentes:`, missingFields)
-            console.warn('📋 Dados do item:', item)
-            
-            // Em vez de falhar, vamos usar valores padrão
-            console.log('🔄 Aplicando valores padrão para campos ausentes...')
-          }
-          
-          // Preparar dados com validação robusta e fallbacks
-          let recordData = {
-            // Campos obrigatórios com validação rigorosa
-            surebet_id: item.surebet_id || item.id || `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            house: item.house || item.house_name || item.bookmaker || 'Casa não especificada',
-            market: item.market || item.market_name || item.bet_type || 'Mercado não especificado',
-            profit: this.validateProfit(item.profit, item.return),
-            date: this.validateDate(item.date, item.match_date, item.event_date),
-            hour: this.validateHour(item.hour, item.time),
-            sport: item.sport || item.sport_name || item.category || 'Esporte não especificado',
-            
-            // Campos opcionais
-            match: item.match || item.match_name || item.game || item.event || 'Partida não especificada',
-            period: item.period || item.time_period || item.period_name || null,
-            minutes: item.minutes || item.match_minutes || item.duration || null,
-            anchorh1: item.anchorh1 || item.anchor_h1 || item.anchor1 || null,
-            anchorh2: item.anchorh2 || item.anchor_h2 || item.anchor2 || null,
-            chance: item.chance || item.odds || item.probability || null,
-            metadata: {
-              source: 'ranking_view',
-              generated_at: new Date().toISOString(),
-              original_data: item,
-              has_fallbacks: missingFields.length > 0,
-              missing_fields: missingFields,
-              ...(item.metadata || {})
-            }
-          }
-          
-          // Validação final dos campos obrigatórios
-          const finalValidation = this.validateRequiredFields(recordData)
-          if (!finalValidation.isValid) {
-            console.error('❌ Validação final falhou:', finalValidation.errors)
-            throw new Error(`Campos obrigatórios inválidos: ${finalValidation.errors.join(', ')}`)
-          }
-
-          // Aplicar sanitização UTF-8 final nos dados preparados
-          const originalRecordData = JSON.parse(JSON.stringify(recordData))
-          recordData = this.sanitizeJSONForUTF8(recordData)
-          
-          // Log detalhado se houve mudanças na sanitização
-          if (JSON.stringify(originalRecordData) !== JSON.stringify(recordData)) {
-            console.warn('🔧 Dados sanitizados antes do envio:', {
-              original: originalRecordData,
-              sanitized: recordData,
-              recordId: recordData.surebet_id
-            })
-          }
-          
-          // Validar se os dados sanitizados são válidos para JSON
-          let jsonBody
-          try {
-            jsonBody = JSON.stringify(recordData)
-          } catch (jsonError) {
-            console.error('❌ Erro ao serializar dados para JSON:', jsonError)
-            console.error('📋 Dados problemáticos:', recordData)
-            throw new Error(`Erro de serialização JSON: ${jsonError.message}`)
-          }
-          
-          const response = await fetch('/api/surebet-stats', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json; charset=utf-8',
-              'Authorization': `Bearer ${this.$store.state.authToken}`
-            },
-            body: jsonBody
-          })
-          
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.error('❌ Erro HTTP detalhado:', {
-              status: response.status,
-              statusText: response.statusText,
-              errorText: errorText,
-              recordId: recordData.surebet_id,
-              dataSize: jsonBody.length
-            })
-            
-            // Tratar erro HTTP 400 - Campos obrigatórios
-            if (response.status === 400) {
-              try {
-                const errorData = JSON.parse(errorText)
-                if (errorData.details && errorData.details.missingFields) {
-                  console.error('🚨 CAMPOS OBRIGATÓRIOS FALTANDO:', errorData.details.missingFields)
-                  console.error('📋 Campos recebidos:', errorData.details.receivedFields)
-                  console.error('📋 Campos obrigatórios:', errorData.details.requiredFields)
-                  
-                  // Tentar corrigir automaticamente os campos faltantes
-                  const correctedData = this.correctMissingFields(recordData, errorData.details.missingFields)
-                  if (correctedData) {
-                    console.log('🔧 Tentando novamente com campos corrigidos...')
-                    
-                    const correctedJsonBody = JSON.stringify(correctedData)
-                    const retryResponse = await fetch('/api/surebet-stats', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'Authorization': `Bearer ${this.$store.state.authToken}`
-                      },
-                      body: correctedJsonBody
-                    })
-                    
-                    if (!retryResponse.ok) {
-                      const retryErrorText = await retryResponse.text()
-                      throw new Error(`Erro HTTP após correção: ${retryResponse.status} - ${retryErrorText}`)
-                    }
-                    
-                    console.log('✅ Registro salvo com campos corrigidos')
-                    return await retryResponse.json()
-                  }
-                }
-              } catch (parseError) {
-                console.error('❌ Erro ao parsear resposta de erro:', parseError)
-              }
-            }
-            
-            // Verificar se é erro específico de UTF-8
-            if (errorText.includes('UTF8') || errorText.includes('codificação') || errorText.includes('0xe3')) {
-              console.error('🚨 ERRO UTF-8 DETECTADO - Aplicando sanitização mais agressiva...')
-              
-              // Aplicar sanitização mais agressiva
-              const aggressiveSanitized = this.aggressiveUTF8Sanitization(recordData)
-              const aggressiveJsonBody = JSON.stringify(aggressiveSanitized)
-              
-              console.log('🔧 Tentando novamente com sanitização agressiva...')
-              
-              // Tentar novamente com dados mais agressivamente sanitizados
-              const retryResponse = await fetch('/api/surebet-stats', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json; charset=utf-8',
-                  'Authorization': `Bearer ${this.$store.state.authToken}`
-                },
-                body: aggressiveJsonBody
-              })
-              
-              if (!retryResponse.ok) {
-                const retryErrorText = await retryResponse.text()
-                throw new Error(`Erro HTTP UTF-8 (retry): ${retryResponse.status} - ${retryErrorText}`)
-              }
-              
-              console.log('✅ Registro salvo com sanitização agressiva')
-              return await retryResponse.json()
-            }
-            
-            throw new Error(`Erro HTTP: ${response.status} - ${errorText}`)
-          }
-          
-          const result = await response.json()
-          const recordId = recordData.surebet_id
-          const hasFallbacks = missingFields.length > 0
-          
-          if (hasFallbacks) {
-            console.log(`✅ Registro ${recordId} salvo com sucesso (com fallbacks para: ${missingFields.join(', ')})`)
-          } else {
-            console.log(`✅ Registro ${recordId} salvo com sucesso`)
-          }
-          
-          return result
-          
-        } catch (error) {
-          console.error(`❌ Erro ao salvar registro ${item.surebet_id}:`, error)
-          throw error
-        }
-      },
-      
-      // Funções de validação para campos obrigatórios
-      validateProfit(profit, returnValue) {
-        if (typeof profit === 'number' && !isNaN(profit)) {
-          return profit;
-        }
-        if (typeof returnValue === 'number' && !isNaN(returnValue)) {
-          return returnValue;
-        }
-        const parsedProfit = parseFloat(profit);
-        if (!isNaN(parsedProfit)) {
-          return parsedProfit;
-        }
-        const parsedReturn = parseFloat(returnValue);
-        if (!isNaN(parsedReturn)) {
-          return parsedReturn;
-        }
-        console.warn('⚠️ Profit inválido, usando 0 como fallback');
-        return 0;
-      },
-      
-      validateDate(date, matchDate, eventDate) {
-        const dateValue = date || matchDate || eventDate;
-        if (dateValue) {
-          // Se já é uma string no formato YYYY-MM-DD
-          if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
-            return dateValue;
-          }
-          // Se é um objeto Date
-          if (dateValue instanceof Date) {
-            return dateValue.toISOString().split('T')[0];
-          }
-          // Tentar converter string para Date
-          const parsedDate = new Date(dateValue);
-          if (!isNaN(parsedDate.getTime())) {
-            return parsedDate.toISOString().split('T')[0];
-          }
-        }
-        console.warn('⚠️ Data inválida, usando data atual como fallback');
-        return new Date().toISOString().split('T')[0];
-      },
-      
-      validateHour(hour, time) {
-        if (typeof hour === 'number' && hour >= 0 && hour <= 23) {
-          return hour;
-        }
-        if (typeof time === 'number' && time >= 0 && time <= 23) {
-          return time;
-        }
-        const parsedHour = parseInt(hour);
-        if (!isNaN(parsedHour) && parsedHour >= 0 && parsedHour <= 23) {
-          return parsedHour;
-        }
-        const parsedTime = parseInt(time);
-        if (!isNaN(parsedTime) && parsedTime >= 0 && parsedTime <= 23) {
-          return parsedTime;
-        }
-        console.warn('⚠️ Hora inválida, usando 0 como fallback');
-        return 0;
-      },
-      
-      validateRequiredFields(recordData) {
-        const requiredFields = ['surebet_id', 'house', 'market', 'profit', 'date', 'hour', 'sport'];
-        const errors = [];
-        
-        requiredFields.forEach(field => {
-          const value = recordData[field];
-          if (!value && value !== 0) {
-            errors.push(`${field} é obrigatório`);
-          }
-        });
-        
-        // Validações específicas
-        if (recordData.profit !== undefined && (isNaN(recordData.profit) || recordData.profit === null)) {
-          errors.push('profit deve ser um número válido');
-        }
-        
-        if (recordData.hour !== undefined && (isNaN(recordData.hour) || recordData.hour < 0 || recordData.hour > 23)) {
-          errors.push('hour deve ser um número entre 0 e 23');
-        }
-        
-        if (recordData.date && !/^\d{4}-\d{2}-\d{2}$/.test(recordData.date)) {
-          errors.push('date deve estar no formato YYYY-MM-DD');
-        }
-        
-        return {
-          isValid: errors.length === 0,
-          errors: errors
-        };
-      },
-      
-      correctMissingFields(recordData, missingFields) {
-        console.log('🔧 Corrigindo campos faltantes:', missingFields)
-        
-        const correctedData = { ...recordData }
-        
-        missingFields.forEach(field => {
-          switch (field) {
-            case 'surebet_id':
-              correctedData.surebet_id = correctedData.surebet_id || `corrected_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-              break
-            case 'house':
-              correctedData.house = correctedData.house || 'Casa corrigida automaticamente'
-              break
-            case 'market':
-              correctedData.market = correctedData.market || 'Mercado corrigido automaticamente'
-              break
-            case 'profit':
-              correctedData.profit = correctedData.profit !== undefined ? correctedData.profit : 0
-              break
-            case 'date':
-              correctedData.date = correctedData.date || new Date().toISOString().split('T')[0]
-              break
-            case 'hour':
-              correctedData.hour = correctedData.hour !== undefined ? correctedData.hour : 0
-              break
-            case 'sport':
-              correctedData.sport = correctedData.sport || 'Esporte corrigido automaticamente'
-              break
-            default:
-              console.warn(`⚠️ Campo desconhecido para correção: ${field}`)
-          }
-        })
-        
-        // Validar se a correção foi bem-sucedida
-        const validation = this.validateRequiredFields(correctedData)
-        if (validation.isValid) {
-          console.log('✅ Campos corrigidos com sucesso')
-          return correctedData
-        } else {
-          console.error('❌ Correção falhou:', validation.errors)
-          return null
-        }
-      },
-      
-      async saveAnalyticsToDatabase(filteredData) {
-        try {
-          // Verificar se há dados para analisar
-          if (!filteredData || !Array.isArray(filteredData) || filteredData.length === 0) {
-            console.log('📊 Nenhum dado para análise')
-            return
-          }
-          
-          // Verificar se o usuário está autenticado
-          if (!this.currentUser?.id) {
-            console.error('❌ Usuário não autenticado para salvar análise')
-            return
-          }
-          
-          // Calcular estatísticas para salvar com validação
-          const validData = filteredData.filter(item => item && item.surebet_id)
-          const totalSurebets = new Set(validData.map(s => s.surebet_id)).size
-          const uniqueHouses = new Set(validData.map(s => s.house || 'Desconhecida')).size
-          const uniqueMarkets = new Set(validData.map(s => s.market || 'Desconhecido')).size
-          
-          const surebetProfits = {}
-          validData.forEach(item => {
-            if (!surebetProfits[item.surebet_id]) {
-              surebetProfits[item.surebet_id] = parseFloat(item.profit) || 0
-            }
-          })
-          const profits = Object.values(surebetProfits)
-          const averageProfit = profits.length > 0 ? profits.reduce((sum, profit) => sum + profit, 0) / profits.length : 0
-          
-          // Preparar dados de análise com validação
-          let analyticsData = {
-            user_id: this.currentUser.id,
-            analysis_type: 'comprehensive',
-            period_days: parseInt(this.selectedPeriod) || 30,
-            sport_filter: this.selectedSport || 'all',
-            analysis_data: {
-              topHouses: this.topHouses || [],
-              topHousePairs: this.topHousePairs || [],
-              topMarkets: this.topMarkets || [],
-              insights: {
-                bestPair: this.bestPair || null,
-                peakHour: this.peakHour || null,
-                bestMarket: this.bestMarket || null,
-                mostActiveSport: this.mostActiveSport || null
-              }
-            },
-            total_surebets: totalSurebets,
-            unique_houses: uniqueHouses,
-            unique_markets: uniqueMarkets,
-            average_profit: averageProfit,
-            generated_at: new Date().toISOString()
-          }
-
-          // Aplicar sanitização UTF-8 nos dados de análise
-          analyticsData = this.sanitizeJSONForUTF8(analyticsData)
-          
-          // Salvar análise no banco
-          const result = await this.$store.dispatch('saveSurebetAnalytics', analyticsData)
-          console.log('✅ Análise salva no banco:', result)
-          
-        } catch (error) {
-          console.error('❌ Erro ao salvar análise no banco:', error)
-          // Não re-throw para não interromper o fluxo principal
-        }
-      },
-  
-      updateHousesChart() {
-        if (!this.housesChart || !this.housesChart.data || !this.housesChart.data.datasets || !this.housesChart.data.datasets[0]) return
-        
-        // Verificar se o gráfico ainda está ativo
-        if (!this.housesChart.canvas || !this.housesChart.canvas.parentNode) {
-          console.warn('⚠️ Gráfico housesChart não está mais ativo, recriando...')
-          this.setupHousesChart()
-          return
-        }
-        
-        const data = this.topHouses.slice(0, 12)
-        this.housesChart.data.labels = data.map(h => h.name)
-        this.housesChart.data.datasets[0].data = data.map(h => h.count)
-        
-        if (typeof this.housesChart.update === 'function') {
-          this.housesChart.update('none')
-        }
-      },
-  
-      updateMarketsChart() {
-        if (!this.marketsChart || !this.marketsChart.data || !this.marketsChart.data.datasets || !this.marketsChart.data.datasets[0]) return
-        
-        // Verificar se o gráfico ainda está ativo
-        if (!this.marketsChart.canvas || !this.marketsChart.canvas.parentNode) {
-          console.warn('⚠️ Gráfico marketsChart não está mais ativo, recriando...')
-          this.setupMarketsChart()
-          return
-        }
-        
-        const { chartData, colors, labels } = createChartData(
-          this.groupedMarkets, 
-          this.marketsChartShowDetails, 
-          this.marketsChartViewMode
-        )
-        
-        this.marketsChart.data.labels = labels
-        this.marketsChart.data.datasets[0].data = chartData
-        this.marketsChart.data.datasets[0].backgroundColor = colors
-        this.marketsChart.data.datasets[0].borderColor = colors.map(color => color.replace('0.8', '1'))
-        
-        if (typeof this.marketsChart.update === 'function') {
-          this.marketsChart.update('none')
-        }
-      },
-  
-      updateTimeChart() {
-        if (!this.timeChart || !this.timeChart.data || !this.timeChart.data.datasets || !this.timeChart.data.datasets[0]) return
-        
-        // Verificar se o gráfico ainda está ativo
-        if (!this.timeChart.canvas || !this.timeChart.canvas.parentNode) {
-          console.warn('⚠️ Gráfico timeChart não está mais ativo, recriando...')
-          this.setupTimeChart()
-          return
-        }
-        
-        const hourStats = {}
-        this.filteredSurebets.forEach(item => hourStats[item.hour] = (hourStats[item.hour] || 0) + 1)
-        const hours = Array.from({length: 24}, (_, i) => i)
-        const counts = hours.map(hour => hourStats[hour] || 0)
-        this.timeChart.data.datasets[0].data = counts
-        
-        if (typeof this.timeChart.update === 'function') {
-          this.timeChart.update('none')
-        }
-      },
-  
-      updateSportsChart() {
-        if (!this.sportsChart || !this.sportsChart.data || !this.sportsChart.data.datasets || !this.sportsChart.data.datasets[0]) return
-        
-        // Verificar se o gráfico ainda está ativo
-        if (!this.sportsChart.canvas || !this.sportsChart.canvas.parentNode) {
-          console.warn('⚠️ Gráfico sportsChart não está mais ativo, recriando...')
-          this.setupSportsChart()
-          return
-        }
-        
-        const sportStats = {}
-        const surebetGroups = {}
-        this.filteredSurebets.forEach(item => {
-          if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-        })
-        Object.values(surebetGroups).forEach(item => {
-          if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
-          sportStats[item.sport].profits.push(item.profit)
-        })
-        const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
-          sport,
-          averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
-        })).sort((a, b) => b.averageProfit - a.averageProfit)
-        
-        this.sportsChart.data.labels = sportsData.map(s => s.sport)
-        this.sportsChart.data.datasets[0].data = sportsData.map(s => s.averageProfit)
-        
-        if (typeof this.sportsChart.update === 'function') {
-          this.sportsChart.update('none')
-        }
-      },
-  
-      updateProfitFrequencyChart() {
-        if (!this.profitFrequencyChart) return
-        
-        // Verificar se o gráfico ainda está ativo
-        if (!this.profitFrequencyChart.canvas || !this.profitFrequencyChart.canvas.parentNode) {
-          console.warn('⚠️ Gráfico profitFrequencyChart não está mais ativo, recriando...')
-          this.setupProfitFrequencyChart()
-          return
-        }
-        
-        // Recalcular dados para o gráfico
-        const marketStats = {}
-        this.filteredSurebets.forEach(item => {
-          if (!marketStats[item.market]) {
-            marketStats[item.market] = { count: 0, profits: [], totalProfit: 0 }
-          }
-          marketStats[item.market].count++
-          marketStats[item.market].profits.push(item.profit)
-          marketStats[item.market].totalProfit += item.profit
-        })
-        
-        // Filtrar mercados com pelo menos 2 aparições para evitar ruído
-        const filteredMarkets = Object.entries(marketStats).filter(([market, stats]) => stats.count >= 2)
-        
-        const chartData = filteredMarkets.map(([market, stats]) => ({
-          x: stats.count,
-          y: stats.totalProfit / stats.count,
-          market: market,
-          count: stats.count,
-          totalProfit: stats.totalProfit,
-          averageProfit: stats.totalProfit / stats.count
-        }))
-        
-        // Calcular estatísticas para melhor distribuição visual
-        const frequencies = chartData.map(item => item.x)
-        const profits = chartData.map(item => item.y)
-        
-        const freqStats = this.calculateStats(frequencies)
-        const profitStats = this.calculateStats(profits)
-        
-        // Calcular percentis para melhor distribuição de cores
-        const sortedProfits = profits.sort((a, b) => a - b)
-        const p33 = sortedProfits[Math.floor(sortedProfits.length * 0.33)]
-        const p66 = sortedProfits[Math.floor(sortedProfits.length * 0.66)]
-        
-        // Atualizar cores baseadas em percentis para melhor distribuição
-        const colors = chartData.map(item => {
-          if (item.y >= p66) return this.getThemeColor('--accent-primary', '#00ff88') // Verde para top 33%
-          if (item.y >= p33) return this.getThemeColor('--accent-secondary', '#ffd700') // Amarelo para médio 33%
-          return this.getThemeColor('--warning-color', '#ff6b35') // Laranja para bottom 33%
-        })
-        
-        // Calcular tamanhos dos pontos baseados na frequência (logarítmico para melhor distribuição)
-        const maxCount = Math.max(...frequencies)
-        const pointSizes = chartData.map(item => {
-          // Usar escala logarítmica para melhor distribuição visual
-          const logSize = Math.log(item.x + 1) / Math.log(maxCount + 1)
-          const normalizedSize = logSize * 0.8 + 0.2 // Entre 0.2 e 1.0
-          return Math.max(4, Math.min(10, normalizedSize * 12.5)) // Entre 4 e 10 pixels (50% menor)
-        })
-        
-        this.profitFrequencyChart.data.datasets[0].data = chartData
-        this.profitFrequencyChart.data.datasets[0].backgroundColor = colors
-        this.profitFrequencyChart.data.datasets[0].borderColor = colors.map(color => color.replace('0.9', '1'))
-        this.profitFrequencyChart.data.datasets[0].pointRadius = pointSizes
-        this.profitFrequencyChart.data.datasets[0].pointHoverRadius = pointSizes.map(size => size + 6)
-        
-        // Atualizar escalas para melhor distribuição
-        this.profitFrequencyChart.options.scales.x.min = Math.max(0, freqStats.q1 - (freqStats.q3 - freqStats.q1) * 0.5)
-        this.profitFrequencyChart.options.scales.x.max = freqStats.q3 + (freqStats.q3 - freqStats.q1) * 1.5
-        this.profitFrequencyChart.options.scales.y.min = Math.max(0, profitStats.q1 - (profitStats.q3 - profitStats.q1) * 0.5)
-        this.profitFrequencyChart.options.scales.y.max = profitStats.q3 + (profitStats.q3 - profitStats.q1) * 1.5
-        
-        if (typeof this.profitFrequencyChart.update === 'function') {
-          this.profitFrequencyChart.update('none')
-        }
-      },
-  
-  
-  
-      calculateVariation(values) {
-        try {
-          // Verificar se values é um array válido
-          if (!Array.isArray(values) || values.length <= 1) return 0
-          
-          // Filtrar valores válidos (números)
-          const validValues = values.filter(val => typeof val === 'number' && !isNaN(val))
-          if (validValues.length <= 1) return 0
-          
-          const mean = validValues.reduce((sum, val) => sum + val, 0) / validValues.length
-          const variance = validValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / validValues.length
-          const stdDev = Math.sqrt(variance)
-          return mean > 0 ? (stdDev / mean) * 100 : 0
-        } catch (error) {
-          console.warn('Erro ao calcular variação:', error)
-          return 0
-        }
-      },
-  
-      calculateStats(values) {
-        if (values.length === 0) return { q1: 0, q3: 0, median: 0, mean: 0 }
-        
-        const sorted = [...values].sort((a, b) => a - b)
-        const n = sorted.length
-        
-        const q1 = sorted[Math.floor(n * 0.25)]
-        const median = sorted[Math.floor(n * 0.5)]
-        const q3 = sorted[Math.floor(n * 0.75)]
-        const mean = values.reduce((sum, val) => sum + val, 0) / n
-        
-        return { q1, q3, median, mean }
-      },
-  
-      // Método auxiliar para selecionar casas aleatórias únicas
-      getRandomHouses(houses, count) {
-        try {
-          if (!houses || !Array.isArray(houses) || houses.length === 0 || !count || count <= 0) {
-            return []
-          }
-          
-          const shuffled = [...houses].sort(() => 0.5 - Math.random())
-          return shuffled.slice(0, Math.min(count, houses.length))
-        } catch (error) {
-          console.warn('Erro ao selecionar casas aleatórias:', error)
-          return []
-        }
-      },
-  
-      updateAnalysis() { 
-        try {
-          this.processAnalytics() 
-        } catch (error) {
-          console.warn('Erro ao atualizar análise:', error)
-        }
-      },
-
-      
-      // Métodos para busca automática de dados
-      startAutoRefresh() {
-        // Parar intervalo existente se houver
-        this.stopAutoRefresh()
-        
-        // Iniciar novo intervalo (buscar a cada 2 minutos)
-        this.autoRefreshInterval = setInterval(async () => {
-          try {
-            console.log('🔄 Busca automática de novos dados...')
-            await this.checkForNewData()
-          } catch (error) {
-            console.error('❌ Erro na busca automática:', error)
-          }
-        }, 2 * 60 * 1000) // 2 minutos
-        
-        console.log('✅ Busca automática iniciada (intervalo: 2 minutos)')
-      },
-      
-      stopAutoRefresh() {
-        try {
-          if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval)
-            this.autoRefreshInterval = null
-            console.log('⏹️ Busca automática parada')
-          }
-        } catch (error) {
-          console.warn('Erro ao parar busca automática:', error)
-          this.autoRefreshInterval = null
-        }
-      },
-  
-      toggleAutoRefresh() {
-        try {
-          if (this.autoRefreshInterval) {
-            this.stopAutoRefresh()
-          } else {
-            this.startAutoRefresh()
-          }
-        } catch (error) {
-          console.warn('Erro ao alternar busca automática:', error)
-        }
-      },
-      
-      async checkForNewData() {
-        try {
-          // Buscar dados da API externa
-          const apiData = await this.fetchFromExternalAPI()
-          
-          if (apiData && apiData.length > 0) {
-            // Verificar se há novos dados
-            const currentCount = this.surebets.length
-            const newCount = apiData.length
-            
-            if (newCount > currentCount || this.hasNewSurebets(apiData)) {
-              console.log(`🆕 Novos dados encontrados! Atual: ${currentCount}, Novo: ${newCount}`)
-              
-              // Atualizar dados
-              this.surebets = apiData
-              this.dataUpdateCount++
-              this.lastDataUpdate = new Date()
-              
-              // Reprocessar análises
-              this.processAnalytics()
-              
-              // Salvar no banco (com tratamento de erro)
-              try {
-                await this.saveDataToDatabase()
-              } catch (saveError) {
-                console.warn('⚠️ Erro ao salvar dados no banco (não crítico):', saveError)
-                // Continuar mesmo se falhar ao salvar
-              }
-              
-              // Atualizar gráficos se estiverem inicializados
-              if (this.chartsInitialized) {
-                this.updateCharts()
-              }
-              
-              console.log('✅ Dados atualizados com sucesso')
-            } else {
-              console.log('📊 Nenhum novo dado encontrado')
-            }
-          }
-        } catch (error) {
-          console.error('❌ Erro ao verificar novos dados:', error)
-        }
-      },
-      
-      hasNewSurebets(newData) {
-        try {
-          // Verificar se há surebets com IDs que não existem nos dados atuais
-          if (!newData || !Array.isArray(newData) || !this.surebets || !Array.isArray(this.surebets)) {
-            return false
-          }
-          
-          const currentIds = new Set(this.surebets.map(s => s.surebet_id))
-          const newIds = new Set(newData.map(s => s.surebet_id))
-          
-          for (const newId of newIds) {
-            if (!currentIds.has(newId)) {
-              return true
-            }
-          }
-          
-          return false
-        } catch (error) {
-          console.warn('Erro ao verificar novos surebets:', error)
-          return false
-        }
-      },
-  
-      destroyCharts() {
-        try {
-          if (this.housesChart && typeof this.housesChart.destroy === 'function') {
-            this.housesChart.destroy()
-            this.housesChart = null
-          }
-          if (this.marketsChart && typeof this.marketsChart.destroy === 'function') {
-            this.marketsChart.destroy()
-            this.marketsChart = null
-          }
-          if (this.timeChart && typeof this.timeChart.destroy === 'function') {
-            this.timeChart.destroy()
-            this.timeChart = null
-          }
-          if (this.sportsChart && typeof this.sportsChart.destroy === 'function') {
-            this.sportsChart.destroy()
-            this.sportsChart = null
-          }
-          if (this.profitFrequencyChart && typeof this.profitFrequencyChart.destroy === 'function') {
-            this.profitFrequencyChart.destroy()
-            this.profitFrequencyChart = null
-          }
-          
-          // Resetar flags
-          this.chartsInitialized = false
-          this._forceChartColorsRunning = false
-          this._forceChartBackgroundRunning = false
-        } catch (error) {
-          console.warn('Erro ao destruir gráficos:', error)
-        }
-      },
-  
-      formatCurrency(value) {
-        if (!value || isNaN(value)) return 'R$ 0,00'
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
-      },
-      formatPercentage(value) { return !value || isNaN(value) ? '0.0' : parseFloat(value).toFixed(1) },
-      getPositionClass(position) {
-        if (position === 1) return 'gold'
-        if (position === 2) return 'silver'
-        if (position === 3) return 'bronze'
-        return 'normal'
-      },
-      getConsistencyClass(value) {
-        if (!value || isNaN(value)) return 'low'
-        if (value >= 80) return 'high'
-        if (value >= 60) return 'medium'
-        return 'low'
-      },
-           formatDateTime(date) {
-         const options = { 
-           year: 'numeric', 
-           month: '2-digit', 
-           day: '2-digit', 
-           hour: '2-digit', 
-           minute: '2-digit' 
-         };
-         return new Date(date).toLocaleDateString('pt-BR', options);
-       },
-       
-       // Métodos para estatísticas adicionais do gráfico
-       getMostFrequentMarket() {
-         if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-         
-         const marketCounts = {}
-         this.filteredSurebets.forEach(item => {
-           marketCounts[item.market] = (marketCounts[item.market] || 0) + 1
-         })
-         
-         const mostFrequent = Object.entries(marketCounts).sort((a, b) => b[1] - a[1])[0]
-         return mostFrequent ? `${mostFrequent[0]} (${mostFrequent[1]}x)` : 'N/A'
-       },
-       
-       getMaxProfit() {
-         if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-         return Math.max(...this.filteredSurebets.map(item => item.profit))
-       },
-       
-             getMinProfit() {
-          if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-          return Math.min(...this.filteredSurebets.map(item => item.profit))
-        },
-        
-        // Métodos para estatísticas dos outros gráficos
-        getTotalHouses() {
-          if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-          return new Set(this.filteredSurebets.map(item => item.house)).size
-        },
-        
-        getMostFrequentHouse() {
-          if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-          
-          const houseCounts = {}
-          this.filteredSurebets.forEach(item => {
-            houseCounts[item.house] = (houseCounts[item.house] || 0) + 1
-          })
-          
-          const mostFrequent = Object.entries(houseCounts).sort((a, b) => b[1] - a[1])[0]
-          return mostFrequent ? `${mostFrequent[0]} (${mostFrequent[1]}x)` : 'N/A'
-        },
-        
-        getPeakHour() {
-          if (!this.peakHour) return 'N/A'
-          return `${this.peakHour.hour}:00h (${this.peakHour.count} surebets)`
-        },
-        
-        getTotalSports() {
-          if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-          return new Set(this.filteredSurebets.map(item => item.sport)).size
-        },
-        
-        getMostProfitableSport() {
-          if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-          
-          const sportStats = {}
-          const surebetGroups = {}
-          
-          this.filteredSurebets.forEach(item => {
-            if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-          })
-          
-          Object.values(surebetGroups).forEach(item => {
-            if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
-            sportStats[item.sport].profits.push(item.profit)
-          })
-          
-          const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
-            sport,
-            averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
-          })).sort((a, b) => b.averageProfit - a.averageProfit)
-          
-          const mostProfitable = sportsData[0]
-                   return mostProfitable ? `${mostProfitable.sport} (R$ ${mostProfitable.averageProfit.toFixed(2)})` : 'N/A'
-         },
-         
-         getDominantMarket() {
-           if (!this.topMarkets || this.topMarkets.length === 0) return 'N/A'
-           const dominant = this.topMarkets[0]
-           return `${dominant.name} (${dominant.count} surebets)`
-         },
-  
-         // Funções para interatividade do gráfico de mercados
-         toggleMarketCategoryFilter(categoryName) {
-           if (this.selectedMarketGroup === categoryName) {
-             this.selectedMarketGroup = null
-           } else {
-             this.selectedMarketGroup = categoryName
-           }
-           this.updateMarketsChart()
-         },
-  
-         handleMarketChartClick(label, index) {
-           // Destacar mercados relacionados no ranking
-           this.selectedMarketGroup = label
-           this.$nextTick(() => {
-             // Scroll para a tabela de mercados
-             const marketsTable = document.querySelector('.markets-table')
-             if (marketsTable) {
-               marketsTable.scrollIntoView({ behavior: 'smooth', block: 'start' })
-             }
-           })
-         },
-  
-         toggleMarketsChartViewMode() {
-           this.marketsChartViewMode = this.marketsChartViewMode === 'percentage' ? 'count' : 'percentage'
-           this.updateMarketsChart()
-         },
-  
-         toggleMarketsChartDetails() {
-           this.marketsChartShowDetails = !this.marketsChartShowDetails
-           this.updateMarketsChart()
-         },
-  
-         updateMarketsChartFilters() {
-           // Recalcular dados com novos filtros
-           this.processMarketsRanking(this.filteredSurebets)
-           this.updateMarketsChart()
-         },
-  
-         getAverageMarketProfit() {
-           if (!this.topMarkets || this.topMarkets.length === 0) return 0
-           const totalProfit = this.topMarkets.reduce((sum, market) => sum + market.averageProfit, 0)
-           return totalProfit / this.topMarkets.length
-         },
-  
-         selectMarket(market) {
-           // Destacar mercado selecionado
-           this.selectedMarketGroup = market.categoryName
-           this.$nextTick(() => {
-             // Scroll para a seção de detalhes se estiver visível
-             if (this.showDetailedTable) {
-               const detailSection = document.querySelector('.markets-detail-section')
-               if (detailSection) {
-                 detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-               }
-             }
-           })
-         },
-  
-         getGroupColor(groupName) {
-           // Encontrar a cor do grupo baseado no nome
-           for (const [key, group] of Object.entries(this.groupedMarkets)) {
-             if (group.name === groupName) {
-               return group.color
-             }
-             // Verificar subcategorias
-             for (const [subKey, subcategory] of Object.entries(group.subcategories)) {
-               if (subcategory.name === groupName || `${group.name} - ${subcategory.name}` === groupName) {
-                 return subcategory.color
-               }
-             }
-           }
-                       return 'var(--text-tertiary)' // Cor padrão cinza
-         },
-  
-         filterMarketsTable() {
-           // A função é chamada quando o filtro de categoria é alterado
-           // A lógica é implementada na computed property filteredTopMarkets
-           this.$nextTick(() => {
-             // Scroll para a tabela se houver filtro ativo
-             if (this.selectedMarketGroup) {
-               const marketsTable = document.querySelector('.markets-table')
-               if (marketsTable) {
-                 marketsTable.scrollIntoView({ behavior: 'smooth', block: 'start' })
-               }
-             }
-           })
-         },
-         
-         getAverageSurebetsPerHouse() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-           const uniqueHouses = new Set(this.filteredSurebets.map(item => item.house)).size
-           return uniqueHouses > 0 ? (this.filteredSurebets.length / uniqueHouses).toFixed(1) : 0
-         },
-         
-         // Métodos adicionais para estatísticas dos gráficos
-         getAverageProfitPerHour() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-           const totalProfit = this.filteredSurebets.reduce((sum, item) => sum + item.profit, 0)
-           return totalProfit / this.filteredSurebets.length
-         },
-         
-         getMostActiveHour() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-           const hourStats = {}
-           this.filteredSurebets.forEach(item => {
-             hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
-           })
-           const mostActive = Object.entries(hourStats).sort((a, b) => b[1] - a[1])[0]
-           return mostActive ? `${mostActive[0]}:00h (${mostActive[1]}x)` : 'N/A'
-         },
-         
-         getLeastActiveHour() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-           const hourStats = {}
-           this.filteredSurebets.forEach(item => {
-             hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
-           })
-           const leastActive = Object.entries(hourStats).sort((a, b) => a[1] - b[1])[0]
-           return leastActive ? `${leastActive[0]}:00h (${leastActive[1]}x)` : 'N/A'
-         },
-         
-         getAverageProfitPerSport() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-           const sportStats = {}
-           const surebetGroups = {}
-           
-           this.filteredSurebets.forEach(item => {
-             if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-           })
-           
-           Object.values(surebetGroups).forEach(item => {
-             if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
-             sportStats[item.sport].profits.push(item.profit)
-           })
-           
-           const allProfits = Object.values(sportStats).flatMap(data => data.profits)
-           return allProfits.length > 0 ? (allProfits.reduce((sum, p) => sum + p, 0) / allProfits.length).toFixed(2) : 0
-         },
-         
-         getLeastProfitableSport() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-           
-           const sportStats = {}
-           const surebetGroups = {}
-           
-           this.filteredSurebets.forEach(item => {
-             if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
-           })
-           
-           Object.values(surebetGroups).forEach(item => {
-             if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
-             sportStats[item.sport].profits.push(item.profit)
-           })
-           
-           const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
-             sport,
-             averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
-           })).sort((a, b) => a.averageProfit - b.averageProfit)
-           
-           const leastProfitable = sportsData[0]
-           return leastProfitable ? `${leastProfitable.sport} (R$ ${leastProfitable.averageProfit.toFixed(2)})` : 'N/A'
-         },
-         
-         getHouseWithHighestProfit() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-           
-           const houseStats = {}
-           this.filteredSurebets.forEach(item => {
-             if (!houseStats[item.house]) houseStats[item.house] = { profits: [] }
-             houseStats[item.house].profits.push(item.profit)
-           })
-           
-           const housesData = Object.entries(houseStats).map(([house, data]) => ({
-             house,
-             averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length,
-             maxProfit: Math.max(...data.profits)
-           })).sort((a, b) => b.averageProfit - a.averageProfit)
-           
-           const bestHouse = housesData[0]
-           return bestHouse ? `${bestHouse.house} (R$ ${bestHouse.averageProfit.toFixed(2)})` : 'N/A'
-         },
-         
-         getHouseWithLowestProfit() {
-           if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-           
-           const houseStats = {}
-           this.filteredSurebets.forEach(item => {
-             if (!houseStats[item.house]) houseStats[item.house] = { profits: [] }
-             houseStats[item.house].profits.push(item.profit)
-           })
-           
-           const housesData = Object.entries(houseStats).map(([house, data]) => ({
-             house,
-             averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
-           })).sort((a, b) => a.averageProfit - b.averageProfit)
-           
-           const worstHouse = housesData[0]
-           return worstHouse ? `${worstHouse.house} (R$ ${worstHouse.averageProfit.toFixed(2)})` : 'N/A'
-         },
-         
-                  getTotalProfit() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
-             return this.filteredSurebets.reduce((sum, item) => sum + item.profit, 0)
-           },
-         
-                  getProfitRange() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             const maxProfit = Math.max(...this.filteredSurebets.map(item => item.profit))
-             const minProfit = Math.min(...this.filteredSurebets.map(item => item.profit))
-             return `R$ ${minProfit.toFixed(2)} - R$ ${maxProfit.toFixed(2)}`
-           },
-           
-           getActivePeriod() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             const hourStats = {}
-             this.filteredSurebets.forEach(item => {
-               hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
-             })
-             
-             const activeHours = Object.entries(hourStats)
-               .filter(([hour, count]) => count > 0)
-               .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
-             
-             if (activeHours.length === 0) return 'N/A'
-             
-             const startHour = activeHours[0][0]
-             const endHour = activeHours[activeHours.length - 1][0]
-             return `${startHour}:00h - ${endHour}:00h`
-           },
-           
-           getInactivePeriod() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             const hourStats = {}
-             this.filteredSurebets.forEach(item => {
-               hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
-             })
-             
-             const inactiveHours = []
-             for (let i = 0; i < 24; i++) {
-               if (!hourStats[i] || hourStats[i] === 0) {
-                 inactiveHours.push(i)
-               }
-             }
-             
-             if (inactiveHours.length === 0) return 'Nenhum'
-             
-             const startHour = inactiveHours[0]
-             const endHour = inactiveHours[inactiveHours.length - 1]
-             return `${startHour}:00h - ${endHour}:00h`
-           },
-           
-           getMostActiveSport() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             
-             const sportCounts = {}
-             this.filteredSurebets.forEach(item => {
-               sportCounts[item.sport] = (sportCounts[item.sport] || 0) + 1
-             })
-             
-             const mostActive = Object.entries(sportCounts).sort((a, b) => b[1] - a[1])[0]
-             return mostActive ? `${mostActive[0]} (${mostActive[1]}x)` : 'N/A'
-           },
-           
-           getLeastActiveSport() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             
-             const sportCounts = {}
-             this.filteredSurebets.forEach(item => {
-               sportCounts[item.sport] = (sportCounts[item.sport] || 0) + 1
-             })
-             
-             const leastActive = Object.entries(sportCounts).sort((a, b) => a[1] - b[1])[0]
-             return leastActive ? `${leastActive[0]} (${leastActive[1]}x)` : 'N/A'
-           },
-           
-           getSportDiversity() {
-             if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
-             
-             const uniqueSports = new Set(this.filteredSurebets.map(item => item.sport)).size
-             const totalSurebets = this.filteredSurebets.length
-             
-             if (totalSurebets === 0) return 'N/A'
-             
-             const diversity = (uniqueSports / totalSurebets * 100).toFixed(1)
-             return `${uniqueSports} esportes (${diversity}% do total)`
-           },
-
-        // Método para obter cores do tema dinamicamente
-        getThemeColor(cssVariable, fallback) {
-          try {
-            // Verificar se document está disponível (para SSR)
-            if (typeof document === 'undefined') return fallback
-            
-            const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable)
-            return value.trim() || fallback
-          } catch (error) {
-            console.warn(`Erro ao obter cor do tema ${cssVariable}:`, error)
-            return fallback
-          }
-        },
-
-        // Forçar o fundo dos gráficos
-        forceChartBackground() {
-          if (!this.chartsInitialized) return
-          
-          // Evitar múltiplas execuções simultâneas
-          if (this._forceChartBackgroundRunning) return
-          
-          // Evitar execução durante atualização dos gráficos
-          if (this._updatingCharts) return
-          
-          this._forceChartBackgroundRunning = true
-          
-          const charts = [
-            this.housesChart,
-            this.marketsChart,
-            this.timeChart,
-            this.sportsChart,
-            this.profitFrequencyChart
-          ]
-          
-          charts.forEach(chart => {
-            if (chart && chart.canvas) {
-              const canvas = chart.canvas
-              const ctx = canvas.getContext('2d')
-              
-              // Aplicar fundo via CSS inline com !important
-              canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
-              canvas.style.setProperty('background', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
-              
-              // Aplicar fundo diretamente no contexto 2D após um delay
-              setTimeout(() => {
-                if (ctx && chart.chartArea) {
-                  try {
-                    ctx.save()
-                    ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
-                    ctx.fillRect(0, 0, canvas.width, canvas.height)
-                    ctx.restore()
-                  } catch (error) {
-                    console.warn('Erro ao aplicar fundo no gráfico:', error)
-                  }
-                }
-              }, 200)
-            }
-          })
-          
-          // Resetar flag após um delay
-          setTimeout(() => {
-            this._forceChartBackgroundRunning = false
-          }, 500)
-        },
-
-        // Forçar cores verdes dos gráficos - VERSÃO SEGURA
-        forceChartColors() {
-          if (!this.chartsInitialized) return
-          
-          // Evitar múltiplas execuções simultâneas
-          if (this._forceChartColorsRunning) return
-          
-          // Evitar execução durante atualização dos gráficos
-          if (this._updatingCharts) return
-          
-          console.log('🎨 Atualizando cores dos gráficos (versão segura)...')
-          this._forceChartColorsRunning = true
-          
-          try {
-            // Aplicar cores de forma segura usando try-catch individual
-            this.safeUpdateChartColors('housesChart', this.housesChart)
-            this.safeUpdateChartColors('timeChart', this.timeChart)
-            this.safeUpdateChartColors('sportsChart', this.sportsChart)
-            this.safeUpdateChartColors('marketsChart', this.marketsChart)
-            this.safeUpdateChartColors('profitFrequencyChart', this.profitFrequencyChart)
-            
-            console.log('✅ Cores dos gráficos atualizadas com segurança')
-            
-          } catch (error) {
-            console.warn('Erro ao atualizar cores dos gráficos:', error)
-          } finally {
-            // Resetar flag após um delay para evitar chamadas muito frequentes
-            setTimeout(() => {
-              this._forceChartColorsRunning = false
-            }, 1000)
-          }
-        },
-
-        // Método seguro para atualizar cores de um gráfico específico
-        safeUpdateChartColors(chartName, chart) {
-          if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) {
-            return
-          }
-
-          try {
-            const dataset = chart.data.datasets[0]
-            
-            // Aplicar cores de forma segura
-            if (dataset.backgroundColor !== undefined) {
-              dataset.backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
-            }
-            if (dataset.borderColor !== undefined) {
-              dataset.borderColor = this.getThemeColor('--accent-primary', '#00ff88')
-            }
-            
-            // Atualizar cores dos textos de forma segura
-            if (chart.options && chart.options.scales) {
-              this.safeUpdateScaleColors(chart.options.scales.y, 'y')
-              this.safeUpdateScaleColors(chart.options.scales.x, 'x')
-            }
-            
-          } catch (error) {
-            console.warn(`Erro ao atualizar cores do gráfico ${chartName}:`, error)
-          }
-        },
-
-        // Método seguro para atualizar cores das escalas
-        safeUpdateScaleColors(scale, scaleName) {
-          if (!scale) return
-          
-          try {
-            if (scale.ticks && scale.ticks.color !== undefined) {
-              scale.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
-            }
-            if (scale.grid && scale.grid.color !== undefined) {
-              scale.grid.color = this.getThemeColor('--border-primary', '#666666')
-            }
-          } catch (error) {
-            console.warn(`Erro ao atualizar cores da escala ${scaleName}:`, error)
-          }
-        },
-
-        // Observar mudanças de tema
-        observeThemeChanges() {
-          let themeChangeTimeout = null
-          
-          const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-              if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
-                // Debounce para evitar múltiplas chamadas
-                if (themeChangeTimeout) {
-                  clearTimeout(themeChangeTimeout)
-                }
-                
-                console.log('🎨 Tema alterado detectado, atualizando gráficos...')
-                themeChangeTimeout = setTimeout(() => {
-                  this.$nextTick(() => {
-                    if (!this._forceChartBackgroundRunning && !this._updatingCharts) {
-                      this.forceChartBackground()
-                      // Desabilitar forceChartColors temporariamente para evitar recursão
-                      // if (this.chartsInitialized) {
-                      //   this.forceChartColors()
-                      // }
-                    }
-                  })
-                }, 300)
-              }
-            })
-          })
-          
-          observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['data-theme']
-          })
-          
-          // Verificação periódica do fundo - DESABILITADA para evitar problemas
-          // const backgroundCheckInterval = setInterval(() => {
-          //   if (this.chartsInitialized && !this._forceChartBackgroundRunning && !this._updatingCharts) {
-          //     this.forceChartBackground()
-          //   }
-          // }, 5000) // Aumentar intervalo para 5 segundos
-          
-          // Limpar observer quando componente for destruído
-          this.$once('hook:beforeDestroy', () => {
-            // clearInterval(backgroundCheckInterval) // Intervalo desabilitado
-            observer.disconnect()
-          })
-        },
+      } catch (error) {
+        console.error('❌ Erro ao verificar novos dados:', error)
       }
+    },
+
+    hasNewSurebets(newData) {
+      try {
+        // Verificar se há surebets com IDs que não existem nos dados atuais
+        if (!newData || !Array.isArray(newData) || !this.surebets || !Array.isArray(this.surebets)) {
+          return false
+        }
+
+        const currentIds = new Set(this.surebets.map(s => s.surebet_id))
+        const newIds = new Set(newData.map(s => s.surebet_id))
+
+        for (const newId of newIds) {
+          if (!currentIds.has(newId)) {
+            return true
+          }
+        }
+
+        return false
+      } catch (error) {
+        console.warn('Erro ao verificar novos surebets:', error)
+        return false
+      }
+    },
+
+    destroyCharts() {
+      try {
+        if (this.housesChart && typeof this.housesChart.destroy === 'function') {
+          this.housesChart.destroy()
+          this.housesChart = null
+        }
+        if (this.marketsChart && typeof this.marketsChart.destroy === 'function') {
+          this.marketsChart.destroy()
+          this.marketsChart = null
+        }
+        if (this.timeChart && typeof this.timeChart.destroy === 'function') {
+          this.timeChart.destroy()
+          this.timeChart = null
+        }
+        if (this.sportsChart && typeof this.sportsChart.destroy === 'function') {
+          this.sportsChart.destroy()
+          this.sportsChart = null
+        }
+        if (this.profitFrequencyChart && typeof this.profitFrequencyChart.destroy === 'function') {
+          this.profitFrequencyChart.destroy()
+          this.profitFrequencyChart = null
+        }
+
+        // Resetar flags
+        this.chartsInitialized = false
+        this._forceChartColorsRunning = false
+        this._forceChartBackgroundRunning = false
+      } catch (error) {
+        console.warn('Erro ao destruir gráficos:', error)
+      }
+    },
+
+    formatCurrency(value) {
+      if (!value || isNaN(value)) return 'R$ 0,00'
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+    },
+    formatPercentage(value) { return !value || isNaN(value) ? '0.0' : parseFloat(value).toFixed(1) },
+    getPositionClass(position) {
+      if (position === 1) return 'gold'
+      if (position === 2) return 'silver'
+      if (position === 3) return 'bronze'
+      return 'normal'
+    },
+    getConsistencyClass(value) {
+      if (!value || isNaN(value)) return 'low'
+      if (value >= 80) return 'high'
+      if (value >= 60) return 'medium'
+      return 'low'
+    },
+    formatDateTime(date) {
+      const options = {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      };
+      return new Date(date).toLocaleDateString('pt-BR', options);
+    },
+
+    // Métodos para estatísticas adicionais do gráfico
+    getMostFrequentMarket() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const marketCounts = {}
+      this.filteredSurebets.forEach(item => {
+        marketCounts[item.market] = (marketCounts[item.market] || 0) + 1
+      })
+
+      const mostFrequent = Object.entries(marketCounts).sort((a, b) => b[1] - a[1])[0]
+      return mostFrequent ? `${mostFrequent[0]} (${mostFrequent[1]}x)` : 'N/A'
+    },
+
+    getMaxProfit() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      return Math.max(...this.filteredSurebets.map(item => item.profit))
+    },
+
+    getMinProfit() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      return Math.min(...this.filteredSurebets.map(item => item.profit))
+    },
+
+    // Métodos para estatísticas dos outros gráficos
+    getTotalHouses() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      return new Set(this.filteredSurebets.map(item => item.house)).size
+    },
+
+    getMostFrequentHouse() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const houseCounts = {}
+      this.filteredSurebets.forEach(item => {
+        houseCounts[item.house] = (houseCounts[item.house] || 0) + 1
+      })
+
+      const mostFrequent = Object.entries(houseCounts).sort((a, b) => b[1] - a[1])[0]
+      return mostFrequent ? `${mostFrequent[0]} (${mostFrequent[1]}x)` : 'N/A'
+    },
+
+    getPeakHour() {
+      if (!this.peakHour) return 'N/A'
+      return `${this.peakHour.hour}:00h (${this.peakHour.count} surebets)`
+    },
+
+    getTotalSports() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      return new Set(this.filteredSurebets.map(item => item.sport)).size
+    },
+
+    getMostProfitableSport() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const sportStats = {}
+      const surebetGroups = {}
+
+      this.filteredSurebets.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+
+      Object.values(surebetGroups).forEach(item => {
+        if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
+        sportStats[item.sport].profits.push(item.profit)
+      })
+
+      const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
+        sport,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
+      })).sort((a, b) => b.averageProfit - a.averageProfit)
+
+      const mostProfitable = sportsData[0]
+      return mostProfitable ? `${mostProfitable.sport} (R$ ${mostProfitable.averageProfit.toFixed(2)})` : 'N/A'
+    },
+
+    getDominantMarket() {
+      if (!this.topMarkets || this.topMarkets.length === 0) return 'N/A'
+      const dominant = this.topMarkets[0]
+      return `${dominant.name} (${dominant.count} surebets)`
+    },
+
+    // Funções para interatividade do gráfico de mercados
+    toggleMarketCategoryFilter(categoryName) {
+      if (this.selectedMarketGroup === categoryName) {
+        this.selectedMarketGroup = null
+      } else {
+        this.selectedMarketGroup = categoryName
+      }
+      this.updateMarketsChart()
+    },
+
+    handleMarketChartClick(label, index) {
+      // Destacar mercados relacionados no ranking
+      this.selectedMarketGroup = label
+      this.$nextTick(() => {
+        // Scroll para a tabela de mercados
+        const marketsTable = document.querySelector('.markets-table')
+        if (marketsTable) {
+          marketsTable.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
+    },
+
+    toggleMarketsChartViewMode() {
+      this.marketsChartViewMode = this.marketsChartViewMode === 'percentage' ? 'count' : 'percentage'
+      this.updateMarketsChart()
+    },
+
+    toggleMarketsChartDetails() {
+      this.marketsChartShowDetails = !this.marketsChartShowDetails
+      this.updateMarketsChart()
+    },
+
+    updateMarketsChartFilters() {
+      // Recalcular dados com novos filtros
+      this.processMarketsRanking(this.filteredSurebets)
+      this.updateMarketsChart()
+    },
+
+    getAverageMarketProfit() {
+      if (!this.topMarkets || this.topMarkets.length === 0) return 0
+      const totalProfit = this.topMarkets.reduce((sum, market) => sum + market.averageProfit, 0)
+      return totalProfit / this.topMarkets.length
+    },
+
+    selectMarket(market) {
+      // Destacar mercado selecionado
+      this.selectedMarketGroup = market.categoryName
+      this.$nextTick(() => {
+        // Scroll para a seção de detalhes se estiver visível
+        if (this.showDetailedTable) {
+          const detailSection = document.querySelector('.markets-detail-section')
+          if (detailSection) {
+            detailSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }
+      })
+    },
+
+    getGroupColor(groupName) {
+      // Encontrar a cor do grupo baseado no nome
+      for (const [key, group] of Object.entries(this.groupedMarkets)) {
+        if (group.name === groupName) {
+          return group.color
+        }
+        // Verificar subcategorias
+        for (const [subKey, subcategory] of Object.entries(group.subcategories)) {
+          if (subcategory.name === groupName || `${group.name} - ${subcategory.name}` === groupName) {
+            return subcategory.color
+          }
+        }
+      }
+      return 'var(--text-tertiary)' // Cor padrão cinza
+    },
+
+    filterMarketsTable() {
+      // A função é chamada quando o filtro de categoria é alterado
+      // A lógica é implementada na computed property filteredTopMarkets
+      this.$nextTick(() => {
+        // Scroll para a tabela se houver filtro ativo
+        if (this.selectedMarketGroup) {
+          const marketsTable = document.querySelector('.markets-table')
+          if (marketsTable) {
+            marketsTable.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+        }
+      })
+    },
+
+    getAverageSurebetsPerHouse() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      const uniqueHouses = new Set(this.filteredSurebets.map(item => item.house)).size
+      return uniqueHouses > 0 ? (this.filteredSurebets.length / uniqueHouses).toFixed(1) : 0
+    },
+
+    // Métodos adicionais para estatísticas dos gráficos
+    getAverageProfitPerHour() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      const totalProfit = this.filteredSurebets.reduce((sum, item) => sum + item.profit, 0)
+      return totalProfit / this.filteredSurebets.length
+    },
+
+    getMostActiveHour() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => {
+        hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
+      })
+      const mostActive = Object.entries(hourStats).sort((a, b) => b[1] - a[1])[0]
+      return mostActive ? `${mostActive[0]}:00h (${mostActive[1]}x)` : 'N/A'
+    },
+
+    getLeastActiveHour() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => {
+        hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
+      })
+      const leastActive = Object.entries(hourStats).sort((a, b) => a[1] - b[1])[0]
+      return leastActive ? `${leastActive[0]}:00h (${leastActive[1]}x)` : 'N/A'
+    },
+
+    getAverageProfitPerSport() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      const sportStats = {}
+      const surebetGroups = {}
+
+      this.filteredSurebets.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+
+      Object.values(surebetGroups).forEach(item => {
+        if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
+        sportStats[item.sport].profits.push(item.profit)
+      })
+
+      const allProfits = Object.values(sportStats).flatMap(data => data.profits)
+      return allProfits.length > 0 ? (allProfits.reduce((sum, p) => sum + p, 0) / allProfits.length).toFixed(2) : 0
+    },
+
+    getLeastProfitableSport() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const sportStats = {}
+      const surebetGroups = {}
+
+      this.filteredSurebets.forEach(item => {
+        if (!surebetGroups[item.surebet_id]) surebetGroups[item.surebet_id] = item
+      })
+
+      Object.values(surebetGroups).forEach(item => {
+        if (!sportStats[item.sport]) sportStats[item.sport] = { profits: [] }
+        sportStats[item.sport].profits.push(item.profit)
+      })
+
+      const sportsData = Object.entries(sportStats).map(([sport, data]) => ({
+        sport,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
+      })).sort((a, b) => a.averageProfit - b.averageProfit)
+
+      const leastProfitable = sportsData[0]
+      return leastProfitable ? `${leastProfitable.sport} (R$ ${leastProfitable.averageProfit.toFixed(2)})` : 'N/A'
+    },
+
+    getHouseWithHighestProfit() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const houseStats = {}
+      this.filteredSurebets.forEach(item => {
+        if (!houseStats[item.house]) houseStats[item.house] = { profits: [] }
+        houseStats[item.house].profits.push(item.profit)
+      })
+
+      const housesData = Object.entries(houseStats).map(([house, data]) => ({
+        house,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length,
+        maxProfit: Math.max(...data.profits)
+      })).sort((a, b) => b.averageProfit - a.averageProfit)
+
+      const bestHouse = housesData[0]
+      return bestHouse ? `${bestHouse.house} (R$ ${bestHouse.averageProfit.toFixed(2)})` : 'N/A'
+    },
+
+    getHouseWithLowestProfit() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const houseStats = {}
+      this.filteredSurebets.forEach(item => {
+        if (!houseStats[item.house]) houseStats[item.house] = { profits: [] }
+        houseStats[item.house].profits.push(item.profit)
+      })
+
+      const housesData = Object.entries(houseStats).map(([house, data]) => ({
+        house,
+        averageProfit: data.profits.reduce((sum, p) => sum + p, 0) / data.profits.length
+      })).sort((a, b) => a.averageProfit - b.averageProfit)
+
+      const worstHouse = housesData[0]
+      return worstHouse ? `${worstHouse.house} (R$ ${worstHouse.averageProfit.toFixed(2)})` : 'N/A'
+    },
+
+    getTotalProfit() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 0
+      return this.filteredSurebets.reduce((sum, item) => sum + item.profit, 0)
+    },
+
+    getProfitRange() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+      const maxProfit = Math.max(...this.filteredSurebets.map(item => item.profit))
+      const minProfit = Math.min(...this.filteredSurebets.map(item => item.profit))
+      return `R$ ${minProfit.toFixed(2)} - R$ ${maxProfit.toFixed(2)}`
+    },
+
+    getActivePeriod() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => {
+        hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
+      })
+
+      const activeHours = Object.entries(hourStats)
+        .filter(([hour, count]) => count > 0)
+        .sort((a, b) => parseInt(a[0]) - parseInt(b[0]))
+
+      if (activeHours.length === 0) return 'N/A'
+
+      const startHour = activeHours[0][0]
+      const endHour = activeHours[activeHours.length - 1][0]
+      return `${startHour}:00h - ${endHour}:00h`
+    },
+
+    getInactivePeriod() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+      const hourStats = {}
+      this.filteredSurebets.forEach(item => {
+        hourStats[item.hour] = (hourStats[item.hour] || 0) + 1
+      })
+
+      const inactiveHours = []
+      for (let i = 0; i < 24; i++) {
+        if (!hourStats[i] || hourStats[i] === 0) {
+          inactiveHours.push(i)
+        }
+      }
+
+      if (inactiveHours.length === 0) return 'Nenhum'
+
+      const startHour = inactiveHours[0]
+      const endHour = inactiveHours[inactiveHours.length - 1]
+      return `${startHour}:00h - ${endHour}:00h`
+    },
+
+    getMostActiveSport() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const sportCounts = {}
+      this.filteredSurebets.forEach(item => {
+        sportCounts[item.sport] = (sportCounts[item.sport] || 0) + 1
+      })
+
+      const mostActive = Object.entries(sportCounts).sort((a, b) => b[1] - a[1])[0]
+      return mostActive ? `${mostActive[0]} (${mostActive[1]}x)` : 'N/A'
+    },
+
+    getLeastActiveSport() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const sportCounts = {}
+      this.filteredSurebets.forEach(item => {
+        sportCounts[item.sport] = (sportCounts[item.sport] || 0) + 1
+      })
+
+      const leastActive = Object.entries(sportCounts).sort((a, b) => a[1] - b[1])[0]
+      return leastActive ? `${leastActive[0]} (${leastActive[1]}x)` : 'N/A'
+    },
+
+    getSportDiversity() {
+      if (!this.filteredSurebets || this.filteredSurebets.length === 0) return 'N/A'
+
+      const uniqueSports = new Set(this.filteredSurebets.map(item => item.sport)).size
+      const totalSurebets = this.filteredSurebets.length
+
+      if (totalSurebets === 0) return 'N/A'
+
+      const diversity = (uniqueSports / totalSurebets * 100).toFixed(1)
+      return `${uniqueSports} esportes (${diversity}% do total)`
+    },
+
+    // Método para obter cores do tema dinamicamente
+    getThemeColor(cssVariable, fallback) {
+      try {
+        // Verificar se document está disponível (para SSR)
+        if (typeof document === 'undefined') return fallback
+
+        const value = getComputedStyle(document.documentElement).getPropertyValue(cssVariable)
+        return value.trim() || fallback
+      } catch (error) {
+        console.warn(`Erro ao obter cor do tema ${cssVariable}:`, error)
+        return fallback
+      }
+    },
+
+    // Forçar o fundo dos gráficos
+    forceChartBackground() {
+      if (!this.chartsInitialized) return
+
+      // Evitar múltiplas execuções simultâneas
+      if (this._forceChartBackgroundRunning) return
+
+      // Evitar execução durante atualização dos gráficos
+      if (this._updatingCharts) return
+
+      this._forceChartBackgroundRunning = true
+
+      const charts = [
+        this.housesChart,
+        this.marketsChart,
+        this.timeChart,
+        this.sportsChart,
+        this.profitFrequencyChart
+      ]
+
+      charts.forEach(chart => {
+        if (chart && chart.canvas) {
+          const canvas = chart.canvas
+          const ctx = canvas.getContext('2d')
+
+          // Aplicar fundo via CSS inline com !important
+          canvas.style.setProperty('background-color', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
+          canvas.style.setProperty('background', this.getThemeColor('--bg-tertiary', '#2a2a2a'), 'important')
+
+          // Aplicar fundo diretamente no contexto 2D após um delay
+          setTimeout(() => {
+            if (ctx && chart.chartArea) {
+              try {
+                ctx.save()
+                ctx.fillStyle = this.getThemeColor('--bg-tertiary', '#2a2a2a')
+                ctx.fillRect(0, 0, canvas.width, canvas.height)
+                ctx.restore()
+              } catch (error) {
+                console.warn('Erro ao aplicar fundo no gráfico:', error)
+              }
+            }
+          }, 200)
+        }
+      })
+
+      // Resetar flag após um delay
+      setTimeout(() => {
+        this._forceChartBackgroundRunning = false
+      }, 500)
+    },
+
+    // Forçar cores verdes dos gráficos - VERSÃO SEGURA
+    forceChartColors() {
+      if (!this.chartsInitialized) return
+
+      // Evitar múltiplas execuções simultâneas
+      if (this._forceChartColorsRunning) return
+
+      // Evitar execução durante atualização dos gráficos
+      if (this._updatingCharts) return
+
+      console.log('🎨 Atualizando cores dos gráficos (versão segura)...')
+      this._forceChartColorsRunning = true
+
+      try {
+        // Aplicar cores de forma segura usando try-catch individual
+        this.safeUpdateChartColors('housesChart', this.housesChart)
+        this.safeUpdateChartColors('timeChart', this.timeChart)
+        this.safeUpdateChartColors('sportsChart', this.sportsChart)
+        this.safeUpdateChartColors('marketsChart', this.marketsChart)
+        this.safeUpdateChartColors('profitFrequencyChart', this.profitFrequencyChart)
+
+        console.log('✅ Cores dos gráficos atualizadas com segurança')
+
+      } catch (error) {
+        console.warn('Erro ao atualizar cores dos gráficos:', error)
+      } finally {
+        // Resetar flag após um delay para evitar chamadas muito frequentes
+        setTimeout(() => {
+          this._forceChartColorsRunning = false
+        }, 1000)
+      }
+    },
+
+    // Método seguro para atualizar cores de um gráfico específico
+    safeUpdateChartColors(chartName, chart) {
+      if (!chart || !chart.data || !chart.data.datasets || !chart.data.datasets[0]) {
+        return
+      }
+
+      try {
+        const dataset = chart.data.datasets[0]
+
+        // Aplicar cores de forma segura
+        if (dataset.backgroundColor !== undefined) {
+          dataset.backgroundColor = this.getThemeColor('--accent-primary', '#00ff88')
+        }
+        if (dataset.borderColor !== undefined) {
+          dataset.borderColor = this.getThemeColor('--accent-primary', '#00ff88')
+        }
+
+        // Atualizar cores dos textos de forma segura
+        if (chart.options && chart.options.scales) {
+          this.safeUpdateScaleColors(chart.options.scales.y, 'y')
+          this.safeUpdateScaleColors(chart.options.scales.x, 'x')
+        }
+
+      } catch (error) {
+        console.warn(`Erro ao atualizar cores do gráfico ${chartName}:`, error)
+      }
+    },
+
+    // Método seguro para atualizar cores das escalas
+    safeUpdateScaleColors(scale, scaleName) {
+      if (!scale) return
+
+      try {
+        if (scale.ticks && scale.ticks.color !== undefined) {
+          scale.ticks.color = this.getThemeColor('--text-primary', '#ffffff')
+        }
+        if (scale.grid && scale.grid.color !== undefined) {
+          scale.grid.color = this.getThemeColor('--border-primary', '#666666')
+        }
+      } catch (error) {
+        console.warn(`Erro ao atualizar cores da escala ${scaleName}:`, error)
+      }
+    },
+
+    // Observar mudanças de tema
+    observeThemeChanges() {
+      let themeChangeTimeout = null
+
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+            // Debounce para evitar múltiplas chamadas
+            if (themeChangeTimeout) {
+              clearTimeout(themeChangeTimeout)
+            }
+
+            console.log('🎨 Tema alterado detectado, atualizando gráficos...')
+            themeChangeTimeout = setTimeout(() => {
+              this.$nextTick(() => {
+                if (!this._forceChartBackgroundRunning && !this._updatingCharts) {
+                  this.forceChartBackground()
+                  // Desabilitar forceChartColors temporariamente para evitar recursão
+                  // if (this.chartsInitialized) {
+                  //   this.forceChartColors()
+                  // }
+                }
+              })
+            }, 300)
+          }
+        })
+      })
+
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+      })
+
+      // Verificação periódica do fundo - DESABILITADA para evitar problemas
+      // const backgroundCheckInterval = setInterval(() => {
+      //   if (this.chartsInitialized && !this._forceChartBackgroundRunning && !this._updatingCharts) {
+      //     this.forceChartBackground()
+      //   }
+      // }, 5000) // Aumentar intervalo para 5 segundos
+
+      // Limpar observer quando componente for destruído
+      this.$once('hook:beforeDestroy', () => {
+        // clearInterval(backgroundCheckInterval) // Intervalo desabilitado
+        observer.disconnect()
+      })
+    },
   }
-  </script>
-  
-  <style scoped>
+}
+</script>
+
+<style scoped>
+.ranking-container {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  overflow: hidden;
+  position: relative;
+  width: calc(100% - 280px);
+  /* Largura ajustada para evitar barra horizontal */
+  max-width: calc(100% - 280px);
+  align-items: stretch;
+  height: 100vh;
+  margin-left: 280px;
+  /* Espaço para o sidebar fixo */
+  transition: margin-left 0.3s ease;
+  box-sizing: border-box;
+
+  &.sidebar-collapsed {
+    margin-left: 80px;
+    /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px);
+    /* Largura ajustada quando colapsado */
+    max-width: calc(100% - 80px);
+  }
+}
+
+.main-content {
+  flex: 1;
+  margin-left: 0;
+  transition: margin-left 0.3s ease;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 200px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+}
+
+.main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+.scroll-spacer {
+  height: 200px;
+  flex-shrink: 0;
+}
+
+.content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: 32px;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin: 0;
+}
+
+.ranking-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 10px var(--accent-primary-transparent));
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 16px;
+  margin: 0;
+}
+
+.data-status-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 20px;
+  font-size: 14px;
+  color: var(--text-primary);
+  backdrop-filter: blur(10px);
+}
+
+.status-icon {
+  font-size: 16px;
+}
+
+.status-icon.cache {
+  color: var(--accent-primary);
+}
+
+.status-icon.api {
+  color: var(--accent-secondary);
+}
+
+.status-text {
+  font-weight: 600;
+}
+
+.status-time {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* Botões de teste UTF-8 */
+.utf8-test-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.test-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.test-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.utf8-test {
+  border-color: var(--accent-primary);
+}
+
+.utf8-stats {
+  border-color: var(--accent-secondary);
+}
+
+.utf8-clear {
+  border-color: var(--error-color);
+}
+
+.utf8-clear:hover {
+  border-color: var(--error-hover);
+  background: var(--error-hover-bg);
+}
+
+.filters-section {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 32px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0 32px;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filter-group label {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* ===== SISTEMA COMPLETO DE PERSONALIZAÇÃO DO FILTER-SELECT ===== */
+
+/* 1. IDENTIFICAÇÃO E SELEÇÃO ESPECÍFICA */
+.filter-select {
+  /* Estilos base */
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border: 2px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 14px 18px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 140px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-md);
+
+  /* Remover aparência padrão do navegador */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* Ícone personalizado de seta */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  background-size: 18px;
+  padding-right: 48px;
+
+  /* Garantir que o texto não sobreponha o ícone */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 2. ESTADOS INTERATIVOS E VISUAIS */
+.filter-select:hover {
+  background: linear-gradient(135deg, var(--bg-secondary-hover), var(--bg-tertiary-hover));
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), 0 0 0 1px var(--accent-primary-transparent);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
+  box-shadow: 0 0 0 3px var(--accent-primary-transparent), var(--shadow-xl);
+  transform: translateY(-1px);
+}
+
+.filter-select:active {
+  transform: translateY(0);
+  transition: transform 0.1s ease;
+}
+
+/* 3. ESTADOS DESABILITADOS */
+.filter-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-overlay);
+  border-color: var(--border-secondary);
+}
+
+/* 4. PERSONALIZAÇÃO DAS OPÇÕES DO DROPDOWN */
+.filter-select option {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  padding: 12px 16px !important;
+  border: none !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border-radius: 0 !important;
+  margin: 2px 0 !important;
+}
+
+/* 5. ESTADOS DAS OPÇÕES */
+.filter-select option:hover {
+  background-color: var(--bg-secondary) !important;
+  color: var(--accent-primary) !important;
+  transform: translateX(4px);
+}
+
+.filter-select option:checked {
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent)) !important;
+  color: var(--accent-primary) !important;
+  font-weight: 700 !important;
+  border-left: 3px solid var(--accent-primary) !important;
+  padding-left: 20px !important;
+}
+
+.filter-select option:selected {
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent)) !important;
+  color: var(--accent-primary) !important;
+}
+
+/* 6. SUPORTE CROSS-BROWSER */
+.filter-select::-ms-expand {
+  display: none;
+}
+
+.filter-select::-webkit-select-placeholder {
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* 7. ANIMAÇÕES E TRANSITIONS */
+.filter-select {
+  animation: filterSelectFadeIn 0.3s ease-out;
+}
+
+@keyframes filterSelectFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 8. ESTADOS ESPECIAIS */
+.filter-select.has-value {
+  border-color: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
+}
+
+.filter-select.is-loading {
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M21 12a9 9 0 11-6.219-8.56'/%3e%3c/svg%3e");
+  animation: filterSelectSpin 1s linear infinite;
+}
+
+@keyframes filterSelectSpin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 9. ESTILOS PARA DROPDOWN ABERTO */
+.filter-select:focus {
+  background-color: var(--bg-primary);
+}
+
+/* 10. GARANTIR VISIBILIDADE DAS OPÇÕES */
+.filter-select option {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+}
+
+.filter-select option:last-child {
+  border-bottom: none !important;
+}
+
+/* 11. ESTILOS PARA OPÇÕES GRUPADAS */
+.filter-select optgroup {
+  background-color: var(--bg-secondary) !important;
+  color: var(--accent-primary) !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 16px !important;
+  border-bottom: 2px solid var(--accent-primary) !important;
+}
+
+.filter-select optgroup option {
+  padding-left: 24px !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+/* 12. ESTILOS PARA OPÇÕES DESTACADAS */
+.filter-select option[data-highlight="true"] {
+  background: linear-gradient(135deg, var(--warning-color-transparent), var(--warning-hover-transparent)) !important;
+  color: var(--warning-color) !important;
+  font-weight: 600 !important;
+  border-left: 3px solid var(--warning-color) !important;
+}
+
+/* 13. ESTILOS PARA OPÇÕES DESABILITADAS */
+.filter-select option:disabled {
+  background-color: var(--bg-tertiary) !important;
+  color: var(--text-tertiary) !important;
+  font-style: italic !important;
+  cursor: not-allowed !important;
+}
+
+/* 14. MELHORIAS DE ACESSIBILIDADE */
+.filter-select:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.filter-select:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px var(--accent-primary-transparent);
+}
+
+/* 15. ESTILOS PARA ESTADOS DE CARREGAMENTO E ERRO */
+.filter-select.is-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.filter-select.has-error {
+  border-color: var(--error-color);
+  background: linear-gradient(135deg, var(--error-color-transparent), var(--error-hover-transparent));
+  box-shadow: 0 0 0 2px var(--error-color-transparent);
+}
+
+.filter-select.has-error:focus {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px var(--error-color-transparent);
+}
+
+/* 16. ESTILOS PARA ESTADOS DE SUCESSO */
+.filter-select.has-success {
+  border-color: var(--accent-primary);
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
+  box-shadow: 0 0 0 2px var(--accent-primary-transparent);
+}
+
+/* 17. ANIMAÇÕES AVANÇADAS */
+.filter-select {
+  transform-origin: center;
+}
+
+/* 18. ESTILOS PARA DARK MODE E ALTO CONTRASTE */
+@media (max-width: 1023px) {
   .ranking-container {
-    display: flex;
-    min-height: 100vh;
-    background: var(--bg-primary);
-    overflow: hidden;
-    position: relative;
-    width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
-    max-width: calc(100% - 280px);
-    align-items: stretch;
-    height: 100vh;
-    margin-left: 280px; /* Espaço para o sidebar fixo */
-    transition: margin-left 0.3s ease;
-    box-sizing: border-box;
-    
-    &.sidebar-collapsed {
-      margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
-      width: calc(100% - 80px); /* Largura ajustada quando colapsado */
-      max-width: calc(100% - 80px);
-    }
-  }
-  
-  .main-content {
-    flex: 1;
     margin-left: 0;
-    transition: margin-left 0.3s ease;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding-bottom: 200px;
+    /* Remove margem em mobile/tablet */
     width: 100%;
     max-width: 100%;
-    min-height: 0;
-    box-sizing: border-box;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
-    display: flex;
-    flex-direction: column;
-    max-height: 100vh;
-  }
-  
-  .main-content::-webkit-scrollbar { width: 8px; }
-  .main-content::-webkit-scrollbar-track { background: transparent; }
-  .main-content::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 4px; }
-  .scroll-spacer { height: 200px; flex-shrink: 0; }
-  
-        .content-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 32px;
-          border-bottom: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-          margin-bottom: 32px;
-        }
-  
-  .header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .page-title {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--accent-primary);
-    margin: 0;
-  }
-  
-  .ranking-icon {
-    width: 36px;
-    height: 36px;
-          color: var(--accent-primary);
-      filter: drop-shadow(0 0 10px var(--accent-primary-transparent));
-  }
-  
-  .page-subtitle {
-    color: var(--text-secondary);
-    font-size: 16px;
-    margin: 0;
-  }
-  
-   .data-status-indicator {
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     gap: 8px;
-     padding: 8px 16px;
-           background: var(--bg-secondary);
-      border: 1px solid var(--border-primary);
-      border-radius: 20px;
-      font-size: 14px;
-      color: var(--text-primary);
-     backdrop-filter: blur(10px);
-   }
-  
-   .status-icon {
-     font-size: 16px;
-   }
-  
-        .status-icon.cache {
-       color: var(--accent-primary);
-     }
-     
-     .status-icon.api {
-       color: var(--accent-secondary);
-     }
-  
-   .status-text {
-     font-weight: 600;
-   }
-  
-        .status-time {
-       color: var(--text-secondary);
-       font-size: 12px;
-       font-weight: 400;
-     }
 
-  /* Botões de teste UTF-8 */
-  .utf8-test-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 16px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .test-btn {
-    padding: 6px 12px;
-    border: 1px solid var(--border-primary);
-    border-radius: 16px;
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    backdrop-filter: blur(10px);
-  }
-
-  .test-btn:hover {
-    background: var(--bg-tertiary);
-    border-color: var(--accent-primary);
-    transform: translateY(-1px);
-  }
-
-  .utf8-test {
-    border-color: var(--accent-primary);
-  }
-
-  .utf8-stats {
-    border-color: var(--accent-secondary);
-  }
-
-  .utf8-clear {
-    border-color: #ff6b6b;
-  }
-
-  .utf8-clear:hover {
-    border-color: #ff5252;
-    background: rgba(255, 107, 107, 0.1);
-  }
-  
-  .filters-section {
-    display: flex;
-    gap: 24px;
-    margin-bottom: 32px;
-    justify-content: center;
-    flex-wrap: wrap;
-    padding: 0 32px;
-  }
-  
-  .filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-      .filter-group label {
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: 14px;
-    }
-  
-  /* ===== SISTEMA COMPLETO DE PERSONALIZAÇÃO DO FILTER-SELECT ===== */
-  
-  /* 1. IDENTIFICAÇÃO E SELEÇÃO ESPECÍFICA */
-  .filter-select {
-    /* Estilos base */
-    background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-    border: 2px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 14px 18px;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 500;
-    min-width: 140px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    
-    /* Remover aparência padrão do navegador */
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    
-    /* Ícone personalizado de seta */
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 16px center;
-    background-size: 18px;
-    padding-right: 48px;
-    
-    /* Garantir que o texto não sobreponha o ícone */
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-  
-  /* 2. ESTADOS INTERATIVOS E VISUAIS */
-  .filter-select:hover {
-    background: linear-gradient(135deg, var(--bg-secondary-hover), var(--bg-tertiary-hover));
-    border-color: var(--accent-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--accent-primary-transparent);
-  }
-  
-  .filter-select:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
-    box-shadow: 0 0 0 3px var(--accent-primary-transparent), 0 8px 25px rgba(0, 0, 0, 0.5);
-    transform: translateY(-1px);
-  }
-  
-  .filter-select:active {
-    transform: translateY(0);
-    transition: transform 0.1s ease;
-  }
-  
-  /* 3. ESTADOS DESABILITADOS */
-  .filter-select:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: rgba(42, 42, 42, 0.5);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  /* 4. PERSONALIZAÇÃO DAS OPÇÕES DO DROPDOWN */
-  .filter-select option {
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
-    padding: 12px 16px !important;
-    border: none !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    border-radius: 0 !important;
-    margin: 2px 0 !important;
-  }
-  
-  /* 5. ESTADOS DAS OPÇÕES */
-  .filter-select option:hover {
-    background-color: var(--bg-secondary) !important;
-    color: var(--accent-primary) !important;
-    transform: translateX(4px);
-  }
-  
-  .filter-select option:checked {
-    background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent)) !important;
-    color: var(--accent-primary) !important;
-    font-weight: 700 !important;
-    border-left: 3px solid var(--accent-primary) !important;
-    padding-left: 20px !important;
-  }
-  
-  .filter-select option:selected {
-    background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent)) !important;
-    color: var(--accent-primary) !important;
-  }
-  
-  /* 6. SUPORTE CROSS-BROWSER */
-  .filter-select::-ms-expand {
-    display: none;
-  }
-  
-  .filter-select::-webkit-select-placeholder {
-    color: var(--text-tertiary);
-    font-style: italic;
-  }
-  
-  /* 7. ANIMAÇÕES E TRANSITIONS */
-  .filter-select {
-    animation: filterSelectFadeIn 0.3s ease-out;
-  }
-  
-  @keyframes filterSelectFadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* 8. ESTADOS ESPECIAIS */
-  .filter-select.has-value {
-    border-color: var(--accent-primary);
-    background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
-  }
-  
-  .filter-select.is-loading {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='M21 12a9 9 0 11-6.219-8.56'/%3e%3c/svg%3e");
-    animation: filterSelectSpin 1s linear infinite;
-  }
-  
-  @keyframes filterSelectSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  
-  /* 9. ESTILOS PARA DROPDOWN ABERTO */
-  .filter-select:focus {
-    background-color: var(--bg-primary);
-  }
-  
-  /* 10. GARANTIR VISIBILIDADE DAS OPÇÕES */
-  .filter-select option {
-    background-color: var(--bg-primary) !important;
-    color: var(--text-primary) !important;
-    border-bottom: 1px solid var(--border-primary) !important;
-  }
-  
-  .filter-select option:last-child {
-    border-bottom: none !important;
-  }
-  
-  /* 11. ESTILOS PARA OPÇÕES GRUPADAS */
-  .filter-select optgroup {
-    background-color: var(--bg-secondary) !important;
-    color: var(--accent-primary) !important;
-    font-weight: 700 !important;
-    font-size: 12px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
-    padding: 8px 16px !important;
-    border-bottom: 2px solid var(--accent-primary) !important;
-  }
-  
-  .filter-select optgroup option {
-    padding-left: 24px !important;
-    font-size: 13px !important;
-    font-weight: 400 !important;
-  }
-  
-  /* 12. ESTILOS PARA OPÇÕES DESTACADAS */
-  .filter-select option[data-highlight="true"] {
-    background: linear-gradient(135deg, var(--warning-color-transparent), var(--warning-hover-transparent)) !important;
-    color: var(--warning-color) !important;
-    font-weight: 600 !important;
-    border-left: 3px solid var(--warning-color) !important;
-  }
-  
-  /* 13. ESTILOS PARA OPÇÕES DESABILITADAS */
-  .filter-select option:disabled {
-    background-color: var(--bg-tertiary) !important;
-    color: var(--text-tertiary) !important;
-    font-style: italic !important;
-    cursor: not-allowed !important;
-  }
-  
-  /* 14. MELHORIAS DE ACESSIBILIDADE */
-  .filter-select:focus-visible {
-    outline: 3px solid var(--accent-primary);
-    outline-offset: 2px;
-  }
-  
-  .filter-select:focus-within {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 4px var(--accent-primary-transparent);
-  }
-  
-  /* 15. ESTILOS PARA ESTADOS DE CARREGAMENTO E ERRO */
-  .filter-select.is-loading {
-    pointer-events: none;
-    opacity: 0.7;
-  }
-  
-  .filter-select.has-error {
-    border-color: var(--error-color);
-    background: linear-gradient(135deg, var(--error-color-transparent), var(--error-hover-transparent));
-    box-shadow: 0 0 0 2px var(--error-color-transparent);
-  }
-  
-  .filter-select.has-error:focus {
-    border-color: var(--error-color);
-    box-shadow: 0 0 0 3px var(--error-color-transparent);
-  }
-  
-  /* 16. ESTILOS PARA ESTADOS DE SUCESSO */
-  .filter-select.has-success {
-    border-color: var(--accent-primary);
-    background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
-    box-shadow: 0 0 0 2px var(--accent-primary-transparent);
-  }
-  
-  /* 17. ANIMAÇÕES AVANÇADAS */
-  .filter-select {
-    transform-origin: center;
-  }
-  
-  /* 18. ESTILOS PARA DARK MODE E ALTO CONTRASTE */
-  @media (max-width: 1023px) {
-    .ranking-container {
-      margin-left: 0; /* Remove margem em mobile/tablet */
+    &.sidebar-collapsed {
       width: 100%;
       max-width: 100%;
-      
-      &.sidebar-collapsed {
-        width: 100%;
-        max-width: 100%;
-        margin-left: 0;
-      }
+      margin-left: 0;
     }
   }
-  
-  @media (prefers-color-scheme: dark) {
-    .filter-select {
-      background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-      border-color: var(--border-primary);
-    }
+}
+
+@media (prefers-color-scheme: dark) {
+  .filter-select {
+    background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+    border-color: var(--border-primary);
   }
-  
-  @media (prefers-contrast: high) {
-    .filter-select {
-      border-width: 3px;
-      box-shadow: 0 0 0 2px var(--border-primary);
-    }
-    
-    .filter-select option {
-      border-bottom: 2px solid var(--border-primary) !important;
-    }
+}
+
+@media (prefers-contrast: high) {
+  .filter-select {
+    border-width: 3px;
+    box-shadow: 0 0 0 2px var(--border-primary);
   }
-  
-  /* 19. ESTILOS PARA REDUÇÃO DE MOVIMENTO */
-  @media (prefers-reduced-motion: reduce) {
-    .filter-select,
-    .filter-select option {
-      transition: none;
-      animation: none;
-      transform: none;
-    }
+
+  .filter-select option {
+    border-bottom: 2px solid var(--border-primary) !important;
   }
-  
-  /* 20. ESTILOS PARA IMPRESSÃO */
-  @media print {
-    .filter-select {
-      background: white !important;
-      color: black !important;
-      border: 1px solid black !important;
-      box-shadow: none !important;
-    }
-    
-    .filter-select option {
-      background: white !important;
-      color: black !important;
-    }
+}
+
+/* 19. ESTILOS PARA REDUÇÃO DE MOVIMENTO */
+@media (prefers-reduced-motion: reduce) {
+
+  .filter-select,
+  .filter-select option {
+    transition: none;
+    animation: none;
+    transform: none;
   }
-  
-  .filter-select:focus {
-    outline: none;
-    border-color: var(--accent-primary);
+}
+
+/* 20. ESTILOS PARA IMPRESSÃO */
+@media print {
+  .filter-select {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
   }
-  
-  .refresh-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border: none;
-    border-radius: 8px;
-    padding: 12px 20px;
-    color: var(--bg-primary);
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 120px;
+
+  .filter-select option {
+    background: white !important;
+    color: black !important;
   }
-  
-  .refresh-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--accent-primary-transparent);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: var(--bg-primary);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--accent-primary-transparent);
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.stats-dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+  padding: 0 32px;
+}
+
+.stat-card {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+}
+
+.stat-icon {
+  font-size: 32px;
+  opacity: 0.8;
+}
+
+.stat-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-number {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+  padding: 0 32px;
+}
+
+.chart-section {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 550px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-section h3 {
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.chart-description {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin: 0 0 16px 0;
+  line-height: 1.4;
+}
+
+.legend-item {
+  display: inline-block;
+  margin-right: 16px;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.legend-color.green {
+  background-color: var(--accent-primary);
+}
+
+.legend-color.yellow {
+  background-color: var(--warning-color);
+}
+
+.legend-color.orange {
+  background-color: var(--error-color);
+}
+
+.chart-container {
+  height: 300px;
+  min-height: 300px;
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+
+.chart-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  border: 1px solid var(--border-primary);
+  backdrop-filter: blur(10px);
+  height: auto;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+/* Scrollbars removidos - conteúdo exibido completamente */
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+  transform: translateY(-1px);
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  margin-right: 8px;
+}
+
+.stat-value {
+  color: var(--accent-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  min-width: fit-content;
+  background: var(--accent-primary-transparent);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--accent-primary);
+}
+
+.chart-container {
+  height: 100px;
+  position: relative;
+}
+
+.ranking-section {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 0 32px 32px;
+}
+
+.ranking-section h3 {
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.ranking-table-container {
+  overflow-x: auto;
+}
+
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ranking-table th {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border-primary);
+  text-align: left;
+}
+
+.ranking-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+}
+
+.ranking-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.position-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.position-badge.gold {
+  background: linear-gradient(135deg, var(--warning-color), var(--warning-hover));
+  color: var(--bg-primary);
+}
+
+.position-badge.silver {
+  background: linear-gradient(135deg, var(--text-tertiary), var(--text-secondary));
+  color: var(--bg-primary);
+}
+
+.position-badge.bronze {
+  background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-secondary));
+  color: var(--text-primary);
+}
+
+.position-badge.normal {
+  background: var(--border-primary);
+  color: var(--text-primary);
+}
+
+.house-name,
+.pair-names {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.house-logo {
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--bg-primary);
+  font-size: 12px;
+}
+
+.house-tag {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--bg-primary);
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.pair-separator {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.consistency-score {
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.consistency-score.high {
+  background: var(--success-color-transparent);
+  color: var(--success-color);
+}
+
+.consistency-score.medium {
+  background: var(--warning-color-transparent);
+  color: var(--warning-color);
+}
+
+.consistency-score.low {
+  background: var(--error-color-transparent);
+  color: var(--error-color);
+}
+
+.positive {
+  color: var(--text-primary);
+}
+
+.negative {
+  color: var(--error-color);
+}
+
+.neutral {
+  color: var(--text-secondary);
+}
+
+.insights-section {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 0 32px 32px;
+}
+
+.insights-section h3 {
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.inactive-houses-info {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+}
+
+.inactive-houses-info h4 {
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.inactive-houses-info p {
+  color: var(--text-primary);
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.inactive-houses-info strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.insight-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.insight-icon {
+  font-size: 20px;
+}
+
+.insight-header h4 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.insight-content p {
+  color: var(--text-primary);
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.insight-detail {
+  color: var(--text-secondary);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.no-data {
+  color: var(--text-tertiary);
+  font-style: italic;
+  font-size: 12px;
+}
+
+.auto-refresh-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 10px 15px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--error-color);
+  /* Red for inactive */
+  transition: background-color 0.3s ease;
+}
+
+.status-dot.active {
+  background-color: var(--accent-primary);
+  /* Green for active */
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
   }
-  
-  .refresh-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+
+  50% {
+    opacity: 0.5;
   }
-  
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.update-info {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.update-text {
+  color: var(--text-secondary);
+}
+
+.update-count {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.toggle-auto-refresh-btn {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  color: var(--bg-primary);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+}
+
+.toggle-auto-refresh-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--accent-primary-transparent);
+}
+
+.toggle-auto-refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-auto-refresh-btn.active {
+  background: linear-gradient(135deg, var(--error-color), var(--error-hover));
+  color: var(--text-primary);
+}
+
+/* 📊 Estilos para a seção melhorada de Mercados */
+.markets-improved-section {
+  background: var(--bg-secondary);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.section-header h3 {
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.section-header p {
+  color: var(--text-secondary);
+  margin: 0;
+  font-size: 14px;
+}
+
+.markets-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+  min-height: 600px;
+}
+
+.chart-wrapper {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 500px;
+  height: auto;
+}
+
+.chart-wrapper h4 {
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.chart-wrapper .chart-container {
+  height: 300px;
+  min-height: 300px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.chart-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.control-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.control-btn:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+  transform: translateY(-1px);
+}
+
+.control-btn.active {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border-color: var(--accent-primary);
+}
+
+.chart-filters {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg-overlay);
+  border-radius: 12px;
+  border: 1px solid var(--border-secondary);
+}
+
+.chart-legend {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--bg-overlay);
+  border-radius: 8px;
+  border: 1px solid var(--border-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-item.selected {
+  background: var(--accent-primary-transparent);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--accent-primary);
+}
+
+.legend-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--border-primary);
+}
+
+.legend-text {
+  color: var(--text-primary);
+  font-weight: 600;
+  flex: 1;
+}
+
+.clear-filter-btn {
+  background: var(--warning-color-transparent);
+  border: 1px solid var(--warning-color);
+  border-radius: 4px;
+  color: var(--warning-color);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.clear-filter-btn:hover {
+  background: var(--warning-color-transparent);
+  border-color: var(--warning-color);
+}
+
+/* Melhorias para responsividade dos gráficos */
+.chart-container canvas {
+  max-width: 100%;
+  height: auto !important;
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Regras agressivas para forçar o fundo dos gráficos */
+[data-theme="dark"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+[data-theme="light"] .chart-container canvas {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+/* Forçar fundo em todos os elementos do gráfico */
+.chart-container * {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Regra específica para o canvas do Chart.js */
+.chart-container canvas[width][height] {
+  background-color: var(--bg-tertiary) !important;
+  background: var(--bg-tertiary) !important;
+}
+
+.chart-wrapper {
+  overflow: hidden;
+}
+
+.chart-stats {
+  margin: 16px 0;
+  flex-shrink: 0;
+}
+
+.chart-description {
+  margin: 12px 0;
+  flex-shrink: 0;
+}
+
+/* Garantir que os gráficos tenham espaço suficiente */
+.chart-wrapper>* {
+  flex-shrink: 0;
+}
+
+.chart-wrapper .chart-container {
+  flex: 1;
+  flex-shrink: 1;
+}
+
+/* Estilos para a nova seção de análise de mercados */
+.markets-analysis-section {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 0 32px 32px;
+  backdrop-filter: blur(10px);
+  overflow: visible;
+  height: auto;
+}
+
+.markets-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+  background: var(--bg-secondary-hover);
+  border-color: var(--border-secondary);
+  transform: translateY(-2px);
+}
+
+.summary-icon {
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-primary-transparent);
+  border-radius: 12px;
+  border: 1px solid var(--accent-primary);
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.summary-value {
+  color: var(--accent-primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.summary-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.markets-main-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+
+.markets-chart-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.chart-container-compact {
+  height: 250px;
+  min-height: 250px;
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 16px 0;
+  max-height: calc(100% - 120px);
+}
+
+.markets-ranking-compact {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.ranking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.ranking-header h4 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.ranking-list {
+  flex: 1;
+  overflow: visible;
+  height: auto;
+  max-height: calc(100% - 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.ranking-item:hover {
+  background: linear-gradient(135deg, var(--bg-secondary-hover), var(--bg-tertiary-hover));
+  border-color: var(--accent-primary);
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md), 0 0 0 1px var(--accent-primary-transparent);
+}
+
+.ranking-item.highlighted {
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--accent-primary-transparent), 0 0 0 1px var(--accent-primary);
+}
+
+.ranking-item.category-filtered {
+  opacity: 0.3;
+}
+
+.ranking-position {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px var(--accent-primary-transparent);
+  border: 2px solid var(--border-primary);
+}
+
+.ranking-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.market-name {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: var(--text-shadow);
+}
+
+.market-category {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ranking-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.stat-count {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.stat-profit {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  text-shadow: var(--text-shadow);
+}
+
+.markets-detail-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.detail-header h4 {
+  color: var(--text-primary);
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  text-shadow: var(--text-shadow);
+}
+
+.close-btn {
+  background: var(--error-color-transparent);
+  border: 1px solid var(--error-color);
+  border-radius: 6px;
+  color: var(--error-color);
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: var(--error-color);
+  border-color: var(--error-hover);
+  color: var(--text-primary);
+}
+
+.detail-table-wrapper {
+  overflow-x: auto;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 16px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-primary);
+}
+
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: var(--bg-tertiary);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.detail-table th {
+  background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+  color: var(--text-primary);
+  font-weight: 700;
+  padding: 16px 12px;
+  border-bottom: 2px solid var(--accent-primary);
+  text-align: left;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.detail-row:hover {
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  transform: translateX(2px);
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.detail-row.highlighted {
+  background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
+  border-left: 4px solid var(--accent-primary);
+  box-shadow: 0 2px 8px var(--accent-primary-transparent);
+}
+
+/* Estilos para colunas de dados */
+.detail-table .position {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  width: 60px;
+  font-size: 16px;
+  text-shadow: var(--text-shadow);
+}
+
+.detail-table .count {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: center;
+  width: 80px;
+  font-size: 15px;
+  text-shadow: var(--text-shadow);
+}
+
+.detail-table .profit {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: right;
+  width: 120px;
+  font-size: 15px;
+  text-shadow: var(--text-shadow);
+}
+
+.detail-table .score {
+  color: var(--bg-primary);
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 8px;
+  padding: 6px 12px;
+  width: 80px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px var(--accent-primary-transparent);
+  border: 1px solid var(--border-primary);
+}
+
+.detail-row.category-filtered {
+  opacity: 0.3;
+}
+
+/* Estilos para células da tabela detalhada */
+.market-name-cell {
+  min-width: 200px;
+}
+
+.market-name-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.market-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.market-name-text {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-shadow: var(--text-shadow);
+}
+
+.category-cell {
+  min-width: 120px;
+}
+
+.category-badge-compact {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border-primary);
+}
+
+.expand-section {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.expand-btn {
+  background: var(--accent-primary-transparent);
+  border: 1px solid var(--accent-primary);
+  border-radius: 8px;
+  color: var(--accent-primary);
+  cursor: pointer;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.expand-btn:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-secondary);
+  color: var(--bg-primary);
+  transform: translateY(-1px);
+}
+
+.markets-ranking {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px;
+  height: auto;
+}
+
+.markets-ranking h4 {
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.table-header h4 {
+  margin: 0;
+  padding: 0;
+  border: none;
+  text-align: left;
+}
+
+.table-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.filter-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-select:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-secondary);
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-primary-transparent);
+}
+
+.category {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, var(--accent-secondary), var(--accent-tertiary));
+  border: 1px solid var(--border-primary);
+  box-shadow: 0 1px 4px var(--accent-secondary-transparent);
+}
+
+.subcategory {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.data-row.highlighted {
+  background: var(--accent-primary-transparent);
+  border-left: 4px solid var(--accent-primary);
+}
+
+.data-row.category-filtered {
+  opacity: 0.3;
+  background: var(--bg-tertiary);
+}
+
+.data-row.category-filtered:hover {
+  opacity: 0.6;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  height: 100%;
+  flex: 1;
+}
+
+.modern-table th {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-weight: 600;
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border-primary);
+  text-align: left;
+  font-size: 15px;
+}
+
+.modern-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.data-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.position {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  width: 60px;
+  font-size: 16px;
+}
+
+.market-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.market-info .icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.count {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: center;
+  width: 80px;
+  font-size: 15px;
+  text-shadow: var(--text-shadow);
+}
+
+.profit {
+  color: var(--text-primary);
+  font-weight: 700;
+  text-align: right;
+  width: 120px;
+  font-size: 15px;
+  text-shadow: var(--text-shadow);
+}
+
+.score {
+  color: var(--bg-primary);
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: 8px;
+  padding: 6px 12px;
+  width: 80px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px var(--accent-primary-transparent);
+  border: 1px solid var(--border-primary);
+}
+
+
+
+/* Media queries para telas muito grandes */
+@media (min-width: 1400px) {
+  .ranking-container {
+    width: calc(100% - 280px);
+    max-width: calc(100% - 280px);
+  }
+
+  .content-header {
+    padding: 32px 40px;
+  }
+
+  .page-title {
+    font-size: 36px;
+  }
+
+  .page-subtitle {
+    font-size: 18px;
+  }
+
   .stats-dashboard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 32px;
-    padding: 0 32px;
+    padding: 32px 40px;
+    gap: 24px;
   }
-  
-      .stat-card {
-      background: var(--bg-secondary);
-      backdrop-filter: blur(10px);
-      border: 1px solid var(--border-primary);
-      border-radius: 12px;
-      padding: 24px;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      transition: transform 0.3s ease;
-    }
-  
-  .stat-card:hover { transform: translateY(-4px); }
-  
-  .stat-icon {
-    font-size: 32px;
-    opacity: 0.8;
+
+  .charts-grid {
+    padding: 0 40px 32px;
+    gap: 32px;
   }
-  
-  .stat-content {
-    display: flex;
-    flex-direction: column;
+
+  .chart-wrapper .chart-container {
+    height: 350px;
+    min-height: 350px;
   }
-  
-      .stat-number {
-      font-size: 22px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-    
-    .stat-label {
-      color: var(--text-secondary);
-      font-size: 14px;
-    }
-  
-   .charts-grid {
-     display: grid;
-     grid-template-columns: repeat(4, 1fr);
-     gap: 24px;
-     margin-bottom: 32px;
-     padding: 0 32px;
-   }
-  
-     .chart-section {
-     background: var(--bg-secondary);
-     backdrop-filter: blur(10px);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 24px;
-     min-height: 550px;
-     height: auto;
-     display: flex;
-     flex-direction: column;
-   }
-   
-    .chart-section h3 {
-      color: var(--text-primary);
-      margin: 0 0 12px 0;
-      font-size: 18px;
-      font-weight: 600;
-    }
-  
-   .chart-description {
-     color: var(--text-secondary);
-     font-size: 13px;
-     margin: 0 0 16px 0;
-     line-height: 1.4;
-   }
-  
-   .legend-item {
-     display: inline-block;
-     margin-right: 16px;
-     margin-left: 8px;
-     font-size: 12px;
-   }
-  
-   .legend-color {
-     display: inline-block;
-     width: 12px;
-     height: 12px;
-     border-radius: 50%;
-     margin-right: 6px;
-     vertical-align: middle;
-   }
-  
-      .legend-color.green {
-     background-color: var(--accent-primary);
-   }
-   
-   .legend-color.yellow {
-     background-color: var(--warning-color);
-   }
-   
-   .legend-color.orange {
-     background-color: var(--error-color);
-   }
-  
-   .chart-container {
-     height: 300px;
-     min-height: 300px;
-     position: relative;
-     flex: 1;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-   }
-  
-  
-  
-   .chart-stats {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-     gap: 12px;
-     margin-bottom: 16px;
-     padding: 16px;
-     background: var(--bg-tertiary);
-     border-radius: 12px;
-     border: 1px solid var(--border-primary);
-     backdrop-filter: blur(10px);
-     height: auto;
-     overflow: visible;
-     flex-shrink: 0;
-   }
-  
-   /* Scrollbars removidos - conteúdo exibido completamente */
-  
-      .stat-item {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     padding: 10px 14px;
-     background: var(--bg-primary);
-     border-radius: 8px;
-     border: 1px solid var(--border-primary);
-     transition: all 0.2s ease;
-   }
-   
-   .stat-item:hover {
-     background: var(--bg-secondary);
-     border-color: var(--border-secondary);
-     transform: translateY(-1px);
-   }
-   
-   .stat-label {
-     color: var(--text-secondary);
-     font-size: 13px;
-     font-weight: 500;
-     flex: 1;
-     margin-right: 8px;
-   }
-  
-   .stat-value {
-     color: var(--accent-primary);
-     font-size: 13px;
-     font-weight: 600;
-     text-align: right;
-     min-width: fit-content;
-     background: var(--accent-primary-transparent);
-     padding: 4px 8px;
-     border-radius: 4px;
-     border: 1px solid var(--accent-primary);
-   }
-  
+
+  .chart-section {
+    min-height: 600px;
+  }
+
   .chart-container {
-    height: 100px;
-    position: relative;
+    height: 350px;
+    min-height: 350px;
   }
-  
-  .ranking-section {
-    background: var(--bg-secondary);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 24px;
+
+  .markets-layout {
+    padding: 0 40px 32px;
+    gap: 32px;
+  }
+
+  .ranking-section,
+  .insights-section,
+  .markets-analysis-section {
+    margin: 0 40px 40px;
+  }
+}
+
+/* Media queries para telas médias */
+@media (min-width: 1200px) and (max-width: 1399px) {
+  .content-header {
+    padding: 28px 32px;
+  }
+
+  .page-title {
+    font-size: 32px;
+  }
+
+  .stats-dashboard {
+    padding: 28px 32px;
+    gap: 20px;
+  }
+
+  .charts-grid {
+    padding: 0 32px 28px;
+    gap: 24px;
+  }
+
+  .markets-layout {
+    padding: 0 32px 28px;
+    gap: 24px;
+  }
+
+  .ranking-section,
+  .insights-section,
+  .markets-analysis-section {
     margin: 0 32px 32px;
   }
-  
-  .ranking-section h3 {
-    color: var(--text-primary);
-    margin: 0 0 20px 0;
-    font-size: 20px;
-    font-weight: 600;
+}
+
+/* Media queries para tablets em landscape */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
   }
-  
-  .ranking-table-container {
-    overflow-x: auto;
+
+  .markets-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
-  
-  .ranking-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
+
+  .markets-summary {
+    grid-template-columns: repeat(2, 1fr);
   }
-  
-  .ranking-table th {
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-weight: 600;
-    padding: 12px 8px;
-    border-bottom: 1px solid var(--border-primary);
+
+  .chart-wrapper .chart-container {
+    height: 300px;
+    min-height: 300px;
+  }
+
+  .chart-container {
+    height: 300px;
+    min-height: 300px;
+  }
+}
+
+/* Media queries para tablets em portrait */
+@media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .markets-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .markets-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-wrapper .chart-container {
+    height: 280px;
+    min-height: 280px;
+  }
+
+  .chart-container {
+    height: 280px;
+    min-height: 280px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .main-content {
+    margin-left: 0;
+  }
+
+  .charts-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .markets-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-wrapper .chart-container {
+    height: 280px;
+    min-height: 280px;
+  }
+
+  .chart-section {
+    min-height: 500px;
+  }
+
+  .chart-container {
+    height: 270px;
+    min-height: 270px;
+  }
+
+  .markets-main-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .markets-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .markets-ranking-compact {
+    min-height: 380px;
+    height: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
     text-align: left;
   }
-  
-  .ranking-table td {
-    padding: 12px 8px;
-    border-bottom: 1px solid var(--border-secondary);
-    color: var(--text-primary);
+
+  .markets-chart-section {
+    min-height: 380px;
+    height: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
   }
-  
-  .ranking-row:hover {
-    background: var(--bg-tertiary);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 120px;
+    -webkit-overflow-scrolling: touch;
   }
-  
-  .position-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 12px;
+
+  .content-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px 20px;
   }
-  
-  .position-badge.gold {
-    background: linear-gradient(135deg, var(--warning-color), var(--warning-hover));
-    color: var(--bg-primary);
+
+  .page-title {
+    font-size: 24px;
   }
-  
-  .position-badge.silver {
-    background: linear-gradient(135deg, var(--text-tertiary), var(--text-secondary));
-    color: var(--bg-primary);
-  }
-  
-  .position-badge.bronze {
-    background: linear-gradient(135deg, var(--accent-tertiary), var(--accent-secondary));
-    color: var(--text-primary);
-  }
-  
-  .position-badge.normal {
-    background: var(--border-primary);
-    color: var(--text-primary);
-  }
-  
-  .house-name, .pair-names {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .house-logo {
-    width: 28px;
-    height: 28px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    color: var(--bg-primary);
-    font-size: 12px;
-  }
-  
-  .house-tag {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    color: var(--bg-primary);
-    padding: 2px 6px;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 10px;
-    white-space: nowrap;
-  }
-  
-  .pair-separator {
-    color: var(--text-primary);
-    font-weight: 700;
-    font-size: 10px;
-  }
-  
-  .consistency-score {
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 11px;
-  }
-  
-  .consistency-score.high {
-    background: var(--success-color-transparent);
-    color: var(--success-color);
-  }
-  
-  .consistency-score.medium {
-    background: var(--warning-color-transparent);
-    color: var(--warning-color);
-  }
-  
-  .consistency-score.low {
-    background: var(--error-color-transparent);
-    color: var(--error-color);
-  }
-  
-  .positive { color: var(--text-primary); }
-  .negative { color: var(--error-color); }
-  .neutral { color: var(--text-secondary); }
-  
-  .insights-section {
-    background: var(--bg-secondary);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 24px;
-    margin: 0 32px 32px;
-  }
-  
-  .insights-section h3 {
-    color: var(--text-primary);
-    margin: 0 0 24px 0;
-    font-size: 20px;
-    font-weight: 600;
-  }
-  
-  .insights-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-  }
-  
-  .inactive-houses-info {
-    margin-top: 24px;
-    padding: 20px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-  }
-  
-  .inactive-houses-info h4 {
-    color: var(--text-primary);
-    margin: 0 0 16px 0;
-    font-size: 16px;
-    font-weight: 600;
-  }
-  
-  .inactive-houses-info p {
-    color: var(--text-primary);
-    margin: 8px 0;
+
+  .page-subtitle {
     font-size: 14px;
   }
-  
-  .inactive-houses-info strong {
-    color: var(--text-primary);
-    font-weight: 600;
+
+  .data-status-indicator {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
-  
-  .insight-card {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
+
+  .filters-section {
+    flex-direction: column;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .filter-group {
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 16px;
+  }
+
+  .stats-dashboard {
+    grid-template-columns: 1fr;
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .stat-card {
     padding: 16px;
   }
-  
-  .insight-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
+
+  .stat-icon {
+    font-size: 24px;
   }
-  
-  .insight-icon {
+
+  .stat-number {
     font-size: 20px;
   }
-  
-  .insight-header h4 {
-    color: var(--text-primary);
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  
-  .insight-content p {
-    color: var(--text-primary);
-    margin: 0;
-    font-weight: 600;
-    font-size: 14px;
-  }
-  
-  .insight-detail {
-    color: var(--text-secondary);
-    font-weight: 400;
+
+  .stat-label {
     font-size: 12px;
   }
-  
-  .no-data {
-    color: var(--text-tertiary);
-    font-style: italic;
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+    padding: 0 20px;
+    gap: 16px;
+  }
+
+  .chart-wrapper {
+    padding: 16px;
+  }
+
+  .chart-wrapper h4 {
+    font-size: 16px;
+  }
+
+  .insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-table {
     font-size: 12px;
   }
-  
-  .auto-refresh-status {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 20px;
-    padding: 10px 15px;
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    color: var(--text-primary);
-    font-size: 14px;
-    font-weight: 600;
+
+  .ranking-table th,
+  .ranking-table td {
+    padding: 8px 4px;
   }
-  
-  .status-indicator {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  
-  .status-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--error-color); /* Red for inactive */
-    transition: background-color 0.3s ease;
-  }
-  
-  .status-dot.active {
-    background-color: var(--accent-primary); /* Green for active */
-    animation: pulse 2s infinite;
-  }
-  
-  @keyframes pulse {
-    0% { opacity: 1; }
-    50% { opacity: 0.5; }
-    100% { opacity: 1; }
-  }
-  
-  .update-info {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  
-  .update-text {
-    color: var(--text-secondary);
-  }
-  
-  .update-count {
-    color: var(--text-primary);
-    font-weight: 700;
-  }
-  
-  .toggle-auto-refresh-btn {
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border: none;
-    border-radius: 8px;
-    padding: 12px 20px;
-    color: var(--bg-primary);
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 120px;
-  }
-  
-  .toggle-auto-refresh-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px var(--accent-primary-transparent);
-  }
-  
-  .toggle-auto-refresh-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  
-  .toggle-auto-refresh-btn.active {
-    background: linear-gradient(135deg, var(--error-color), var(--error-hover));
-    color: var(--text-primary);
-  }
-  
-  /* 📊 Estilos para a seção melhorada de Mercados */
+
   .markets-improved-section {
-    background: var(--bg-secondary);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border-primary);
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 32px;
+    padding: 16px;
   }
-  
-  .section-header {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-  
+
   .section-header h3 {
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-    font-size: 24px;
-    font-weight: 600;
+    font-size: 20px;
   }
-  
-  .section-header p {
-    color: var(--text-secondary);
-    margin: 0;
-    font-size: 14px;
+
+  .modern-table {
+    font-size: 12px;
   }
-  
-   .markets-layout {
-     display: grid;
-     grid-template-columns: 1fr 1fr;
-     gap: 24px;
-     align-items: stretch;
-     min-height: 600px;
-   }
-  
-   .chart-wrapper {
-     background: var(--bg-tertiary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 24px;
-     text-align: center;
-     display: flex;
-     flex-direction: column;
-     justify-content: space-between;
-     min-height: 500px;
-     height: auto;
-   }
-   
-   .chart-wrapper h4 {
-     color: var(--text-primary);
-     margin: 0 0 12px 0;
-     font-size: 18px;
-     font-weight: 600;
-   }
-  
-     .chart-wrapper .chart-container {
-      height: 300px;
-      min-height: 300px;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 20px 0;
-    }
-  
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+
+  .modern-table th,
+  .modern-table td {
+    padding: 8px 6px;
+  }
+
+  .markets-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ranking-section {
+    margin: 0 20px 32px;
+  }
+
+  .insights-section {
+    margin: 0 20px 32px;
+  }
+
+  .markets-analysis-section {
+    margin: 0 20px 32px;
+  }
+
+  .chart-wrapper,
+  .markets-ranking {
+    min-height: 350px;
+    height: auto;
+  }
+
+  .chart-wrapper .chart-container {
+    height: 250px;
+    min-height: 250px;
+  }
+
+  .chart-section {
+    min-height: 450px;
+  }
+
+  .chart-container {
+    height: 250px;
+    min-height: 250px;
+  }
+
+  .markets-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-container-compact {
+    height: 200px;
+    min-height: 200px;
+  }
+
+  .markets-ranking-compact {
+    min-height: 350px;
+    height: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+    padding: 16px;
+  }
+
+  .markets-chart-section {
+    min-height: 350px;
+    height: 100%;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+    padding: 16px;
+  }
+
+  /* Melhorias para centralização em mobile */
+  .markets-main-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .chart-header,
+  .ranking-header {
+    text-align: center;
     margin-bottom: 16px;
   }
-  
-  .chart-controls {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .control-btn {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  
-  .control-btn:hover {
-    background: var(--bg-secondary);
-    border-color: var(--border-secondary);
-    transform: translateY(-1px);
-  }
-  
-  .control-btn.active {
-    background: var(--accent-primary);
-    color: var(--bg-primary);
-    border-color: var(--accent-primary);
-  }
-  
-  .chart-filters {
-    margin: 16px 0;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .chart-legend {
-    margin-top: 16px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-  }
-  
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  
-  .legend-item.selected {
-    background: var(--accent-primary-transparent);
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid var(--accent-primary);
-  }
-  
-  .legend-color {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-  }
-  
-  .legend-text {
-    color: var(--text-primary);
-    font-weight: 600;
-    flex: 1;
-  }
-  
-  .clear-filter-btn {
-    background: var(--warning-color-transparent);
-    border: 1px solid var(--warning-color);
-    border-radius: 4px;
-    color: var(--warning-color);
-    cursor: pointer;
-    padding: 4px 8px;
-    font-size: 12px;
-    transition: all 0.3s ease;
-  }
-  
-   .clear-filter-btn:hover {
-     background: var(--warning-color-transparent);
-     border-color: var(--warning-color);
-   }
-  
-  /* Melhorias para responsividade dos gráficos */
-  .chart-container canvas {
-    max-width: 100%;
-    height: auto !important;
-    background-color: var(--bg-tertiary) !important;
-    background: var(--bg-tertiary) !important;
-  }
-  
-  /* Regras agressivas para forçar o fundo dos gráficos */
-  [data-theme="dark"] .chart-container canvas {
-    background-color: var(--bg-tertiary) !important;
-    background: var(--bg-tertiary) !important;
-  }
-  
-  [data-theme="light"] .chart-container canvas {
-    background-color: var(--bg-tertiary) !important;
-    background: var(--bg-tertiary) !important;
-  }
-  
-  /* Forçar fundo em todos os elementos do gráfico */
-  .chart-container * {
-    background-color: var(--bg-tertiary) !important;
-  }
-  
-  /* Regra específica para o canvas do Chart.js */
-  .chart-container canvas[width][height] {
-    background-color: var(--bg-tertiary) !important;
-    background: var(--bg-tertiary) !important;
-  }
-  
-  .chart-wrapper {
-    overflow: hidden;
-  }
-  
-  .chart-stats {
-    margin: 16px 0;
-    flex-shrink: 0;
-  }
-  
-  .chart-description {
-    margin: 12px 0;
-    flex-shrink: 0;
-  }
-  
-  /* Garantir que os gráficos tenham espaço suficiente */
-  .chart-wrapper > * {
-    flex-shrink: 0;
-  }
-  
-  .chart-wrapper .chart-container {
-    flex: 1;
-    flex-shrink: 1;
-  }
-  
-   /* Estilos para a nova seção de análise de mercados */
-   .markets-analysis-section {
-     background: var(--bg-tertiary);
-     border: 1px solid var(--border-primary);
-     border-radius: 16px;
-     padding: 24px;
-     margin: 0 32px 32px;
-     backdrop-filter: blur(10px);
-     overflow: visible;
-     height: auto;
-   }
-  
-   .markets-summary {
-     display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-     gap: 16px;
-     margin-bottom: 24px;
-   }
-  
-      .summary-card {
-     background: var(--bg-secondary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 20px;
-     display: flex;
-     align-items: center;
-     gap: 16px;
-     transition: all 0.3s ease;
-   }
-   
-   .summary-card:hover {
-     background: var(--bg-secondary-hover);
-     border-color: var(--border-secondary);
-     transform: translateY(-2px);
-   }
-  
-   .summary-icon {
-     font-size: 24px;
-     width: 48px;
-     height: 48px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     background: var(--accent-primary-transparent);
-     border-radius: 12px;
-     border: 1px solid var(--accent-primary);
-   }
-  
-   .summary-content {
-     display: flex;
-     flex-direction: column;
-     flex: 1;
-   }
-  
-   .summary-value {
-     color: var(--accent-primary);
-     font-size: 18px;
-     font-weight: 700;
-     margin-bottom: 4px;
-   }
-  
-   .summary-label {
-     color: var(--text-secondary);
-     font-size: 13px;
-     font-weight: 500;
-   }
-  
-   .markets-main-layout {
-     display: grid;
-     grid-template-columns: 1fr 1fr;
-     gap: 24px;
-     margin-bottom: 24px;
-     align-items: stretch;
-   }
-  
-   .markets-chart-section {
-     background: var(--bg-secondary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 20px;
-     display: flex;
-     flex-direction: column;
-     height: 100%;
-     min-height: 400px;
-     justify-content: center;
-     align-items: center;
-     text-align: center;
-   }
-  
-   .chart-container-compact {
-     height: 250px;
-     min-height: 250px;
-     position: relative;
-     flex: 1;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     margin: 16px 0;
-     max-height: calc(100% - 120px);
-   }
-  
-   .markets-ranking-compact {
-     background: var(--bg-secondary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 20px;
-     display: flex;
-     flex-direction: column;
-     height: 100%;
-     min-height: 400px;
-     justify-content: center;
-     align-items: center;
-     text-align: center;
-   }
-  
-      .ranking-header {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     margin-bottom: 16px;
-     padding-bottom: 12px;
-     border-bottom: 1px solid var(--border-primary);
-   }
-   
-   .ranking-header h4 {
-     color: var(--text-primary);
-     margin: 0;
-     font-size: 18px;
-     font-weight: 600;
-   }
-  
-   .ranking-list {
-     flex: 1;
-     overflow: visible;
-     height: auto;
-     max-height: calc(100% - 80px);
-     display: flex;
-     flex-direction: column;
-     gap: 8px;
-   }
-  
-      .ranking-item {
-     display: flex;
-     align-items: center;
-     gap: 12px;
-     padding: 12px;
-     margin-bottom: 8px;
-     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-     border-radius: 8px;
-     border: 1px solid var(--border-primary);
-     cursor: pointer;
-     transition: all 0.3s ease;
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-   }
-   
-   .ranking-item:hover {
-     background: linear-gradient(135deg, var(--bg-secondary-hover), var(--bg-tertiary-hover));
-     border-color: var(--accent-primary);
-     transform: translateX(4px);
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--accent-primary-transparent);
-   }
-   
-   .ranking-item.highlighted {
-     background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
-     border-color: var(--accent-primary);
-     box-shadow: 0 2px 8px var(--accent-primary-transparent), 0 0 0 1px var(--accent-primary);
-   }
-  
-   .ranking-item.category-filtered {
-     opacity: 0.3;
-   }
-  
-   .ranking-position {
-     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-     color: var(--text-primary);
-     font-weight: 800;
-     font-size: 14px;
-     width: 32px;
-     height: 32px;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     border-radius: 50%;
-     flex-shrink: 0;
-     box-shadow: 0 2px 8px var(--accent-primary-transparent);
-     border: 2px solid var(--border-primary);
-   }
-  
-   .ranking-content {
-     flex: 1;
-     min-width: 0;
-   }
-  
-   .market-name {
-     color: var(--text-primary);
-     font-weight: 700;
-     font-size: 14px;
-     margin-bottom: 4px;
-     white-space: nowrap;
-     overflow: hidden;
-     text-overflow: ellipsis;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-  
-   .market-category {
-     display: flex;
-     align-items: center;
-     gap: 8px;
-   }
-  
-   .ranking-stats {
-     display: flex;
-     flex-direction: column;
-     align-items: flex-end;
-     gap: 4px;
-     flex-shrink: 0;
-   }
-  
-      .stat-count {
-     color: var(--text-secondary);
-     font-size: 12px;
-     font-weight: 500;
-   }
-   
-   .stat-profit {
-     color: var(--text-primary);
-     font-size: 13px;
-     font-weight: 700;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-  
-   .markets-detail-section {
-     background: var(--bg-secondary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 20px;
-     margin-top: 24px;
-   }
-  
-      .detail-header {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     margin-bottom: 16px;
-     padding-bottom: 12px;
-     border-bottom: 1px solid var(--border-primary);
-   }
-   
-   .detail-header h4 {
-     color: var(--text-primary);
-     margin: 0;
-     font-size: 20px;
-     font-weight: 700;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-  
-   .close-btn {
-     background: var(--error-color-transparent);
-     border: 1px solid var(--error-color);
-     border-radius: 6px;
-     color: var(--error-color);
-     cursor: pointer;
-     padding: 8px 12px;
-     font-size: 14px;
-     transition: all 0.3s ease;
-   }
-  
-   .close-btn:hover {
-     background: var(--error-color);
-     border-color: var(--error-hover);
-     color: var(--text-primary);
-   }
-  
-   .detail-table-wrapper {
-     overflow-x: auto;
-     background: var(--bg-tertiary);
-     border-radius: 12px;
-     padding: 20px;
-     margin-top: 16px;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-     border: 1px solid var(--border-primary);
-   }
-  
-   .detail-table {
-     width: 100%;
-     border-collapse: collapse;
-     font-size: 14px;
-     background: var(--bg-tertiary);
-     border-radius: 12px;
-     overflow: hidden;
-     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-   }
-  
-   .detail-table th {
-     background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
-     color: var(--text-primary);
-     font-weight: 700;
-     padding: 16px 12px;
-     border-bottom: 2px solid var(--accent-primary);
-     text-align: left;
-     font-size: 15px;
-     text-transform: uppercase;
-     letter-spacing: 0.5px;
-   }
-  
-   .detail-table td {
-     padding: 16px 12px;
-     border-bottom: 1px solid var(--border-secondary);
-     color: var(--text-primary);
-     vertical-align: middle;
-   }
-  
-      .detail-row:hover {
-     background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
-     transform: translateX(2px);
-     transition: all 0.3s ease;
-     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-   }
-   
-   .detail-row.highlighted {
-     background: linear-gradient(135deg, var(--accent-primary-transparent), var(--accent-secondary-transparent));
-     border-left: 4px solid var(--accent-primary);
-     box-shadow: 0 2px 8px var(--accent-primary-transparent);
-   }
-  
-   /* Estilos para colunas de dados */
-      .detail-table .position {
-     font-weight: 700;
-     color: var(--text-primary);
-     text-align: center;
-     width: 60px;
-     font-size: 16px;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-   
-   .detail-table .count {
-     color: var(--text-primary);
-     font-weight: 700;
-     text-align: center;
-     width: 80px;
-     font-size: 15px;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-   
-   .detail-table .profit {
-     color: var(--text-primary);
-     font-weight: 700;
-     text-align: right;
-     width: 120px;
-     font-size: 15px;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-   
-   .detail-table .score {
-     color: var(--bg-primary);
-     font-weight: 700;
-     text-align: center;
-     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-     border-radius: 8px;
-     padding: 6px 12px;
-     width: 80px;
-     font-size: 14px;
-     box-shadow: 0 2px 4px var(--accent-primary-transparent);
-     border: 1px solid var(--border-primary);
-   }
-  
-   .detail-row.category-filtered {
-     opacity: 0.3;
-   }
-  
-   /* Estilos para células da tabela detalhada */
-   .market-name-cell {
-     min-width: 200px;
-   }
-  
-   .market-name-wrapper {
-     display: flex;
-     align-items: center;
-     gap: 8px;
-   }
-  
-   .market-icon {
-     font-size: 16px;
-     flex-shrink: 0;
-   }
-  
-   .market-name-text {
-     font-weight: 600;
-     color: var(--text-primary);
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-  
-   .category-cell {
-     min-width: 120px;
-   }
-  
-   .category-badge-compact {
-     display: inline-block;
-     padding: 4px 8px;
-     border-radius: 6px;
-     font-size: 11px;
-     font-weight: 700;
-     color: var(--text-primary);
-     text-transform: uppercase;
-     letter-spacing: 0.5px;
-     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-     border: 1px solid var(--border-primary);
-   }
-  
-   .expand-section {
-     text-align: center;
-     margin-top: 16px;
-   }
-  
-      .expand-btn {
-     background: var(--accent-primary-transparent);
-     border: 1px solid var(--accent-primary);
-     border-radius: 8px;
-     color: var(--accent-primary);
-     cursor: pointer;
-     padding: 12px 24px;
-     font-size: 14px;
-     font-weight: 600;
-     transition: all 0.3s ease;
-   }
-   
-   .expand-btn:hover {
-     background: var(--accent-primary);
-     border-color: var(--accent-secondary);
-     color: var(--bg-primary);
-     transform: translateY(-1px);
-   }
-  
-      .markets-ranking {
-     background: var(--bg-tertiary);
-     border: 1px solid var(--border-primary);
-     border-radius: 12px;
-     padding: 24px;
-     display: flex;
-     flex-direction: column;
-     min-height: 500px;
-     height: auto;
-   }
-   
-   .markets-ranking h4 {
-     color: var(--text-primary);
-     margin: 0 0 20px 0;
-     font-size: 20px;
-     font-weight: 600;
-     text-align: center;
-     padding-bottom: 12px;
-     border-bottom: 1px solid var(--border-primary);
-   }
-  
-  .table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-primary);
-  }
-  
-  .table-header h4 {
+
+  .chart-header h4,
+  .ranking-header h4 {
+    font-size: 16px;
     margin: 0;
-    padding: 0;
-    border: none;
-    text-align: left;
   }
-  
-  .table-filters {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+
+  .chart-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 16px;
+    height: auto;
+    max-height: none;
   }
-  
-  .filter-select {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border-primary);
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: var(--text-primary);
+
+  /* Responsividade para tabela detalhada */
+  .detail-table {
+    font-size: 12px;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 12px 8px;
+  }
+
+  .market-name-cell {
+    min-width: 150px;
+  }
+
+  .category-cell {
+    min-width: 100px;
+  }
+
+  .detail-table .position {
+    width: 50px;
     font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s ease;
   }
-  
-  .filter-select:hover {
-    background: var(--bg-secondary);
-    border-color: var(--border-secondary);
+
+  .detail-table .count {
+    width: 60px;
+    font-size: 13px;
   }
-  
-  .filter-select:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px var(--accent-primary-transparent);
+
+  .detail-table .profit {
+    width: 100px;
+    font-size: 13px;
   }
-  
-  .category {
-    display: flex;
+
+  .detail-table .score {
+    width: 70px;
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+
+  .stat-item {
+    padding: 8px 10px;
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
   }
-  
-  .category-badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--text-primary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-tertiary));
-    border: 1px solid var(--border-primary);
-    box-shadow: 0 1px 4px var(--accent-secondary-transparent);
+
+  .stat-label,
+  .stat-value {
+    font-size: 12px;
+    width: 100%;
+    text-align: left;
   }
-  
-  .subcategory {
-    font-size: 11px;
-    color: var(--text-secondary);
-    font-style: italic;
-  }
-  
-  .data-row.highlighted {
+
+  .stat-value {
     background: var(--accent-primary-transparent);
-    border-left: 4px solid var(--accent-primary);
-  }
-  
-  .data-row.category-filtered {
-    opacity: 0.3;
-    background: var(--bg-tertiary);
-  }
-  
-  .data-row.category-filtered:hover {
-    opacity: 0.6;
-  }
-  
-   .table-wrapper {
-     overflow-x: auto;
-     flex: 1;
-     display: flex;
-     flex-direction: column;
-   }
-  
-   .modern-table {
-     width: 100%;
-     border-collapse: collapse;
-     font-size: 14px;
-     height: 100%;
-     flex: 1;
-   }
-  
-      .modern-table th {
-     background: var(--bg-primary);
-     color: var(--text-primary);
-     font-weight: 600;
-     padding: 16px 12px;
-     border-bottom: 1px solid var(--border-primary);
-     text-align: left;
-     font-size: 15px;
-   }
-   
-   .modern-table td {
-     padding: 16px 12px;
-     border-bottom: 1px solid var(--border-secondary);
-     color: var(--text-primary);
-     font-size: 14px;
-   }
-   
-  .data-row:hover {
-    background: var(--bg-tertiary);
-  }
-  
-   .position {
-     font-weight: 700;
-     color: var(--text-primary);
-     text-align: center;
-     width: 60px;
-     font-size: 16px;
-   }
-  
-   .market-info {
-     display: flex;
-     align-items: center;
-     gap: 8px;
-     flex: 1;
-     min-width: 0;
-   }
-  
-   .market-info .icon {
-     font-size: 20px;
-     flex-shrink: 0;
-   }
-  
-      .count {
-     color: var(--text-primary);
-     font-weight: 700;
-     text-align: center;
-     width: 80px;
-     font-size: 15px;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-   
-   .profit {
-     color: var(--text-primary);
-     font-weight: 700;
-     text-align: right;
-     width: 120px;
-     font-size: 15px;
-     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-   }
-  
-   .score {
-     color: var(--bg-primary);
-     font-weight: 700;
-     text-align: center;
-     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-     border-radius: 8px;
-     padding: 6px 12px;
-     width: 80px;
-     font-size: 14px;
-     box-shadow: 0 2px 4px var(--accent-primary-transparent);
-     border: 1px solid var(--border-primary);
-   }
-  
-  
-  
-  /* Media queries para telas muito grandes */
-  @media (min-width: 1400px) {
-    .ranking-container {
-      width: calc(100% - 280px);
-      max-width: calc(100% - 280px);
-    }
-    
-    .content-header {
-      padding: 32px 40px;
-    }
-    
-    .page-title {
-      font-size: 36px;
-    }
-    
-    .page-subtitle {
-      font-size: 18px;
-    }
-    
-    .stats-dashboard {
-      padding: 32px 40px;
-      gap: 24px;
-    }
-    
-    .charts-grid {
-      padding: 0 40px 32px;
-      gap: 32px;
-    }
-    
-    .chart-wrapper .chart-container {
-      height: 350px;
-      min-height: 350px;
-    }
-    
-    .chart-section {
-      min-height: 600px;
-    }
-    
-    .chart-container {
-      height: 350px;
-      min-height: 350px;
-    }
-    
-    .markets-layout {
-      padding: 0 40px 32px;
-      gap: 32px;
-    }
-    
-    .ranking-section,
-    .insights-section,
-    .markets-analysis-section {
-      margin: 0 40px 40px;
-    }
+    padding: 6px 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
   }
 
-  /* Media queries para telas médias */
-  @media (min-width: 1200px) and (max-width: 1399px) {
-    .content-header {
-      padding: 28px 32px;
-    }
-    
-    .page-title {
-      font-size: 32px;
-    }
-    
-    .stats-dashboard {
-      padding: 28px 32px;
-      gap: 20px;
-    }
-    
-    .charts-grid {
-      padding: 0 32px 28px;
-      gap: 24px;
-    }
-    
-    .markets-layout {
-      padding: 0 32px 28px;
-      gap: 24px;
-    }
-    
-    .ranking-section,
-    .insights-section,
-    .markets-analysis-section {
-      margin: 0 32px 32px;
-    }
+  .chart-wrapper h4 {
+    font-size: 16px;
   }
 
-  /* Media queries para tablets em landscape */
-  @media (min-width: 768px) and (max-width: 1024px) and (orientation: landscape) {
-    .charts-grid {
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
-    
-    .markets-layout {
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    
-    .markets-summary {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .chart-wrapper .chart-container {
-      height: 300px;
-      min-height: 300px;
-    }
-    
-    .chart-container {
-      height: 300px;
-      min-height: 300px;
-    }
+  .chart-wrapper .chart-container {
+    height: 250px;
+    min-height: 250px;
   }
 
-  /* Media queries para tablets em portrait */
-  @media (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
-    .charts-grid {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    
-    .markets-layout {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    
-    .markets-summary {
-      grid-template-columns: 1fr;
-    }
-    
-    .chart-wrapper .chart-container {
-      height: 280px;
-      min-height: 280px;
-    }
-    
-    .chart-container {
-      height: 280px;
-      min-height: 280px;
-    }
+  .chart-description {
+    font-size: 12px;
   }
 
-  @media (max-width: 1200px) {
-    .main-content { margin-left: 0; }
-    .charts-grid { grid-template-columns: repeat(2, 1fr); }
-    .markets-layout { grid-template-columns: 1fr; gap: 16px; }
-    .chart-wrapper .chart-container { 
-      height: 280px; 
-      min-height: 280px;
-    }
-    .chart-section {
-      min-height: 500px;
-    }
-    .chart-container {
-      height: 270px;
-      min-height: 270px;
-    }
-    .markets-main-layout {
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    .markets-summary {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    .markets-ranking-compact {
-      min-height: 380px;
-      height: 100%;
-      justify-content: flex-start;
-      align-items: stretch;
-      text-align: left;
-    }
-    .markets-chart-section {
-      min-height: 380px;
-      height: 100%;
-      justify-content: flex-start;
-      align-items: stretch;
-      text-align: left;
-    }
-  }
-  
-   @media (max-width: 768px) {
-    .main-content { 
-      padding-bottom: 120px; 
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    .content-header { 
-      flex-direction: column; 
-      align-items: flex-start; 
-      gap: 16px; 
-      padding: 16px 20px; 
-    }
-    
-    .page-title {
-      font-size: 24px;
-    }
-    
-    .page-subtitle {
-      font-size: 14px;
-    }
-    
-    .data-status-indicator {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 8px;
-    }
-    
-    .filters-section { 
-      flex-direction: column; 
-      align-items: center; 
-      padding: 0 20px; 
-      gap: 16px;
-    }
-    
-    .filter-group {
-      width: 100%;
-    }
-    
-    .filter-select {
-      width: 100%;
-      font-size: 16px;
-      padding: 12px 16px;
-    }
-    
-    .stats-dashboard { 
-      grid-template-columns: 1fr; 
-      padding: 0 20px; 
-      gap: 16px;
-    }
-    
-    .stat-card {
-      padding: 16px;
-    }
-    
-    .stat-icon {
-      font-size: 24px;
-    }
-    
-    .stat-number {
-      font-size: 20px;
-    }
-    
-    .stat-label {
-      font-size: 12px;
-    }
-    
-    .charts-grid { 
-      grid-template-columns: 1fr; 
-      padding: 0 20px; 
-      gap: 16px;
-    }
-    
-    .chart-wrapper {
-      padding: 16px;
-    }
-    
-    .chart-wrapper h4 {
-      font-size: 16px;
-    }
-    
-    .insights-grid { grid-template-columns: 1fr; }
-    .ranking-table { font-size: 12px; }
-    .ranking-table th, .ranking-table td { padding: 8px 4px; }
-    .markets-improved-section { padding: 16px; }
-    .section-header h3 { font-size: 20px; }
-    .modern-table { font-size: 12px; }
-    .modern-table th, .modern-table td { padding: 8px 6px; }
-    .markets-layout { grid-template-columns: 1fr; gap: 16px; }
-    .ranking-section { margin: 0 20px 32px; }
-    .insights-section { margin: 0 20px 32px; }
-    .markets-analysis-section { margin: 0 20px 32px; }
-          .chart-wrapper, .markets-ranking { 
-       min-height: 350px; 
-       height: auto;
-     }
-     .chart-wrapper .chart-container { 
-       height: 250px; 
-       min-height: 250px;
-     }
-     .chart-section {
-       min-height: 450px;
-     }
-     .chart-container {
-       height: 250px;
-       min-height: 250px;
-     }
-     .markets-summary {
-       grid-template-columns: 1fr;
-     }
-     .chart-container-compact {
-       height: 200px;
-       min-height: 200px;
-     }
-     .markets-ranking-compact {
-       min-height: 350px;
-       height: 100%;
-       justify-content: flex-start;
-       align-items: stretch;
-       text-align: left;
-       padding: 16px;
-     }
-     .markets-chart-section {
-       min-height: 350px;
-       height: 100%;
-       justify-content: flex-start;
-       align-items: stretch;
-       text-align: left;
-       padding: 16px;
-     }
-     
-     /* Melhorias para centralização em mobile */
-     .markets-main-layout {
-       grid-template-columns: 1fr;
-       gap: 16px;
-       align-items: stretch;
-     }
-     
-     .chart-header,
-     .ranking-header {
-       text-align: center;
-       margin-bottom: 16px;
-     }
-     
-     .chart-header h4,
-     .ranking-header h4 {
-       font-size: 16px;
-       margin: 0;
-     }
-     .chart-stats { 
-       grid-template-columns: 1fr; 
-       gap: 8px; 
-       padding: 16px;
-       height: auto;
-       max-height: none;
-     }
-     
-     /* Responsividade para tabela detalhada */
-     .detail-table {
-       font-size: 12px;
-     }
-     
-     .detail-table th,
-     .detail-table td {
-       padding: 12px 8px;
-     }
-     
-     .market-name-cell {
-       min-width: 150px;
-     }
-     
-     .category-cell {
-       min-width: 100px;
-     }
-     
-     .detail-table .position {
-       width: 50px;
-       font-size: 14px;
-     }
-     
-     .detail-table .count {
-       width: 60px;
-       font-size: 13px;
-     }
-     
-     .detail-table .profit {
-       width: 100px;
-       font-size: 13px;
-     }
-     
-     .detail-table .score {
-       width: 70px;
-       font-size: 12px;
-       padding: 4px 8px;
-     }
-     .stat-item { 
-       padding: 8px 10px; 
-       flex-direction: column;
-       align-items: flex-start;
-       gap: 4px;
-     }
-     .stat-label, .stat-value { 
-       font-size: 12px; 
-       width: 100%;
-       text-align: left;
-     }
-     .stat-value {
-       background: var(--accent-primary-transparent);
-       padding: 6px 10px;
-       border-radius: 6px;
-       text-align: center;
-        font-weight: 700;
-     }
-     .chart-wrapper h4 { font-size: 16px; }
-   .chart-wrapper .chart-container { 
-     height: 250px; 
-     min-height: 250px;
-   }
-     .chart-description { font-size: 12px; }
-     
-     .page-title {
-       font-size: 24px;
-     }
-     
-     .page-subtitle {
-       font-size: 14px;
-     }
-     
-     /* Melhorias para filtros em dispositivos móveis */
-     .filter-select {
-       min-width: 100%;
-       font-size: 16px; /* Evita zoom em iOS */
-       padding: 16px 20px;
-       border-radius: 16px;
-       margin-bottom: 8px;
-     }
-     
-     .filter-select option {
-       font-size: 16px;
-       padding: 14px 20px;
-     }
-     
-     /* Ajustes para telas muito pequenas */
-     .filter-select {
-       background-size: 20px;
-       padding-right: 56px;
-     }
-   }
-  
-  @media (max-width: 600px) {
-    .charts-grid { 
-      grid-template-columns: 1fr; 
-      gap: 16px;
-    }
-    .chart-section {
-      min-height: 400px;
-    }
-    .chart-container {
-      height: 220px;
-      min-height: 220px;
-    }
-    
-    /* Ajustes para filtros em telas pequenas */
-    .filter-select {
-      min-width: 100%;
-      font-size: 15px;
-      padding: 12px 16px;
-      border-radius: 10px;
-    }
-    
-    .filter-select option {
-      font-size: 15px;
-      padding: 10px 16px;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .content-header {
-      padding: 12px 16px;
-    }
-    
-    .page-title {
-      font-size: 20px;
-    }
-    
-    .page-subtitle {
-      font-size: 13px;
-    }
-    
-    .data-status-indicator {
-      font-size: 12px;
-    }
-    
-    .filters-section {
-      padding: 0 16px;
-      gap: 12px;
-    }
-    
-    .filter-group label {
-      font-size: 14px;
-    }
-    
-    .filter-select {
-      font-size: 14px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      background-size: 16px;
-      padding-right: 44px;
-    }
-    
-    .filter-select option {
-      font-size: 14px;
-      padding: 8px 14px;
-    }
-    
-    .stats-dashboard {
-      padding: 0 16px;
-      gap: 12px;
-    }
-    
-    .stat-card {
-      padding: 12px;
-    }
-    
-    .stat-icon {
-      font-size: 20px;
-    }
-    
-    .stat-number {
-      font-size: 18px;
-    }
-    
-    .stat-label {
-      font-size: 11px;
-    }
-    
-    .charts-grid {
-      padding: 0 16px;
-      gap: 12px;
-    }
-    
-    .chart-wrapper {
-      padding: 12px;
-    }
-    
-    .chart-wrapper h4 {
-      font-size: 14px;
-    }
-    
-    .chart-description {
-      font-size: 11px;
-    }
-    
-    .ranking-section,
-    .insights-section,
-    .markets-analysis-section {
-      margin: 0 16px 24px;
-    }
-    
-    /* Melhorias para centralização em mobile pequeno */
-    .markets-ranking-compact,
-    .markets-chart-section {
-      padding: 12px;
-      justify-content: flex-start;
-      align-items: stretch;
-      text-align: left;
-    }
-    
-    .chart-header,
-    .ranking-header {
-      text-align: center;
-      margin-bottom: 12px;
-    }
-    
-    .chart-header h4,
-    .ranking-header h4 {
-      font-size: 14px;
-      margin: 0;
-    }
-    
-    .markets-main-layout {
-      gap: 12px;
-    }
-    
-    .section-header h3 {
-      font-size: 18px;
-    }
-    
-    .ranking-table {
-      font-size: 10px;
-    }
-    
-    .ranking-table th,
-    .ranking-table td {
-      padding: 6px 3px;
-    }
-    
-    .modern-table {
-      font-size: 10px;
-    }
-    
-    .modern-table th,
-    .modern-table td {
-      padding: 6px 4px;
-    }
-    
-    .detail-table {
-      font-size: 10px;
-    }
-    
-    .detail-table th,
-    .detail-table td {
-      padding: 8px 4px;
-    }
-    
-    .market-name-cell {
-      min-width: 120px;
-    }
-    
-    .category-cell {
-      min-width: 80px;
-    }
-    
-    .detail-table .position {
-      width: 40px;
-      font-size: 12px;
-    }
-    
-    .detail-table .count {
-      width: 50px;
-      font-size: 11px;
-    }
-    
-    .detail-table .profit {
-      width: 80px;
-      font-size: 11px;
-    }
-    
-    .detail-table .score {
-      width: 60px;
-      font-size: 10px;
-      padding: 3px 6px;
-    }
-  }
-  
-  /* Media queries para telas muito pequenas */
-  @media (max-width: 320px) {
-    .content-header {
-      padding: 8px 12px;
-    }
-    
-    .page-title {
-      font-size: 18px;
-    }
-    
-    .page-subtitle {
-      font-size: 12px;
-    }
-    
-    .data-status-indicator {
-      font-size: 11px;
-    }
-    
-    .filters-section {
-      padding: 0 12px;
-      gap: 8px;
-    }
-    
-    .filter-group label {
-      font-size: 13px;
-    }
-    
-    .filter-select {
-      font-size: 13px;
-      padding: 8px 12px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      background-size: 14px;
-      padding-right: 40px;
-    }
-    
-    .filter-select option {
-      font-size: 13px;
-      padding: 6px 12px;
-    }
-    
-    .stats-dashboard {
-      padding: 0 12px;
-      gap: 8px;
-    }
-    
-    .stat-card {
-      padding: 8px;
-    }
-    
-    .stat-icon {
-      font-size: 18px;
-    }
-    
-    .stat-number {
-      font-size: 16px;
-    }
-    
-    .stat-label {
-      font-size: 10px;
-    }
-    
-    .charts-grid {
-      padding: 0 12px;
-      gap: 8px;
-    }
-    
-    .chart-wrapper {
-      padding: 8px;
-    }
-    
-    .chart-wrapper h4 {
-      font-size: 13px;
-    }
-    
-    .chart-description {
-      font-size: 10px;
-    }
-    
-    .ranking-section,
-    .insights-section,
-    .markets-analysis-section {
-      margin: 0 12px 20px;
-    }
-    
-    /* Melhorias para centralização em telas muito pequenas */
-    .markets-ranking-compact,
-    .markets-chart-section {
-      padding: 8px;
-      justify-content: flex-start;
-      align-items: stretch;
-      text-align: left;
-    }
-    
-    .chart-header,
-    .ranking-header {
-      text-align: center;
-      margin-bottom: 8px;
-    }
-    
-    .chart-header h4,
-    .ranking-header h4 {
-      font-size: 13px;
-      margin: 0;
-    }
-    
-    .markets-main-layout {
-      gap: 8px;
-    }
-    
-    .section-header h3 {
-      font-size: 16px;
-    }
-    
-    .ranking-table {
-      font-size: 9px;
-    }
-    
-    .ranking-table th,
-    .ranking-table td {
-      padding: 4px 2px;
-    }
-    
-    .modern-table {
-      font-size: 9px;
-    }
-    
-    .modern-table th,
-    .modern-table td {
-      padding: 4px 3px;
-    }
-    
-    .detail-table {
-      font-size: 9px;
-    }
-    
-    .detail-table th,
-    .detail-table td {
-      padding: 6px 3px;
-    }
-    
-    .market-name-cell {
-      min-width: 100px;
-    }
-    
-    .category-cell {
-      min-width: 70px;
-    }
-    
-    .detail-table .position {
-      width: 35px;
-      font-size: 11px;
-    }
-    
-    .detail-table .count {
-      width: 45px;
-      font-size: 10px;
-    }
-    
-    .detail-table .profit {
-      width: 70px;
-      font-size: 10px;
-    }
-    
-    .detail-table .score {
-      width: 55px;
-      font-size: 9px;
-      padding: 2px 4px;
-    }
+  .page-title {
+    font-size: 24px;
   }
 
-  </style>
+  .page-subtitle {
+    font-size: 14px;
+  }
+
+  /* Melhorias para filtros em dispositivos móveis */
+  .filter-select {
+    min-width: 100%;
+    font-size: 16px;
+    /* Evita zoom em iOS */
+    padding: 16px 20px;
+    border-radius: 16px;
+    margin-bottom: 8px;
+  }
+
+  .filter-select option {
+    font-size: 16px;
+    padding: 14px 20px;
+  }
+
+  /* Ajustes para telas muito pequenas */
+  .filter-select {
+    background-size: 20px;
+    padding-right: 56px;
+  }
+}
+
+@media (max-width: 600px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .chart-section {
+    min-height: 400px;
+  }
+
+  .chart-container {
+    height: 220px;
+    min-height: 220px;
+  }
+
+  /* Ajustes para filtros em telas pequenas */
+  .filter-select {
+    min-width: 100%;
+    font-size: 15px;
+    padding: 12px 16px;
+    border-radius: 10px;
+  }
+
+  .filter-select option {
+    font-size: 15px;
+    padding: 10px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-header {
+    padding: 12px 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .data-status-indicator {
+    font-size: 12px;
+  }
+
+  .filters-section {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .filter-group label {
+    font-size: 14px;
+  }
+
+  .filter-select {
+    font-size: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background-size: 16px;
+    padding-right: 44px;
+  }
+
+  .filter-select option {
+    font-size: 14px;
+    padding: 8px 14px;
+  }
+
+  .stats-dashboard {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-icon {
+    font-size: 20px;
+  }
+
+  .stat-number {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .charts-grid {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .chart-wrapper {
+    padding: 12px;
+  }
+
+  .chart-wrapper h4 {
+    font-size: 14px;
+  }
+
+  .chart-description {
+    font-size: 11px;
+  }
+
+  .ranking-section,
+  .insights-section,
+  .markets-analysis-section {
+    margin: 0 16px 24px;
+  }
+
+  /* Melhorias para centralização em mobile pequeno */
+  .markets-ranking-compact,
+  .markets-chart-section {
+    padding: 12px;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .chart-header,
+  .ranking-header {
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .chart-header h4,
+  .ranking-header h4 {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .markets-main-layout {
+    gap: 12px;
+  }
+
+  .section-header h3 {
+    font-size: 18px;
+  }
+
+  .ranking-table {
+    font-size: 10px;
+  }
+
+  .ranking-table th,
+  .ranking-table td {
+    padding: 6px 3px;
+  }
+
+  .modern-table {
+    font-size: 10px;
+  }
+
+  .modern-table th,
+  .modern-table td {
+    padding: 6px 4px;
+  }
+
+  .detail-table {
+    font-size: 10px;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 8px 4px;
+  }
+
+  .market-name-cell {
+    min-width: 120px;
+  }
+
+  .category-cell {
+    min-width: 80px;
+  }
+
+  .detail-table .position {
+    width: 40px;
+    font-size: 12px;
+  }
+
+  .detail-table .count {
+    width: 50px;
+    font-size: 11px;
+  }
+
+  .detail-table .profit {
+    width: 80px;
+    font-size: 11px;
+  }
+
+  .detail-table .score {
+    width: 60px;
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+}
+
+/* Media queries para telas muito pequenas */
+@media (max-width: 320px) {
+  .content-header {
+    padding: 8px 12px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .page-subtitle {
+    font-size: 12px;
+  }
+
+  .data-status-indicator {
+    font-size: 11px;
+  }
+
+  .filters-section {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .filter-group label {
+    font-size: 13px;
+  }
+
+  .filter-select {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background-size: 14px;
+    padding-right: 40px;
+  }
+
+  .filter-select option {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
+  .stats-dashboard {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 8px;
+  }
+
+  .stat-icon {
+    font-size: 18px;
+  }
+
+  .stat-number {
+    font-size: 16px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .charts-grid {
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .chart-wrapper {
+    padding: 8px;
+  }
+
+  .chart-wrapper h4 {
+    font-size: 13px;
+  }
+
+  .chart-description {
+    font-size: 10px;
+  }
+
+  .ranking-section,
+  .insights-section,
+  .markets-analysis-section {
+    margin: 0 12px 20px;
+  }
+
+  /* Melhorias para centralização em telas muito pequenas */
+  .markets-ranking-compact,
+  .markets-chart-section {
+    padding: 8px;
+    justify-content: flex-start;
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .chart-header,
+  .ranking-header {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+
+  .chart-header h4,
+  .ranking-header h4 {
+    font-size: 13px;
+    margin: 0;
+  }
+
+  .markets-main-layout {
+    gap: 8px;
+  }
+
+  .section-header h3 {
+    font-size: 16px;
+  }
+
+  .ranking-table {
+    font-size: 9px;
+  }
+
+  .ranking-table th,
+  .ranking-table td {
+    padding: 4px 2px;
+  }
+
+  .modern-table {
+    font-size: 9px;
+  }
+
+  .modern-table th,
+  .modern-table td {
+    padding: 4px 3px;
+  }
+
+  .detail-table {
+    font-size: 9px;
+  }
+
+  .detail-table th,
+  .detail-table td {
+    padding: 6px 3px;
+  }
+
+  .market-name-cell {
+    min-width: 100px;
+  }
+
+  .category-cell {
+    min-width: 70px;
+  }
+
+  .detail-table .position {
+    width: 35px;
+    font-size: 11px;
+  }
+
+  .detail-table .count {
+    width: 45px;
+    font-size: 10px;
+  }
+
+  .detail-table .profit {
+    width: 70px;
+    font-size: 10px;
+  }
+
+  .detail-table .score {
+    width: 55px;
+    font-size: 9px;
+    padding: 2px 4px;
+  }
+}
+</style>

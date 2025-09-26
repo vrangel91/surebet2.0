@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import SurebetCard from '@/components/SurebetCard.vue'
+import SurebetCard from '@/components/UI/SurebetCard.vue'
 import { mockSurebetData, mockBookmakerAccounts } from '../fixtures/surebets.js'
 
 // Mock das dependências

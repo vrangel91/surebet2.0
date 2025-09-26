@@ -129,9 +129,15 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: "/vip-admin",
-    name: "vip-admin",
+    path: "/vip-admin-legacy",
+    name: "vip-admin-legacy",
     component: VIPAdminView,
+    meta: { requiresAdmin: true },
+  },
+  {
+    path: "/admin-legacy",
+    name: "admin-legacy",
+    component: () => import("../views/AdminView.vue"),
     meta: { requiresAdmin: true },
   },
   {

@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import SurebetCard from "../SurebetCard.vue";
+import SurebetCard from "../UI/SurebetCard.vue";
 import { MapPin, Trash2 } from "lucide-vue-next";
 
 export default {
@@ -136,31 +136,62 @@ export default {
 .control-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-primary);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, var(--accent-color-alpha), transparent);
+    transition: left 0.5s ease;
+  }
 
   &:hover {
-    background: var(--bg-hover);
-    border-color: var(--border-hover);
+    background: var(--accent-color-alpha);
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+
+    &::before {
+      left: 100%;
+    }
   }
 
   &.active {
-    background: var(--accent-color);
+    background: var(--accent-gradient);
     border-color: var(--accent-color);
     color: var(--text-inverse);
+    font-weight: 600;
+    box-shadow: var(--shadow-accent);
+
+    &:hover {
+      background: var(--accent-gradient);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-accent-hover);
+    }
   }
 }
 
 .control-text {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
 }
 
 .drag-hint {
@@ -172,20 +203,25 @@ export default {
 .clear-pinned-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid var(--error-color);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: var(--error-color);
   color: var(--text-inverse);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
     background: var(--error-hover);
     border-color: var(--error-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-error);
   }
 }
 
@@ -206,7 +242,7 @@ export default {
 
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--shadow-md);
       }
     }
   }

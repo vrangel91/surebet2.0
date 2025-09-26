@@ -5,8 +5,10 @@ module.exports = defineConfig({
   transpileDependencies: true,
   
   // Otimizações de performance
-  parallel: true,
+  parallel: require('os').cpus().length,
   productionSourceMap: false,
+  
+  // Cache otimizado será configurado no configureWebpack
 
   // Configurações PWA
   pwa: {
@@ -22,7 +24,7 @@ module.exports = defineConfig({
     startUrl: "/",
 
     // Usar nosso Service Worker personalizado
-    disable: true,
+    disable: false,
     workboxPluginMode: "InjectManifest",
     workboxOptions: {
       // Usar nosso arquivo sw.js personalizado

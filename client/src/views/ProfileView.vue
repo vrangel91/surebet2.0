@@ -179,8 +179,8 @@
 </template>
 
 <script>
-import Sidebar from '../components/Sidebar.vue'
-import Header from '../components/Header.vue'
+import Sidebar from '../components/Navigation/Sidebar.vue'
+import Header from '../components/Navigation/Header.vue'
 import { http } from '../utils/http.js'
 
 export default {

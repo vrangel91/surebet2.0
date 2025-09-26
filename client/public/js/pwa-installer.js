@@ -7,14 +7,68 @@ class SureStakePWAInstaller {
     this.isInstalled = false;
     this.isInstalling = false;
     this.position = 'left'; // 'left' ou 'right'
-    this.theme = 'dark'; // 'dark' ou 'light'
+    this.theme = this.detectTheme(); // Detectar tema automaticamente
     
     this.init();
+  }
+
+  // Detectar tema atual do sistema
+  detectTheme() {
+    // Verificar se há uma classe de tema no body ou html
+    const bodyTheme = document.body.classList.contains('dark') || 
+                     document.body.classList.contains('light');
+    const htmlTheme = document.documentElement.classList.contains('dark') || 
+                     document.documentElement.classList.contains('light');
+    
+    if (bodyTheme || htmlTheme) {
+      return document.body.classList.contains('dark') || 
+             document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    }
+    
+    // Verificar preferência do sistema
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    
+    // Verificar se há variáveis CSS customizadas
+    const rootStyles = getComputedStyle(document.documentElement);
+    const bgColor = rootStyles.getPropertyValue('--bg-color') || 
+                   rootStyles.getPropertyValue('--background-color') ||
+                   rootStyles.getPropertyValue('background-color');
+    
+    if (bgColor) {
+      // Se a cor de fundo for escura, assumir tema dark
+      const rgb = bgColor.match(/\d+/g);
+      if (rgb && rgb.length >= 3) {
+        const brightness = (parseInt(rgb[0]) + parseInt(rgb[1]) + parseInt(rgb[2])) / 3;
+        return brightness < 128 ? 'dark' : 'light';
+      }
+    }
+    
+    // Padrão: light
+    return 'light';
+  }
+
+  // Obter cores do tema atual
+  getThemeColors() {
+    const isDark = this.theme === 'dark';
+    
+    return {
+      success: isDark ? '#00ff88' : '#00aa44',
+      error: isDark ? '#ff4444' : '#cc0000',
+      info: isDark ? '#00aaff' : '#0066cc',
+      warning: isDark ? '#ffaa00' : '#cc8800',
+      background: isDark ? '#1a1a1a' : '#ffffff',
+      text: isDark ? '#ffffff' : '#000000',
+      border: isDark ? '#333333' : '#cccccc',
+      shadow: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.2)'
+    };
   }
 
   // Inicializar o instalador
   init() {
     console.log('🚀 Inicializando instalador PWA personalizado...');
+    console.log('🎨 Tema detectado:', this.theme);
     
     // Verificar se já está instalado
     this.checkInstallationStatus();
@@ -71,6 +125,13 @@ class SureStakePWAInstaller {
         this.hideInstaller();
       }
     });
+
+    // Verificar mudanças no tema do sistema
+    if (window.matchMedia) {
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+        this.updateTheme();
+      });
+    }
   }
 
   // Criar elemento do instalador
@@ -336,9 +397,12 @@ class SureStakePWAInstaller {
 
   // Mostrar notificação
   showNotification(message, type = 'info') {
+    // Obter cores do tema atual
+    const colors = this.getThemeColors();
+    
     // Criar notificação personalizada
     const notification = document.createElement('div');
-    notification.className = `pwa-notification pwa-notification-${type}`;
+    notification.className = `pwa-notification pwa-notification-${type} pwa-notification-${this.theme}`;
     notification.innerHTML = `
       <div class="pwa-notification-content">
         <span class="pwa-notification-message">${message}</span>
@@ -346,26 +410,70 @@ class SureStakePWAInstaller {
       </div>
     `;
     
-    // Adicionar estilos inline
+    // Determinar cor de fundo baseada no tipo e tema
+    let backgroundColor;
+    switch (type) {
+      case 'success':
+        backgroundColor = colors.success;
+        break;
+      case 'error':
+        backgroundColor = colors.error;
+        break;
+      case 'warning':
+        backgroundColor = colors.warning;
+        break;
+      case 'info':
+      default:
+        backgroundColor = colors.info;
+        break;
+    }
+    
+    // Adicionar estilos inline com cores dinâmicas
     notification.style.cssText = `
       position: fixed;
       top: 20px;
       right: 20px;
-      background: ${type === 'success' ? '#00ff88' : type === 'error' ? '#ff4444' : '#00aaff'};
+      background: ${backgroundColor};
       color: white;
       padding: 16px 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 12px ${colors.shadow};
       z-index: 10001;
       max-width: 400px;
       animation: slideInRight 0.3s ease-out;
+      border: 1px solid ${colors.border};
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.4;
     `;
+    
+    // Estilizar botão de fechar
+    const closeBtn = notification.querySelector('.pwa-notification-close');
+    closeBtn.style.cssText = `
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 12px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease;
+    `;
+    
+    closeBtn.addEventListener('mouseenter', () => {
+      closeBtn.style.opacity = '1';
+    });
+    
+    closeBtn.addEventListener('mouseleave', () => {
+      closeBtn.style.opacity = '0.8';
+    });
     
     // Adicionar ao DOM
     document.body.appendChild(notification);
     
     // Configurar botão de fechar
-    const closeBtn = notification.querySelector('.pwa-notification-close');
     closeBtn.addEventListener('click', () => {
       notification.remove();
     });
@@ -408,6 +516,15 @@ class SureStakePWAInstaller {
     }
     
     console.log(`🎨 Tema do instalador alterado para: ${theme}`);
+  }
+
+  // Atualizar tema automaticamente
+  updateTheme() {
+    const newTheme = this.detectTheme();
+    if (newTheme !== this.theme) {
+      console.log(`🔄 Tema alterado de ${this.theme} para ${newTheme}`);
+      this.setTheme(newTheme);
+    }
   }
 
   // Forçar exibição do instalador
@@ -464,10 +581,16 @@ window.setPWAInstallerTheme = (theme) => {
   if (pwaInstaller) pwaInstaller.setTheme(theme);
 };
 
+window.updatePWAInstallerTheme = () => {
+  if (pwaInstaller) pwaInstaller.updateTheme();
+};
+
 console.log('🚀 Instalador PWA personalizado carregado e pronto!');
+console.log('🎨 Tema detectado automaticamente:', pwaInstaller ? pwaInstaller.theme : 'N/A');
 console.log('💡 Funções disponíveis:');
 console.log('   - showPWAInstaller() - Forçar exibição do instalador');
 console.log('   - hidePWAInstaller() - Ocultar instalador');
 console.log('   - resetPWAPreference() - Redefinir preferência do usuário');
 console.log('   - setPWAInstallerPosition("left"|"right") - Definir posição');
 console.log('   - setPWAInstallerTheme("dark"|"light") - Definir tema');
+console.log('   - updatePWAInstallerTheme() - Atualizar tema automaticamente');

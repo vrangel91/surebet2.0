@@ -354,18 +354,18 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-/* Overlay de Filtros */
+/* Overlay de Filtros Profissional */
 .filter-overlay {
   position: fixed;
   top: 0;
   right: -460px;
   width: 460px;
   height: 100vh;
-  background: var(--bg-overlay);
-  backdrop-filter: blur(10px);
+  background: var(--bg-modal);
+  backdrop-filter: blur(12px);
   border-left: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-overlay);
-  transition: right 0.3s ease;
+  box-shadow: var(--shadow-xl);
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   overflow-y: auto;
 
@@ -384,68 +384,74 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px;
+  padding: 24px;
   border-bottom: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
 
   h3 {
     margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    letter-spacing: -0.02em;
   }
 
   .close-btn {
-    background: transparent;
-    border: none;
-    font-size: 24px;
+    background: var(--button-secondary-bg);
+    border: 1px solid var(--border-primary);
+    font-size: 20px;
     color: var(--text-secondary);
     cursor: pointer;
     padding: 0;
-    width: 30px;
-    height: 30px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s ease;
+    border-radius: 8px;
+    transition: all 0.2s ease;
 
     &:hover {
-      background: var(--bg-tertiary);
-      color: var(--accent-color);
+      background: var(--button-secondary-hover);
+      border-color: var(--border-accent);
+      color: var(--accent-primary);
+      transform: translateY(-1px);
     }
   }
 }
 
 .filter-content {
   flex: 1;
-  padding: 20px;
+  padding: 24px;
   overflow-y: auto;
 }
 
 .filter-section {
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 
 .filter-section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .filter-section-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.01em;
 }
 
 .default-indicator {
   font-size: 12px;
-  color: var(--text-inverse);
-  background: var(--accent-color);
-  padding: 2px 8px;
-  border-radius: 12px;
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+  padding: 4px 12px;
+  border-radius: 16px;
   font-weight: 600;
+  border: 1px solid var(--accent-primary);
 }
 
 .profit-range {
@@ -456,22 +462,23 @@ export default {
 
 .profit-input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border-secondary);
-  border-radius: 6px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
   }
 
   &:hover {
-    border-color: var(--accent-color);
+    border-color: var(--border-accent);
   }
 
   &::placeholder {
@@ -509,27 +516,28 @@ export default {
 .risk-level-filters {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 12px;
 }
 
 .risk-filter-btn {
-  padding: 12px;
-  border: 1px solid var(--border-secondary);
+  padding: 16px 12px;
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  background: var(--bg-tertiary);
+  background: var(--button-secondary-bg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-height: 80px;
 
   &:hover {
-    background: var(--accent-color-alpha);
-    border-color: var(--accent-color);
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
     transform: translateY(-1px);
   }
 
   &.active {
-    border-color: var(--accent-color);
-    background: var(--accent-gradient);
-    box-shadow: var(--shadow-accent);
+    border-color: var(--accent-primary);
+    background: var(--button-primary-bg);
+    box-shadow: var(--shadow-button);
   }
 }
 
@@ -539,13 +547,14 @@ export default {
 
 .risk-indicator {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  border: 2px solid var(--bg-primary);
 
   &.conservative {
-    background: var(--accent-color);
+    background: var(--accent-primary);
   }
 
   &.moderate {
@@ -563,50 +572,57 @@ export default {
 
 .risk-title {
   margin: 0 0 4px 0;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .risk-description {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .filter-category-header {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 
   h4 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent-primary);
+    letter-spacing: -0.01em;
   }
 }
 
 .filter-actions {
   display: flex;
   gap: 8px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
+  margin-bottom: 20px;
+  flex-wrap: nowrap;
+  justify-content: space-between;
 }
 
 .action-btn {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
-  border: 1px solid var(--border-secondary);
-  border-radius: 6px;
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+  padding: 8px 12px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-height: 32px;
+  flex: 1;
+  justify-content: center;
 
   &:hover {
-    background: var(--accent-color-alpha);
-    border-color: var(--accent-color);
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
     transform: translateY(-1px);
   }
 }
@@ -638,26 +654,27 @@ export default {
 
 .search-input {
   width: 100%;
-  padding: 8px 12px 8px 36px;
-  border: 1px solid var(--border-secondary);
-  border-radius: 6px;
+  padding: 12px 16px 12px 40px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-size: 14px;
-  transition: all 0.3s ease;
+  font-weight: 500;
+  transition: all 0.2s ease;
 
   &:focus {
     outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px var(--accent-color-alpha);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-primary-alpha);
 
     +.search-icon {
-      color: var(--accent-color);
+      color: var(--accent-primary);
     }
   }
 
   &:hover {
-    border-color: var(--accent-color);
+    border-color: var(--border-accent);
   }
 
   &::placeholder {
@@ -667,18 +684,23 @@ export default {
 
 .clear-search-btn {
   position: absolute;
-  right: 8px;
-  background: none;
+  right: 12px;
+  background: var(--button-danger-bg);
   border: none;
-  color: var(--text-secondary);
+  color: var(--button-danger-text);
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 50%;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
-    background: var(--bg-tertiary);
-    color: var(--error-color);
+    background: var(--button-danger-hover);
+    transform: scale(1.05);
   }
 }
 
@@ -702,15 +724,17 @@ export default {
 .sport-checkbox {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-radius: 6px;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   flex: 1;
+  border: 1px solid transparent;
 
   &:hover {
-    background: var(--accent-color-alpha);
+    background: var(--accent-primary-alpha);
+    border-color: var(--border-accent);
     transform: translateX(2px);
   }
 }
@@ -719,33 +743,37 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  background: var(--button-secondary-bg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   flex-shrink: 0;
 
   &:hover {
-    background: var(--bg-tertiary);
-    transform: scale(1.1);
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
+    transform: scale(1.05);
   }
 
   .favorite-icon {
     color: var(--text-secondary);
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
   }
 
   &.favorited {
+    background: var(--button-warning-bg);
+    border-color: var(--warning-color);
+
     .favorite-icon {
-      color: var(--warning-color);
-      filter: drop-shadow(0 0 8px var(--warning-color-alpha));
+      color: var(--button-warning-text);
     }
 
     &:hover {
-      background: var(--warning-color-alpha);
+      background: var(--button-warning-hover);
+      border-color: var(--warning-color);
     }
   }
 }
@@ -762,18 +790,19 @@ input[type="checkbox"] {
 }
 
 .checkmark {
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border-secondary);
-  border-radius: 3px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border-primary);
+  border-radius: 4px;
   position: relative;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  background: var(--bg-primary);
 }
 
 input[type="checkbox"]:checked+.checkmark {
-  background: var(--accent-color);
-  border-color: var(--accent-color);
-  box-shadow: var(--shadow-accent);
+  background: var(--button-primary-bg);
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-button);
 }
 
 input[type="checkbox"]:checked+.checkmark::after {
@@ -782,14 +811,15 @@ input[type="checkbox"]:checked+.checkmark::after {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--text-inverse);
-  font-size: 10px;
+  color: var(--button-primary-text);
+  font-size: 12px;
   font-weight: bold;
 }
 
 .checkbox-label {
   font-size: 14px;
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .search-results-info {
@@ -808,43 +838,48 @@ input[type="checkbox"]:checked+.checkmark::after {
 
 .filter-footer {
   display: flex;
-  gap: 12px;
-  padding: 20px;
+  gap: 16px;
+  padding: 24px;
   border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
 }
 
 .clear-btn,
 .apply-btn {
   flex: 1;
-  padding: 12px;
-  border: none;
-  border-radius: 6px;
+  padding: 14px 20px;
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .clear-btn {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-secondary);
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
 
   &:hover {
-    background: var(--bg-secondary);
+    background: var(--button-secondary-hover);
+    border-color: var(--border-accent);
     transform: translateY(-1px);
   }
 }
 
 .apply-btn {
-  background: var(--accent-gradient);
-  color: var(--text-inverse);
-  font-weight: 600;
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border-color: var(--accent-primary);
 
   &:hover {
-    background: var(--accent-gradient);
+    background: var(--button-primary-hover);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-accent-hover);
+    box-shadow: var(--shadow-button);
   }
 }
 
