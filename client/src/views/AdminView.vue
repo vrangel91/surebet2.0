@@ -125,99 +125,142 @@
 
           <!-- Users Tab -->
           <div v-if="activeTab === 'users'" class="tab-content">
-            <div class="section-header">
-              <h3 class="section-title">Gerenciamento de Usuários</h3>
+            <!-- Header Section -->
+            <div class="users-header">
+              <div class="header-content">
+                <div class="header-title">
+                  <h3 class="section-title">
+                    <i class="bi bi-people-fill"></i>
+                    Gerenciamento de Usuários
+                  </h3>
+                  <p class="section-subtitle">Gerencie usuários, permissões e acessos do sistema</p>
+                </div>
+                <div class="header-actions">
+                  <button class="btn-primary" @click="showCreateUserModal = true">
+                    <i class="bi bi-person-plus-fill"></i>
+                    Novo Usuário
+                  </button>
+                </div>
+              </div>
+
+              <!-- Filter Controls -->
               <div class="filter-controls">
-                <input v-model="userSearchQuery" type="text" placeholder="Buscar por nome ou email..."
-                  class="search-input">
-                <select v-model="userStatusFilter" class="status-filter">
-                  <option value="">Todos os Status</option>
-                  <option value="active">Ativos</option>
-                  <option value="inactive">Inativos</option>
-                </select>
+                <div class="search-container">
+                  <i class="bi bi-search search-icon"></i>
+                  <input v-model="userSearchQuery" type="text" placeholder="Buscar por nome, email ou ID..."
+                    class="search-input">
+                </div>
+                <div class="filter-group">
+                  <select v-model="userStatusFilter" class="filter-select">
+                    <option value="">Todos os Status</option>
+                    <option value="active">Ativos</option>
+                    <option value="inactive">Inativos</option>
+                  </select>
+                  <select class="filter-select">
+                    <option value="">Todos os Tipos</option>
+                    <option value="admin">Administradores</option>
+                    <option value="user">Usuários</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="users-list">
+            <!-- Users Content -->
+            <div class="users-content">
               <!-- Loading State -->
-              <div v-if="loading" class="loading-users">
+              <div v-if="loading" class="loading-state">
                 <div class="loading-spinner"></div>
                 <p>Carregando usuários...</p>
               </div>
 
               <!-- Empty State -->
-              <div v-else-if="filteredUsers.length === 0" class="empty-users">
-                <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                  <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z" />
-                </svg>
+              <div v-else-if="filteredUsers.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-people"></i>
+                </div>
                 <h4>Nenhum usuário encontrado</h4>
                 <p>Não há usuários que correspondam aos filtros selecionados</p>
+                <button class="btn-secondary" @click="userSearchQuery = ''; userStatusFilter = ''">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  Limpar Filtros
+                </button>
               </div>
 
-              <div v-for="user in filteredUsers" :key="user.id" class="user-card">
-                <div class="user-header">
-                  <div class="user-info">
-                    <h4 class="user-name">{{ user.name }}</h4>
-                    <span class="user-email">{{ user.email }}</span>
-                    <span class="user-id">#{{ user.id }}</span>
+              <!-- Users Grid -->
+              <div v-else class="users-grid">
+                <div v-for="user in filteredUsers" :key="user.id" class="user-card">
+                  <!-- User Header -->
+                  <div class="user-card-header">
+                    <div class="user-avatar">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="user-info">
+                      <h4 class="user-name">{{ user.name }}</h4>
+                      <p class="user-email">{{ user.email }}</p>
+                      <span class="user-id">ID: #{{ user.id }}</span>
+                    </div>
+                    <div class="user-status">
+                      <span class="status-badge" :class="user.status">
+                        <i class="bi bi-circle-fill"></i>
+                        {{ getUserStatusText(user.status) }}
+                      </span>
+                    </div>
                   </div>
-                  <div class="user-status" :class="user.status">
-                    <span class="status-badge">{{ getUserStatusText(user.status) }}</span>
-                  </div>
-                </div>
 
-                <div class="user-content">
-                  <div class="user-meta">
-                    <span class="user-plan">{{ getPlanDisplayName(user.plan) || 'Sem plano' }}</span>
-                    <!-- Debug: {{ user.plan }} -->
-                    <span class="user-role" :class="user.account_type">{{ getUserRoleText(user.account_type) }}</span>
-                    <span class="user-created">{{ formatDate(user.createdAt) }}</span>
+                  <!-- User Details -->
+                  <div class="user-card-body">
+                    <div class="user-details">
+                      <div class="detail-item">
+                        <i class="bi bi-shield-fill-check detail-icon" :class="user.role"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Tipo de Conta</span>
+                          <span class="detail-value" :class="user.role">{{ getUserRoleText(user.role) }}</span>
+                        </div>
+                      </div>
+                      <div class="detail-item">
+                        <i class="bi bi-calendar-check detail-icon"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Plano</span>
+                          <span class="detail-value">{{ getPlanDisplayName(user.plan) || 'Sem plano' }}</span>
+                        </div>
+                      </div>
+                      <div class="detail-item">
+                        <i class="bi bi-clock detail-icon"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Criado em</span>
+                          <span class="detail-value">{{ formatDate(user.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div class="user-actions">
-                  <button class="action-btn toggle-btn"
-                    :class="user.status === 'active' ? 'deactivate-btn' : 'activate-btn'"
-                    @click="toggleUserStatus(user)"
-                    :title="user.status === 'active' ? 'Desativar usuário' : 'Ativar usuário'">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path v-if="user.status === 'active'"
-                        d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V3.5A.5.5 0 0 1 8 3zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V3.5a.5.5 0 0 1 .5-.5z" />
-                      <path v-if="user.status === 'active'"
-                        d="M8 8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V8.5A.5.5 0 0 1 8 8zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V8.5a.5.5 0 0 1 .5-.5z" />
-                      <path v-if="user.status === 'inactive'"
-                        d="M8 3a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V3.5A.5.5 0 0 1 8 3zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V3.5a.5.5 0 0 1 .5-.5z" />
-                      <path v-if="user.status === 'inactive'"
-                        d="M8 8a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5V8.5A.5.5 0 0 1 8 8zm3 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11V8.5a.5.5 0 0 1 .5-.5z" />
-                      <path v-if="user.status === 'inactive'"
-                        d="M8 13a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H6a.5.5 0 0 1 0-1h1.5v-1A.5.5 0 0 1 8 13zm3 0a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5H9.5a.5.5 0 0 1 0-1H11v-1a.5.5 0 0 1 .5-.5z" />
-                    </svg>
-                    {{ user.status === 'active' ? 'Desativar' : 'Ativar' }}
-                  </button>
-                  <button class="action-btn edit-btn" @click="editUser(user)">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path
-                        d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.5.5 0 0 1-.5-.5V9h-.5a.5.5 0 0 1-.5-.5V8h-.5a.5.5 0 0 1-.5-.5V7h-.5a.5.5 0 0 1-.5-.5V6h-.5a.5.5 0 0 1-.5-.5V5h-.5a.5.5 0 0 1-.5-.5V4h-.5a.5.5 0 0 1-.5-.5V3h-.5a.5.5 0 0 1-.5-.5V2h-.5a.5.5 0 0 1-.5-.5V1h-.5a.5.5 0 0 1-.5-.5V0H1a.5.5 0 0 0-.5.5v15a.5.5 0 0 0 .5.5h15a.5.5 0 0 0 .5-.5V1a.5.5 0 0 0-.5-.5H1z" />
-                    </svg>
-                    Editar
-                  </button>
-                  <button class="action-btn password-btn" @click="changePassword(user)">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path
-                        d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
-                    </svg>
-                    Senha
-                  </button>
-                  <button class="action-btn delete-btn" @click="deleteUser(user)">
-                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                      <path
-                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
-                      <path fill-rule="evenodd"
-                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
-                    </svg>
-                    Excluir
-                  </button>
+                  <!-- User Actions -->
+                  <div class="user-card-footer">
+                    <div class="action-buttons">
+                      <button class="action-btn toggle-btn"
+                        :class="user.status === 'active' ? 'deactivate-btn' : 'activate-btn'"
+                        @click="toggleUserStatus(user)"
+                        :title="user.status === 'active' ? 'Desativar usuário' : 'Ativar usuário'">
+                        <i class="bi" :class="user.status === 'active' ? 'bi-pause-fill' : 'bi-play-fill'"></i>
+                        {{ user.status === 'active' ? 'Desativar' : 'Ativar' }}
+                      </button>
+
+                      <button class="action-btn edit-btn" @click="editUser(user)" title="Editar usuário">
+                        <i class="bi bi-pencil-fill"></i>
+                        Editar
+                      </button>
+
+                      <button class="action-btn password-btn" @click="changePassword(user)" title="Alterar senha">
+                        <i class="bi bi-key-fill"></i>
+                        Senha
+                      </button>
+
+                      <button class="action-btn delete-btn" @click="deleteUser(user)" title="Excluir usuário">
+                        <i class="bi bi-trash-fill"></i>
+                        Excluir
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -225,74 +268,162 @@
 
           <!-- Tickets Tab -->
           <div v-if="activeTab === 'tickets'" class="tab-content">
-            <div class="section-header">
-              <h3 class="section-title">Gerenciamento de Tickets</h3>
+            <!-- Header Section -->
+            <div class="tickets-header">
+              <div class="header-content">
+                <div class="header-title">
+                  <h3 class="section-title">
+                    <i class="bi bi-ticket-perforated-fill"></i>
+                    Gerenciamento de Tickets
+                  </h3>
+                  <p class="section-subtitle">Monitore e gerencie todos os tickets de suporte do sistema</p>
+                </div>
+                <div class="header-stats">
+                  <div class="stat-item">
+                    <div class="stat-value">{{ filteredTickets.length }}</div>
+                    <div class="stat-label">Total</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value open">{{filteredTickets.filter(t => t.status === 'open').length}}</div>
+                    <div class="stat-label">Abertos</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value in-progress">{{filteredTickets.filter(t => t.status ===
+                      'in_progress').length}}</div>
+                    <div class="stat-label">Em Andamento</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value closed">{{filteredTickets.filter(t => t.status === 'closed').length}}</div>
+                    <div class="stat-label">Fechados</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter Controls -->
               <div class="filter-controls">
-                <input v-model="searchQuery" type="text" placeholder="Buscar por ID, título ou usuário..."
-                  class="search-input">
-                <select v-model="statusFilter" class="status-filter">
-                  <option value="">Todos os Status</option>
-                  <option value="open">Abertos</option>
-                  <option value="in_progress">Em Andamento</option>
-                  <option value="closed">Fechados</option>
-                </select>
-                <select v-model="priorityFilter" class="priority-filter">
-                  <option value="">Todas as Prioridades</option>
-                  <option value="low">Baixa</option>
-                  <option value="medium">Média</option>
-                  <option value="high">Alta</option>
-                  <option value="urgent">Urgente</option>
-                </select>
-                <select v-model="categoryFilter" class="category-filter">
-                  <option value="">Todas as Categorias</option>
-                  <option value="financial">Financeiro</option>
-                  <option value="technical">Técnico</option>
-                  <option value="support">Suporte</option>
-                  <option value="billing">Cobrança</option>
-                  <option value="feature">Sugestão</option>
-                  <option value="other">Outro</option>
-                </select>
+                <div class="search-container">
+                  <i class="bi bi-search search-icon"></i>
+                  <input v-model="searchQuery" type="text" placeholder="Buscar por ID, título ou usuário..."
+                    class="search-input">
+                </div>
+                <div class="filter-group">
+                  <select v-model="statusFilter" class="filter-select">
+                    <option value="">Todos os Status</option>
+                    <option value="open">Abertos</option>
+                    <option value="in_progress">Em Andamento</option>
+                    <option value="closed">Fechados</option>
+                  </select>
+                  <select v-model="priorityFilter" class="filter-select">
+                    <option value="">Todas as Prioridades</option>
+                    <option value="low">Baixa</option>
+                    <option value="medium">Média</option>
+                    <option value="high">Alta</option>
+                    <option value="urgent">Urgente</option>
+                  </select>
+                  <select v-model="categoryFilter" class="filter-select">
+                    <option value="">Todas as Categorias</option>
+                    <option value="financial">Financeiro</option>
+                    <option value="technical">Técnico</option>
+                    <option value="support">Suporte</option>
+                    <option value="billing">Cobrança</option>
+                    <option value="feature">Sugestão</option>
+                    <option value="other">Outro</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="tickets-list">
-              <div v-if="filteredTickets.length === 0" class="empty-tickets">
-                <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                  <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z" />
-                </svg>
+            <!-- Tickets Content -->
+            <div class="tickets-content">
+              <!-- Empty State -->
+              <div v-if="filteredTickets.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-ticket-perforated"></i>
+                </div>
                 <h4>Nenhum ticket encontrado</h4>
                 <p>Não há tickets que correspondam aos filtros selecionados</p>
+                <button class="btn-secondary"
+                  @click="searchQuery = ''; statusFilter = ''; priorityFilter = ''; categoryFilter = ''">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  Limpar Filtros
+                </button>
               </div>
 
-              <div v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card admin-ticket"
-                @click="openTicket(ticket)">
-                <div class="ticket-header">
-                  <div class="ticket-info">
-                    <h4 class="ticket-title">{{ ticket.subject }}</h4>
-                    <span class="ticket-id">#{{ ticket.id }}</span>
-                    <span class="ticket-user">{{ ticket.userName }}</span>
+              <!-- Tickets Grid -->
+              <div v-else class="tickets-grid">
+                <div v-for="ticket in filteredTickets" :key="ticket.id" class="ticket-card" @click="openTicket(ticket)">
+                  <!-- Ticket Header -->
+                  <div class="ticket-card-header">
+                    <div class="ticket-avatar">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="ticket-info">
+                      <h4 class="ticket-title">{{ ticket.subject }}</h4>
+                      <p class="ticket-user">{{ ticket.userName }}</p>
+                      <span class="ticket-id">ID: #{{ ticket.id }}</span>
+                    </div>
+                    <div class="ticket-status">
+                      <span class="status-badge" :class="ticket.status">
+                        <i class="bi bi-circle-fill"></i>
+                        {{ getStatusText(ticket.status) }}
+                      </span>
+                    </div>
                   </div>
-                  <div class="ticket-status" :class="ticket.status">
-                    <span class="status-badge">{{ getStatusText(ticket.status) }}</span>
-                  </div>
-                </div>
 
-                <div class="ticket-content">
-                  <p class="ticket-description">{{ ticket.messages?.[0]?.content ?
-                    ticket.messages[0].content.substring(0, 100) + (ticket.messages[0].content.length > 100 ? '...' :
-                      '') :
-                    'Sem descrição' }}</p>
-                </div>
-
-                <div class="ticket-footer">
-                  <div class="ticket-meta">
-                    <span class="ticket-category">{{ getCategoryText(ticket.category) }}</span>
-                    <span class="ticket-date">{{ formatDate(ticket.createdAt) }}</span>
-                    <span class="ticket-messages">{{ ticket.messages.length }} mensagens</span>
+                  <!-- Ticket Content -->
+                  <div class="ticket-card-body">
+                    <div class="ticket-description">
+                      <p>{{ ticket.messages?.[0]?.content ?
+                        ticket.messages[0].content.substring(0, 120) + (ticket.messages[0].content.length > 120 ? '...'
+                          : '') :
+                        'Sem descrição' }}</p>
+                    </div>
                   </div>
-                  <div class="ticket-priority" :class="ticket.priority">
-                    <span class="priority-badge">{{ getPriorityText(ticket.priority) }}</span>
+
+                  <!-- Ticket Details -->
+                  <div class="ticket-details">
+                    <div class="detail-item">
+                      <i class="bi bi-tag detail-icon"></i>
+                      <div class="detail-content">
+                        <span class="detail-label">Categoria</span>
+                        <span class="detail-value">{{ getCategoryText(ticket.category) }}</span>
+                      </div>
+                    </div>
+                    <div class="detail-item">
+                      <i class="bi bi-chat-dots detail-icon"></i>
+                      <div class="detail-content">
+                        <span class="detail-label">Mensagens</span>
+                        <span class="detail-value">{{ ticket.messages.length }}</span>
+                      </div>
+                    </div>
+                    <div class="detail-item">
+                      <i class="bi bi-clock detail-icon"></i>
+                      <div class="detail-content">
+                        <span class="detail-label">Criado em</span>
+                        <span class="detail-value">{{ formatDate(ticket.createdAt) }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Ticket Footer -->
+                  <div class="ticket-card-footer">
+                    <div class="priority-section">
+                      <span class="priority-badge" :class="ticket.priority">
+                        <i class="bi" :class="{
+                          'bi-arrow-down': ticket.priority === 'low',
+                          'bi-dash': ticket.priority === 'medium',
+                          'bi-arrow-up': ticket.priority === 'high',
+                          'bi-exclamation-triangle': ticket.priority === 'urgent'
+                        }"></i>
+                        {{ getPriorityText(ticket.priority) }}
+                      </span>
+                    </div>
+                    <div class="ticket-actions">
+                      <button class="action-btn view-btn" @click.stop="openTicket(ticket)" title="Ver detalhes">
+                        <i class="bi bi-eye-fill"></i>
+                        Ver Detalhes
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -301,117 +432,167 @@
 
           <!-- Payments Tab -->
           <div v-if="activeTab === 'payments'" class="tab-content">
-            <div class="section-header">
-              <h3 class="section-title">Gerenciamento de Pagamentos</h3>
+            <!-- Header Section -->
+            <div class="payments-header">
+              <div class="header-content">
+                <div class="header-title">
+                  <h3 class="section-title">
+                    <i class="bi bi-credit-card-fill"></i>
+                    Gerenciamento de Pagamentos
+                  </h3>
+                  <p class="section-subtitle">Monitore e gerencie todos os pagamentos do sistema</p>
+                </div>
+                <div class="header-stats">
+                  <div class="stat-item">
+                    <div class="stat-value">{{ filteredPayments.length }}</div>
+                    <div class="stat-label">Total</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value pending">{{filteredPayments.filter(p => p.status === 'pending').length}}
+                    </div>
+                    <div class="stat-label">Pendentes</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value approved">{{filteredPayments.filter(p => p.status === 'approved').length}}
+                    </div>
+                    <div class="stat-label">Aprovados</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter Controls -->
               <div class="filter-controls">
-                <input v-model="paymentSearchQuery" type="text"
-                  placeholder="Buscar por usuário, email ou ID do pagamento..." class="search-input">
-                <select v-model="paymentPlanFilter" class="status-filter">
-                  <option value="">Todos os Planos</option>
-                  <template v-for="(plans, category) in groupedPlans" :key="category">
-                    <optgroup :label="category">
-                      <option v-for="plan in plans" :key="plan.id" :value="plan.type">
-                        {{ plan.display_name || plan.name }}
-                      </option>
-                    </optgroup>
-                  </template>
-                </select>
-                <select v-model="paymentStatusFilter" class="status-filter">
-                  <option value="">Todos os Status</option>
-                  <option value="approved">Aprovado</option>
-                  <option value="pending">Pendente</option>
-                  <option value="rejected">Rejeitado</option>
-                  <option value="cancelled">Cancelado</option>
-                </select>
-                <select v-model="paymentPeriodFilter" class="status-filter">
-                  <option value="">Todos os Períodos</option>
-                  <option value="today">Hoje</option>
-                  <option value="week">Esta Semana</option>
-                  <option value="month">Este Mês</option>
-                  <option value="year">Este Ano</option>
-                </select>
+                <div class="search-container">
+                  <i class="bi bi-search search-icon"></i>
+                  <input v-model="paymentSearchQuery" type="text"
+                    placeholder="Buscar por usuário, email ou ID do pagamento..." class="search-input">
+                </div>
+                <div class="filter-group">
+                  <select v-model="paymentStatusFilter" class="filter-select">
+                    <option value="">Todos os Status</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="pending">Pendente</option>
+                    <option value="rejected">Rejeitado</option>
+                    <option value="cancelled">Cancelado</option>
+                  </select>
+                  <select v-model="paymentPlanFilter" class="filter-select">
+                    <option value="">Todos os Planos</option>
+                    <template v-for="(plans, category) in groupedPlans" :key="category">
+                      <optgroup :label="category">
+                        <option v-for="plan in plans" :key="plan.id" :value="plan.type">
+                          {{ plan.display_name || plan.name }}
+                        </option>
+                      </optgroup>
+                    </template>
+                  </select>
+                  <select v-model="paymentPeriodFilter" class="filter-select">
+                    <option value="">Todos os Períodos</option>
+                    <option value="today">Hoje</option>
+                    <option value="week">Esta Semana</option>
+                    <option value="month">Este Mês</option>
+                    <option value="year">Este Ano</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div class="payments-list">
+            <!-- Payments Content -->
+            <div class="payments-content">
               <!-- Loading State -->
-              <div v-if="loadingPayments" class="loading-payments">
+              <div v-if="loadingPayments" class="loading-state">
                 <div class="loading-spinner"></div>
                 <p>Carregando pagamentos...</p>
               </div>
 
               <!-- Empty State -->
-              <div v-else-if="filteredPayments.length === 0" class="empty-payments">
-                <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
-                  <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z" />
-                </svg>
+              <div v-else-if="filteredPayments.length === 0" class="empty-state">
+                <div class="empty-icon">
+                  <i class="bi bi-credit-card"></i>
+                </div>
                 <h4>Nenhum pagamento encontrado</h4>
                 <p>Não há pagamentos que correspondam aos filtros selecionados</p>
+                <button class="btn-secondary"
+                  @click="paymentSearchQuery = ''; paymentStatusFilter = ''; paymentPlanFilter = ''; paymentPeriodFilter = ''">
+                  <i class="bi bi-arrow-clockwise"></i>
+                  Limpar Filtros
+                </button>
               </div>
 
-              <div v-for="payment in filteredPayments" :key="payment.id" class="payment-card">
-                <div class="payment-header">
-                  <div class="payment-info">
-                    <h4 class="payment-user">{{ payment.userName }}</h4>
-                    <span class="payment-email">{{ payment.userEmail }}</span>
-                    <span class="payment-id">#{{ payment.id }}</span>
+              <!-- Payments Grid -->
+              <div v-else class="payments-grid">
+                <div v-for="payment in filteredPayments" :key="payment.id" class="payment-card">
+                  <!-- Payment Header -->
+                  <div class="payment-card-header">
+                    <div class="payment-avatar">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div class="payment-info">
+                      <h4 class="payment-user">{{ payment.userName }}</h4>
+                      <p class="payment-email">{{ payment.userEmail }}</p>
+                      <span class="payment-id">ID: #{{ payment.id }}</span>
+                    </div>
+                    <div class="payment-status">
+                      <span class="status-badge" :class="payment.status">
+                        <i class="bi bi-circle-fill"></i>
+                        {{ getPaymentStatusText(payment.status) }}
+                      </span>
+                    </div>
                   </div>
-                  <div class="payment-status" :class="payment.status">
-                    <span class="status-badge">{{ getPaymentStatusText(payment.status) }}</span>
-                  </div>
-                </div>
 
-                <div class="payment-content">
-                  <div class="payment-details">
-                    <div class="payment-plan">
-                      <span class="plan-label">Plano:</span>
-                      <span class="plan-name">{{ getPlanDisplayName(payment.planId) }}</span>
-                    </div>
-                    <div class="payment-amount">
-                      <span class="amount-label">Valor:</span>
-                      <span class="amount-value">R$ {{ payment.amount.toFixed(2) }}</span>
-                    </div>
-                    <div class="payment-method">
-                      <span class="method-label">Método:</span>
-                      <span class="method-name">{{ getPaymentMethodText(payment.paymentMethod) }}</span>
+                  <!-- Payment Details -->
+                  <div class="payment-card-body">
+                    <div class="payment-details">
+                      <div class="detail-item">
+                        <i class="bi bi-currency-dollar detail-icon amount"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Valor</span>
+                          <span class="detail-value amount">R$ {{ payment.amount.toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <div class="detail-item">
+                        <i class="bi bi-calendar-check detail-icon"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Plano</span>
+                          <span class="detail-value">{{ getPlanDisplayName(payment.planId) }}</span>
+                        </div>
+                      </div>
+                      <div class="detail-item">
+                        <i class="bi bi-credit-card detail-icon"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Método</span>
+                          <span class="detail-value">{{ getPaymentMethodText(payment.paymentMethod) }}</span>
+                        </div>
+                      </div>
+                      <div class="detail-item">
+                        <i class="bi bi-clock detail-icon"></i>
+                        <div class="detail-content">
+                          <span class="detail-label">Data</span>
+                          <span class="detail-value">{{ formatDate(payment.createdAt) }}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="payment-footer">
-                  <div class="payment-meta">
-                    <span class="payment-date">{{ formatDate(payment.createdAt) }}</span>
-                    <span class="payment-expires" v-if="payment.expiresAt">
-                      Expira em: {{ formatDate(payment.expiresAt) }}
-                    </span>
-                  </div>
-                  <div class="payment-actions">
-                    <button class="action-btn view-btn" @click="viewPaymentDetails(payment)">
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path
-                          d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z" />
-                        <path
-                          d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z" />
-                      </svg>
-                      Ver Detalhes
-                    </button>
-                    <button v-if="payment.status === 'pending'" class="action-btn approve-btn"
-                      @click="approvePayment(payment)">
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path
-                          d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
-                      </svg>
-                      Aprovar
-                    </button>
-                    <button v-if="payment.status === 'pending'" class="action-btn reject-btn"
-                      @click="rejectPayment(payment)">
-                      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                        <path
-                          d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-                      </svg>
-                      Rejeitar
-                    </button>
+                  <!-- Payment Actions -->
+                  <div class="payment-card-footer">
+                    <div class="action-buttons">
+                      <button class="action-btn view-btn" @click="viewPaymentDetails(payment)" title="Ver detalhes">
+                        <i class="bi bi-eye-fill"></i>
+                        Detalhes
+                      </button>
+
+                      <button v-if="payment.status === 'pending'" class="action-btn approve-btn"
+                        @click="approvePayment(payment)" title="Aprovar pagamento">
+                        <i class="bi bi-check-circle-fill"></i>
+                        Aprovar
+                      </button>
+
+                      <button v-if="payment.status === 'pending'" class="action-btn reject-btn"
+                        @click="rejectPayment(payment)" title="Rejeitar pagamento">
+                        <i class="bi bi-x-circle-fill"></i>
+                        Rejeitar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -443,9 +624,9 @@
           <div class="ticket-detail-header">
             <div class="ticket-detail-meta">
               <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status)
-              }}</span>
+                }}</span>
               <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority)
-              }}</span>
+                }}</span>
               <span class="category-badge">{{ getCategoryText(selectedTicket.category) }}</span>
             </div>
           </div>
@@ -613,14 +794,12 @@
                 <option value="">Selecione o tipo de conta</option>
                 <option value="user">Usuário</option>
                 <option value="admin">Administrador</option>
-                <option value="moderator">Moderador</option>
               </select>
               <div v-if="validationErrors.account_type" class="field-error">
                 {{ validationErrors.account_type }}
               </div>
               <small class="form-help">
                 <strong>Usuário:</strong> Acesso padrão ao sistema<br>
-                <strong>Moderador:</strong> Pode gerenciar tickets e usuários<br>
                 <strong>Administrador:</strong> Acesso completo ao sistema
               </small>
             </div>
@@ -717,84 +896,171 @@
     <div v-if="showPaymentDetailModal" class="modal-overlay" @click="closePaymentDetailModal">
       <div class="payment-detail-modal admin-modal" @click.stop>
         <div class="modal-header">
-          <h3>Detalhes do Pagamento #{{ selectedPayment?.id }}</h3>
-          <button class="close-btn" @click="closePaymentDetailModal">×</button>
+          <div class="modal-header-content">
+            <div class="modal-title">
+              <i class="bi bi-credit-card-fill"></i>
+              <h3>Detalhes do Pagamento #{{ selectedPayment?.id }}</h3>
+            </div>
+            <button class="close-btn" @click="closePaymentDetailModal">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
         </div>
 
         <div class="modal-body" v-if="selectedPayment">
-          <div class="payment-detail-header">
-            <div class="payment-detail-meta">
-              <span class="status-badge" :class="selectedPayment.status">{{ getPaymentStatusText(selectedPayment.status)
-              }}</span>
-              <span class="amount-badge">R$ {{ selectedPayment.amount.toFixed(2) }}</span>
-              <span class="plan-badge">{{ getPlanDisplayName(selectedPayment.planId) }}</span>
+          <!-- Payment Status Banner -->
+          <div class="payment-status-banner" :class="selectedPayment.status">
+            <div class="status-content">
+              <div class="status-icon">
+                <i class="bi" :class="{
+                  'bi-check-circle-fill': selectedPayment.status === 'approved',
+                  'bi-clock-fill': selectedPayment.status === 'pending',
+                  'bi-x-circle-fill': selectedPayment.status === 'rejected',
+                  'bi-dash-circle-fill': selectedPayment.status === 'cancelled'
+                }"></i>
+              </div>
+              <div class="status-info">
+                <h4 class="status-title">{{ getPaymentStatusText(selectedPayment.status) }}</h4>
+                <p class="status-description">{{ getPaymentStatusDescription(selectedPayment.status) }}</p>
+              </div>
+              <div class="status-amount">
+                <span class="amount-value">R$ {{ selectedPayment.amount.toFixed(2) }}</span>
+              </div>
             </div>
           </div>
 
-          <div class="payment-detail-content">
-            <div class="payment-info-grid">
-              <div class="info-item">
-                <label>Usuário:</label>
-                <span>{{ selectedPayment.userName }}</span>
-              </div>
-              <div class="info-item">
-                <label>Email:</label>
-                <span>{{ selectedPayment.userEmail }}</span>
-              </div>
-              <div class="info-item">
-                <label>Plano:</label>
-                <span>{{ getPlanDisplayName(selectedPayment.planId) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Valor:</label>
-                <span>R$ {{ selectedPayment.amount.toFixed(2) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Método de Pagamento:</label>
-                <span>{{ getPaymentMethodText(selectedPayment.paymentMethod) }}</span>
-              </div>
-              <div class="info-item">
-                <label>Status:</label>
-                <span class="status-text" :class="selectedPayment.status">{{
-                  getPaymentStatusText(selectedPayment.status)
-                }}</span>
-              </div>
-              <div class="info-item">
-                <label>Data do Pagamento:</label>
-                <span>{{ formatDate(selectedPayment.createdAt) }}</span>
-              </div>
-              <div class="info-item" v-if="selectedPayment.expiresAt">
-                <label>Expira em:</label>
-                <span>{{ formatDate(selectedPayment.expiresAt) }}</span>
-              </div>
-              <div class="info-item" v-if="selectedPayment.paymentId">
-                <label>ID do Pagamento:</label>
-                <span class="payment-id-text">{{ selectedPayment.paymentId }}</span>
-              </div>
-              <div class="info-item" v-if="selectedPayment.description">
-                <label>Descrição:</label>
-                <span>{{ selectedPayment.description }}</span>
+          <!-- Payment Details Grid -->
+          <div class="payment-details-grid">
+            <div class="detail-section">
+              <h4 class="section-title">
+                <i class="bi bi-person-fill"></i>
+                Informações do Usuário
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-person"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Nome</span>
+                    <span class="detail-value">{{ selectedPayment.userName }}</span>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-envelope"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">{{ selectedPayment.userEmail }}</span>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div class="payment-actions-section" v-if="selectedPayment.status === 'pending'">
-              <h5>Ações Administrativas</h5>
-              <div class="admin-actions">
-                <button class="approve-payment-btn" @click="approvePayment(selectedPayment)">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path
-                      d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z" />
-                  </svg>
-                  Aprovar Pagamento
-                </button>
-                <button class="reject-payment-btn" @click="rejectPayment(selectedPayment)">
-                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                    <path
-                      d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
-                  </svg>
-                  Rejeitar Pagamento
-                </button>
+            <div class="detail-section">
+              <h4 class="section-title">
+                <i class="bi bi-credit-card-fill"></i>
+                Informações do Pagamento
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-currency-dollar"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Valor</span>
+                    <span class="detail-value amount">R$ {{ selectedPayment.amount.toFixed(2) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-calendar-check"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Plano</span>
+                    <span class="detail-value">{{ getPlanDisplayName(selectedPayment.planId) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-credit-card"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Método</span>
+                    <span class="detail-value">{{ getPaymentMethodText(selectedPayment.paymentMethod) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item" v-if="selectedPayment.paymentId">
+                  <div class="detail-icon">
+                    <i class="bi bi-hash"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">ID do Pagamento</span>
+                    <span class="detail-value">{{ selectedPayment.paymentId }}</span>
+                  </div>
+                </div>
+                <div class="detail-item" v-if="selectedPayment.description">
+                  <div class="detail-icon">
+                    <i class="bi bi-file-text"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Descrição</span>
+                    <span class="detail-value">{{ selectedPayment.description }}</span>
+                  </div>
+                </div>
               </div>
+            </div>
+
+            <div class="detail-section">
+              <h4 class="section-title">
+                <i class="bi bi-clock-fill"></i>
+                Informações Temporais
+              </h4>
+              <div class="detail-items">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="bi bi-calendar-plus"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Data de Criação</span>
+                    <span class="detail-value">{{ formatDate(selectedPayment.createdAt) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item" v-if="selectedPayment.expiresAt">
+                  <div class="detail-icon">
+                    <i class="bi bi-calendar-x"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Expira em</span>
+                    <span class="detail-value">{{ formatDate(selectedPayment.expiresAt) }}</span>
+                  </div>
+                </div>
+                <div class="detail-item"
+                  v-if="selectedPayment.updatedAt && selectedPayment.updatedAt !== selectedPayment.createdAt">
+                  <div class="detail-icon">
+                    <i class="bi bi-arrow-clockwise"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Última Atualização</span>
+                    <span class="detail-value">{{ formatDate(selectedPayment.updatedAt) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="modal-footer" v-if="selectedPayment.status === 'pending'">
+            <div class="action-buttons">
+              <button class="btn-approve" @click="approvePayment(selectedPayment)">
+                <i class="bi bi-check-circle-fill"></i>
+                Aprovar Pagamento
+              </button>
+              <button class="btn-reject" @click="rejectPayment(selectedPayment)">
+                <i class="bi bi-x-circle-fill"></i>
+                Rejeitar Pagamento
+              </button>
             </div>
           </div>
         </div>
@@ -807,6 +1073,8 @@
 
     <!-- Glossary Modal -->
 
+    <!-- Toast Container -->
+    <ToastContainer />
   </div>
 </template>
 
@@ -815,10 +1083,12 @@ import Sidebar from '../components/Navigation/Sidebar.vue'
 import Header from '../components/Navigation/Header.vue'
 import PWAForceUpdateModal from '../components/PWA/PWAForceUpdateModal.vue'
 import AdminNotificationPanel from '../components/Admin/AdminNotificationPanel.vue'
+import ToastContainer from '../components/UI/ToastContainer.vue'
 
 import { mapGetters } from 'vuex'
 import { adminAPI } from '@/api/admin'
 import axios from '@/utils/axios'
+import { useToast } from '@/composables/useToast'
 
 export default {
   name: 'AdminView',
@@ -826,7 +1096,8 @@ export default {
     Sidebar,
     Header,
     PWAForceUpdateModal,
-    AdminNotificationPanel
+    AdminNotificationPanel,
+    ToastContainer
   },
   mounted() {
     console.log('🚀 Componente AdminView montado, verificando permissões...')
@@ -1130,7 +1401,9 @@ export default {
             email: user.email,
             status: user.status, // Não definir valor padrão - usar exatamente o que vem do banco
             plan: user.plan || user.account_type || '', // Priorizar plan sobre account_type
-            account_type: user.account_type || 'user', // Manter account_type para tipo de conta
+            account_type: user.account_type || 'user', // Manter para compatibilidade com sistema de planos
+            role: user.role || (user.is_admin ? 'admin' : 'user'), // Usar role baseado em is_admin
+            is_admin: user.is_admin, // Campo principal para funcionalidades administrativas
             createdAt: user.created_at || user.createdAt || new Date().toISOString()
           }))
           console.log('✅ Usuários carregados:', this.users.length)
@@ -1599,9 +1872,10 @@ export default {
         name: user.name,
         email: user.email,
         status: user.status,
-        account_type: user.account_type || 'user'
+        account_type: user.role || (user.is_admin ? 'admin' : 'user')
       }
       console.log('Frontend: Editando usuário:', this.editingUser)
+      console.log('Frontend: User role:', user.role, 'User is_admin:', user.is_admin)
 
       // Limpar estados de validação e validar campos iniciais
       this.clearValidationStates()
@@ -1713,7 +1987,7 @@ export default {
         const userData = {
           name: this.editingUser.name.trim(),
           email: this.editingUser.email.toLowerCase().trim(),
-          account_type: this.editingUser.account_type || 'user',
+          account_type: this.editingUser.account_type || 'user', // Mantido para compatibilidade com API
           status: this.editingUser.status
         }
 
@@ -1930,6 +2204,16 @@ export default {
       return methodMap[method] || method
     },
 
+    getPaymentStatusDescription(status) {
+      const descriptionMap = {
+        approved: 'Pagamento aprovado e processado com sucesso',
+        pending: 'Aguardando aprovação administrativa',
+        rejected: 'Pagamento rejeitado pelo administrador',
+        cancelled: 'Pagamento cancelado pelo usuário'
+      }
+      return descriptionMap[status] || 'Status não definido'
+    },
+
     getPlanDisplayName(planId) {
       // Prioridade 1: Store Vuex (dados mais atualizados)
       if (this.$store.getters.plansLoaded) {
@@ -2084,12 +2368,17 @@ export default {
     },
 
     showToastNotification(message, type = 'info') {
-      // Sistema de notificação melhorado
-      const icon = type === 'error' ? '❌' : type === 'success' ? '✅' : 'ℹ️'
-      const title = type === 'error' ? 'Erro' : type === 'success' ? 'Sucesso' : 'Informação'
+      const { success, error, warning, info } = useToast()
 
-      // Usar alert melhorado com título
-      alert(`${icon} ${title}\n\n${message}`)
+      if (type === 'success') {
+        success('Sucesso!', message)
+      } else if (type === 'error') {
+        error('Erro!', message)
+      } else if (type === 'warning') {
+        warning('Atenção!', message)
+      } else {
+        info('Informação', message)
+      }
 
       // Log da notificação
       console.log(`[NOTIFICATION] ${type.toUpperCase()}: ${message}`)
@@ -2630,27 +2919,185 @@ export default {
   }
 }
 
-/* Users Management */
-.users-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+/* Users Management - Professional Design */
+.users-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
 }
 
-.loading-users {
-  text-align: center;
+.header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 20px;
+}
+
+.header-title {
+  flex: 1;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 8px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.section-title i {
+  color: var(--accent-primary);
+  font-size: 20px;
+}
+
+.section-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-button);
+}
+
+.btn-primary:hover {
+  background: var(--accent-secondary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-button-hover);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+}
+
+.filter-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+  min-width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-alpha);
+}
+
+.filter-group {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-select {
+  padding: 12px 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 140px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-alpha);
+}
+
+.users-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 60px 20px;
-  color: var(--text-secondary, #a0a0a0);
+  color: var(--text-secondary);
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid var(--bg-tertiary, #3a3a3a);
-  border-top: 4px solid var(--info);
+  border: 4px solid var(--border-primary);
+  border-top: 4px solid var(--accent-primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 16px;
+  margin-bottom: 20px;
 }
 
 @keyframes spin {
@@ -2663,148 +3110,265 @@ export default {
   }
 }
 
-.empty-users {
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   text-align: center;
-  padding: 48px 24px;
-  color: var(--text-secondary, #888888);
 }
 
-.empty-users svg {
-  opacity: 0.5;
-  margin-bottom: 16px;
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-radius: 50%;
+  margin-bottom: 20px;
 }
 
-.empty-users h4 {
-  font-size: 20px;
+.empty-icon i {
+  font-size: 32px;
+  color: var(--text-disabled);
+}
+
+.empty-state h4 {
   margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
-.empty-users p {
+.empty-state p {
+  margin: 0 0 20px 0;
   font-size: 14px;
-  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
 }
 
 .user-card {
-  background: var(--bg-primary, #1a1a1a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
-  border-radius: 8px;
-  padding: 20px;
-  transition: all 0.2s ease;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
+}
 
-  @media (max-width: 768px) {
-    padding: 16px;
+.user-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--accent-primary));
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
   }
 
-  @media (max-width: 480px) {
-    padding: 12px;
+  50% {
+    background-position: 100% 50%;
   }
 }
 
 .user-card:hover {
-  border-color: var(--accent-strong);
-  transform: translateY(-1px);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
 }
 
-.user-header {
+.user-card-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 16px;
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
 
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-alpha);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.user-avatar i {
+  font-size: 20px;
+  color: var(--accent-primary);
 }
 
 .user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-id {
+  font-size: 11px;
+  color: var(--text-disabled);
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.user-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.active {
+  background: var(--success-alpha);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.status-badge.inactive {
+  background: var(--error-alpha);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.status-badge i {
+  font-size: 8px;
+}
+
+.user-card-body {
+  padding: 16px 20px;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary, #ffffff);
-  margin: 0;
-}
-
-.user-email {
-  font-size: 14px;
-  color: var(--text-secondary, #888888);
-}
-
-.user-id {
-  font-size: 12px;
-  color: var(--text-secondary, #888888);
-  font-family: monospace;
-}
-
-.user-status {
+.detail-icon {
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
-}
-
-.user-content {
-  margin-bottom: 16px;
-}
-
-.user-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.user-plan,
-.user-created {
-  font-size: 12px;
-  color: var(--text-secondary, #888888);
-}
-
-.user-role {
-  font-size: 11px;
-  padding: 2px 6px;
+  justify-content: center;
   border-radius: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
+  font-size: 12px;
+  flex-shrink: 0;
 }
 
-.user-role.user {
-  background: var(--info-light);
+.detail-icon.admin {
+  background: var(--accent-alpha);
+  color: var(--accent-primary);
+}
+
+.detail-icon.user {
+  background: var(--info-alpha);
   color: var(--info);
 }
 
-.user-role.admin {
-  background: var(--warning-light);
-  color: var(--warning);
+.detail-icon:not(.admin):not(.user) {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
 }
 
-.user-role.moderator {
-  background: var(--success-light);
-  color: var(--success);
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.user-actions {
+.detail-label {
+  font-size: 11px;
+  color: var(--text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.detail-value.admin {
+  color: var(--accent-primary);
+}
+
+.detail-value.user {
+  color: var(--info);
+}
+
+.user-card-footer {
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.action-buttons {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    gap: 6px;
-  }
-
-  @media (max-width: 480px) {
-    justify-content: center;
-    gap: 4px;
-  }
 }
 
 .action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
@@ -2813,64 +3377,197 @@ export default {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-
-  @media (max-width: 768px) {
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 8px 10px;
-    font-size: 10px;
-    gap: 4px;
-  }
+  transition: all 0.3s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
 }
 
-.edit-btn {
-  background: var(--info-light);
-  color: var(--info);
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
 }
 
-.edit-btn:hover {
-  background: var(--info-medium);
+.action-btn:hover::before {
+  left: 100%;
 }
 
-.delete-btn {
-  background: var(--error-light);
-  color: var(--error);
+.toggle-btn {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
 }
 
-.delete-btn:hover {
-  background: var(--error-medium);
+.toggle-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
 }
 
 .activate-btn {
-  background: var(--success-light);
+  background: var(--success-alpha);
   color: var(--success);
+  border: 1px solid var(--success);
 }
 
 .activate-btn:hover {
-  background: var(--success-medium);
+  background: var(--success);
+  color: var(--bg-primary);
 }
 
 .deactivate-btn {
-  background: var(--warning-light);
+  background: var(--warning-alpha);
   color: var(--warning);
+  border: 1px solid var(--warning);
 }
 
 .deactivate-btn:hover {
-  background: var(--warning-medium);
+  background: var(--warning);
+  color: var(--bg-primary);
+}
+
+.edit-btn {
+  background: var(--info-alpha);
+  color: var(--info);
+  border: 1px solid var(--info);
+}
+
+.edit-btn:hover {
+  background: var(--info);
+  color: var(--bg-primary);
 }
 
 .password-btn {
-  background: var(--purple-light);
-  color: var(--purple);
+  background: var(--accent-alpha);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
 }
 
 .password-btn:hover {
-  background: var(--purple-medium);
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.delete-btn {
+  background: var(--error-alpha);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.delete-btn:hover {
+  background: var(--error);
+  color: var(--bg-primary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .users-header {
+    padding: 20px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .header-actions {
+    justify-content: stretch;
+  }
+
+  .btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-container {
+    min-width: auto;
+  }
+
+  .filter-group {
+    flex-direction: column;
+  }
+
+  .filter-select {
+    min-width: auto;
+  }
+
+  .users-content {
+    padding: 20px;
+  }
+
+  .users-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .user-card-header {
+    padding: 16px 16px 12px 16px;
+  }
+
+  .user-card-body {
+    padding: 12px 16px;
+  }
+
+  .user-card-footer {
+    padding: 12px 16px 16px 16px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-btn {
+    flex: none;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .users-header {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .users-content {
+    padding: 16px;
+  }
+
+  .user-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 16px 12px 16px;
+  }
+
+  .user-info {
+    text-align: center;
+  }
+
+  .user-status {
+    align-self: center;
+  }
+
+  .user-avatar {
+    align-self: center;
+  }
 }
 
 /* Tickets Management */
@@ -2992,6 +3689,515 @@ export default {
 .empty-tickets p {
   font-size: 14px;
   margin: 0;
+}
+
+/* Tickets Tab - Professional Design */
+.tickets-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.header-title {
+  flex: 1;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+  transition: color 0.3s ease;
+}
+
+.section-title i {
+  color: var(--accent-primary);
+  font-size: 22px;
+}
+
+.section-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.header-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+  min-width: 60px;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
+}
+
+.stat-value.open {
+  color: var(--warning);
+}
+
+.stat-value.in-progress {
+  color: var(--accent-primary);
+}
+
+.stat-value.closed {
+  color: var(--success);
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+  min-width: 280px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 14px;
+  z-index: 2;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-alpha);
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.filter-group {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  min-width: 140px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-alpha);
+}
+
+.tickets-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 24px;
+  color: var(--text-secondary);
+}
+
+.empty-icon {
+  font-size: 64px;
+  color: var(--text-disabled);
+  margin-bottom: 24px;
+  opacity: 0.6;
+}
+
+.empty-state h4 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+.empty-state p {
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--accent-alpha);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  transform: translateY(-1px);
+}
+
+.tickets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.ticket-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--accent-primary));
+  background-size: 200% 100%;
+  animation: ticketGradient 3s ease-in-out infinite;
+}
+
+@keyframes ticketGradient {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.ticket-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.ticket-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.ticket-avatar {
+  width: 40px;
+  height: 40px;
+  background: var(--accent-alpha);
+  border: 1px solid var(--accent-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.ticket-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ticket-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ticket-user {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 4px 0;
+  font-weight: 500;
+}
+
+.ticket-id {
+  font-size: 11px;
+  color: var(--text-disabled);
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.ticket-status {
+  flex-shrink: 0;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.status-badge i {
+  font-size: 8px;
+}
+
+.status-badge.open {
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.status-badge.in_progress {
+  background: var(--accent-light);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.status-badge.closed {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.ticket-card-body {
+  margin-bottom: 16px;
+}
+
+.ticket-description p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ticket-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.detail-icon {
+  color: var(--accent-primary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.detail-label {
+  font-size: 10px;
+  color: var(--text-disabled);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 12px;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticket-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.priority-section {
+  flex: 1;
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.priority-badge i {
+  font-size: 10px;
+}
+
+.priority-badge.low {
+  background: var(--success-light);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.priority-badge.medium {
+  background: var(--warning-light);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.priority-badge.high {
+  background: var(--error-light);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.priority-badge.urgent {
+  background: var(--error);
+  color: var(--bg-primary);
+  border: 1px solid var(--error);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.ticket-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.view-btn {
+  background: var(--accent-alpha);
+  color: var(--accent-primary);
+  border: 1px solid var(--accent-primary);
+}
+
+.view-btn:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+  transform: translateY(-1px);
 }
 
 .ticket-card {
@@ -3178,6 +4384,8 @@ export default {
   right: 0;
   bottom: 0;
   background: var(--overlay-dark);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3827,243 +5035,786 @@ export default {
   background: var(--error-dark);
 }
 
-/* Payment Management Styles */
-.payments-list {
+/* Payment Management - Professional Design */
+.payments-header {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.header-stats {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  gap: 24px;
+  align-items: center;
 }
 
-.loading-payments {
+.stat-item {
   text-align: center;
-  padding: 60px 20px;
-  color: var(--text-secondary, #a0a0a0);
-}
-
-.empty-payments {
-  text-align: center;
-  padding: 48px 24px;
-  color: var(--text-secondary, #888888);
-}
-
-.empty-payments svg {
-  opacity: 0.5;
-  margin-bottom: 16px;
-}
-
-.empty-payments h4 {
-  font-size: 20px;
-  margin: 0 0 8px 0;
-}
-
-.empty-payments p {
-  font-size: 14px;
-  margin: 0;
-}
-
-.payment-card {
-  background: var(--bg-primary, #1a1a1a);
-  border: 1px solid var(--border-primary, rgba(255, 255, 255, 0.1));
+  padding: 16px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 8px;
-  padding: 20px;
-  transition: all 0.2s ease;
-
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 12px;
-  }
+  min-width: 80px;
 }
 
-.payment-card:hover {
-  border-color: var(--accent-strong);
-  transform: translateY(-1px);
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
 }
 
-.payment-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
+.stat-value.pending {
+  color: var(--warning);
 }
 
-.payment-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.payment-user {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary, #ffffff);
-  margin: 0;
-}
-
-.payment-email {
-  font-size: 14px;
-  color: var(--text-secondary, #888888);
-}
-
-.payment-id {
-  font-size: 12px;
-  color: var(--text-secondary, #888888);
-  font-family: monospace;
-}
-
-.payment-status {
-  display: flex;
-  align-items: center;
-}
-
-.payment-content {
-  margin-bottom: 16px;
-}
-
-.payment-details {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-  }
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-}
-
-.payment-plan,
-.payment-amount,
-.payment-method {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.plan-label,
-.amount-label,
-.method-label {
-  font-size: 12px;
-  color: var(--text-secondary, #888888);
-  font-weight: 600;
-}
-
-.plan-name,
-.amount-value,
-.method-name {
-  font-size: 14px;
-  color: var(--text-primary, #ffffff);
-}
-
-.amount-value {
-  font-weight: 600;
-  color: var(--accent-primary);
-}
-
-.payment-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-}
-
-.payment-meta {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.payment-date,
-.payment-expires {
-  font-size: 12px;
-  color: var(--text-secondary, #888888);
-}
-
-.payment-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-
-  @media (max-width: 768px) {
-    gap: 6px;
-  }
-
-  @media (max-width: 480px) {
-    justify-content: center;
-    gap: 4px;
-  }
-}
-
-.view-btn {
-  background: var(--info-light);
-  color: var(--info);
-}
-
-.view-btn:hover {
-  background: var(--info-medium);
-}
-
-.approve-btn {
-  background: var(--success-light);
+.stat-value.approved {
   color: var(--success);
 }
 
-.approve-btn:hover {
-  background: var(--success-medium);
+.stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
 }
 
-.reject-btn {
-  background: var(--error-light);
-  color: var(--error);
+.payments-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-card);
 }
 
-.reject-btn:hover {
-  background: var(--error-medium);
+.payments-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+  gap: 20px;
 }
 
-/* Payment Detail Modal Styles */
-.payment-detail-modal {
-  max-width: 800px;
+.payment-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  position: relative;
 }
 
-.payment-detail-header {
-  margin-bottom: 24px;
+.payment-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--accent-primary));
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease-in-out infinite;
 }
 
-.payment-detail-meta {
+.payment-card:hover {
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.payment-card-header {
   display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.payment-avatar {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-alpha);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.payment-avatar i {
+  font-size: 20px;
+  color: var(--accent-primary);
+}
+
+.payment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-user {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-email {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.payment-id {
+  font-size: 11px;
+  color: var(--text-disabled);
+  background: var(--bg-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.payment-status {
+  flex-shrink: 0;
+}
+
+.payment-card-body {
+  padding: 16px 20px;
+}
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.detail-icon.amount {
+  background: var(--success-alpha);
+  color: var(--success);
+}
+
+.detail-icon:not(.amount) {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.detail-value.amount {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.payment-card-footer {
+  padding: 16px 20px 20px 20px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
-.amount-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  background: var(--success-light);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.action-btn:hover::before {
+  left: 100%;
+}
+
+.view-btn {
+  background: var(--accent-alpha);
   color: var(--accent-primary);
+
+}
+
+.view-btn:hover {
+  background: var(--accent-primary);
+  color: var(--bg-primary);
+}
+
+.approve-btn {
+  background: var(--success-alpha);
+  color: var(--success);
+  border: 1px solid var(--success);
+}
+
+.approve-btn:hover {
+  background: var(--success);
+  color: var(--bg-primary);
+}
+
+.reject-btn {
+  background: var(--error-alpha);
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.reject-btn:hover {
+  background: var(--error);
+  color: var(--bg-primary);
+}
+
+/* Payment Detail Modal - Professional Design */
+.payment-detail-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  max-width: 900px;
+  width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+}
+
+.payment-detail-modal .modal-header {
+  padding: 24px 24px 0 24px;
+  border-bottom: 1px solid var(--border-primary);
+  margin-bottom: 0;
+}
+
+.payment-detail-modal .modal-body {
+  padding: 24px;
+}
+
+.modal-header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  position: relative;
+}
+
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-title i {
+  color: var(--accent-primary);
+  font-size: 20px;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.close-btn:hover {
+  background: var(--error-alpha);
+  border-color: var(--error);
+  color: var(--error);
+  transform: scale(1.05);
+}
+
+.close-btn i {
+  font-size: 16px;
+}
+
+.payment-status-banner {
+  margin-bottom: 24px;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid;
+}
+
+.payment-status-banner.approved {
+  background: var(--success-alpha);
+  border-color: var(--success);
+}
+
+.payment-status-banner.pending {
+  background: var(--warning-alpha);
+  border-color: var(--warning);
+}
+
+.payment-status-banner.rejected {
+  background: var(--error-alpha);
+  border-color: var(--error);
+}
+
+.payment-status-banner.cancelled {
+  background: var(--text-disabled-alpha);
+  border-color: var(--text-disabled);
+}
+
+.status-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--bg-primary);
+  flex-shrink: 0;
+}
+
+.status-icon i {
+  font-size: 24px;
+}
+
+.payment-status-banner.approved .status-icon i {
+  color: var(--success);
+}
+
+.payment-status-banner.pending .status-icon i {
+  color: var(--warning);
+}
+
+.payment-status-banner.rejected .status-icon i {
+  color: var(--error);
+}
+
+.payment-status-banner.cancelled .status-icon i {
+  color: var(--text-disabled);
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-description {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.status-amount {
+  flex-shrink: 0;
+}
+
+.amount-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--success);
+}
+
+.payment-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.detail-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.section-title i {
+  color: var(--accent-primary);
+  font-size: 16px;
+}
+
+.detail-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.detail-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.detail-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-label {
+  font-size: 11px;
+  color: var(--text-disabled);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.detail-value.amount {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.modal-footer {
+  padding-top: 20px;
+  border-top: 1px solid var(--border-primary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-approve,
+.btn-reject {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  justify-content: center;
+}
+
+.btn-approve {
+  background: var(--success);
+  color: var(--bg-primary);
+}
+
+.btn-approve:hover {
+  background: var(--success-dark);
+  transform: translateY(-1px);
+}
+
+.btn-reject {
+  background: var(--error);
+  color: var(--bg-primary);
+}
+
+.btn-reject:hover {
+  background: var(--error-dark);
+  transform: translateY(-1px);
+}
+
+/* Responsive Design for Payments */
+@media (max-width: 768px) {
+  .payments-header {
+    padding: 20px;
+  }
+
+  .header-stats {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stat-item {
+    min-width: auto;
+    flex: 1;
+  }
+
+  .payments-content {
+    padding: 20px;
+  }
+
+  .payments-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .payment-card-header {
+    padding: 16px 16px 12px 16px;
+  }
+
+  .payment-card-body {
+    padding: 12px 16px;
+  }
+
+  .payment-card-footer {
+    padding: 12px 16px 16px 16px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-btn {
+    flex: none;
+    justify-content: center;
+  }
+
+  .payment-details-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .detail-section {
+    padding: 16px;
+  }
+
+  .status-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn-approve,
+  .btn-reject {
+    min-width: auto;
+  }
+
+  .payment-detail-modal {
+    max-width: 95vw;
+    max-height: 95vh;
+    border-radius: 8px;
+  }
+
+  .payment-detail-modal .modal-header {
+    padding: 20px 20px 0 20px;
+  }
+
+  .payment-detail-modal .modal-body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .payments-header {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .payments-content {
+    padding: 16px;
+  }
+
+  .payment-card-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px 16px 12px 16px;
+  }
+
+  .payment-info {
+    text-align: center;
+  }
+
+  .payment-status {
+    align-self: center;
+  }
+
+  .payment-avatar {
+    align-self: center;
+  }
+
+  .modal-header-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .modal-title {
+    justify-content: center;
+  }
+
+  .payment-detail-modal {
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .payment-detail-modal .modal-header {
+    padding: 16px 16px 0 16px;
+  }
+
+  .payment-detail-modal .modal-body {
+    padding: 16px;
+  }
+
+  /* Tickets Responsive */
+  .tickets-header {
+    padding: 20px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .header-stats {
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .filter-controls {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-container {
+    min-width: 100%;
+  }
+
+  .filter-group {
+    justify-content: center;
+  }
+
+  .tickets-content {
+    padding: 20px;
+  }
+
+  .tickets-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .ticket-card {
+    padding: 16px;
+  }
+
+  .ticket-details {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .ticket-card-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .ticket-actions {
+    justify-content: center;
+  }
 }
 
 .plan-badge {
@@ -4219,6 +5970,76 @@ export default {
   .modal-header,
   .modal-body {
     padding: 12px;
+  }
+
+  /* Tickets Mobile */
+  .tickets-header {
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  .section-title i {
+    font-size: 18px;
+  }
+
+  .header-stats {
+    gap: 12px;
+  }
+
+  .stat-item {
+    min-width: 50px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .tickets-content {
+    padding: 16px;
+  }
+
+  .ticket-card {
+    padding: 12px;
+  }
+
+  .ticket-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .ticket-title {
+    font-size: 14px;
+  }
+
+  .ticket-user {
+    font-size: 12px;
+  }
+
+  .ticket-id {
+    font-size: 10px;
+  }
+
+  .status-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .priority-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .action-btn {
+    padding: 6px 12px;
+    font-size: 11px;
   }
 }
 </style>

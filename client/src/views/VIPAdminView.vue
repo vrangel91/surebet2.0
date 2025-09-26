@@ -860,6 +860,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Toast Container -->
+    <ToastContainer />
   </div>
 </template>
 
@@ -869,6 +872,8 @@ import { useStore } from 'vuex'
 import axios from '@/utils/axios'
 import Sidebar from '@/components/Navigation/Sidebar.vue'
 import Header from '@/components/Navigation/Header.vue'
+import ToastContainer from '@/components/UI/ToastContainer.vue'
+import { useToast } from '@/composables/useToast'
 import {
   Crown,
   RefreshCw,
@@ -892,6 +897,7 @@ export default {
   components: {
     Sidebar,
     Header,
+    ToastContainer,
     Crown,
     RefreshCw,
     Plus,
@@ -910,6 +916,8 @@ export default {
   },
   setup() {
     const store = useStore()
+    const { success, error, warning, info } = useToast()
+
     console.log('🏪 Store inicializado:', !!store)
     console.log('🔑 Token no store:', !!store.getters.authToken)
     console.log('🔑 Token valor:', store.getters.authToken)
@@ -1620,7 +1628,7 @@ export default {
           // Recarregar dados
           await refreshData()
 
-          alert('Plano ativado com sucesso!')
+          success('Sucesso!', 'Plano ativado com sucesso!')
         } else {
           throw new Error(response.data.message || 'Erro ao ativar plano')
         }
@@ -1630,7 +1638,7 @@ export default {
         console.error('📋 Detalhes do erro:', error.response?.data)
 
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
-        alert(`Erro ao ativar plano: ${errorMessage}`)
+        error('Erro!', `Erro ao ativar plano: ${errorMessage}`)
       }
     }
 
@@ -1666,7 +1674,7 @@ export default {
         console.log('✅ [Frontend] Resposta da API:', response.data)
 
         if (response.data.success) {
-          alert('Plano renovado com sucesso!')
+          success('Sucesso!', 'Plano renovado com sucesso!')
           await refreshData()
         } else {
           throw new Error(response.data.message || 'Erro ao renovar plano')
@@ -1682,7 +1690,7 @@ export default {
         })
 
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
-        alert(`Erro ao renovar plano: ${errorMessage}`)
+        error('Erro!', `Erro ao renovar plano: ${errorMessage}`)
       }
     }
 
@@ -1703,7 +1711,7 @@ export default {
         })
 
         if (response.data.success) {
-          alert('Plano desativado com sucesso!')
+          success('Sucesso!', 'Plano desativado com sucesso!')
           await refreshData()
         } else {
           throw new Error(response.data.message || 'Erro ao desativar plano')
@@ -1713,7 +1721,7 @@ export default {
         console.error('📋 Detalhes do erro:', error.response?.data)
 
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
-        alert(`Erro ao desativar plano: ${errorMessage}`)
+        error('Erro!', `Erro ao desativar plano: ${errorMessage}`)
       }
     }
 
@@ -1828,7 +1836,7 @@ export default {
         if (response.data.success) {
           showEditModal.value = false
           await refreshData()
-          alert('Plano atualizado com sucesso!')
+          success('Sucesso!', 'Plano atualizado com sucesso!')
         } else {
           throw new Error(response.data.message || 'Erro ao atualizar plano')
         }
@@ -1843,7 +1851,7 @@ export default {
         })
 
         const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message
-        alert(`Erro ao atualizar plano: ${errorMessage}`)
+        error('Erro!', `Erro ao atualizar plano: ${errorMessage}`)
       }
     }
 

@@ -109,6 +109,10 @@
   --border-button: transparent;
   --border-button-hover: rgba(0, 255, 136, 0.3);
   --border-button-active: rgba(0, 255, 136, 0.5);
+
+  // Filtros para ícones (tema escuro)
+  --icon-filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+  --icon-filter-hover: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
 }
 
 

@@ -17,11 +17,25 @@
 
       <!-- Área direita com usuário -->
       <div class="header-right">
-        <!-- Botão Admin (apenas para administradores) -->
-        <button v-if="isAdmin" class="admin-header-btn" @click="goToAdmin" title="Acessar Administração">
-          <i class="bi bi-gear-fill"></i>
-          <span class="admin-text">Admin</span>
-        </button>
+        <!-- Dropdown Admin (apenas para administradores) -->
+        <div v-if="isAdmin" class="admin-dropdown" :class="{ active: showAdminDropdown }">
+          <button class="admin-header-btn" @click="toggleAdminDropdown" title="Acessar Administração">
+            <i class="bi bi-gear-fill"></i>
+            <span class="admin-text">Admin</span>
+            <i class="bi bi-chevron-down dropdown-arrow" :class="{ rotated: showAdminDropdown }"></i>
+          </button>
+
+          <div v-if="showAdminDropdown" class="admin-dropdown-menu">
+            <button class="admin-dropdown-item" @click="goToAdmin">
+              <i class="bi bi-gear"></i>
+              <span>Administração Geral</span>
+            </button>
+            <button class="admin-dropdown-item" @click="goToVIPAdmin">
+              <i class="bi bi-star-fill"></i>
+              <span>Administração VIP</span>
+            </button>
+          </div>
+        </div>
 
         <!-- Toggle de Tema -->
         <button class="theme-toggle-btn" @click="toggleTheme"
@@ -72,46 +86,60 @@
           </div>
 
 
-          <!-- Informações VIP -->
-          <div v-if="currentUserVIPPlan && currentUserVIPExpiration" class="vip-info-section">
-            <div class="vip-info-header">
-              <div class="vip-badge">
-                <span class="vip-icon">👑</span>
-                <span class="vip-text">{{ currentUserVIPPlan }}</span>
-                <span v-if="getDaysRemaining(currentUserVIPExpiration) > 0" class="vip-days">
+          <!-- Informações do Plano -->
+          <div class="plan-info-section">
+            <div class="plan-info-header">
+              <div class="plan-badge">
+                <span class="plan-icon">📋</span>
+                <span class="plan-text">{{ currentUserVIPPlan || 'Sem Plano Ativo' }}</span>
+                <span v-if="currentUserVIPPlan && getDaysRemaining(currentUserVIPExpiration) > 0" class="plan-days">
                   {{ getDaysRemaining(currentUserVIPExpiration) }}d
                 </span>
               </div>
             </div>
 
-            <!-- Informações de Expiração -->
-            <div class="expiration-info">
-              <div class="expiration-text" :class="getDaysRemainingClass(currentUserVIPExpiration)">
-                <span v-if="getDaysRemaining(currentUserVIPExpiration) > 0">
-                  Expira em {{ formatDate(currentUserVIPExpiration) }}
-                </span>
-                <span v-else>
-                  Expirado em {{ formatDate(currentUserVIPExpiration) }}
-                </span>
+            <!-- Informações de Período -->
+            <div v-if="currentUserVIPPlan && currentUserVIPExpiration" class="expiration-info">
+              <div class="period-info">
+                <div class="period-item">
+                  <span class="period-label">Início:</span>
+                  <span class="period-date">{{ formatDate(currentUserVIPStart) }}</span>
+                </div>
+                <div class="period-item">
+                  <span class="period-label">Expira:</span>
+                  <span class="period-date" :class="getDaysRemainingClass(currentUserVIPExpiration)">
+                    {{ formatDate(currentUserVIPExpiration) }}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <!-- Status VIP -->
-            <div class="vip-status-info">
+            <!-- Mensagem quando não há plano ativo -->
+            <div v-else class="no-plan-message">
+              <p>Você não possui um plano ativo.</p>
+              <p>Entre em contato para adquirir um plano.</p>
+            </div>
+
+            <!-- Status do Plano -->
+            <div v-if="currentUserVIPPlan && currentUserVIPExpiration" class="plan-status-info">
               <span class="status-badge" :class="getVIPStatus(currentUserVIPExpiration).class">
                 {{ getVIPStatus(currentUserVIPExpiration).label }}
               </span>
             </div>
 
-            <!-- Barra de Progresso VIP -->
-            <div v-if="getDaysRemaining(currentUserVIPExpiration) > 0" class="vip-progress-container">
-              <div class="vip-progress-info">
-                <span class="progress-label">Dias restantes</span>
-                <span class="progress-days">{{ getDaysRemaining(currentUserVIPExpiration) }} dias</span>
+            <!-- Barra de Progresso do Plano -->
+            <div v-if="getDaysRemaining(currentUserVIPExpiration) > 0" class="plan-progress-container">
+              <div class="plan-progress-info">
+                <span class="progress-label">Progresso do Plano</span>
+                <span class="progress-days">{{ getDaysRemaining(currentUserVIPExpiration) }} dias restantes</span>
               </div>
-              <div class="vip-progress-bar">
-                <div class="vip-progress-fill" :class="getDaysRemainingClass(currentUserVIPExpiration)"
+              <div class="plan-progress-bar">
+                <div class="plan-progress-fill" :class="getDaysRemainingClass(currentUserVIPExpiration)"
                   :style="{ width: getVIPProgressPercent(currentUserVIPExpiration) + '%' }"></div>
+              </div>
+              <div class="plan-progress-details">
+                <span class="progress-used">{{ getVIPProgressPercent(currentUserVIPExpiration) }}% utilizado</span>
+                <span class="progress-total">{{ getTotalPlanDays() }} dias total</span>
               </div>
             </div>
           </div>
@@ -125,10 +153,6 @@
             <button class="action-btn settings-btn" @click="goToSettings">
               <i class="bi bi-gear"></i>
               Configurações
-            </button>
-            <button v-if="isAdmin" class="action-btn vip-admin-btn" @click="goToVIPAdmin">
-              <i class="bi bi-crown"></i>
-              Administração VIP
             </button>
             <button class="action-btn logout-btn" @click="logout">
               <i class="bi bi-box-arrow-right"></i>
@@ -245,9 +269,11 @@ export default {
     return {
       showUserModal: false,
       showNotificationsModal: false,
+      showAdminDropdown: false,
       userVIPData: null,
       currentUserVIPPlan: null, // Plano VIP do usuário atual
       currentUserVIPExpiration: null, // Data de expiração do VIP do usuário atual
+      currentUserVIPStart: null, // Data de início do VIP do usuário atual
       countdownTimer: null,
 
       // Sistema de notificações
@@ -299,7 +325,13 @@ export default {
       return this.$store.getters.isVIP
     },
     isAdmin() {
-      return this.$store.getters.isAdmin
+      const isAdmin = this.$store.getters.isAdmin;
+      console.log('🔍 [Header] isAdmin getter:', {
+        currentUser: this.currentUser,
+        is_admin: this.currentUser?.is_admin,
+        storeIsAdmin: isAdmin
+      });
+      return isAdmin;
     },
     userAccountType() {
       // Determinar o tipo de PLANO (não o tipo de conta/role)
@@ -649,6 +681,17 @@ export default {
       this.showUserModal = false
     },
 
+    closeAdminDropdown() {
+      this.showAdminDropdown = false
+    },
+
+    handleClickOutside(event) {
+      // Fechar dropdown admin se clicar fora dele
+      if (this.showAdminDropdown && !event.target.closest('.admin-dropdown')) {
+        this.closeAdminDropdown()
+      }
+    },
+
     goToProfile() {
       this.closeUserModal()
       this.$router.push('/profile')
@@ -660,12 +703,21 @@ export default {
     },
 
     goToVIPAdmin() {
-      this.closeUserModal()
+      this.closeAdminDropdown()
       this.$router.push('/vip-admin-legacy')
     },
 
+    toggleAdminDropdown() {
+      this.showAdminDropdown = !this.showAdminDropdown
+      // Fechar outros modais quando abrir dropdown admin
+      if (this.showAdminDropdown) {
+        this.showUserModal = false
+        this.showNotificationsModal = false
+      }
+    },
+
     goToAdmin() {
-      this.closeUserModal()
+      this.closeAdminDropdown()
       this.$router.push('/admin')
     },
 
@@ -1027,25 +1079,35 @@ export default {
           return
         }
 
-        // Buscar VIPs ativos (mesma API do VIPAdminView.vue)
-        const response = await axios.get('/api/vip/active')
-        console.log('📊 [Header] Resposta da API VIPs ativos:', response.data)
+        // Buscar planos ativos (mesma API do VIPAdminView.vue)
+        const response = await axios.get('/api/users/with-plans')
+        console.log('📊 [Header] Resposta da API planos ativos:', response.data)
 
         if (response.data && response.data.activeVIPs) {
-          // Encontrar o VIP do usuário atual
+          console.log('📊 [Header] Total de planos ativos recebidos:', response.data.activeVIPs.length)
+          console.log('📊 [Header] Usuário atual ID:', this.currentUser.id)
+          console.log('📊 [Header] Todos os planos ativos:', response.data.activeVIPs.map(vip => ({ id: vip.userId, name: vip.planName })))
+
+          // Encontrar o plano do usuário atual
           const userVIP = response.data.activeVIPs.find(vip => vip.userId === this.currentUser.id)
 
           if (userVIP) {
-            console.log('✅ [Header] Plano VIP encontrado para o usuário:', userVIP.planName)
+            console.log('✅ [Header] Plano encontrado para o usuário:', userVIP.planName)
+            console.log('✅ [Header] Data de início:', userVIP.dataInicio)
             console.log('✅ [Header] Data de expiração:', userVIP.dataFim)
-            // Armazenar o plano VIP e data de expiração do usuário
+            // Armazenar o plano, data de início e data de expiração do usuário
             this.currentUserVIPPlan = userVIP.planName
+            this.currentUserVIPStart = userVIP.dataInicio
             this.currentUserVIPExpiration = userVIP.dataFim
           } else {
-            console.log('ℹ️ [Header] Usuário não possui VIP ativo')
+            console.log('ℹ️ [Header] Usuário não possui plano ativo')
+            console.log('🔍 [Header] IDs dos usuários com planos:', response.data.activeVIPs.map(vip => vip.userId))
             this.currentUserVIPPlan = null
+            this.currentUserVIPStart = null
             this.currentUserVIPExpiration = null
           }
+        } else {
+          console.log('⚠️ [Header] Resposta da API não contém activeVIPs:', response.data)
         }
       } catch (error) {
         console.error('❌ [Header] Erro ao buscar plano VIP do usuário:', error)
@@ -1116,20 +1178,35 @@ export default {
       return new Date(date).toLocaleDateString('pt-BR')
     },
 
-    // Calcular percentual de progresso VIP (baseado nos dias restantes)
+    // Calcular percentual de progresso VIP (baseado nas datas reais)
     getVIPProgressPercent(endDate) {
-      if (!endDate) return 0
+      if (!endDate || !this.currentUserVIPStart) return 0
 
-      const daysRemaining = this.getDaysRemaining(endDate)
+      const startDate = new Date(this.currentUserVIPStart)
+      const endDateObj = new Date(endDate)
+      const now = new Date()
 
-      // Assumir que o VIP tem 30 dias de duração (pode ser ajustado conforme necessário)
-      const totalDays = 30
-      const daysUsed = totalDays - daysRemaining
+      // Calcular duração total do plano em dias
+      const totalDuration = Math.ceil((endDateObj - startDate) / (1000 * 60 * 60 * 24))
 
-      if (daysUsed <= 0) return 100
-      if (daysUsed >= totalDays) return 0
+      // Calcular dias já utilizados
+      const daysUsed = Math.ceil((now - startDate) / (1000 * 60 * 60 * 24))
 
-      return Math.round((daysUsed / totalDays) * 100)
+      // Calcular percentual usado
+      const percentUsed = Math.min(100, Math.max(0, (daysUsed / totalDuration) * 100))
+
+      return Math.round(percentUsed)
+    },
+
+    // Calcular total de dias do plano
+    getTotalPlanDays() {
+      if (!this.currentUserVIPStart || !this.currentUserVIPExpiration) return 0
+
+      const startDate = new Date(this.currentUserVIPStart)
+      const endDate = new Date(this.currentUserVIPExpiration)
+      const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
+
+      return totalDays
     }
   },
 
@@ -1168,6 +1245,7 @@ export default {
 
     // Event listeners
     window.addEventListener('resize', this.handleResize)
+    document.addEventListener('click', this.handleClickOutside)
 
     // Inicializar largura da janela no store
     this.$store.commit('setWindowWidth', window.innerWidth)
@@ -1187,6 +1265,7 @@ export default {
 
   beforeUnmount() {
     window.removeEventListener('resize', this.handleResize)
+    document.removeEventListener('click', this.handleClickOutside)
     document.removeEventListener('keydown', this.closeUserModal)
     this.stopCountdownTimer()
     this.stopNotificationsPolling()
@@ -1339,6 +1418,98 @@ export default {
 
   .admin-text {
     font-weight: 600;
+  }
+
+  .dropdown-arrow {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+.admin-dropdown {
+  position: relative;
+  display: inline-block;
+
+  &.active {
+    .admin-header-btn {
+      background: var(--accent-secondary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-accent-md);
+    }
+  }
+}
+
+.admin-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--bg-modal);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  box-shadow: var(--shadow-xl);
+  z-index: 1000;
+  min-width: 200px;
+  margin-top: 4px;
+  backdrop-filter: blur(12px);
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+.admin-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+
+  &:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+
+  &:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+
+  &:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+  }
+
+  i {
+    font-size: 16px;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  &:hover i {
+    color: var(--accent-primary);
+  }
+
+  span {
+    flex: 1;
+  }
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -1668,13 +1839,13 @@ export default {
   }
 }
 
-.vip-status-info {
+.plan-status-info {
   margin-bottom: 8px;
   text-align: center;
 }
 
-/* Seção de Informações VIP */
-.vip-info-section {
+/* Seção de Informações do Plano */
+.plan-info-section {
   margin-bottom: 16px;
   padding: 12px;
   background: var(--bg-card);
@@ -1685,7 +1856,7 @@ export default {
   overflow: hidden;
 }
 
-.vip-info-section::before {
+.plan-info-section::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1694,10 +1865,10 @@ export default {
   height: 3px;
   background: linear-gradient(90deg, var(--accent-primary), var(--warning), var(--accent-primary));
   background-size: 200% 100%;
-  animation: vipGradient 3s ease-in-out infinite;
+  animation: planGradient 3s ease-in-out infinite;
 }
 
-@keyframes vipGradient {
+@keyframes planGradient {
 
   0%,
   100% {
@@ -1709,11 +1880,11 @@ export default {
   }
 }
 
-.vip-info-header {
+.plan-info-header {
   margin-bottom: 8px;
 }
 
-.vip-badge {
+.plan-badge {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1734,17 +1905,17 @@ export default {
     transform: translateY(-1px);
   }
 
-  .vip-icon {
+  .plan-icon {
     font-size: 16px;
     color: var(--accent-primary);
     text-shadow: var(--text-shadow-accent);
   }
 
-  .vip-text {
+  .plan-text {
     color: var(--text-primary);
   }
 
-  .vip-days {
+  .plan-days {
     font-weight: 700;
     color: var(--accent-primary);
   }
@@ -1752,6 +1923,69 @@ export default {
 
 .expiration-info {
   margin-bottom: 8px;
+}
+
+.period-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.period-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  padding: 2px 0;
+}
+
+.period-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.period-date {
+  color: var(--text-primary);
+  font-weight: 600;
+  transition: color 0.3s ease;
+
+  &.success {
+    color: var(--success);
+  }
+
+  &.warning {
+    color: var(--warning);
+  }
+
+  &.urgent {
+    color: var(--error);
+  }
+
+  &.critical {
+    color: var(--error);
+    animation: pulse 1s infinite;
+  }
+
+  &.expired {
+    color: var(--text-disabled);
+  }
+}
+
+.no-plan-message {
+  text-align: center;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+
+  p {
+    margin: 4px 0;
+
+    &:first-child {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+  }
 }
 
 .expiration-text {
@@ -1774,12 +2008,12 @@ export default {
 }
 
 /* Barra de Progresso VIP */
-.vip-progress-container {
+.plan-progress-container {
   margin-top: 8px;
   padding: 0;
 }
 
-.vip-progress-info {
+.plan-progress-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1801,7 +2035,26 @@ export default {
   transition: color 0.3s ease;
 }
 
-.vip-progress-bar {
+.plan-progress-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.progress-used {
+  font-weight: 500;
+  color: var(--accent-primary);
+}
+
+.progress-total {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.plan-progress-bar {
   width: 100%;
   height: 6px;
   background: var(--progress-bg);
@@ -1813,7 +2066,7 @@ export default {
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-.vip-progress-fill {
+.plan-progress-fill {
   height: 100%;
   border-radius: 3px;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1960,20 +2213,6 @@ export default {
     }
   }
 
-  &.vip-admin-btn {
-    color: var(--warning);
-    border-color: var(--border-warning);
-
-    &:hover {
-      background: var(--bg-warning);
-      border-color: var(--warning);
-      box-shadow: 0 0 15px var(--warning);
-    }
-
-    i {
-      color: var(--warning);
-    }
-  }
 
   &.admin-btn {
     color: var(--info);

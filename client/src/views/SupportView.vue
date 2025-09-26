@@ -1,17 +1,14 @@
 <template>
   <div class="support-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
-    <Sidebar 
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-    />
+    <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded" />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
       <!-- Header Global -->
       <Header />
-      
+
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -20,7 +17,8 @@
         </div>
         <button class="new-ticket-btn" @click="showNewTicketModal = true">
           <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+            <path
+              d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
           </svg>
           Novo Ticket
         </button>
@@ -28,87 +26,80 @@
 
       <!-- Main Content -->
       <div class="support-main">
-              <!-- Stats Cards -->
-      <div class="stats-cards">
-        <div class="stat-card">
-          <div class="stat-icon open-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z"/>
-              <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z"/>
-            </svg>
+        <!-- Stats Cards -->
+        <div class="stats-cards">
+          <div class="stat-card">
+            <div class="stat-icon open-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path
+                  d="M8 0a8 8 0 0 1 8 8c0 1.162-.362 2.35-.938 3.299a.5.5 0 0 1-.463.301h-1.196a.5.5 0 0 1-.463-.301A7.725 7.725 0 0 1 8 1a7.725 7.725 0 0 1-3.299.938.5.5 0 0 1-.301.463V3.5a.5.5 0 0 1 .301.463A7.725 7.725 0 0 1 8 0z" />
+                <path d="M4.5 4.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-.5.5h-6a.5.5 0 0 1-.5-.5v-6z" />
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ ticketsStats.open }}</div>
+              <div class="stat-label">Tickets Abertos</div>
+            </div>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ ticketsStats.open }}</div>
-            <div class="stat-label">Tickets Abertos</div>
-          </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-icon pending-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-            </svg>
+          <div class="stat-card">
+            <div class="stat-icon pending-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z" />
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ ticketsStats.in_progress }}</div>
+              <div class="stat-label">Em Andamento</div>
+            </div>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ ticketsStats.in_progress }}</div>
-            <div class="stat-label">Em Andamento</div>
-          </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-icon closed-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-            </svg>
+          <div class="stat-card">
+            <div class="stat-icon closed-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path
+                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ ticketsStats.closed }}</div>
+              <div class="stat-label">Fechados</div>
+            </div>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ ticketsStats.closed }}</div>
-            <div class="stat-label">Fechados</div>
-          </div>
-        </div>
 
-        <div class="stat-card">
-          <div class="stat-icon time-icon">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
-              <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-            </svg>
+          <div class="stat-card">
+            <div class="stat-icon time-icon">
+              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z" />
+                <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z" />
+              </svg>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ ticketsStats.avgResponseTime }}</div>
+              <div class="stat-label">Tempo Médio Resposta</div>
+            </div>
           </div>
-          <div class="stat-content">
-            <div class="stat-value">{{ ticketsStats.avgResponseTime }}</div>
-            <div class="stat-label">Tempo Médio Resposta</div>
-          </div>
-        </div>
 
-        <!-- QR Code do Telegram -->
-        <div class="stat-card telegram-qr-card">
-          <div class="telegram-qr">
-            <img 
-              src="@/assets/qrocodetelegram.png" 
-              alt="QR Code Telegram" 
-              class="qr-image"
-              title="Entre no nosso grupo do Telegram"
-            />
-            <div class="qr-content">
-              <div class="qr-text">Telegram</div>
-              <div class="qr-subtitle">Suporte Rápido</div>
+          <!-- QR Code do Telegram -->
+          <div class="stat-card telegram-qr-card">
+            <div class="telegram-qr">
+              <img src="@/assets/qrocodetelegram.png" alt="QR Code Telegram" class="qr-image"
+                title="Entre no nosso grupo do Telegram" />
+              <div class="qr-content">
+                <div class="qr-text">Telegram</div>
+                <div class="qr-subtitle">Suporte Rápido</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         <!-- Tickets List -->
         <div class="tickets-section">
           <div class="section-header">
             <h3 class="section-title">Meus Tickets</h3>
             <div class="filter-controls">
-              <input 
-                v-model="searchQuery" 
-                type="text" 
-                placeholder="Buscar por ID ou título..."
-                class="search-input"
-              >
+              <input v-model="searchQuery" type="text" placeholder="Buscar por ID ou título..." class="search-input">
               <select v-model="statusFilter" class="status-filter">
                 <option value="">Todos os Status</option>
                 <option value="open">Abertos</option>
@@ -137,8 +128,8 @@
           <div class="tickets-list">
             <div v-if="filteredTickets.length === 0" class="empty-tickets">
               <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z"/>
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path d="M8 4a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5H5a.5.5 0 0 1 0-1h2.5V4.5A.5.5 0 0 1 8 4z" />
               </svg>
               <h4>Nenhum ticket encontrado</h4>
               <p>Crie seu primeiro ticket de suporte para começar</p>
@@ -154,11 +145,13 @@
                   <span class="status-badge">{{ getStatusText(ticket.status) }}</span>
                 </div>
               </div>
-              
+
               <div class="ticket-content">
-                <p class="ticket-description">{{ ticket.messages && ticket.messages[0] ? ticket.messages[0].content.substring(0, 100) + (ticket.messages[0].content.length > 100 ? '...' : '') : 'Sem descrição' }}</p>
+                <p class="ticket-description">{{ ticket.messages && ticket.messages[0] ?
+                  ticket.messages[0].content.substring(0, 100) + (ticket.messages[0].content.length > 100 ? '...' : '')
+                  : 'Sem descrição' }}</p>
               </div>
-              
+
               <div class="ticket-footer">
                 <div class="ticket-meta">
                   <span class="ticket-category">{{ ticket.category }}</span>
@@ -181,21 +174,15 @@
           <h3>Criar Novo Ticket</h3>
           <button class="close-btn" @click="closeNewTicketModal">×</button>
         </div>
-        
+
         <div class="modal-body">
           <form @submit.prevent="createNewTicket">
             <div class="form-group">
               <label for="ticket-title">Assunto</label>
-              <input 
-                id="ticket-title"
-                v-model="newTicket.subject" 
-                type="text" 
-                class="form-input"
-                placeholder="Descreva brevemente o problema"
-                required
-              >
+              <input id="ticket-title" v-model="newTicket.subject" type="text" class="form-input"
+                placeholder="Descreva brevemente o problema" required>
             </div>
-            
+
             <div class="form-row">
               <div class="form-group">
                 <label for="ticket-category">Categoria</label>
@@ -209,7 +196,7 @@
                   <option value="other">Outro</option>
                 </select>
               </div>
-              
+
               <div class="form-group">
                 <label for="ticket-priority">Prioridade</label>
                 <select id="ticket-priority" v-model="newTicket.priority" class="form-select" required>
@@ -221,19 +208,13 @@
                 </select>
               </div>
             </div>
-            
+
             <div class="form-group">
               <label for="ticket-description">Mensagem</label>
-              <textarea 
-                id="ticket-description"
-                v-model="newTicket.message" 
-                class="form-textarea"
-                placeholder="Descreva detalhadamente o problema ou solicitação..."
-                rows="6"
-                required
-              ></textarea>
+              <textarea id="ticket-description" v-model="newTicket.message" class="form-textarea"
+                placeholder="Descreva detalhadamente o problema ou solicitação..." rows="6" required></textarea>
             </div>
-            
+
             <div class="form-actions">
               <button type="button" class="cancel-btn" @click="closeNewTicketModal">Cancelar</button>
               <button type="submit" class="submit-btn" :disabled="!isFormValid">
@@ -253,16 +234,18 @@
           <h3>Ticket #{{ selectedTicket?.id }}</h3>
           <button class="close-btn" @click="closeTicketDetailModal">×</button>
         </div>
-        
+
         <div class="modal-body" v-if="selectedTicket">
           <div class="ticket-detail-header">
             <h4>{{ selectedTicket.subject }}</h4>
             <div class="ticket-detail-meta">
-              <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status) }}</span>
-              <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority) }}</span>
+              <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status)
+                }}</span>
+              <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority)
+                }}</span>
             </div>
           </div>
-          
+
           <div class="ticket-detail-content">
             <div class="ticket-info-grid">
               <div class="info-item">
@@ -278,16 +261,18 @@
                 <span>{{ formatDate(selectedTicket.updatedAt) }}</span>
               </div>
             </div>
-            
+
             <div class="ticket-description-section">
               <h5>Descrição</h5>
-              <p>{{ selectedTicket.messages && selectedTicket.messages[0] ? selectedTicket.messages[0].content : 'Sem descrição' }}</p>
+              <p>{{ selectedTicket.messages && selectedTicket.messages[0] ? selectedTicket.messages[0].content : 'Sem
+                descrição' }}</p>
             </div>
-            
+
             <div class="ticket-messages-section">
               <h5>Mensagens</h5>
               <div class="messages-list">
-                <div v-for="message in selectedTicket.messages" :key="message.id" class="message-item" :class="message.type">
+                <div v-for="message in selectedTicket.messages" :key="message.id" class="message-item"
+                  :class="message.type">
                   <div class="message-header">
                     <span class="message-author">{{ message.author }}</span>
                     <span class="message-date">{{ formatDate(message.createdAt) }}</span>
@@ -297,21 +282,18 @@
                   </div>
                 </div>
               </div>
-              
+
               <div class="new-message-section">
                 <div v-if="selectedTicket.status === 'closed'" class="ticket-closed-notice">
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                    <path
+                      d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
                   </svg>
                   <span>Este ticket está fechado. Não é possível enviar novas mensagens.</span>
                 </div>
                 <template v-else>
-                  <textarea 
-                    v-model="newMessage" 
-                    class="message-input"
-                    placeholder="Digite sua mensagem..."
-                    rows="3"
-                  ></textarea>
+                  <textarea v-model="newMessage" class="message-input" placeholder="Digite sua mensagem..."
+                    rows="3"></textarea>
                   <button class="send-message-btn" @click="sendMessage" :disabled="!newMessage.trim()">
                     Enviar Mensagem
                   </button>
@@ -324,21 +306,26 @@
     </div>
 
     <!-- Glossary Modal -->
-    
+
+    <!-- Toast Container -->
+    <ToastContainer />
   </div>
 </template>
 
 <script>
 import Sidebar from '../components/Navigation/Sidebar.vue'
 import Header from '../components/Navigation/Header.vue'
+import ToastContainer from '../components/UI/ToastContainer.vue'
 
 import { mapGetters, mapActions } from 'vuex'
+import { useToast } from '@/composables/useToast'
 
 export default {
   name: 'SupportView',
   components: {
     Sidebar,
-    Header
+    Header,
+    ToastContainer
   },
   data() {
     return {
@@ -353,7 +340,7 @@ export default {
       selectedTicket: null,
       newMessage: '',
       isSubmitting: false,
-      
+
       newTicket: {
         title: '',
         category: '',
@@ -450,24 +437,24 @@ export default {
       ]
     }
   },
-  
+
   computed: {
     ...mapGetters([
       'currentUser',
       'isAdmin'
     ]),
-    
+
     ticketsStats() {
       const open = this.tickets.filter(t => t.status === 'open').length
       const pending = this.tickets.filter(t => t.status === 'pending').length
       const closed = this.tickets.filter(t => t.status === 'closed').length
-      
+
       // Calcular tempo médio de resposta (mockado - será implementado com API real)
       const avgResponseTime = '2h 30m'
-      
+
       return { open, pending, closed, avgResponseTime }
     },
-    
+
     filteredTickets() {
       let filtered = this.tickets
 
@@ -489,7 +476,7 @@ export default {
       // Filtro por busca
       if (this.searchQuery) {
         const query = this.searchQuery.toLowerCase()
-        filtered = filtered.filter(ticket => 
+        filtered = filtered.filter(ticket =>
           ticket.id.toString().includes(query) ||
           ticket.subject.toLowerCase().includes(query) ||
           ticket.userName.toLowerCase().includes(query)
@@ -498,56 +485,56 @@ export default {
 
       return filtered
     },
-    
+
     isFormValid() {
-              return this.newTicket.subject && 
-             this.newTicket.category && 
-             this.newTicket.priority && 
-             this.newTicket.message
+      return this.newTicket.subject &&
+        this.newTicket.category &&
+        this.newTicket.priority &&
+        this.newTicket.message
     }
   },
-  
+
   async mounted() {
     // Carregar tickets do usuário
     await this.loadUserTickets()
   },
-  
+
   methods: {
     ...mapActions([
       'updateTicketData',
       'addMessageToTicket'
     ]),
-    
+
     handleSidebarToggle(collapsed) {
       this.sidebarCollapsed = collapsed
     },
-    
+
     handleSidebarStateLoaded(collapsed) {
       this.sidebarCollapsed = collapsed
     },
-    
+
     toggleSidebar() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
-    
+
 
 
     logout() {
       this.$store.dispatch('logout')
       this.$router.push('/login')
     },
-    
+
     closeNewTicketModal() {
       this.showNewTicketModal = false
       this.resetNewTicket()
     },
-    
+
     closeTicketDetailModal() {
       this.showTicketDetailModal = false
       this.selectedTicket = null
       this.newMessage = ''
     },
-    
+
     resetNewTicket() {
       this.newTicket = {
         subject: '',
@@ -556,10 +543,10 @@ export default {
         message: ''
       }
     },
-    
+
     async createNewTicket() {
       this.isSubmitting = true
-      
+
       try {
         // Chamar API para criar ticket
         const response = await this.$store.dispatch('createTicket', {
@@ -568,16 +555,16 @@ export default {
           category: this.newTicket.category,
           priority: this.newTicket.priority
         })
-        
+
         // Adicionar ticket à lista
         this.tickets.unshift(response)
-        
+
         // Fechar modal
         this.closeNewTicketModal()
-        
+
         // Mostrar notificação
         this.showToastNotification('Ticket criado com sucesso!', 'success')
-        
+
       } catch (error) {
         console.error('Erro ao criar ticket:', error)
         this.showToastNotification('Erro ao criar ticket. Tente novamente.', 'error')
@@ -585,45 +572,45 @@ export default {
         this.isSubmitting = false
       }
     },
-    
+
     openTicket(ticket) {
       this.selectedTicket = ticket
       this.showTicketDetailModal = true
     },
-    
+
     async sendMessage() {
       if (!this.newMessage.trim()) return
-      
+
       // Verificar se o ticket está fechado
       if (this.selectedTicket.status === 'closed') {
         this.showToastNotification('Não é possível enviar mensagens em tickets fechados.', 'error')
         return
       }
-      
+
       try {
         // Chamar API para adicionar mensagem
         const response = await this.$store.dispatch('addMessageToTicket', {
           ticketId: this.selectedTicket.id,
           message: this.newMessage
         })
-        
+
         // Adicionar mensagem ao ticket
         this.selectedTicket.messages.push(response)
         this.selectedTicket.updatedAt = new Date().toISOString()
-        
+
         // Atualizar status para "Em andamento" se ainda estiver aberto
         if (this.selectedTicket.status === 'open') {
           this.selectedTicket.status = 'in_progress'
         }
-        
+
         this.newMessage = ''
-        
+
       } catch (error) {
         console.error('Erro ao enviar mensagem:', error)
         this.showToastNotification('Erro ao enviar mensagem. Tente novamente.', 'error')
       }
     },
-    
+
     getStatusText(status) {
       const statusMap = {
         open: 'Aberto',
@@ -632,7 +619,7 @@ export default {
       }
       return statusMap[status] || status
     },
-    
+
     getPriorityText(priority) {
       const priorityMap = {
         low: 'Baixa',
@@ -642,7 +629,7 @@ export default {
       }
       return priorityMap[priority] || priority
     },
-    
+
     formatDate(date) {
       return new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
@@ -654,14 +641,16 @@ export default {
     },
 
     showToastNotification(message, type = 'info') {
-      // Sistema de notificação simples usando alert temporariamente
-      // TODO: Implementar sistema de toast mais elegante
-      if (type === 'error') {
-        alert(`❌ ${message}`)
-      } else if (type === 'success') {
-        alert(`✅ ${message}`)
+      const { success, error, warning, info } = useToast()
+
+      if (type === 'success') {
+        success('Sucesso!', message)
+      } else if (type === 'error') {
+        error('Erro!', message)
+      } else if (type === 'warning') {
+        warning('Atenção!', message)
       } else {
-        alert(`ℹ️ ${message}`)
+        info('Informação', message)
       }
     },
 
@@ -699,23 +688,27 @@ export default {
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease, margin-left 0.3s ease;
-  width: calc(100% - 280px); /* Largura ajustada para evitar barra horizontal */
+  width: calc(100% - 280px);
+  /* Largura ajustada para evitar barra horizontal */
   max-width: calc(100% - 280px);
-  margin-left: 280px; /* Espaço para o sidebar fixo */
+  margin-left: 280px;
+  /* Espaço para o sidebar fixo */
   box-sizing: border-box;
-  
+
   &.sidebar-collapsed {
-    margin-left: 80px; /* Espaço reduzido quando sidebar colapsado */
-    width: calc(100% - 80px); /* Largura ajustada quando colapsado */
+    margin-left: 80px;
+    /* Espaço reduzido quando sidebar colapsado */
+    width: calc(100% - 80px);
+    /* Largura ajustada quando colapsado */
     max-width: calc(100% - 80px);
   }
-  
+
   /* Melhorias para responsividade */
   @media (max-width: 1023px) {
     width: 100%;
     max-width: 100%;
     margin-left: 0;
-    
+
     &.sidebar-collapsed {
       width: 100%;
       max-width: 100%;
@@ -730,14 +723,15 @@ export default {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  -webkit-overflow-scrolling: touch; /* Scroll suave no iOS */
-  
+  -webkit-overflow-scrolling: touch;
+  /* Scroll suave no iOS */
+
   /* Melhorias para responsividade */
   @media (max-width: 1023px) {
     width: 100%;
     max-width: 100%;
   }
-  
+
   @media (max-width: 768px) {
     -webkit-overflow-scrolling: touch;
     overflow-y: auto;
@@ -1504,62 +1498,62 @@ export default {
     width: calc(100% - 280px);
     max-width: calc(100% - 280px);
   }
-  
+
   .content-header {
     padding: 32px 40px;
   }
-  
+
   .page-title {
     font-size: 36px;
   }
-  
+
   .page-subtitle {
     font-size: 18px;
   }
-  
+
   .support-main {
     padding: 40px 32px;
   }
-  
+
   .stats-cards {
     gap: 32px;
     margin-bottom: 40px;
   }
-  
+
   .stat-card {
     padding: 32px;
   }
-  
+
   .stat-icon {
     width: 56px;
     height: 56px;
   }
-  
+
   .stat-value {
     font-size: 36px;
   }
-  
+
   .stat-label {
     font-size: 16px;
   }
-  
+
   .tickets-section {
     padding: 32px;
   }
-  
+
   .section-title {
     font-size: 28px;
   }
-  
+
   .qr-image {
     width: 70px;
     height: 70px;
   }
-  
+
   .qr-text {
     font-size: 20px;
   }
-  
+
   .qr-subtitle {
     font-size: 14px;
   }
@@ -1570,24 +1564,24 @@ export default {
   .content-header {
     padding: 28px 32px;
   }
-  
+
   .page-title {
     font-size: 32px;
   }
-  
+
   .support-main {
     padding: 32px 28px;
   }
-  
+
   .stats-cards {
     gap: 24px;
     margin-bottom: 32px;
   }
-  
+
   .stat-card {
     padding: 28px;
   }
-  
+
   .tickets-section {
     padding: 28px;
   }
@@ -1599,12 +1593,12 @@ export default {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
   }
-  
+
   .filter-controls {
     flex-direction: row;
     flex-wrap: wrap;
   }
-  
+
   .search-input,
   .status-filter,
   .priority-filter,
@@ -1619,12 +1613,12 @@ export default {
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
   }
-  
+
   .filter-controls {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .search-input,
   .status-filter,
   .priority-filter,
@@ -1636,7 +1630,8 @@ export default {
 /* Responsividade */
 @media (max-width: 1023px) {
   .support-container {
-    margin-left: 0; /* Remove margem em mobile/tablet */
+    margin-left: 0;
+    /* Remove margem em mobile/tablet */
     width: 100%;
     max-width: 100%;
   }
@@ -1647,35 +1642,35 @@ export default {
     padding: 24px 16px;
     -webkit-overflow-scrolling: touch;
   }
-  
+
   .content-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
     padding: 20px 16px;
   }
-  
+
   .page-title {
     font-size: 24px;
   }
-  
+
   .page-subtitle {
     font-size: 14px;
   }
-  
+
   .new-ticket-btn {
     width: 100%;
     justify-content: center;
     padding: 14px 20px;
     font-size: 15px;
   }
-  
+
   .stats-cards {
     grid-template-columns: 1fr;
     gap: 16px;
     margin-bottom: 24px;
   }
-  
+
   .stat-card {
     padding: 20px;
     flex-direction: row;
@@ -1713,11 +1708,11 @@ export default {
   .qr-subtitle {
     font-size: 11px;
   }
-  
+
   .tickets-section {
     padding: 20px;
   }
-  
+
   .section-header {
     flex-direction: column;
     align-items: flex-start;
@@ -1741,48 +1736,49 @@ export default {
     min-width: auto;
     width: 100%;
     padding: 10px 12px;
-    font-size: 15px; /* Evita zoom no iOS */
+    font-size: 15px;
+    /* Evita zoom no iOS */
   }
-  
+
   .ticket-card {
     padding: 16px;
   }
-  
+
   .ticket-title {
     font-size: 15px;
   }
-  
+
   .ticket-description {
     font-size: 13px;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
+
   .ticket-info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .ticket-detail-meta {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .modal-overlay {
     padding: 16px;
   }
-  
+
   .ticket-modal,
   .ticket-detail-modal {
     max-width: 100%;
     width: 100%;
   }
-  
+
   .modal-header {
     padding: 20px;
   }
-  
+
   .modal-body {
     padding: 20px;
   }
@@ -1792,39 +1788,39 @@ export default {
   .support-main {
     padding: 16px 12px;
   }
-  
+
   .content-header {
     padding: 16px 12px;
   }
-  
+
   .page-title {
     font-size: 20px;
   }
-  
+
   .page-subtitle {
     font-size: 13px;
   }
-  
+
   .new-ticket-btn {
     padding: 12px 16px;
     font-size: 14px;
   }
-  
+
   .stats-cards {
     gap: 12px;
     margin-bottom: 20px;
   }
-  
+
   .stat-card {
     padding: 16px;
     gap: 12px;
   }
-  
+
   .stat-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   .stat-value {
     font-size: 24px;
   }
@@ -1845,15 +1841,15 @@ export default {
   .qr-subtitle {
     font-size: 10px;
   }
-  
+
   .tickets-section {
     padding: 16px;
   }
-  
+
   .section-title {
     font-size: 18px;
   }
-  
+
   .search-input,
   .status-filter,
   .priority-filter,
@@ -1861,65 +1857,65 @@ export default {
     padding: 8px 10px;
     font-size: 14px;
   }
-  
+
   .ticket-card {
     padding: 14px;
   }
-  
+
   .ticket-title {
     font-size: 14px;
   }
-  
+
   .ticket-description {
     font-size: 12px;
   }
-  
+
   .ticket-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .ticket-footer {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
-  
+
   .status-badge,
   .priority-badge {
     font-size: 10px;
     padding: 3px 6px;
   }
-  
+
   .modal-overlay {
     padding: 12px;
   }
-  
+
   .modal-header {
     padding: 16px;
   }
-  
+
   .modal-header h3 {
     font-size: 18px;
   }
-  
+
   .modal-body {
     padding: 16px;
   }
-  
+
   .form-input,
   .form-select,
   .form-textarea {
     padding: 10px;
     font-size: 14px;
   }
-  
+
   .form-actions {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .cancel-btn,
   .submit-btn {
     width: 100%;
@@ -1933,39 +1929,39 @@ export default {
   .support-main {
     padding: 12px 8px;
   }
-  
+
   .content-header {
     padding: 12px 8px;
   }
-  
+
   .page-title {
     font-size: 18px;
   }
-  
+
   .page-subtitle {
     font-size: 12px;
   }
-  
+
   .new-ticket-btn {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .stats-cards {
     gap: 8px;
     margin-bottom: 16px;
   }
-  
+
   .stat-card {
     padding: 12px;
     gap: 8px;
   }
-  
+
   .stat-icon {
     width: 36px;
     height: 36px;
   }
-  
+
   .stat-value {
     font-size: 20px;
   }
@@ -1986,15 +1982,15 @@ export default {
   .qr-subtitle {
     font-size: 9px;
   }
-  
+
   .tickets-section {
     padding: 12px;
   }
-  
+
   .section-title {
     font-size: 16px;
   }
-  
+
   .search-input,
   .status-filter,
   .priority-filter,
@@ -2002,102 +1998,102 @@ export default {
     padding: 6px 8px;
     font-size: 13px;
   }
-  
+
   .ticket-card {
     padding: 12px;
   }
-  
+
   .ticket-title {
     font-size: 13px;
   }
-  
+
   .ticket-description {
     font-size: 11px;
   }
-  
+
   .ticket-id {
     font-size: 10px;
   }
-  
+
   .status-badge,
   .priority-badge {
     font-size: 9px;
     padding: 2px 4px;
   }
-  
+
   .ticket-category,
   .ticket-date {
     font-size: 10px;
   }
-  
+
   .modal-overlay {
     padding: 8px;
   }
-  
+
   .modal-header {
     padding: 12px;
   }
-  
+
   .modal-header h3 {
     font-size: 16px;
   }
-  
+
   .modal-body {
     padding: 12px;
   }
-  
+
   .form-input,
   .form-select,
   .form-textarea {
     padding: 8px;
     font-size: 13px;
   }
-  
+
   .form-group label {
     font-size: 13px;
   }
-  
+
   .cancel-btn,
   .submit-btn {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .ticket-detail-header h4 {
     font-size: 16px;
   }
-  
+
   .info-item label {
     font-size: 11px;
   }
-  
+
   .info-item span {
     font-size: 12px;
   }
-  
+
   .ticket-description-section h5,
   .ticket-messages-section h5 {
     font-size: 14px;
   }
-  
+
   .message-author {
     font-size: 12px;
   }
-  
+
   .message-date {
     font-size: 10px;
   }
-  
+
   .message-content {
     font-size: 12px;
   }
-  
+
   .message-input {
     padding: 8px;
     font-size: 13px;
     min-height: 60px;
   }
-  
+
   .send-message-btn {
     padding: 8px 12px;
     font-size: 12px;

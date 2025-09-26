@@ -15,8 +15,16 @@
     <!-- Filtros de Data -->
     <div class="date-filters">
       <label class="date-filter-label">Data:</label>
-      <input type="date" :value="selectedDate" class="date-filter-input" placeholder="dd/mm/aaaa"
-        @change="$emit('date-change', $event.target.value)" />
+      <div class="date-input-wrapper">
+        <input type="date" :value="selectedDate" class="date-filter-input" placeholder="dd/mm/aaaa"
+          @change="$emit('date-change', $event.target.value)" />
+        <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+      </div>
       <button v-if="selectedDate" class="clear-date-btn" @click="$emit('clear-date-filter')"
         title="Limpar filtro de data">
         ×
@@ -187,7 +195,6 @@ export default {
   transition: all 0.2s ease;
 
   &:hover {
-    border-color: var(--border-accent);
     background: var(--button-secondary-hover);
   }
 }
@@ -199,8 +206,14 @@ export default {
   white-space: nowrap;
 }
 
+.date-input-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .date-filter-input {
   padding: 8px 12px;
+  padding-right: 40px; // Espaço para o ícone
   border: 1px solid var(--border-primary);
   border-radius: 6px;
   background: var(--bg-primary);
@@ -217,6 +230,42 @@ export default {
 
   &:hover {
     border-color: var(--border-accent);
+  }
+
+  // Esconder ícone nativo do navegador
+  &::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  // Para Firefox
+  &::-moz-calendar-picker-indicator {
+    opacity: 0;
+    position: absolute;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+}
+
+.calendar-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: all 0.2s ease;
+
+  .date-input-wrapper:hover & {
+    color: var(--accent-primary);
   }
 }
 

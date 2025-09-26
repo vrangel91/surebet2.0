@@ -972,7 +972,7 @@ export default {
       }
 
       // Padrão para outros mercados de jogadores
-      const playerMarketsMatch = market.match(/^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+(Goals|Assists|Cards|Fouls|Corners)$/i)
+      const playerMarketsMatch = market.match(/^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+(Goals|Assists|Cards|Fouls|Corners|to Score)$/i)
       if (playerMarketsMatch) {
         const [, playerName, overUnder, number, marketType] = playerMarketsMatch
         const isOver = overUnder.toLowerCase() === 'over'
@@ -983,7 +983,8 @@ export default {
           'Assists': 'Assistências',
           'Cards': 'Cartões',
           'Fouls': 'Faltas',
-          'Corners': 'Escanteios'
+          'Corners': 'Escanteios',
+          'to Score': 'Pontos'
         }
 
         const translatedType = marketTranslations[marketType] || marketType

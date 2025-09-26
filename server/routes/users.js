@@ -1262,16 +1262,37 @@ router.put('/:id', async (req, res) => {
     if (email) user.email = email.toLowerCase();
     if (role) user.role = role;
     
-    // Atualizar account_type se fornecido
+    // Atualizar is_admin diretamente (removendo dependência do account_type)
     if (account_type) {
-      console.log('Backend: Atualizando account_type de', user.account_type, 'para', account_type)
-      user.account_type = account_type;
+      console.log('Backend: Atualizando is_admin baseado no account_type:', account_type)
+      
+      // Atualizar is_admin baseado no account_type
+      if (account_type === 'admin') {
+        console.log('Backend: Definindo is_admin como true')
+        user.is_admin = true;
+      } else {
+        console.log('Backend: Definindo is_admin como false')
+        user.is_admin = false;
+      }
     }
 
     if (status) user.status = status;
 
     await user.save();
     console.log('Backend: Usuário salvo no banco')
+    
+    // Se o usuário foi promovido a admin ou removido de admin, invalidar suas sessões
+    if (account_type && (account_type === 'admin' || account_type === 'user')) {
+      console.log('Backend: Invalidando sessões do usuário devido a mudança de status admin')
+      try {
+        await UserSession.destroy({
+          where: { user_id: user.id }
+        });
+        console.log('Backend: Sessões do usuário invalidadas com sucesso')
+      } catch (sessionError) {
+        console.log('Backend: Erro ao invalidar sessões (não crítico):', sessionError.message)
+      }
+    }
 
     const responseData = {
       success: true,
@@ -1280,8 +1301,8 @@ router.put('/:id', async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        account_type: user.account_type,
+        role: user.is_admin ? 'admin' : 'user',
+        is_admin: user.is_admin,
         status: user.status,
         updated_at: user.updated_at
       }

@@ -144,8 +144,9 @@ function processOtherPlayerMarkets(marketString) {
   // - Nome do Jogador - Over/Under(Número) - Player Goals
   // - Nome do Jogador - Over/Under(Número) - Player Assists
   // - Nome do Jogador - Over/Under(Número) - Player Cards
+  // - Nome do Jogador - Over/Under(Número) - Player to Score
   const playerMarketsRegex =
-    /^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+(Goals|Assists|Cards|Fouls|Corners)$/i;
+    /^(.+?)\s*-\s*(Over|Under)\((\d+(?:\.\d+)?)\)\s*-\s*Player\s+(Goals|Assists|Cards|Fouls|Corners|to Score)$/i;
 
   const match = marketString.match(playerMarketsRegex);
   if (!match) return null;
@@ -162,6 +163,7 @@ function processOtherPlayerMarkets(marketString) {
       Cards: "Cartões",
       Fouls: "Faltas",
       Corners: "Escanteios",
+      "to Score": "Pontos",
     };
 
     const translatedType = marketTranslations[marketType] || marketType;
