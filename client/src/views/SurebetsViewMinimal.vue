@@ -31,8 +31,8 @@
       :selectedRiskLevel="selectedRiskLevel" :houseSearchTerm="houseSearchTerm" :sportSearchTerm="sportSearchTerm"
       :selectedHouses="selectedHouses" :selectedSports="selectedSports" :selectedCurrencies="selectedCurrencies"
       :filteredHouses="filteredHouses" :filteredSports="filteredSports" :filterOptions="filterOptions"
-      :showSaveFilterModal="showSaveFilterModal" :currentFilterName="currentFilterName"
-      :showSavedFiltersModal="showSavedFiltersModal" :savedFilters="savedFilters"
+      :favoriteHouses="favoriteHouses" :favoriteSports="favoriteSports" :showSaveFilterModal="showSaveFilterModal"
+      :currentFilterName="currentFilterName" :showSavedFiltersModal="showSavedFiltersModal" :savedFilters="savedFilters"
       @toggle-filter-overlay="toggleFilterOverlay" @update:minProfit="minProfit = $event"
       @update:maxProfit="maxProfit = $event" @update:roundValues="roundValues = $event" @set-risk-level="setRiskLevel"
       @select-all-houses="selectAllHouses" @deselect-all-houses="deselectAllHouses"
@@ -44,7 +44,8 @@
       @deselect-all-currencies="deselectAllCurrencies" @toggle-currency="toggleCurrency" @clear-filters="clearFilters"
       @apply-filters="applyFilters" @close-save-filter-modal="closeSaveFilterModal"
       @update:currentFilterName="currentFilterName = $event" @save-filter="saveFilter"
-      @close-saved-filters-modal="closeSavedFiltersModal" @load-filter="loadFilter" @delete-filter="deleteFilter" />
+      @close-saved-filters-modal="closeSavedFiltersModal" @load-filter="loadFilter" @delete-filter="deleteFilter"
+      @toggle-favorite-house="toggleFavoriteHouse" @toggle-favorite-sport="toggleFavoriteSport" />
   </MainLayout>
 </template>
 
@@ -90,4 +91,3 @@ export default {
   },
 };
 </script>
-

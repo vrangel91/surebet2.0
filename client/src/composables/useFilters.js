@@ -23,6 +23,12 @@ export function useFilters() {
   const favoriteSports = ref([]);
   const favoriteHouses = ref([]);
   
+  // Cache de favoritos (persistente)
+  const favoritesCache = ref({
+    houses: [],
+    sports: []
+  });
+  
   // Estados de UI
   const showFilterOverlay = ref(false);
   const searchSuggestions = ref([]);
@@ -213,46 +219,71 @@ export function useFilters() {
     saveFiltersToSettings();
   };
   
-  // Funções de favoritos
+  // Funções de favoritos com cache
   const selectFavoriteHouses = () => {
-    // Casas de apostas mais populares
-    const favoriteHousesList = [
-      'Bet365', 'Betano', 'Sportingbet', 'Betfair', 'Rivalo',
-      '1xBet', 'Pinnacle', 'Marathonbet', 'Unibet', 'William Hill'
-    ];
-    selectedHouses.value = favoriteHousesList.filter(house => 
+    // Seleciona apenas as casas que estão no cache de favoritos
+    selectedHouses.value = favoritesCache.value.houses.filter(house => 
       filterOptions.houses.includes(house)
     );
     saveFiltersToSettings();
   };
   
   const selectFavoriteSports = () => {
-    // Esportes mais populares para arbitragem
-    const favoriteSportsList = ['futebol', 'tenis', 'basquete', 'volei', 'handebol'];
-    selectedSports.value = favoriteSportsList.filter(sport => 
+    // Seleciona apenas os esportes que estão no cache de favoritos
+    selectedSports.value = favoritesCache.value.sports.filter(sport => 
       filterOptions.sports.some(s => s.value === sport)
     );
     saveFiltersToSettings();
   };
   
-  // Funções de toggle de favoritos individuais
+  // Funções de toggle de favoritos individuais com cache
   const toggleFavoriteHouse = (house) => {
-    const index = favoriteHouses.value.indexOf(house);
-    if (index > -1) {
-      favoriteHouses.value.splice(index, 1);
+    // Verifica se o item já está no cache de favoritos
+    const cacheIndex = favoritesCache.value.houses.indexOf(house);
+    
+    if (cacheIndex > -1) {
+      // Remove do cache se já estiver marcado
+      favoritesCache.value.houses.splice(cacheIndex, 1);
+    } else {
+      // Adiciona ao cache se não estiver marcado
+      favoritesCache.value.houses.push(house);
+    }
+    
+    // Atualiza o estado visual (para exibir a estrela)
+    const visualIndex = favoriteHouses.value.indexOf(house);
+    if (visualIndex > -1) {
+      favoriteHouses.value.splice(visualIndex, 1);
     } else {
       favoriteHouses.value.push(house);
     }
+    
+    // Salva o cache de favoritos
+    saveFavoritesCache();
     saveFiltersToSettings();
   };
   
   const toggleFavoriteSport = (sport) => {
-    const index = favoriteSports.value.indexOf(sport);
-    if (index > -1) {
-      favoriteSports.value.splice(index, 1);
+    // Verifica se o item já está no cache de favoritos
+    const cacheIndex = favoritesCache.value.sports.indexOf(sport);
+    
+    if (cacheIndex > -1) {
+      // Remove do cache se já estiver marcado
+      favoritesCache.value.sports.splice(cacheIndex, 1);
+    } else {
+      // Adiciona ao cache se não estiver marcado
+      favoritesCache.value.sports.push(sport);
+    }
+    
+    // Atualiza o estado visual (para exibir a estrela)
+    const visualIndex = favoriteSports.value.indexOf(sport);
+    if (visualIndex > -1) {
+      favoriteSports.value.splice(visualIndex, 1);
     } else {
       favoriteSports.value.push(sport);
     }
+    
+    // Salva o cache de favoritos
+    saveFavoritesCache();
     saveFiltersToSettings();
   };
   
@@ -346,6 +377,45 @@ export function useFilters() {
     };
   };
   
+  // Função para salvar cache de favoritos
+  const saveFavoritesCache = () => {
+    try {
+      const savedSettings = localStorage.getItem("app_settings");
+      let settings = savedSettings ? JSON.parse(savedSettings) : {};
+      
+      if (!settings.favoritesCache) {
+        settings.favoritesCache = {};
+      }
+      
+      settings.favoritesCache.houses = [...favoritesCache.value.houses];
+      settings.favoritesCache.sports = [...favoritesCache.value.sports];
+      
+      localStorage.setItem("app_settings", JSON.stringify(settings));
+    } catch (error) {
+      console.error("Erro ao salvar cache de favoritos:", error);
+    }
+  };
+  
+  // Função para carregar cache de favoritos
+  const loadFavoritesCache = () => {
+    try {
+      const savedSettings = localStorage.getItem("app_settings");
+      if (savedSettings) {
+        const settings = JSON.parse(savedSettings);
+        if (settings.favoritesCache) {
+          if (settings.favoritesCache.houses && Array.isArray(settings.favoritesCache.houses)) {
+            favoritesCache.value.houses = [...settings.favoritesCache.houses];
+          }
+          if (settings.favoritesCache.sports && Array.isArray(settings.favoritesCache.sports)) {
+            favoritesCache.value.sports = [...settings.favoritesCache.sports];
+          }
+        }
+      }
+    } catch (error) {
+      console.warn("Erro ao carregar cache de favoritos:", error);
+    }
+  };
+
   const saveFiltersToSettings = () => {
     try {
       const savedSettings = localStorage.getItem("app_settings");
@@ -406,6 +476,11 @@ export function useFilters() {
           }
         }
       }
+      
+      // Carrega o cache de favoritos e sincroniza com o estado visual
+      loadFavoritesCache();
+      syncFavoritesVisualState();
+      
     } catch (error) {
       console.warn("Erro ao carregar filtros das configurações:", error);
     }
@@ -454,6 +529,15 @@ export function useFilters() {
     return now - lastDeselectTime < 5000;
   };
   
+  // Função para sincronizar estado visual dos favoritos com o cache
+  const syncFavoritesVisualState = () => {
+    // Sincroniza casas de apostas
+    favoriteHouses.value = [...favoritesCache.value.houses];
+    
+    // Sincroniza esportes
+    favoriteSports.value = [...favoritesCache.value.sports];
+  };
+
   const loadDefaultFilters = () => {
     try {
       const savedSettings = localStorage.getItem("app_settings");
@@ -516,6 +600,7 @@ export function useFilters() {
     activeSearchType,
     favoriteSports,
     favoriteHouses,
+    favoritesCache,
     showFilterOverlay,
     searchSuggestions,
     showSearchSuggestions,
@@ -561,6 +646,9 @@ export function useFilters() {
     getMarketTranslations,
     saveFiltersToSettings,
     loadFiltersFromSettings,
+    saveFavoritesCache,
+    loadFavoritesCache,
+    syncFavoritesVisualState,
     updateFiltersCache,
     restoreFiltersFromCache,
     checkIfUserExplicitlyDeselectedAll,
