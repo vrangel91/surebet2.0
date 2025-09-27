@@ -1,17 +1,14 @@
 <template>
   <div class="surebet-reports-container" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <!-- Sidebar Reutilizável -->
-    <Sidebar 
-      :sidebarCollapsed="sidebarCollapsed"
-      @toggle-sidebar="handleSidebarToggle"
-      @sidebar-state-loaded="handleSidebarStateLoaded"
-    />
+    <Sidebar :sidebarCollapsed="sidebarCollapsed" @toggle-sidebar="handleSidebarToggle"
+      @sidebar-state-loaded="handleSidebarStateLoaded" />
 
     <!-- Conteúdo Principal -->
     <main class="main-content">
       <!-- Header Global -->
       <Header />
-      
+
       <!-- Header do Conteúdo -->
       <header class="content-header">
         <div class="header-left">
@@ -21,8 +18,9 @@
         <div class="header-right">
           <button @click="refreshReports" class="btn btn-secondary">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-              <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z" />
+              <path
+                d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z" />
             </svg>
             {{ config.texts.refreshButton }}
           </button>
@@ -36,7 +34,8 @@
           <div class="stat-card">
             <div class="stat-icon">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                <path
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -44,12 +43,13 @@
               <p class="stat-label">{{ config.texts.totalReports }}</p>
             </div>
           </div>
-          
+
           <div class="stat-card">
             <div class="stat-icon">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                <path
+                  d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -61,7 +61,8 @@
           <div class="stat-card">
             <div class="stat-icon">
               <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                <path
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <div class="stat-content">
@@ -77,11 +78,7 @@
             <h3 class="section-title">{{ config.texts.reportsSectionTitle }}</h3>
             <div class="section-actions">
               <select v-model="statusFilter" class="form-select">
-                <option 
-                  v-for="option in config.statusOptions" 
-                  :key="option.value" 
-                  :value="option.value"
-                >
+                <option v-for="option in config.statusOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
                 </option>
               </select>
@@ -92,7 +89,8 @@
           <div v-if="!Array.isArray(reports) || reports.length === 0" class="empty-state">
             <div class="empty-icon">
               <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                <path
+                  d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
               </svg>
             </div>
             <h3 class="empty-title">{{ config.texts.emptyStateTitle }}</h3>
@@ -103,30 +101,22 @@
 
           <!-- Reports List -->
           <div v-else class="reports-list">
-            <div 
-              v-for="report in filteredReports" 
-              :key="report.id" 
-              class="report-card"
-              :class="{ 
-                'report-pending': report.status === 'pending',
-                'report-completed': report.status === 'completed',
-                'report-cancelled': report.status === 'cancelled'
-              }"
-            >
+            <div v-for="report in filteredReports" :key="report.id" class="report-card" :class="{
+              'report-pending': report.status === 'pending',
+              'report-completed': report.status === 'completed',
+              'report-cancelled': report.status === 'cancelled'
+            }">
               <div class="report-header">
                 <div class="report-info">
                   <h4 class="report-title">{{ report.surebet[0]?.match || config.texts.gameNotIdentified }}</h4>
                   <p class="report-date">{{ formatDate(report.timestamp) }}</p>
                 </div>
                 <div class="report-status">
-                  <span 
-                    class="status-badge" 
-                    :class="{ 
-                      'status-pending': report.status === 'pending', 
-                      'status-completed': report.status === 'completed',
-                      'status-cancelled': report.status === 'cancelled'
-                    }"
-                  >
+                  <span class="status-badge" :class="{
+                    'status-pending': report.status === 'pending',
+                    'status-completed': report.status === 'completed',
+                    'status-cancelled': report.status === 'cancelled'
+                  }">
                     {{ getStatusText(report.status) }}
                   </span>
                 </div>
@@ -143,7 +133,8 @@
                 </div>
                 <div v-if="report.status === 'completed'" class="detail-item">
                   <span class="detail-label">{{ config.texts.actualProfit }}</span>
-                  <span class="detail-value" :class="{ 'profit-positive': report.actualProfit > 0, 'profit-negative': report.actualProfit < 0 }">
+                  <span class="detail-value"
+                    :class="{ 'profit-positive': report.actualProfit > 0, 'profit-negative': report.actualProfit < 0 }">
                     {{ formatCurrency(report.actualProfit) }}
                   </span>
                 </div>
@@ -153,11 +144,7 @@
               <div class="bets-section">
                 <h5 class="bets-title">{{ config.texts.betsPerformed }}</h5>
                 <div class="bets-list">
-                  <div 
-                    v-for="(bet, index) in report.surebet" 
-                    :key="index" 
-                    class="bet-item"
-                  >
+                  <div v-for="(bet, index) in report.surebet" :key="index" class="bet-item">
                     <div class="bet-info">
                       <span class="bet-house">{{ bet.house }}</span>
                       <span class="bet-market">{{ bet.market }}</span>
@@ -165,7 +152,8 @@
                     </div>
                     <div class="bet-amount">
                       <span class="bet-stake">{{ formatCurrency(report.stakes[index]) }}</span>
-                      <span v-if="report.status === 'completed'" class="bet-result" :class="{ 'result-win': report.results[index]?.result === 'win', 'result-loss': report.results[index]?.result === 'loss' }">
+                      <span v-if="report.status === 'completed'" class="bet-result"
+                        :class="{ 'result-win': report.results[index]?.result === 'win', 'result-loss': report.results[index]?.result === 'loss' }">
                         {{ report.results[index]?.result === 'win' ? 'WIN' : 'LOSS' }}
                       </span>
                     </div>
@@ -175,36 +163,29 @@
 
               <!-- Ações -->
               <div class="report-actions">
-                <button 
-                  v-if="report.status === 'pending'" 
-                  @click="openResultModal(report)" 
-                  class="btn btn-primary"
-                >
+                <button v-if="report.status === 'pending'" @click="openResultModal(report)" class="btn btn-primary">
                   <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                    <path
+                      d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                   </svg>
                   {{ config.texts.confirmResult }}
                 </button>
-                <button 
-                  v-if="report.status === 'pending'" 
-                  @click="cancelReport(report)" 
-                  class="btn btn-danger"
-                >
+                <button v-if="report.status === 'pending'" @click="cancelReport(report)" class="btn btn-danger">
                   <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                    <path
+                      d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z" />
+                    <path
+                      d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z" />
                   </svg>
                   {{ config.texts.cancel }}
                 </button>
-                <button 
-                  v-if="report.status === 'completed'" 
-                  @click="viewReportDetails(report)" 
-                  class="btn btn-secondary"
-                >
+                <button v-if="report.status === 'completed'" @click="viewReportDetails(report)"
+                  class="btn btn-secondary">
                   <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z" />
+                    <path
+                      d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
                   </svg>
                   {{ config.texts.viewDetails }}
                 </button>
@@ -221,7 +202,8 @@
             <h3 class="modal-title">{{ config.texts.confirmResultModalTitle }}</h3>
             <button @click="closeResultModal" class="modal-close">
               <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                <path
+                  d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
               </svg>
             </button>
           </div>
@@ -229,13 +211,9 @@
           <div class="modal-body">
             <div class="result-form">
               <h4 class="form-title">{{ selectedReport?.surebet[0]?.match || config.texts.gameNotIdentified }}</h4>
-              
+
               <div class="bets-results">
-                <div 
-                  v-for="(bet, index) in selectedReport?.surebet" 
-                  :key="index" 
-                  class="bet-result-item"
-                >
+                <div v-for="(bet, index) in selectedReport?.surebet" :key="index" class="bet-result-item">
                   <div class="bet-info">
                     <span class="bet-house">{{ bet.house }}</span>
                     <span class="bet-market">{{ bet.market }}</span>
@@ -243,18 +221,12 @@
                     <span class="bet-stake">{{ formatCurrency(selectedReport?.stakes[index]) }}</span>
                   </div>
                   <div class="result-selection">
-                    <button 
-                      @click="setBetResult(index, 'win')"
-                      :class="{ 'active': betResults[index] === 'win' }"
-                      class="result-btn result-win"
-                    >
+                    <button @click="setBetResult(index, 'win')" :class="{ 'active': betResults[index] === 'win' }"
+                      class="result-btn result-win">
                       WIN
                     </button>
-                    <button 
-                      @click="setBetResult(index, 'loss')"
-                      :class="{ 'active': betResults[index] === 'loss' }"
-                      class="result-btn result-loss"
-                    >
+                    <button @click="setBetResult(index, 'loss')" :class="{ 'active': betResults[index] === 'loss' }"
+                      class="result-btn result-loss">
                       LOSS
                     </button>
                   </div>
@@ -273,14 +245,15 @@
                 </div>
                 <div class="calculation-item total">
                   <span>{{ config.texts.profitLoss }}</span>
-                  <span :class="{ 'profit-positive': calculateActualProfit() > 0, 'profit-negative': calculateActualProfit() < 0 }">
+                  <span
+                    :class="{ 'profit-positive': calculateActualProfit() > 0, 'profit-negative': calculateActualProfit() < 0 }">
                     {{ formatCurrency(calculateActualProfit()) }}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-          
+
           <div class="modal-footer">
             <button @click="closeResultModal" class="btn btn-secondary">{{ config.texts.cancel }}</button>
             <button @click="confirmResult" class="btn btn-primary" :disabled="!canConfirmResult">
@@ -298,15 +271,16 @@ import Header from '@/components/Navigation/Header.vue'
 import Sidebar from '@/components/Navigation/Sidebar.vue'
 import { http } from '@/utils/http.js'
 import { surebetReportsConfig } from '@/config/surebetReportsConfig.js'
+import { emitter } from '@/utils/emitter.js'
 
 export default {
   name: 'SurebetReportsView',
-  
+
   components: {
     Header,
     Sidebar
   },
-  
+
   data() {
     return {
       reports: [],
@@ -320,17 +294,17 @@ export default {
       config: surebetReportsConfig
     }
   },
-  
+
   computed: {
     filteredReports() {
       if (!this.statusFilter) return this.reports
       return this.reports.filter(report => report.status === this.statusFilter)
     },
-    
+
     pendingReports() {
       return this.reports.filter(report => report.status === 'pending').length
     },
-    
+
     totalProfit() {
       return this.reports
         .filter(report => report.status === 'completed')
@@ -338,25 +312,25 @@ export default {
         .toFixed(2)
     }
   },
-  
+
   mounted() {
     this.loadReports()
   },
-  
+
   methods: {
     // Métodos do sidebar
     handleSidebarToggle() {
       this.sidebarCollapsed = !this.sidebarCollapsed
     },
-    
+
     handleSidebarStateLoaded(isCollapsed) {
       this.sidebarCollapsed = isCollapsed
     },
-    
+
     async loadReports() {
       try {
         console.log('Carregando relatórios de surebets...')
-        
+
         const token = this.$store.getters.authToken
         if (!token) {
           console.error('Token de autenticação não encontrado')
@@ -364,7 +338,7 @@ export default {
           this.$router.push('/login')
           return
         }
-        
+
         const response = await fetch(this.config.api.endpoints.reports, {
           method: 'GET',
           headers: {
@@ -378,7 +352,7 @@ export default {
         }
 
         const data = await response.json()
-        
+
         if (data.success) {
           this.reports = Array.isArray(data.data) ? data.data : []
           console.log('Relatórios carregados:', this.reports)
@@ -391,73 +365,73 @@ export default {
         this.reports = []
       }
     },
-    
+
     refreshReports() {
       this.loadReports()
     },
-    
+
     getStatusText(status) {
       return this.config.statusTextMap[status] || status
     },
-    
+
     formatCurrency(value) {
       return new Intl.NumberFormat(this.config.formatting.currency.locale, {
         style: 'currency',
         currency: this.config.formatting.currency.currency
       }).format(value)
     },
-    
+
     formatDate(date) {
       return new Intl.DateTimeFormat(this.config.formatting.date.locale, this.config.formatting.date.options).format(new Date(date))
     },
-    
+
     openResultModal(report) {
       this.selectedReport = report
       this.betResults = {}
       this.showResultModal = true
     },
-    
+
     closeResultModal() {
       this.showResultModal = false
       this.selectedReport = null
       this.betResults = {}
     },
-    
+
     setBetResult(index, result) {
       this.betResults[index] = result
     },
-    
+
     canConfirmResult() {
-      return this.selectedReport && 
-             Object.keys(this.betResults).length === this.selectedReport.surebet.length &&
-             Object.values(this.betResults).every(result => result === 'win' || result === 'loss')
+      return this.selectedReport &&
+        Object.keys(this.betResults).length === this.selectedReport.surebet.length &&
+        Object.values(this.betResults).every(result => result === 'win' || result === 'loss')
     },
-    
+
     calculateExpectedReturn() {
       if (!this.selectedReport) return 0
-      
+
       let totalReturn = 0
       for (let i = 0; i < this.selectedReport.surebet.length; i++) {
         const bet = this.selectedReport.surebet[i]
         const stake = this.selectedReport.stakes[i]
         const result = this.betResults[i]
-        
+
         if (result === 'win') {
           totalReturn += stake * parseFloat(bet.chance)
         }
       }
-      
+
       return totalReturn
     },
-    
+
     calculateActualProfit() {
       const expectedReturn = this.calculateExpectedReturn()
       return expectedReturn - this.selectedReport.totalInvestment
     },
-    
+
     async confirmResult() {
       if (!this.canConfirmResult()) return
-      
+
       try {
         const resultData = {
           reportId: this.selectedReport.id,
@@ -467,12 +441,21 @@ export default {
           surebet: this.selectedReport.surebet,
           stakes: this.selectedReport.stakes
         }
-        
+
         const response = await http.put(this.config.api.endpoints.confirmResult(this.selectedReport.id), resultData)
-        
+
         if (response.data.success) {
           this.$toast.success(this.config.texts.resultConfirmed)
           console.log('💰 Ajustes de saldo:', response.data.data.balanceAdjustments)
+
+          // Emite evento para atualizar saldos no BookmakerAccountsView
+          emitter.emit('surebet-result-confirmed', {
+            report: this.selectedReport,
+            results: this.betResults,
+            actualProfit: this.calculateActualProfit(),
+            balanceAdjustments: response.data.data.balanceAdjustments
+          })
+
           this.closeResultModal()
           await this.loadReports()
         } else {
@@ -483,12 +466,12 @@ export default {
         this.$toast.error(this.config.texts.errorConfirmingResult + error.message)
       }
     },
-    
+
     async cancelReport(report) {
       if (confirm(this.config.texts.cancelConfirmation)) {
         try {
           const response = await http.put(this.config.api.endpoints.cancel(report.id))
-          
+
           if (response.data.success) {
             this.$toast.success(this.config.texts.reportCancelled)
             await this.loadReports()
@@ -501,7 +484,7 @@ export default {
         }
       }
     },
-    
+
     viewReportDetails(report) {
       // Implementar visualização de detalhes
       console.log('Ver detalhes do relatório:', report)
@@ -1065,28 +1048,28 @@ export default {
   .reports-main {
     padding: 1rem;
   }
-  
+
   .content-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
     padding: 1rem;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .report-actions {
     flex-direction: column;
   }
-  
+
   .modal-footer {
     flex-direction: column;
   }

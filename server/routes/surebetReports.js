@@ -3,41 +3,22 @@ const router = express.Router();
 const { authenticateToken } = require("../utils/auth");
 const { BookmakerAccount } = require("../models");
 
+// Armazenamento temporário em memória para relatórios de surebets
+// Em produção, isso seria substituído por um banco de dados
+let surebetReports = [];
+
 // GET /api/surebet-reports - Listar relatórios de surebets
 router.get("/", authenticateToken, async (req, res) => {
   try {
-    // Por enquanto, retornar dados mockados
-    // Em produção, isso viria do banco de dados
-    const mockReports = [
-      {
-        id: 1,
-        surebet: [
-          {
-            house: "Superbet",
-            market: "Resultado Final",
-            chance: 4.6,
-            match: "Flamengo vs Palmeiras",
-          },
-          {
-            house: "Vbet",
-            market: "Resultado Final",
-            chance: 1.25,
-            match: "Flamengo vs Palmeiras",
-          },
-        ],
-        stakes: [340.0, 1160.0],
-        totalInvestment: 1500.0,
-        expectedProfit: 64.0,
-        actualProfit: null,
-        timestamp: new Date().toISOString(),
-        status: "pending",
-        results: [],
-      },
-    ];
+    console.log(`📊 Carregando ${surebetReports.length} relatórios de surebets`);
+    
+    // Retornar relatórios armazenados em memória
+    // Ordenar por timestamp (mais recentes primeiro)
+    const sortedReports = surebetReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     res.json({
       success: true,
-      data: mockReports,
+      data: sortedReports,
       message: "Relatórios carregados com sucesso",
     });
   } catch (error) {
@@ -66,7 +47,7 @@ router.post("/", authenticateToken, async (req, res) => {
       });
     }
 
-    // Criar relatório (mockado por enquanto)
+    // Criar novo relatório
     const newReport = {
       id: Date.now(), // ID temporário
       surebet,
@@ -79,7 +60,11 @@ router.post("/", authenticateToken, async (req, res) => {
       results: results || [],
     };
 
+    // Adicionar ao armazenamento em memória
+    surebetReports.push(newReport);
+
     console.log("✅ Novo relatório de surebet criado:", newReport);
+    console.log(`📊 Total de relatórios: ${surebetReports.length}`);
 
     res.json({
       success: true,
@@ -108,6 +93,17 @@ router.put("/:id/confirm-result", authenticateToken, async (req, res) => {
         success: false,
         error: "Dados inválidos",
         message: "results e actualProfit são obrigatórios",
+      });
+    }
+
+    // Encontrar o relatório no armazenamento
+    const reportIndex = surebetReports.findIndex(report => report.id === parseInt(id));
+    
+    if (reportIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: "Relatório não encontrado",
+        message: "O relatório especificado não existe",
       });
     }
 
@@ -153,13 +149,17 @@ router.put("/:id/confirm-result", authenticateToken, async (req, res) => {
       }
     }
 
-    // Simular confirmação de resultado
-    console.log("💰 Ajustes de saldo calculados:", balanceAdjustments);
+    // Atualizar o relatório no armazenamento
+    surebetReports[reportIndex] = {
+      ...surebetReports[reportIndex],
+      status: "completed",
+      actualProfit,
+      results,
+      confirmedAt: new Date().toISOString(),
+    };
 
-    // Em produção, aqui você:
-    // 1. Atualizaria o relatório no banco de dados
-    // 2. Processaria os ajustes de saldo nas contas correspondentes
-    // 3. Registraria o histórico de transações
+    console.log("💰 Ajustes de saldo calculados:", balanceAdjustments);
+    console.log(`📊 Relatório ${id} atualizado para status: completed`);
 
     res.json({
       success: true,
@@ -188,11 +188,26 @@ router.put("/:id/cancel", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Simular cancelamento
-    console.log(`❌ Relatório ${id} cancelado`);
+    // Encontrar o relatório no armazenamento
+    const reportIndex = surebetReports.findIndex(report => report.id === parseInt(id));
+    
+    if (reportIndex === -1) {
+      return res.status(404).json({
+        success: false,
+        error: "Relatório não encontrado",
+        message: "O relatório especificado não existe",
+      });
+    }
 
-    // Em produção, aqui você atualizaria o status no banco de dados
-    // e possivelmente reverteria os débitos de saldo
+    // Atualizar o relatório no armazenamento
+    surebetReports[reportIndex] = {
+      ...surebetReports[reportIndex],
+      status: "cancelled",
+      cancelledAt: new Date().toISOString(),
+    };
+
+    console.log(`❌ Relatório ${id} cancelado`);
+    console.log(`📊 Relatório ${id} atualizado para status: cancelled`);
 
     res.json({
       success: true,
@@ -218,32 +233,22 @@ router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Simular busca de relatório específico
     console.log(`🔍 Buscando relatório ${id}`);
 
-    // Em produção, aqui você buscaria no banco de dados
-    const mockReport = {
-      id: parseInt(id),
-      surebet: [
-        {
-          house: "Superbet",
-          market: "Resultado Final",
-          chance: 4.6,
-          match: "Flamengo vs Palmeiras",
-        },
-      ],
-      stakes: [340.0],
-      totalInvestment: 340.0,
-      expectedProfit: 64.0,
-      actualProfit: null,
-      timestamp: new Date().toISOString(),
-      status: "pending",
-      results: [],
-    };
+    // Buscar relatório no armazenamento
+    const report = surebetReports.find(report => report.id === parseInt(id));
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        error: "Relatório não encontrado",
+        message: "O relatório especificado não existe",
+      });
+    }
 
     res.json({
       success: true,
-      data: mockReport,
+      data: report,
       message: "Relatório encontrado",
     });
   } catch (error) {

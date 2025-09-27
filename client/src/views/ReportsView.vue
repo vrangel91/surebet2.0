@@ -361,6 +361,7 @@ import ProfitEvolutionChart from '../components/Charts/ProfitEvolutionChart.vue'
 import ROIBarChart from '../components/Charts/ROIBarChart.vue'
 import Sidebar from '../components/Navigation/Sidebar.vue'
 import Header from '../components/Navigation/Header.vue'
+import { emitter } from '../utils/emitter.js'
 
 
 
@@ -583,9 +584,14 @@ export default {
     this.fetchSurebets()
     this.loadStoredBets()
     this.startStatusCheckTimer() // Inicia verificação automática de status das apostas
+
+    // Escuta eventos de apostas adicionadas aos relatórios
+    emitter.on('bet-added-to-reports', this.handleBetAddedToReports)
   },
   beforeUnmount() {
     this.stopStatusCheckTimer() // Limpa o timer ao destruir o componente
+    // Remove listener de eventos
+    emitter.off('bet-added-to-reports', this.handleBetAddedToReports)
   },
   methods: {
     handleSidebarToggle(collapsed) {
@@ -747,55 +753,9 @@ export default {
       const storedBets = localStorage.getItem('reports_bets')
       if (storedBets) {
         this.bets = JSON.parse(storedBets)
-      }
-
-      // Se não há dados, adiciona alguns dados de teste para demonstrar os gráficos
-      if (this.bets.length === 0) {
-        this.bets = [
-          {
-            id: 1,
-            match: 'Flamengo vs Palmeiras',
-            sport: 'Futebol',
-            houses: ['Bet365', 'Pinnacle'],
-            market: 'Resultado Final',
-            odds: '2.15 / 3.40',
-            stake: 100.00,
-            investment: 100.00,
-            status: 'Finalizado',
-            profit: 15.00,
-            roi: 15.0,
-            date: new Date(Date.now() - 86400000).toISOString() // 1 dia atrás
-          },
-          {
-            id: 2,
-            match: 'São Paulo vs Santos',
-            sport: 'Futebol',
-            houses: ['Betfair', 'Betway'],
-            market: 'Over/Under 2.5',
-            odds: '1.85 / 2.05',
-            stake: 50.00,
-            investment: 50.00,
-            status: 'Em andamento',
-            profit: -10.00,
-            roi: -20.0,
-            date: new Date(Date.now() - 43200000).toISOString() // 12 horas atrás
-          },
-          {
-            id: 3,
-            match: 'Corinthians vs Vasco',
-            sport: 'Futebol',
-            houses: ['Bet365', 'Betfair'],
-            market: 'Ambas Marcam',
-            odds: '1.95 / 1.85',
-            stake: 75.00,
-            investment: 75.00,
-            status: 'Finalizado',
-            profit: 25.00,
-            roi: 33.3,
-            date: new Date().toISOString() // Agora
-          }
-        ]
-        this.saveBets()
+      } else {
+        // Inicializa com array vazio se não há dados armazenados
+        this.bets = []
       }
     },
     // Salva apostas no localStorage
@@ -1007,6 +967,25 @@ color: var(--text-primary);
       // Salva as mudanças apenas se houve atualizações
       if (hasChanges) {
         this.saveBets()
+      }
+    },
+
+    // Manipula eventos de apostas adicionadas aos relatórios
+    handleBetAddedToReports(newBet) {
+      try {
+        console.log('📊 Nova aposta adicionada aos relatórios:', newBet)
+
+        // Recarrega as apostas armazenadas para incluir a nova
+        this.loadStoredBets()
+
+        // Mostra notificação de sucesso
+        this.showNotification(`✅ Aposta "${newBet.match}" adicionada aos relatórios!`)
+
+        // Reset paginação para mostrar a nova aposta
+        this.currentPage = 1
+
+      } catch (error) {
+        console.error('❌ Erro ao processar nova aposta nos relatórios:', error)
       }
     }
   },

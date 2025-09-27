@@ -109,6 +109,7 @@
 import { getBookmakerUrl, extractDomainFromAnchorh, buildBookmakerUrlFromDomain } from '../../config/bookmakerUrls.js'
 import { http } from '../../utils/http.js'
 import marketTranslations from '../../config/marketTranslations.json'
+import { emitter } from '../../utils/emitter.js'
 
 export default {
   name: 'SurebetCard',
@@ -541,6 +542,9 @@ export default {
         this.$emit('refresh-accounts')
         this.$emit('add-to-reports', this.surebet)
 
+        // 8. Adicionar aposta aos relatórios locais
+        this.addBetToReports()
+
         const successfulResults = results.filter(r => r.success)
         const failedResults = results.filter(r => !r.success)
 
@@ -640,6 +644,56 @@ export default {
           }
         }, 300)
       }, 3000)
+    },
+
+    // Adiciona aposta aos relatórios locais
+    addBetToReports() {
+      try {
+        const firstBet = this.surebet[0]
+        const houses = this.surebet.map(bet => bet.house).filter(Boolean)
+
+        // Extrai a data e hora da partida do surebet
+        const matchDate = firstBet.date || new Date().toISOString().split('T')[0]
+        const matchHour = firstBet.hour || '00:00'
+
+        // Cria a data completa da partida
+        const matchDateTime = new Date(`${matchDate}T${matchHour}`)
+
+        const newBet = {
+          id: Date.now() + Math.random(), // ID único
+          match: firstBet.match || 'Partida não especificada',
+          sport: firstBet.sport || 'Esporte não especificado',
+          houses: houses,
+          market: firstBet.market || 'Mercado não especificado',
+          odds: this.surebet.map(bet => bet.chance).join(' / '),
+          stake: this.totalInvestment, // Valor total investido
+          investment: this.totalInvestment, // Valor total investido
+          status: 'Em andamento',
+          profit: this.expectedProfit, // Lucro esperado
+          roi: firstBet.profit || 0,
+          date: matchDateTime.toISOString(), // Data e hora de início da partida
+          surebetId: this.surebet[0]?.id || Date.now(), // Referência ao surebet original
+          statusUpdated: false // Flag para controlar notificações
+        }
+
+        // Obtém apostas existentes do localStorage
+        const storedBets = localStorage.getItem('reports_bets')
+        let bets = storedBets ? JSON.parse(storedBets) : []
+
+        // Adiciona a nova aposta no início
+        bets.unshift(newBet)
+
+        // Salva no localStorage
+        localStorage.setItem('reports_bets', JSON.stringify(bets))
+
+        console.log('✅ Aposta adicionada aos relatórios locais:', newBet)
+
+        // Emite evento para atualizar ReportsView se estiver ativo
+        emitter.emit('bet-added-to-reports', newBet)
+
+      } catch (error) {
+        console.error('❌ Erro ao adicionar aposta aos relatórios:', error)
+      }
     },
 
     // Verifica se a aposta tem uma URL válida

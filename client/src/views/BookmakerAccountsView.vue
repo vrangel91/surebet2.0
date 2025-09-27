@@ -296,6 +296,7 @@
 import AppHeader from "@/components/Navigation/Header.vue";
 import Sidebar from "@/components/Navigation/Sidebar.vue";
 import { filterOptions } from "@/config/filters.js";
+import { emitter } from "@/utils/emitter.js";
 
 export default {
   name: "BookmakerAccountsView",
@@ -353,6 +354,14 @@ export default {
 
   mounted() {
     this.loadAccounts();
+
+    // Escuta eventos de confirmação de resultados de surebets
+    emitter.on('surebet-result-confirmed', this.handleSurebetResultConfirmed)
+  },
+
+  beforeUnmount() {
+    // Remove listener de eventos
+    emitter.off('surebet-result-confirmed', this.handleSurebetResultConfirmed)
   },
 
   methods: {
@@ -846,6 +855,29 @@ export default {
         hour: "2-digit",
         minute: "2-digit",
       }).format(new Date(date));
+    },
+
+    // Manipula eventos de confirmação de resultados de surebets
+    handleSurebetResultConfirmed(eventData) {
+      try {
+        console.log('💰 Resultado de surebet confirmado, atualizando saldos:', eventData)
+
+        // Recarrega as contas para refletir os novos saldos
+        this.loadAccounts()
+
+        // Mostra notificação de sucesso
+        const profitText = eventData.actualProfit >= 0 ?
+          `Lucro: ${this.formatCurrency(eventData.actualProfit)}` :
+          `Prejuízo: ${this.formatCurrency(Math.abs(eventData.actualProfit))}`
+
+        this.$toast.success(`Resultado confirmado! ${profitText}`)
+
+        console.log('✅ Saldos atualizados após confirmação de resultado')
+
+      } catch (error) {
+        console.error('❌ Erro ao processar confirmação de resultado:', error)
+        this.$toast.error('Erro ao atualizar saldos após confirmação de resultado')
+      }
     },
   },
 };
