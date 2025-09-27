@@ -373,7 +373,7 @@ async function getSurebetsFromAPI(filters) {
 // app.use('/api/referrals', referralsRoutes);
 // app.use('/api/tickets', ticketsRoutes);
 app.use('/api/admin', adminRoutes);
-// app.use('/api/notifications', notificationRoutes);
+app.use('/api/notifications', notificationRoutes);
 // app.use('/api/payments', paymentRoutes);
 // app.use('/api/manual-payments', manualPaymentRoutes);
 // app.use('/api/payment-status', paymentStatusRoutes);

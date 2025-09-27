@@ -240,9 +240,9 @@
             <h4>{{ selectedTicket.subject }}</h4>
             <div class="ticket-detail-meta">
               <span class="status-badge" :class="selectedTicket.status">{{ getStatusText(selectedTicket.status)
-              }}</span>
+                }}</span>
               <span class="priority-badge" :class="selectedTicket.priority">{{ getPriorityText(selectedTicket.priority)
-              }}</span>
+                }}</span>
             </div>
           </div>
 
@@ -264,8 +264,7 @@
 
             <div class="ticket-description-section">
               <h5>Descrição</h5>
-              <p>{{ selectedTicket.messages && selectedTicket.messages[0] ? selectedTicket.messages[0].content : 'Sem
-                descrição' }}</p>
+              <p>{{ getTicketDescription(selectedTicket) }}</p>
             </div>
 
             <div class="ticket-messages-section">
@@ -628,6 +627,32 @@ export default {
         urgent: 'Urgente'
       }
       return priorityMap[priority] || priority
+    },
+
+    getTicketDescription(ticket) {
+      // Verificar se o objeto selectedTicket existe
+      if (!ticket) {
+        return 'Sem descrição'
+      }
+
+      // Verificar se possui a chave messages
+      if (!ticket.messages) {
+        return 'Sem descrição'
+      }
+
+      // Verificar se messages é um array e tem pelo menos um item
+      if (!Array.isArray(ticket.messages) || ticket.messages.length === 0) {
+        return 'Sem descrição'
+      }
+
+      // Verificar se o primeiro item tem o campo content
+      const firstMessage = ticket.messages[0]
+      if (!firstMessage || !firstMessage.content) {
+        return 'Sem descrição'
+      }
+
+      // Retornar o conteúdo do primeiro item
+      return firstMessage.content
     },
 
     formatDate(date) {

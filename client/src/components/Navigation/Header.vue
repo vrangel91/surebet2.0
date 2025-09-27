@@ -205,7 +205,7 @@
                 <div class="notification-type-icon">
                   <i :class="getNotificationIcon(notification.type)"></i>
                 </div>
-                <div class="notification-content">
+                <div class="notification-content" @click="openNotificationModal(notification)" style="cursor: pointer;">
                   <h5 class="notification-title">{{ notification.title }}</h5>
                   <p class="notification-message">{{ notification.message }}</p>
                   <div class="notification-meta">
@@ -216,17 +216,72 @@
                   </div>
                 </div>
                 <div class="notification-actions">
-                  <button v-if="!notification.is_read" class="mark-read-btn" @click="markAsRead(notification.id)"
+                  <button v-if="!notification.is_read" class="mark-read-btn" @click.stop="markAsRead(notification.id)"
                     title="Marcar como lida">
                     <i class="bi bi-check2"></i>
                   </button>
-                  <button class="dismiss-btn" @click="dismissNotification(notification.id)" title="Descartar">
+                  <button class="dismiss-btn" @click.stop="dismissNotification(notification.id)" title="Descartar">
                     <i class="bi bi-x"></i>
                   </button>
                 </div>
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Notificação Individual -->
+    <div v-if="showNotificationModal" class="notification-detail-modal-overlay" @click="closeNotificationModal">
+      <div class="notification-detail-modal" @click.stop>
+        <!-- Cabeçalho do modal -->
+        <div class="modal-header">
+          <div class="notification-header-info">
+            <div class="notification-type-icon-large">
+              <i :class="getNotificationIcon(selectedNotification?.type)"></i>
+            </div>
+            <div class="notification-header-text">
+              <h3>{{ selectedNotification?.title }}</h3>
+              <div class="notification-meta-large">
+                <span class="notification-date">{{ formatDate(selectedNotification?.created_at) }}</span>
+                <span class="notification-priority" :class="selectedNotification?.priority">
+                  {{ getPriorityText(selectedNotification?.priority) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button class="close-btn" @click="closeNotificationModal">×</button>
+        </div>
+
+        <!-- Conteúdo do modal -->
+        <div class="modal-content">
+          <div class="notification-message-full">
+            <p>{{ selectedNotification?.message }}</p>
+          </div>
+
+          <!-- Dados adicionais se existirem -->
+          <div v-if="selectedNotification?.metadata" class="notification-metadata">
+            <h4>Informações Adicionais:</h4>
+            <pre class="metadata-content">{{ JSON.stringify(selectedNotification.metadata, null, 2) }}</pre>
+          </div>
+        </div>
+
+        <!-- Ações do modal -->
+        <div class="modal-actions">
+          <button v-if="!selectedNotification?.is_read" class="action-btn mark-read-btn"
+            @click="markAsRead(selectedNotification.id); closeNotificationModal()">
+            <i class="bi bi-check2"></i>
+            Marcar como Lida
+          </button>
+          <button class="action-btn dismiss-btn"
+            @click="dismissNotification(selectedNotification.id); closeNotificationModal()">
+            <i class="bi bi-x"></i>
+            Descartar
+          </button>
+          <button class="action-btn close-btn-secondary" @click="closeNotificationModal()">
+            <i class="bi bi-x-circle"></i>
+            Fechar
+          </button>
         </div>
       </div>
     </div>
@@ -281,6 +336,8 @@ export default {
       loadingNotifications: false,
       markingAllAsRead: false,
       unreadCount: 0,
+      showNotificationModal: false,
+      selectedNotification: null,
 
       // Sistema de toast
       activeToasts: [],
@@ -762,31 +819,35 @@ export default {
 
     async markAsRead(notificationId) {
       try {
-        await axios.patch(`/api/notifications/${notificationId}/read`)
+        console.log('🔔 [Header] Marcando notificação como lida:', notificationId)
+        await axios.put(`/api/notifications/${notificationId}/read`)
         const notification = this.notifications && Array.isArray(this.notifications)
           ? this.notifications.find(n => n.id === notificationId)
           : null;
         if (notification) {
           notification.is_read = true
           this.updateUnreadCount()
+          console.log('✅ [Header] Notificação marcada como lida com sucesso')
         }
       } catch (error) {
-        console.error('Erro ao marcar notificação como lida:', error)
+        console.error('❌ [Header] Erro ao marcar notificação como lida:', error)
       }
     },
 
     async dismissNotification(notificationId) {
       try {
-        await axios.patch(`/api/notifications/${notificationId}/dismiss`)
+        console.log('🔔 [Header] Descartando notificação:', notificationId)
+        await axios.put(`/api/notifications/${notificationId}/dismiss`)
         const notification = this.notifications && Array.isArray(this.notifications)
           ? this.notifications.find(n => n.id === notificationId)
           : null;
         if (notification) {
           notification.is_dismissed = true
           this.updateUnreadCount()
+          console.log('✅ [Header] Notificação descartada com sucesso')
         }
       } catch (error) {
-        console.error('Erro ao descartar notificação:', error)
+        console.error('❌ [Header] Erro ao descartar notificação:', error)
       }
     },
 
@@ -795,11 +856,18 @@ export default {
 
       this.markingAllAsRead = true
       try {
-        await axios.patch('/api/notifications/mark-all-read')
-        this.notifications.forEach(n => n.is_read = true)
+        console.log('🔔 [Header] Marcando todas as notificações como lidas')
+        // Como não temos uma rota específica para marcar todas como lidas,
+        // vamos marcar uma por uma
+        const unreadNotifications = this.notifications.filter(n => !n.is_read && !n.is_dismissed)
+        for (const notification of unreadNotifications) {
+          await axios.put(`/api/notifications/${notification.id}/read`)
+          notification.is_read = true
+        }
         this.updateUnreadCount()
+        console.log('✅ [Header] Todas as notificações marcadas como lidas')
       } catch (error) {
-        console.error('Erro ao marcar todas como lidas:', error)
+        console.error('❌ [Header] Erro ao marcar todas como lidas:', error)
       } finally {
         this.markingAllAsRead = false
       }
@@ -807,6 +875,17 @@ export default {
 
     updateUnreadCount() {
       this.unreadCount = this.notifications.filter(n => !n.is_read && !n.is_dismissed).length
+    },
+
+    // Modal de notificação
+    openNotificationModal(notification) {
+      this.selectedNotification = notification
+      this.showNotificationModal = true
+    },
+
+    closeNotificationModal() {
+      this.showNotificationModal = false
+      this.selectedNotification = null
     },
 
     getNotificationIcon(type) {
@@ -2765,11 +2844,246 @@ export default {
   }
 }
 
+/* Modal de Notificação Individual */
+.notification-detail-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--overlay-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  padding: 20px;
+}
+
+.notification-detail-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 80vh;
+  box-shadow: var(--shadow-modal);
+  animation: modalSlideIn 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes modalSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.notification-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.notification-type-icon-large {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 20px;
+  background: var(--bg-primary);
+  border: 2px solid var(--border-primary);
+
+  .bi-info-circle-fill {
+    color: var(--info);
+  }
+
+  .bi-check-circle-fill {
+    color: var(--success);
+  }
+
+  .bi-exclamation-triangle-fill {
+    color: var(--warning);
+  }
+
+  .bi-x-circle-fill {
+    color: var(--error);
+  }
+
+  .bi-arrow-clockwise {
+    color: var(--accent-primary);
+  }
+}
+
+.notification-header-text {
+  flex: 1;
+  min-width: 0;
+
+  h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.3;
+  }
+}
+
+.notification-meta-large {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+
+.notification-message-full {
+  margin-bottom: 20px;
+
+  p {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}
+
+.notification-metadata {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-primary);
+
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .metadata-content {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-primary);
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  border-top: 1px solid var(--border-primary);
+  background: var(--bg-primary);
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-button-hover);
+  }
+
+  i {
+    font-size: 14px;
+  }
+
+  &.mark-read-btn {
+    background: var(--success);
+    color: var(--text-button-success);
+    border-color: var(--success);
+
+    &:hover {
+      background: var(--success-dark);
+    }
+  }
+
+  &.dismiss-btn {
+    background: var(--error);
+    color: var(--text-button-error);
+    border-color: var(--error);
+
+    &:hover {
+      background: var(--error-dark);
+    }
+  }
+
+  &.close-btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border-color: var(--border-primary);
+
+    &:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+  }
+}
+
 /* Responsividade para notificações */
 @media (max-width: 768px) {
   .notifications-modal {
     width: 320px;
     margin-right: 10px;
+  }
+
+  .notification-detail-modal {
+    margin: 10px;
+    max-height: 90vh;
+  }
+
+  .notification-header-info {
+    gap: 12px;
+  }
+
+  .notification-type-icon-large {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .notification-header-text h3 {
+    font-size: 16px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .action-btn {
+    justify-content: center;
   }
 
   .toast-container {
