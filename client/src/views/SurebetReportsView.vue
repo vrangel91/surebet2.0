@@ -256,7 +256,7 @@
 
           <div class="modal-footer">
             <button @click="closeResultModal" class="btn btn-secondary">{{ config.texts.cancel }}</button>
-            <button @click="confirmResult" class="btn btn-primary" :disabled="!canConfirmResult">
+            <button @click.prevent="confirmResult" class="btn btn-primary" :disabled="!canConfirmResult">
               {{ config.texts.confirmResult }}
             </button>
           </div>
@@ -361,7 +361,8 @@ export default {
         }
       } catch (error) {
         console.error('Erro ao carregar relatórios:', error)
-        this.$toast.error(this.config.texts.errorLoadingReports + error.message)
+        const errorMessage = error?.message || error?.toString() || 'Erro desconhecido'
+        this.$toast.error(this.config.texts.errorLoadingReports + errorMessage)
         this.reports = []
       }
     },
@@ -398,13 +399,24 @@ export default {
     },
 
     setBetResult(index, result) {
-      this.betResults[index] = result
+      console.log('🔍 [DEBUG] setBetResult chamado - index:', index, 'result:', result)
+      // Usar Vue.set para garantir reatividade
+      this.$set(this.betResults, index, result)
+      console.log('🔍 [DEBUG] betResults após set:', this.betResults)
     },
 
     canConfirmResult() {
-      return this.selectedReport &&
-        Object.keys(this.betResults).length === this.selectedReport.surebet.length &&
-        Object.values(this.betResults).every(result => result === 'win' || result === 'loss')
+      const hasSelectedReport = !!this.selectedReport
+      const hasAllResults = this.selectedReport && Object.keys(this.betResults).length === this.selectedReport.surebet.length
+      const allResultsValid = this.selectedReport && Object.values(this.betResults).every(result => result === 'win' || result === 'loss')
+
+      console.log('🔍 [DEBUG] canConfirmResult - hasSelectedReport:', hasSelectedReport)
+      console.log('🔍 [DEBUG] canConfirmResult - hasAllResults:', hasAllResults)
+      console.log('🔍 [DEBUG] canConfirmResult - allResultsValid:', allResultsValid)
+      console.log('🔍 [DEBUG] canConfirmResult - betResults keys:', Object.keys(this.betResults))
+      console.log('🔍 [DEBUG] canConfirmResult - surebet length:', this.selectedReport?.surebet?.length)
+
+      return hasSelectedReport && hasAllResults && allResultsValid
     },
 
     calculateExpectedReturn() {
@@ -430,9 +442,19 @@ export default {
     },
 
     async confirmResult() {
-      if (!this.canConfirmResult()) return
+      console.log('🔍 [DEBUG] confirmResult chamado')
+      console.log('🔍 [DEBUG] canConfirmResult:', this.canConfirmResult())
+      console.log('🔍 [DEBUG] selectedReport:', this.selectedReport)
+      console.log('🔍 [DEBUG] betResults:', this.betResults)
+
+      if (!this.canConfirmResult()) {
+        console.log('❌ [DEBUG] Não pode confirmar resultado - validação falhou')
+        return
+      }
 
       try {
+        console.log('✅ [DEBUG] Iniciando confirmação de resultado...')
+
         const resultData = {
           reportId: this.selectedReport.id,
           results: this.betResults,
@@ -442,28 +464,36 @@ export default {
           stakes: this.selectedReport.stakes
         }
 
+        console.log('🔍 [DEBUG] Dados enviados:', resultData)
+        console.log('🔍 [DEBUG] URL da API:', this.config.api.endpoints.confirmResult(this.selectedReport.id))
+
         const response = await http.put(this.config.api.endpoints.confirmResult(this.selectedReport.id), resultData)
 
-        if (response.data.success) {
+        console.log('🔍 [DEBUG] Resposta completa da API:', response)
+        console.log('🔍 [DEBUG] response.data:', response.data)
+
+        if (response && response.data && response.data.success) {
           this.$toast.success(this.config.texts.resultConfirmed)
-          console.log('💰 Ajustes de saldo:', response.data.data.balanceAdjustments)
+          console.log('💰 Ajustes de saldo:', response.data.data?.balanceAdjustments)
 
           // Emite evento para atualizar saldos no BookmakerAccountsView
           emitter.emit('surebet-result-confirmed', {
             report: this.selectedReport,
             results: this.betResults,
             actualProfit: this.calculateActualProfit(),
-            balanceAdjustments: response.data.data.balanceAdjustments
+            balanceAdjustments: response.data.data?.balanceAdjustments || []
           })
 
           this.closeResultModal()
           await this.loadReports()
         } else {
-          throw new Error(response.data.message)
+          const errorMessage = response?.data?.message || 'Resposta inválida da API'
+          throw new Error(errorMessage)
         }
       } catch (error) {
         console.error('Erro ao confirmar resultado:', error)
-        this.$toast.error(this.config.texts.errorConfirmingResult + error.message)
+        const errorMessage = error?.message || error?.toString() || 'Erro desconhecido'
+        this.$toast.error(this.config.texts.errorConfirmingResult + errorMessage)
       }
     },
 
@@ -480,7 +510,8 @@ export default {
           }
         } catch (error) {
           console.error('Erro ao cancelar relatório:', error)
-          this.$toast.error(this.config.texts.errorCancellingReport + error.message)
+          const errorMessage = error?.message || error?.toString() || 'Erro desconhecido'
+          this.$toast.error(this.config.texts.errorCancellingReport + errorMessage)
         }
       }
     },

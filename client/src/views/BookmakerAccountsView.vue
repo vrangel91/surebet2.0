@@ -140,13 +140,13 @@
                   <span class="detail-label">Saldo:</span>
                   <span class="detail-value">{{
                     formatCurrency(account.balance)
-                    }}</span>
+                  }}</span>
                 </div>
                 <div class="detail-item">
                   <span class="detail-label">Última atualização:</span>
                   <span class="detail-value">{{
                     formatDate(account.last_updated || account.updated_at)
-                    }}</span>
+                  }}</span>
                 </div>
                 <div v-if="account.notes" class="detail-item">
                   <span class="detail-label">Observações:</span>
@@ -865,12 +865,33 @@ export default {
         // Recarrega as contas para refletir os novos saldos
         this.loadAccounts()
 
-        // Mostra notificação de sucesso
+        // Mostra notificação de sucesso com detalhes dos ajustes
         const profitText = eventData.actualProfit >= 0 ?
           `Lucro: ${this.formatCurrency(eventData.actualProfit)}` :
           `Prejuízo: ${this.formatCurrency(Math.abs(eventData.actualProfit))}`
 
-        this.$toast.success(`Resultado confirmado! ${profitText}`)
+        // Criar mensagem detalhada dos ajustes
+        let adjustmentsMessage = ''
+        if (eventData.balanceAdjustments && eventData.balanceAdjustments.length > 0) {
+          const creditAdjustments = eventData.balanceAdjustments.filter(adj => adj.action === 'credit')
+          const lossAdjustments = eventData.balanceAdjustments.filter(adj => adj.action === 'none')
+
+          if (creditAdjustments.length > 0) {
+            adjustmentsMessage += '\n\n💰 Saldos creditados:'
+            creditAdjustments.forEach(adj => {
+              adjustmentsMessage += `\n• ${adj.house}: +${this.formatCurrency(adj.amount)}`
+            })
+          }
+
+          if (lossAdjustments.length > 0) {
+            adjustmentsMessage += '\n\n❌ Apostas perdidas (débito já foi feito):'
+            lossAdjustments.forEach(adj => {
+              adjustmentsMessage += `\n• ${adj.house}: ${this.formatCurrency(adj.stake)}`
+            })
+          }
+        }
+
+        this.$toast.success(`Resultado confirmado! ${profitText}${adjustmentsMessage}`)
 
         console.log('✅ Saldos atualizados após confirmação de resultado')
 
